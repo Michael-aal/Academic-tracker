@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String             @id @default(cuid())
+  name                  String             @db.VarChar(80)
+  email                 String             @unique @db.VarChar(254)
+  passwordHash          String             @map("password_hash")
+  currentAcademicYear   String             @default("2026–2027") @map("current_academic_year") @db.VarChar(30)
+  currentTerm           String             @default("Term 1") @map("current_term") @db.VarChar(20)
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+  subjects              Subject[]
+  assessmentScores      AssessmentScore[]
+
+  @@map("users")
+}
+
+model Subject {
+  id                String            @id @default(cuid())
+  userId            String            @map("user_id")
+  name              String            @db.VarChar(70)
+  normalizedName    String            @map("normalized_name") @db.VarChar(70)
+  targetPercentage  Int               @default(75) @map("target_percentage")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assessmentScores  AssessmentScore[]
+
+  // Enables a composite foreign key that prevents scores from being attached
+  // to a subject owned by a different user.
+  @@unique([id, userId])
+  @@unique([userId, normalizedName])
+  @@index([userId, createdAt])
+  @@map("subjects")
+}
+
+model AssessmentScore {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  subjectId      String   @map("subject_id")
+  academicYear   String   @map("academic_year") @db.VarChar(30)
+  term           String   @db.VarChar(20)
+  ca1            Float?
+  ca1Max         Float    @default(10) @map("ca1_max")
+  ca2            Float?
+  ca2Max         Float    @default(10) @map("ca2_max")
+  ca3            Float?
+  ca3Max         Float    @default(10) @map("ca3_max")
+  exam           Float?
+  examMax        Float    @default(70) @map("exam_max")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject        Subject  @relation(fields: [subjectId, userId], references: [id, userId], onDelete: Cascade)
+
+  @@unique([subjectId, academicYear, term])
+  @@index([userId, academicYear, term])
+  @@map("assessment_scores")
+}
