@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a100d">
+  <meta name="description" content="Manage your Academic Tracker profile and account details.">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="ui-polish.css">
+  <link rel="stylesheet" href="profile.css">
+  <title>My profile · Academic Tracker</title>
+</head>
+<body class="profile-page">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="index.html"><span class="brand-mark">A</span><span>Academic<span class="muted"> Tracker</span></span></a>
+      <nav class="side-nav" aria-label="Main navigation">
+        <a class="nav-link" href="dashboard.html">▦ <span>Dashboard</span></a>
+        <a class="nav-link" href="dashboard.html#scores">▤ <span>Score entry</span></a>
+        <a class="nav-link" href="dashboard.html#subjects">◈ <span>Subjects</span></a>
+        <a class="nav-link" href="dashboard.html#reports">▥ <span>Reports</span></a>
+        <a class="nav-link" href="dashboard.html#settings">⚙ <span>Settings</span></a>
+        <a class="nav-link active" href="profile.html">◉ <span>My profile</span></a>
+      </nav>
+      <div class="sidebar-note"><span class="status-dot"></span> Your account details are private to your signed-in account.</div>
+    </aside>
+    <main class="main profile-main">
+      <header class="topbar">
+        <div><p class="eyebrow">YOUR ACCOUNT</p><h1>My profile</h1></div>
+        <div class="top-actions"><a class="button secondary" href="dashboard.html">← Back to dashboard</a></div>
+      </header>
+      <section class="profile-hero card">
+        <div class="profile-avatar" id="profile-avatar" aria-hidden="true">A</div>
+        <div class="profile-hero-copy"><p class="eyebrow">STUDENT PROFILE</p><h2 id="profile-heading">Your study identity</h2><p id="profile-handle" class="profile-handle">@student</p><p id="profile-email" class="profile-email">Loading account details…</p></div>
+        <span class="profile-status"><span class="status-dot"></span> Account active</span>
+      </section>
+      <div class="profile-layout">
+        <section class="card">
+          <div class="section-heading profile-section-heading"><div><h2>Personal details</h2><p>Keep the name shown around your study space up to date.</p></div></div>
+          <form id="profile-form" class="profile-form">
+            <label class="field" for="profile-name">Display name<input id="profile-name" name="name" autocomplete="name" maxlength="80" minlength="2" required placeholder="Your full name"></label>
+            <label class="field" for="profile-email-input">Email address<input id="profile-email-input" name="email" type="email" readonly aria-describedby="email-note"></label>
+            <p id="email-note" class="notice">Email is your account identifier and cannot be changed from this page.</p>
+            <div id="profile-error" class="profile-message error-text" role="alert"></div>
+            <div id="profile-success" class="profile-message" role="status"></div>
+            <div class="button-row"><button class="button primary" id="save-profile" type="submit">Save changes</button><a class="button secondary" href="dashboard.html">Cancel</a></div>
+          </form>
+        </section>
+        <aside class="card profile-info-card">
+          <p class="eyebrow">YOUR STUDY SPACE</p><h2>Built around your progress.</h2>
+          <p class="notice">Your dashboard helps you organise subjects, record assessment marks, compare them with your targets, and review your progress.</p>
+          <div class="profile-info-row"><span>Account type</span><strong id="profile-role">Student</strong></div>
+          <div class="profile-info-row"><span>Member since</span><strong id="profile-created">—</strong></div>
+          <div class="profile-info-row"><span>Username handle</span><strong id="profile-handle-small">@student</strong></div>
+          <p class="notice profile-footnote">Your handle is generated from the email address on your account. Your academic scores currently remain stored in this browser and are not automatically synced to your account.</p>
+          <button class="button secondary profile-signout" id="profile-signout" type="button">Sign out</button>
+        </aside>
+      </div>
+      <footer><span>Small, consistent progress adds up.</span><span>Academic Tracker</span></footer>
+    </main>
+  </div>
+  <script src="profile.js"></script>
+</body>
+</html>

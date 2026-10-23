@@ -178,3 +178,21 @@ footer {
   table { min-width: 0 !important; }
   th, td { padding: 7px !important; color: #111 !important; }
 }
+
+
+/* Profile shortcut and account identity */
+.profile-shortcut{display:flex;align-items:center;gap:10px;min-width:0;padding:5px 10px 5px 5px;border:1px solid var(--line);border-radius:14px;background:rgba(20,29,23,.9);color:var(--text);text-decoration:none;transition:border-color .18s ease,background .18s ease,transform .18s ease}
+.profile-shortcut:hover{border-color:#4b7659;background:#1a2a20;transform:translateY(-1px)}
+.profile-shortcut-avatar{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#a8f0c2,#54ce88);color:#102117;font:800 12px Manrope,sans-serif}
+.profile-shortcut-copy{display:grid;gap:3px;min-width:0}
+.profile-shortcut-copy strong{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.profile-shortcut-copy small{color:var(--muted);font-size:10px}
+.profile-shortcut-arrow{color:var(--green);font-size:14px;margin-left:3px}
+@media(max-width:1000px){.profile-shortcut-copy{display:none}.profile-shortcut{padding:4px}}
+@media(max-width:680px){.profile-shortcut{display:none}.top-actions{gap:7px}.top-actions .button{padding:9px 10px;font-size:11px}}
+
+.mobile-nav{grid-template-columns:repeat(6,minmax(0,1fr))}
+.mobile-nav .mobile-profile-link{position:relative;display:grid;justify-items:center;align-content:center;gap:4px;min-width:0;min-height:47px;padding:5px 0;border-radius:12px;color:#819188;font-size:10px;font-weight:600;text-decoration:none}
+.mobile-nav .mobile-profile-link span{font-size:18px;line-height:1.1}
+.mobile-nav .mobile-profile-link:hover,.mobile-nav .mobile-profile-link:focus-visible{color:var(--green);background:rgba(91,169,112,.13)}
+@media(max-width:380px){.mobile-nav .mobile-profile-link{font-size:9px}}
