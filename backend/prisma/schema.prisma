@@ -8,16 +8,19 @@ datasource db {
 }
 
 model User {
-  id                    String             @id @default(cuid())
-  name                  String             @db.VarChar(80)
-  email                 String             @unique @db.VarChar(254)
-  passwordHash          String             @map("password_hash")
-  currentAcademicYear   String             @default("2026–2027") @map("current_academic_year") @db.VarChar(30)
-  currentTerm           String             @default("Term 1") @map("current_term") @db.VarChar(20)
-  createdAt             DateTime           @default(now()) @map("created_at")
-  updatedAt             DateTime           @updatedAt @map("updated_at")
+  id                    String                @id @default(cuid())
+  name                  String                @db.VarChar(80)
+  email                 String                @unique @db.VarChar(254)
+  passwordHash          String                @map("password_hash")
+  role                  String                @default("USER") @db.VarChar(20)
+  currentAcademicYear   String                @default("2026–2027") @map("current_academic_year") @db.VarChar(30)
+  currentTerm           String                @default("Term 1") @map("current_term") @db.VarChar(20)
+  createdAt             DateTime              @default(now()) @map("created_at")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
   subjects              Subject[]
   assessmentScores      AssessmentScore[]
+  supportConversation   SupportConversation?
+  supportMessages       SupportMessage[]      @relation("SupportMessageSender")
 
   @@map("users")
 }
@@ -33,8 +36,6 @@ model Subject {
   user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   assessmentScores  AssessmentScore[]
 
-  // Enables a composite foreign key that prevents scores from being attached
-  // to a subject owned by a different user.
   @@unique([id, userId])
   @@unique([userId, normalizedName])
   @@index([userId, createdAt])
@@ -63,4 +64,32 @@ model AssessmentScore {
   @@unique([subjectId, academicYear, term])
   @@index([userId, academicYear, term])
   @@map("assessment_scores")
+}
+
+model SupportConversation {
+  id        String           @id @default(cuid())
+  userId    String           @unique @map("user_id")
+  status    String           @default("OPEN") @db.VarChar(20)
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  SupportMessage[]
+
+  @@index([status, updatedAt])
+  @@map("support_conversations")
+}
+
+model SupportMessage {
+  id             String             @id @default(cuid())
+  conversationId String             @map("conversation_id")
+  senderId       String             @map("sender_id")
+  body           String             @db.VarChar(4000)
+  readAt         DateTime?          @map("read_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  conversation   SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User               @relation("SupportMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@index([senderId, readAt])
+  @@map("support_messages")
 }
