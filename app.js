@@ -3,7 +3,7 @@
   const DB_NAME = "academic-tracker-db";
   const STORE = "state";
   const KEY = "main";
-  const defaults = () => ({version:1, academicYear:"2026–2027", term:"Term 1", subjects:[], scores:{}, targets:{}, updatedAt:new Date().toISOString()});
+  const defaults = () => { const now = new Date(); const start = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1; return {version:1, academicYear:start + "–" + (start + 1), term:"Term 1", subjects:[], scores:{}, targets:{}, updatedAt:new Date().toISOString()}; };
   let state = defaults();
   let view = "dashboard";
   const $ = s => document.querySelector(s);
