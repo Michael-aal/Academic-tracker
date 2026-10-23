@@ -16,3 +16,14 @@
 .value-icon .fa-solid{font-size:17px}
 .step-symbol .fa-solid{font-size:15px}
 @media(max-width:760px){.feature-icon{min-height:54px}.feature-icon>span{font-size:8px}}
+
+.preview-chart-placeholder{position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:13px;height:116px;margin-top:8px;padding:5px 0 0}
+.preview-chart-placeholder>span{height:1px;width:100%;background:#24382b}
+.preview-chart-placeholder>div{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#8fa696;font-size:9px}
+.preview-chart-placeholder>div .fa-solid{font-size:20px;color:var(--mint)}
+.score-art-empty{display:grid;gap:8px}
+.score-art-empty>span{display:flex;align-items:center;gap:8px;color:#8fa696;font-size:9px}
+.score-art-empty>span .fa-solid{color:var(--purple)}
+.score-art-empty>span b{margin-left:auto;color:#c9d8ce;font-size:9px;font-weight:600}
+.report-art-empty{display:flex;align-items:center;gap:10px;min-height:70px;color:#9db0a2;font-size:10px;line-height:1.5}
+.report-art-empty>.fa-solid{font-size:22px;color:var(--orange);flex:0 0 auto}
