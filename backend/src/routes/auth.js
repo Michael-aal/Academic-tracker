@@ -121,8 +121,10 @@ router.post("/admin/bootstrap", requireAuth, async (req, res, next) => {
     if (!configuredEmail || expectedSecret.length < 32) {
       return res.status(503).json({ error: "Administrator bootstrap is not configured on the server." });
     }
-    if (suppliedSecret.length !== expectedSecret.length ||
-        !require("crypto").timingSafeEqual(Buffer.from(suppliedSecret), Buffer.from(expectedSecret))) {
+    const suppliedBytes = Buffer.from(suppliedSecret);
+    const expectedBytes = Buffer.from(expectedSecret);
+    if (suppliedBytes.length !== expectedBytes.length ||
+        !require("crypto").timingSafeEqual(suppliedBytes, expectedBytes)) {
       return res.status(403).json({ error: "Administrator setup secret is invalid." });
     }
     const account = await prisma.user.findUnique({ where: { id: req.userId } });
