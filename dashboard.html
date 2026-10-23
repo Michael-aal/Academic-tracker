@@ -4,7 +4,7 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0a100d"><meta name="description" content="Your personal academic accountability tracker.">
   <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="ui-polish.css">
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="ui-polish.css"><link rel="stylesheet" href="dashboard-menus.css">
   <title>Academic Tracker · Dashboard</title>
 </head>
 <body>
@@ -21,8 +21,33 @@
       <div class="sidebar-note"><span class="status-dot"></span> Your academic records are stored on this device.</div>
     </aside>
     <main class="main">
-      <header class="topbar"><div><p class="eyebrow">YOUR PERSONAL STUDY SPACE</p><h1 id="page-title">Dashboard</h1></div><div class="top-actions"><span class="local-pill"><span class="status-dot"></span> Offline-ready</span><button class="icon-button" id="quick-add" aria-label="Add subject" title="Add subject">＋</button><a class="button secondary" id="support-link" href="support.html">Messages</a><a class="profile-shortcut" id="profile-shortcut" href="profile.html" aria-label="Open your profile"><span class="profile-shortcut-avatar" id="profile-shortcut-avatar">A</span><span class="profile-shortcut-copy"><strong id="profile-shortcut-name">My profile</strong><small id="profile-shortcut-handle">@student</small></span><span class="profile-shortcut-arrow">↗</span></a><button class="button secondary" id="logout-button" type="button">Sign out</button></div></header>
-      <div id="app" aria-live="polite"></div>
+      <header class="topbar compact-topbar">
+        <div class="topbar-main">
+          <button class="menu-trigger" id="navigation-menu-trigger" type="button" aria-label="Open main menu" aria-expanded="false" aria-controls="navigation-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+          <div class="page-heading"><p class="eyebrow">YOUR PERSONAL STUDY SPACE</p><h1 id="page-title">Dashboard</h1></div>
+        </div>
+        <div class="top-actions compact-actions">
+          <button class="menu-trigger account-menu-trigger" id="account-menu-trigger" type="button" aria-label="Open account menu" aria-expanded="false" aria-controls="account-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.7-3.3 3.2-5 7-5s6.3 1.7 7 5"/></svg></button>
+        </div>
+        <div class="dropdown-menu navigation-menu" id="navigation-menu" hidden>
+          <p class="menu-caption">WORKSPACE</p>
+          <button class="dropdown-item active" data-view="dashboard"><span class="dropdown-symbol">▦</span>Dashboard</button>
+          <button class="dropdown-item" data-view="scores"><span class="dropdown-symbol">▤</span>Score entry</button>
+          <button class="dropdown-item" data-view="subjects"><span class="dropdown-symbol">◈</span>Subjects</button>
+          <button class="dropdown-item" data-view="reports"><span class="dropdown-symbol">▥</span>Reports</button>
+          <button class="dropdown-item" data-view="settings"><span class="dropdown-symbol">⚙</span>Backup &amp; settings</button>
+        </div>
+        <div class="dropdown-menu account-menu" id="account-menu" hidden>
+          <div class="account-menu-heading"><span class="profile-shortcut-avatar" id="menu-profile-avatar">A</span><span><strong id="menu-profile-name">My account</strong><small>Academic Tracker</small></span></div>
+          <div class="menu-separator"></div>
+          <div class="menu-status"><span class="status-dot"></span> Offline-ready</div>
+          <button class="dropdown-item" id="quick-add-menu"><span class="dropdown-symbol">＋</span>Add a subject</button>
+          <a class="dropdown-item" id="support-link" href="support.html"><span class="dropdown-symbol">✉</span>Messages</a>
+          <a class="dropdown-item" id="profile-shortcut" href="profile.html"><span class="profile-shortcut-avatar" id="profile-shortcut-avatar">A</span><span class="profile-shortcut-copy"><strong id="profile-shortcut-name">My profile</strong><small id="profile-shortcut-handle">@student</small></span></a>
+          <button class="dropdown-item signout-item" id="logout-button" type="button"><span class="dropdown-symbol">↪</span>Sign out</button>
+        </div>
+      </header>
+      <button class="quick-add-proxy" id="quick-add" type="button" aria-hidden="true" tabindex="-1" hidden>＋</button><div id="app" aria-live="polite"></div>
       <footer><span>Small, consistent progress adds up.</span><span id="year-label"></span></footer>
     </main>
   </div>
@@ -35,5 +60,5 @@
     <label>Target total (out of 100)<input id="subject-target" type="number" min="0" max="100" value="75" required inputmode="numeric"></label>
     <div class="dialog-actions"><button class="button secondary" type="button" id="cancel-subject">Cancel</button><button class="button primary" id="save-subject" value="default">Add subject</button></div>
   </form></dialog>
-  <input id="import-file" type="file" accept="application/json,.json" hidden><script src="app.js"></script><script src="dashboard-auth.js"></script><script src="profile-widget.js"></script>
+  <input id="import-file" type="file" accept="application/json,.json" hidden><script src="app.js"></script><script src="dashboard-auth.js"></script><script src="profile-widget.js"></script><script src="dashboard-menus.js"></script>
 </body></html>
