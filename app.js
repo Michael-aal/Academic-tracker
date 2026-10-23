@@ -117,6 +117,8 @@
     finally { $("#import-file").value=""; }
   }
   $("#subject-form").addEventListener("submit",e=>{e.preventDefault();addSubject();});
+  $("#close-subject-dialog").addEventListener("click",()=>$("#subject-dialog").close());
+  $("#cancel-subject").addEventListener("click",()=>$("#subject-dialog").close());
   $("#quick-add").addEventListener("click",openSubjectDialog);
   document.addEventListener("click",async e=>{
     const nav=e.target.closest("[data-view]"); if(nav){e.preventDefault();setView(nav.dataset.view);return;}
