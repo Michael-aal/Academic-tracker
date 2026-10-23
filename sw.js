@@ -1,5 +1,11 @@
-const CACHE_NAME = "academic-tracker-v3";
-const APP_SHELL = ["./", "./index.html", "./styles.css", "./ui-polish.css", "./app.js", "./manifest.webmanifest", "./assets/icon.svg"];
+const CACHE_NAME = "academic-tracker-v4";
+const APP_SHELL = [
+  "./", "./index.html", "./landing.css", "./landing.js",
+  "./login.html", "./register.html", "./auth.css", "./auth.js",
+  "./dashboard.html", "./dashboard-auth.js",
+  "./styles.css", "./ui-polish.css", "./app.js",
+  "./manifest.webmanifest", "./assets/icon.svg"
+];
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -19,10 +25,8 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
-
   const requestUrl = new URL(event.request.url);
   if (requestUrl.origin !== self.location.origin) return;
-
   event.respondWith(
     fetch(event.request, { cache: "no-cache" })
       .then(response => {
