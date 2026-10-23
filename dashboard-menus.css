@@ -34,3 +34,68 @@
 @media(max-width:380px){.compact-topbar{gap:8px;padding:10px}.topbar-main{gap:8px}.page-heading .eyebrow{max-width:150px}.menu-trigger{width:36px;height:36px;flex-basis:36px}}
 @media(prefers-reduced-motion:reduce){.dropdown-menu{animation:none}.menu-trigger{transition:none}}
 @media print{.compact-topbar{display:none!important}}
+
+
+/* Image-inspired dashboard refresh: mobile-first charcoal + emerald */
+.welcome-card{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 16px;padding:22px;border:1px solid #1b6040;border-radius:22px;background:radial-gradient(circle at 92% 25%,rgba(18,153,91,.22),transparent 34%),linear-gradient(125deg,#06251a,#071711 68%,#073422);overflow:hidden}
+.welcome-kicker{margin:0 0 9px;color:#70e8a4;font-size:10px;font-weight:800;letter-spacing:1.5px}
+.welcome-card h2{font-size:clamp(22px,3vw,29px);margin:0 0 8px;letter-spacing:-.7px}
+.welcome-card p:not(.welcome-kicker){margin:0;color:#b8c9bf;font-size:13px;line-height:1.6}
+.term-chip{display:inline-flex;margin-top:14px;padding:6px 10px;border-radius:999px;background:#0d5136;color:#a3f4c2;font-size:11px;font-weight:700}
+.welcome-symbol{display:grid;place-items:center;flex:0 0 54px;width:54px;height:54px;border:1px solid #176a43;border-radius:50%;background:#063d29;color:#5ff0a0;font-size:29px}
+.mobile-dashboard-stats{gap:12px;margin-bottom:16px}
+.dashboard-stat{min-height:142px;padding:17px;display:grid;grid-template-columns:42px minmax(0,1fr);align-content:start;column-gap:11px;row-gap:5px;background:linear-gradient(145deg,#101b19,#0b1414);border-color:#1b2a2a}
+.dashboard-stat .stat-icon{grid-row:span 3;display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:#063b2a;color:#4ce79a;font-size:22px}
+.dashboard-stat .stat-label{align-self:center;font-size:12px;letter-spacing:0;color:#aabbbd}
+.dashboard-stat .stat-value{margin:3px 0 0;font-size:26px;line-height:1.2}
+.dashboard-stat .stat-foot{grid-column:2;font-size:10px;line-height:1.4}
+.performance-card,.activity-card{margin-top:16px;padding:19px;background:linear-gradient(145deg,#101a19,#0b1414);border-color:#1b2a2a}
+.dashboard-section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
+.dashboard-section-title>div{display:flex;align-items:center;gap:11px;min-width:0}
+.dashboard-section-title h2{font-size:17px;margin:0 0 5px;letter-spacing:-.3px}
+.dashboard-section-title p{font-size:11px;color:#8fa39a;margin:0}
+.section-icon{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border-radius:50%;background:#063b2a;color:#45e894;font-size:18px}
+.text-action{border:0;background:transparent;color:#4ce79a;font-size:11px;font-weight:700;white-space:nowrap}
+.text-action span{font-size:16px;margin-left:3px}
+.performance-chart{display:grid;grid-template-columns:31px minmax(0,1fr);gap:8px;height:174px}
+.chart-axis{display:flex;flex-direction:column;justify-content:space-between;padding:0 0 22px;color:#8da19a;font-size:9px;text-align:right}
+.performance-bars{position:relative;display:flex;align-items:stretch;justify-content:space-around;gap:8px;min-width:0;padding:0 2px 22px}
+.chart-grid-lines{position:absolute;inset:0 0 22px;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
+.chart-grid-lines i{height:1px;background:#1e302c;width:100%}
+.performance-bar-item{position:relative;z-index:1;display:flex;flex:1;min-width:0;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px}
+.performance-bar-track{height:100%;width:min(100%,28px);display:flex;align-items:flex-end;overflow:hidden;border-bottom:1px solid #294238}
+.performance-bar-fill{width:100%;min-height:0;border-radius:5px 5px 0 0;background:linear-gradient(180deg,#2bd98b,#08784b);box-shadow:0 0 15px rgba(43,217,139,.08)}
+.performance-bar-item>span{position:absolute;top:calc(100% - 15px);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#c5d1cb;font-size:9px}
+.chart-note{margin:12px 0 0;color:#71857a;font-size:10px;line-height:1.5}
+.activity-card .dashboard-section-title{margin-bottom:12px}
+.dashboard-action-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #1d2a27;min-width:0}
+.dashboard-action-row:last-of-type{border-bottom:0}
+.activity-icon{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:50%;font-size:18px}
+.activity-icon.green{background:#06432d;color:#48e99a}.activity-icon.blue{background:#102f52;color:#8bbcff}.activity-icon.purple{background:#352044;color:#d9a4ff}
+.dashboard-action-row>div{flex:1;min-width:0;display:grid;gap:5px}
+.dashboard-action-row strong{font-size:12px;font-weight:600}
+.dashboard-action-row small{font-size:10px;color:#91a49a;line-height:1.4}
+.row-arrow{border:0;background:transparent;color:#8fa59a;font-size:25px;padding:4px 7px}
+.dashboard-quick-actions{margin-top:16px}
+@media(max-width:680px){
+ .welcome-card{padding:19px 17px;border-radius:19px;margin-bottom:12px}
+ .welcome-card h2{font-size:22px}
+ .welcome-card p:not(.welcome-kicker){font-size:12px;max-width:240px}
+ .welcome-symbol{flex-basis:44px;width:44px;height:44px;font-size:24px}
+ .mobile-dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .dashboard-stat{min-height:132px;padding:13px 11px;grid-template-columns:36px minmax(0,1fr);column-gap:8px}
+ .dashboard-stat .stat-icon{width:36px;height:36px;font-size:19px}
+ .dashboard-stat .stat-label{font-size:10px}
+ .dashboard-stat .stat-value{font-size:24px}
+ .dashboard-stat .stat-foot{font-size:9px}
+ .performance-card,.activity-card{padding:15px;border-radius:18px}
+ .dashboard-section-title{gap:6px;margin-bottom:18px}
+ .dashboard-section-title h2{font-size:15px}
+ .dashboard-section-title p{font-size:10px}
+ .text-action{font-size:10px}
+ .performance-chart{height:160px;grid-template-columns:27px minmax(0,1fr);gap:6px}
+ .performance-bars{gap:5px}
+ .performance-bar-track{width:min(100%,24px)}
+ .performance-bar-item>span{font-size:8px}
+}
+@media(max-width:360px){.dashboard-stat{grid-template-columns:1fr;gap:6px}.dashboard-stat .stat-icon{grid-row:auto;width:32px;height:32px}.dashboard-stat .stat-foot{grid-column:1}.welcome-symbol{display:none}}

@@ -3,7 +3,7 @@
   const DB_NAME = "academic-tracker-db";
   const STORE = "state";
   const KEY = "main";
-  const defaults = () => ({version:1, academicYear:"2026–2027", term:"Term 1", subjects:[], scores:{}, targets:{}, updatedAt:new Date().toISOString()});
+  const defaults = () => { const now = new Date(); const start = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1; return {version:1, academicYear:start + "–" + (start + 1), term:"Term 1", subjects:[], scores:{}, targets:{}, updatedAt:new Date().toISOString()}; };
   let state = defaults();
   let view = "dashboard";
   const $ = s => document.querySelector(s);
@@ -63,12 +63,32 @@
     return state.subjects.map(s=>{const n=getEntered(s.id),p=pct(s.id);return '<div class="subject-row"><div class="subject-icon">'+esc(s.name.trim().slice(0,1).toUpperCase())+'</div><div class="subject-info"><strong>'+esc(s.name)+'</strong><small>'+n+'/4 assessments entered · Target '+targetFor(s.id)+'%</small><div class="progress-track" style="margin-top:9px"><div class="progress-fill" style="width:'+p+'%"></div></div></div><div class="subject-score">'+(n?p+'%':'—')+'<small>'+(n?getTotal(s.id)+'/'+getMaxTotal(s.id):"No scores")+'</small></div></div>';}).join("");
   }
   function dashboard() {
-    const total=state.subjects.length, withScores=state.subjects.filter(s=>getEntered(s.id)>0).length, completeSubjects=state.subjects.filter(s=>isComplete(s.id)).length;
-    const pending=state.subjects.reduce((a,s)=>a+4-getEntered(s.id),0);
-    return '<div class="grid stats-grid">'+stat("SUBJECTS",total,"In your current tracker")+stat("CURRENT AVERAGE",withScores?average()+"%":"—",withScores?"Across subjects with scores":"Enter scores to calculate")+stat("ASSESSMENTS ENTERED",state.subjects.reduce((a,s)=>a+getEntered(s.id),0), "of "+(total*4)+" possible entries")+stat("MISSING SCORES",pending,pending?"Missing scores are not treated as zero":"All subject components entered")+'</div>'+
-    '<div class="grid content-grid">'+
-    '<section>'+heading("Your subjects","Progress for "+esc(state.term)+" · "+esc(state.academicYear),'<button class="button primary" data-action="add-subject">＋ Add subject</button>')+'<article class="card">'+subjectRows()+'</article></section>'+
-    '<section>'+heading("Study snapshot","A quick view of what needs attention")+'<article class="card"><h3>Assessment coverage</h3><div class="report-total">'+(total?Math.round((total*4-pending)/(total*4)*100):0)+'<small>%</small></div><p class="notice">Coverage counts scores you have entered. A missing mark stays missing; it is never silently counted as zero.</p><div class="progress-track"><div class="progress-fill" style="width:'+(total?((total*4-pending)/(total*4)*100):0)+'%"></div></div><div class="progress-row"><span>Complete subjects</span><strong>'+completeSubjects+' of '+total+'</strong></div><div class="progress-row"><span>Term</span><strong>'+esc(state.term)+'</strong></div><div class="progress-row"><span>Academic year</span><strong>'+esc(state.academicYear)+'</strong></div><div class="callout" style="margin-top:18px">'+(pending?'Next step: enter missing assessment marks in Score entry. Check your teacher’s returned scripts or class records before filling any mark.':'Nice work — every subject has all four component scores entered.')+'</div><div class="button-row" style="margin-top:16px"><button class="button primary" data-view="scores">Enter scores →</button><button class="button secondary" data-view="reports">View report</button></div></article></section></div>';
+    const total=state.subjects.length;
+    const withScores=state.subjects.filter(s=>getEntered(s.id)>0).length;
+    const entered=state.subjects.reduce((a,s)=>a+getEntered(s.id),0);
+    const possible=total*4;
+    const pending=Math.max(0,possible-entered);
+    const avg=withScores?average():null;
+    const bars=state.subjects.slice(0,8).map(s=>{
+      const has=getEntered(s.id)>0, value=has?pct(s.id):0;
+      return '<div class="performance-bar-item"><div class="performance-bar-track"><div class="performance-bar-fill" style="height:'+value+'%" title="'+value+'%"></div></div><span>'+esc(s.name.length>7?s.name.slice(0,7):s.name)+'</span></div>';
+    }).join("");
+    const best=state.subjects.filter(s=>getEntered(s.id)>0).sort((a,b)=>pct(b.id)-pct(a.id))[0];
+    return '<section class="welcome-card"><div><p class="welcome-kicker">YOUR STUDY SPACE</p><h2>Welcome back 👋</h2><p>Small steps today. Better results tomorrow.</p><span class="term-chip">'+esc(state.term)+' · '+esc(state.academicYear)+'</span></div><div class="welcome-symbol" aria-hidden="true">↗</div></section>'+
+    '<div class="grid stats-grid mobile-dashboard-stats">'+
+    '<article class="card dashboard-stat"><span class="stat-icon">▤</span><div class="stat-label">Subjects</div><div class="stat-value">'+total+'</div><div class="stat-foot">In your tracker</div></article>'+
+    '<article class="card dashboard-stat"><span class="stat-icon">✦</span><div class="stat-label">Average score</div><div class="stat-value">'+(avg===null?'—':avg+'%')+'</div><div class="stat-foot">'+(avg===null?'Add scores to calculate':'Across scored subjects')+'</div></article>'+
+    '<article class="card dashboard-stat"><span class="stat-icon">✓</span><div class="stat-label">Scores entered</div><div class="stat-value">'+entered+'</div><div class="stat-foot">Of '+possible+' possible</div></article>'+
+    '<article class="card dashboard-stat"><span class="stat-icon">◷</span><div class="stat-label">Missing scores</div><div class="stat-value">'+pending+'</div><div class="stat-foot">'+(pending?'Still to record':'All scores entered')+'</div></article>'+
+    '</div>'+
+    '<section class="card performance-card"><div class="dashboard-section-title"><div><span class="section-icon">▥</span><div><h2>Performance overview</h2><p>Current subject scores</p></div></div><button class="text-action" data-view="reports">View reports <span>→</span></button></div>'+
+    (bars?'<div class="performance-chart" role="img" aria-label="Current score percentage for each subject"><div class="chart-axis"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div><div class="performance-bars"><div class="chart-grid-lines"><i></i><i></i><i></i><i></i><i></i></div>'+bars+'</div></div><p class="chart-note">Subjects without entered marks appear at 0% until scores are recorded. This chart uses your saved marks.</p>':'<div class="empty"><strong>Your chart will appear here</strong>Add subjects and enter scores to see your academic performance.</div>')+
+    '</section>'+
+    '<section class="card activity-card"><div class="dashboard-section-title"><div><span class="section-icon">◷</span><div><h2>Continue your progress</h2><p>Useful next steps for this term</p></div></div></div>'+
+    '<div class="dashboard-action-row"><span class="activity-icon green">＋</span><div><strong>Add or manage subjects</strong><small>'+(total?total+' subjects in your tracker':'Start by adding your first subject')+'</small></div><button class="row-arrow" data-view="subjects" aria-label="Open subjects">›</button></div>'+
+    '<div class="dashboard-action-row"><span class="activity-icon blue">▤</span><div><strong>Enter assessment scores</strong><small>'+pending+' score '+(pending===1?'entry':'entries')+' remaining in your tracker</small></div><button class="row-arrow" data-view="scores" aria-label="Open score entry">›</button></div>'+
+    '<div class="dashboard-action-row"><span class="activity-icon purple">▥</span><div><strong>Review your report</strong><small>'+(best?'Your strongest scored subject: '+esc(best.name):'Your report updates when you enter scores')+'</small></div><button class="row-arrow" data-view="reports" aria-label="Open reports">›</button></div>'+
+    '<div class="button-row dashboard-quick-actions"><button class="button primary" data-action="add-subject">＋ Add subject</button><button class="button secondary" data-view="scores">Enter scores</button></div></section>';
   }
   function scoresView() {
     if(!state.subjects.length) return '<article class="card">'+subjectRows()+'</article>';
