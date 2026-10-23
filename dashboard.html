@@ -21,7 +21,7 @@
       <div class="sidebar-note"><span class="status-dot"></span> Your academic records are stored on this device.</div>
     </aside>
     <main class="main">
-      <header class="topbar"><div><p class="eyebrow">YOUR PERSONAL STUDY SPACE</p><h1 id="page-title">Dashboard</h1></div><div class="top-actions"><span class="local-pill"><span class="status-dot"></span> Offline-ready</span><button class="icon-button" id="quick-add" aria-label="Add subject" title="Add subject">＋</button><a class="button secondary" id="support-link" href="support.html">Messages</a><button class="button secondary" id="logout-button" type="button">Sign out</button></div></header>
+      <header class="topbar"><div><p class="eyebrow">YOUR PERSONAL STUDY SPACE</p><h1 id="page-title">Dashboard</h1></div><div class="top-actions"><span class="local-pill"><span class="status-dot"></span> Offline-ready</span><button class="icon-button" id="quick-add" aria-label="Add subject" title="Add subject">＋</button><a class="button secondary" id="support-link" href="support.html">Messages</a><a class="profile-shortcut" id="profile-shortcut" href="profile.html" aria-label="Open your profile"><span class="profile-shortcut-avatar" id="profile-shortcut-avatar">A</span><span class="profile-shortcut-copy"><strong id="profile-shortcut-name">My profile</strong><small id="profile-shortcut-handle">@student</small></span><span class="profile-shortcut-arrow">↗</span></a><button class="button secondary" id="logout-button" type="button">Sign out</button></div></header>
       <div id="app" aria-live="polite"></div>
       <footer><span>Small, consistent progress adds up.</span><span id="year-label"></span></footer>
     </main>
@@ -35,5 +35,5 @@
     <label>Target total (out of 100)<input id="subject-target" type="number" min="0" max="100" value="75" required inputmode="numeric"></label>
     <div class="dialog-actions"><button class="button secondary" type="button" id="cancel-subject">Cancel</button><button class="button primary" id="save-subject" value="default">Add subject</button></div>
   </form></dialog>
-  <input id="import-file" type="file" accept="application/json,.json" hidden><script src="app.js"></script><script src="dashboard-auth.js"></script>
+  <input id="import-file" type="file" accept="application/json,.json" hidden><script src="app.js"></script><script src="dashboard-auth.js"></script><script src="profile-widget.js"></script>
 </body></html>
