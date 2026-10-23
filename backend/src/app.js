@@ -7,18 +7,19 @@ const { prisma } = require("./prisma");
 const authRoutes = require("./routes/auth");
 const subjectRoutes = require("./routes/subjects");
 const scoreRoutes = require("./routes/scores");
+const supportRoutes = require("./routes/support");
+const adminRoutes = require("./routes/admin");
 
 const app = express();
 app.disable("x-powered-by");
 app.use(helmet());
 app.use(cors({
   origin(origin, callback) {
-    // Allow non-browser tools (curl/health checks) with no Origin header.
     if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
     return callback(new Error("This website is not allowed to access the Academic Tracker API."));
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Bootstrap-Secret"]
 }));
 app.use(express.json({ limit: "30kb" }));
 
@@ -44,9 +45,18 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: "Too many authentication attempts. Please try again in a few minutes." }
 });
+const messageLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 60,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many messages. Please wait before sending another." }
+});
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/subjects", subjectRoutes);
 app.use("/api/scores", scoreRoutes);
+app.use("/api/support", messageLimiter, supportRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use((_req, res) => res.status(404).json({ error: "Route not found." }));
 
