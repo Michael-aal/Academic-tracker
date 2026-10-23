@@ -53,7 +53,7 @@ Create a **Web Service** from this GitHub repository:
 
 - **Root Directory:** `backend`
 - **Runtime:** Node
-- **Build Command:** `npm ci && npx prisma generate && npx prisma migrate deploy`
+- **Build Command:** `npm install && npx prisma generate && npx prisma migrate deploy`
 - **Start Command:** `npm start`
 - **Health Check Path:** `/api/health`
 
@@ -64,7 +64,7 @@ Add these environment variables in Render (never commit real values):
 - `FRONTEND_ORIGIN` — comma-separated exact allowed origins, e.g. your production Vercel URL and any preview URL you intentionally allow.
 - `NODE_ENV` — `production`.
 
-If Neon gives separate pooled and direct URLs, this project currently uses `DATABASE_URL` for both runtime and migrations. For a reliable production setup, configure Prisma's migration connection separately (for example `DIRECT_URL`) before using a pooled runtime URL, then update the Prisma datasource and deployment setup together.
+For the simplest first deployment, use Neon's direct PostgreSQL connection string as `DATABASE_URL` so both Prisma Client and the migration command can connect. Keep the connection string private. We can add a separate direct migration URL later if you decide to use Neon's pooled URL for runtime traffic.
 
 ## Important current limitation
 
