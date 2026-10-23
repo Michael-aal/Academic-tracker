@@ -11,6 +11,13 @@ const configuredOrigins = (process.env.FRONTEND_ORIGIN || "http://localhost:5173
 
 const allowedOrigins = [...new Set([...productionOrigins, ...configuredOrigins])];
 
+// Allow preview deployments for this Vercel project only. Do not use a broad
+// *.vercel.app rule: that would let unrelated sites call the API from browsers.
+const previewOriginPattern = /^https:\/\/academic-tracker-git-[a-z0-9-]+-michael-aals-projects\.vercel\.app$/;
+function isAllowedOrigin(origin) {
+  return allowedOrigins.includes(origin) || previewOriginPattern.test(origin);
+}
+
 function validateEnvironment() {
   const missing = ["DATABASE_URL", "JWT_SECRET"].filter((key) => !process.env[key]);
   if (missing.length) {
@@ -21,4 +28,4 @@ function validateEnvironment() {
   }
 }
 
-module.exports = { allowedOrigins, validateEnvironment };
+module.exports = { allowedOrigins, isAllowedOrigin, validateEnvironment };

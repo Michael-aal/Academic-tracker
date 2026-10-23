@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-const { allowedOrigins } = require("./config");
+const { isAllowedOrigin } = require("./config");
 const { prisma } = require("./prisma");
 const authRoutes = require("./routes/auth");
 const subjectRoutes = require("./routes/subjects");
@@ -15,7 +15,7 @@ app.disable("x-powered-by");
 app.use(helmet());
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    if (!origin || isAllowedOrigin(origin)) return callback(null, true);
     return callback(new Error("This website is not allowed to access the Academic Tracker API."));
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
