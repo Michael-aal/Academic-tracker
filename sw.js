@@ -1,5 +1,5 @@
-const CACHE_NAME = "academic-tracker-v2";
-const APP_SHELL = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./assets/icon.svg"];
+const CACHE_NAME = "academic-tracker-v3";
+const APP_SHELL = ["./", "./index.html", "./styles.css", "./ui-polish.css", "./app.js", "./manifest.webmanifest", "./assets/icon.svg"];
 
 self.addEventListener("install", event => {
   event.waitUntil(
