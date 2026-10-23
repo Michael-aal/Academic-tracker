@@ -34,7 +34,7 @@
       localStorage.setItem('academic-tracker-token', data.token);
       localStorage.setItem('academic-tracker-user', JSON.stringify(data.user));
       showMessage(successBox, mode === 'register' ? 'Account created. Opening your study space…' : 'Welcome back. Opening your study space…');
-      window.location.replace('dashboard.html');
+      window.location.replace(mode === 'login' && data.user.isAdmin ? 'admin-support.html' : 'dashboard.html');
     } catch (error) {
       const message = error instanceof TypeError
         ? 'Could not reach the API. Check your connection and confirm the Render API allows this website in its CORS settings.'
