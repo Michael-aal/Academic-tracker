@@ -43,11 +43,11 @@
           <div class="menu-status"><span class="status-dot"></span> Offline-ready</div>
           <button class="dropdown-item" id="quick-add-menu"><span class="dropdown-symbol">＋</span>Add a subject</button>
           <a class="dropdown-item" id="support-link" href="support.html"><span class="dropdown-symbol">✉</span>Messages</a>
-          <a class="dropdown-item" id="profile-shortcut" href="profile.html"><span class="profile-shortcut-avatar" id="profile-shortcut-avatar">A</span><span>My profile</span></a>
+          <a class="dropdown-item" id="profile-shortcut" href="profile.html"><span class="profile-shortcut-avatar" id="profile-shortcut-avatar">A</span><span class="profile-shortcut-copy"><strong id="profile-shortcut-name">My profile</strong><small id="profile-shortcut-handle">@student</small></span></a>
           <button class="dropdown-item signout-item" id="logout-button" type="button"><span class="dropdown-symbol">↪</span>Sign out</button>
         </div>
       </header>
-      <div id="app" aria-live="polite"></div>
+      <button class="quick-add-proxy" id="quick-add" type="button" aria-hidden="true" tabindex="-1" hidden>＋</button><div id="app" aria-live="polite"></div>
       <footer><span>Small, consistent progress adds up.</span><span id="year-label"></span></footer>
     </main>
   </div>
