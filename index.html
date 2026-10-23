@@ -38,10 +38,10 @@
   </nav>
   <dialog id="subject-dialog">
     <form method="dialog" id="subject-form">
-      <div class="dialog-head"><div><p class="eyebrow">BUILD YOUR TRACKER</p><h2>Add a subject</h2></div><button class="icon-button" value="cancel" aria-label="Close">×</button></div>
+      <div class="dialog-head"><div><p class="eyebrow">BUILD YOUR TRACKER</p><h2>Add a subject</h2></div><button class="icon-button" type="button" id="close-subject-dialog" aria-label="Close">×</button></div>
       <label>Subject name<input id="subject-name" required maxlength="70" placeholder="e.g. Mathematics"></label>
       <label>Target total (out of 100)<input id="subject-target" type="number" min="0" max="100" value="75" required></label>
-      <div class="dialog-actions"><button class="button secondary" value="cancel">Cancel</button><button class="button primary" id="save-subject" value="default">Add subject</button></div>
+      <div class="dialog-actions"><button class="button secondary" type="button" id="cancel-subject">Cancel</button><button class="button primary" id="save-subject" value="default">Add subject</button></div>
     </form>
   </dialog>
   <input id="import-file" type="file" accept="application/json,.json" hidden>
