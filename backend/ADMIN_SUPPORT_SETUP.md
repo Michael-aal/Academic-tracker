@@ -18,7 +18,7 @@ Keep the existing start command (normally `npm start`). Confirm `DATABASE_URL` p
 2. In Render's Environment settings, set `ADMIN_EMAIL` to that account's exact email address (case-insensitive).
 3. Set `ADMIN_BOOTSTRAP_SECRET` to a new, random secret with at least 32 characters. Keep it private; do not put it in frontend files, source control, or chat messages.
 4. Redeploy the backend.
-5. Log in to the existing administrator account and use its JWT to call the one-time promotion endpoint:
+5. Open `https://academic-tracker-nu.vercel.app/admin-setup.html` (or your deployed frontend domain). Enter the existing account email/password and the `ADMIN_BOOTSTRAP_SECRET` value. The page signs in, calls the one-time promotion endpoint, and redirects to the admin inbox. The secret is entered only into the page and sent to the API over HTTPS. If you prefer manual setup, log in and use the JWT to call the endpoint below:
 
 ```sh
 curl -X POST "https://academic-tracker-0b2q.onrender.com/api/auth/admin/bootstrap" \

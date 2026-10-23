@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07100c">
+  <meta name="description" content="Securely configure the Academic Tracker administrator account.">
+  <link rel="stylesheet" href="auth.css">
+  <title>Admin setup · Academic Tracker</title>
+</head>
+<body data-mode="admin-setup">
+  <aside class="auth-side">
+    <a class="brand" href="index.html"><span class="brand-icon">A</span><span>Academic<span class="brand-muted"> Tracker</span></span></a>
+    <div class="side-message">
+      <span class="eyebrow">SECURE ACCOUNT SETUP</span>
+      <h1>Administrator<br><span class="gradient-text">access.</span></h1>
+      <p>This one-time setup can promote only the account whose email is configured on the API server. The secret is sent directly to the API and is never saved in this page.</p>
+    </div>
+    <div class="side-foot">Never share your password, session token, or setup secret.</div>
+  </aside>
+  <main class="auth-main">
+    <div class="auth-card">
+      <a class="mobile-brand" href="index.html"><span class="brand-icon">A</span><span>Academic<span class="brand-muted"> Tracker</span></span></a>
+      <a class="back-link" href="login.html">← Back to login</a>
+      <div class="eyebrow">ONE-TIME ADMIN PROMOTION</div>
+      <h2>Configure admin access.</h2>
+      <p class="auth-subtitle">First create the account through Register. Then enter the same credentials and the server-only setup secret configured in Render.</p>
+      <form class="auth-form" id="admin-setup-form" novalidate>
+        <label class="field">Administrator email
+          <input id="email" type="email" autocomplete="username" maxlength="254" required placeholder="admin@example.com">
+        </label>
+        <label class="field">Account password
+          <input id="password" type="password" autocomplete="current-password" minlength="10" required>
+        </label>
+        <label class="field">Admin setup secret
+          <input id="setup-secret" type="password" autocomplete="off" minlength="32" required>
+        </label>
+        <div id="form-error" class="form-error" role="alert"></div>
+        <div id="form-success" class="form-success" role="status"></div>
+        <button class="submit-button" id="submit-button" type="submit">Verify and enable admin access →</button>
+      </form>
+      <p class="privacy-note">The server verifies both your signed-in account and the configured email. Ordinary accounts cannot promote themselves.</p>
+    </div>
+  </main>
+  <script>
+  (() => {
+    const API_BASE = (window.AT_API_BASE || 'https://academic-tracker-0b2q.onrender.com').replace(/\/$/, '');
+    const form = document.getElementById('admin-setup-form');
+    const errorBox = document.getElementById('form-error');
+    const successBox = document.getElementById('form-success');
+    const button = document.getElementById('submit-button');
+    function message(box, value) {
+      errorBox.classList.remove('show'); successBox.classList.remove('show');
+      box.textContent = value; box.classList.add('show');
+    }
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      errorBox.classList.remove('show'); successBox.classList.remove('show');
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      const password = document.getElementById('password').value;
+      const secret = document.getElementById('setup-secret').value;
+      if (secret.length < 32) return message(errorBox, 'The setup secret must be at least 32 characters.');
+      button.disabled = true; button.textContent = 'Verifying account…';
+      try {
+        const loginResponse = await fetch(API_BASE + '/api/auth/login', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const loginData = await loginResponse.json().catch(() => ({}));
+        if (!loginResponse.ok || !loginData.token) throw new Error(loginData.error || 'Could not sign in with those credentials.');
+        const promoteResponse = await fetch(API_BASE + '/api/auth/admin/bootstrap', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + loginData.token,
+            'X-Admin-Bootstrap-Secret': secret
+          }
+        });
+        const promoteData = await promoteResponse.json().catch(() => ({}));
+        if (!promoteResponse.ok || !promoteData.ok) throw new Error(promoteData.error || 'Admin setup failed.');
+        localStorage.setItem('academic-tracker-token', loginData.token);
+        localStorage.setItem('academic-tracker-user', JSON.stringify(promoteData.user));
+        document.getElementById('password').value = '';
+        document.getElementById('setup-secret').value = '';
+        message(successBox, 'Administrator verified. Opening the private admin inbox…');
+        window.location.replace('admin-support.html');
+      } catch (error) {
+        const text = error instanceof TypeError
+          ? 'Could not reach the API. Check your connection and the Render CORS settings.'
+          : error.message;
+        message(errorBox, text);
+      } finally {
+        button.disabled = false; button.textContent = 'Verify and enable admin access →';
+      }
+    });
+  })();
+  </script>
+</body>
+</html>
