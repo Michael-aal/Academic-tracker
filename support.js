@@ -85,6 +85,7 @@
       const avatar = document.createElement("span"); avatar.className = "user-avatar"; avatar.textContent = escapeInitial(user.name);
       const info = document.createElement("span"); info.className = "user-info";
       const name = document.createElement("strong"); name.textContent = user.name;
+      if (user.unreadCount > 0) name.textContent += " · " + user.unreadCount + " new";
       const email = document.createElement("small"); email.textContent = user.email;
       const preview = document.createElement("span"); preview.className = "user-preview";
       preview.textContent = user.lastMessage?.body || (user.conversationId ? "Conversation started" : "No messages yet");
