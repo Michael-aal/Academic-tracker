@@ -9,6 +9,7 @@
   const STORAGE_KEY = "academic-tracker-memory-v1:" + owner;
   const INTERVALS = [0, 1, 3, 7, 14, 30, 60];
   let cards = loadCards();
+  let editingId = null;
   let queue = [];
   let current = null;
   let answerRevealed = false;
@@ -100,9 +101,18 @@
     if (!values.subject.trim() || !values.question.trim() || !values.answer.trim()) {
       $("form-notice").textContent = "Please add a subject, question, and answer."; return;
     }
-    addCard(values);
+    if (editingId) {
+      const existing = cards.find(card => card.id === editingId);
+      if (existing) { existing.subject = values.subject.trim(); existing.topic = values.topic.trim(); existing.question = values.question.trim(); existing.answer = values.answer.trim(); }
+      editingId = null;
+      $("save-card-button").textContent = "＋ Save memory card";
+      persist(); buildQueue(); renderLibrary();
+      $("form-notice").textContent = "Memory card updated on this device.";
+    } else {
+      addCard(values);
+      $("form-notice").textContent = "Memory card saved on this device. Try recalling it before revealing the answer.";
+    }
     $("card-form").reset();
-    $("form-notice").textContent = "Memory card saved on this device. Try recalling it before revealing the answer.";
     $("review-stage").scrollIntoView({ behavior: "smooth", block: "nearest" });
   });
   $("reveal-answer").addEventListener("click", () => {
@@ -142,10 +152,11 @@
     const deleteId = event.target.closest("[data-delete]")?.dataset.delete;
     if (editId) {
       const card = cards.find(c => c.id === editId); if (!card) return;
+      editingId = card.id;
       $("card-subject").value = card.subject || ""; $("card-topic").value = card.topic || "";
       $("card-question").value = card.question; $("card-answer").value = card.answer;
-      cards = cards.filter(c => c.id !== editId); persist(); buildQueue(); renderLibrary();
-      $("form-notice").textContent = "Editing this card. Save it again to keep your changes.";
+      $("save-card-button").textContent = "Save card changes";
+      $("form-notice").textContent = "Editing this card. Its review schedule will be preserved when you save.";
       $("add-card").scrollIntoView({ behavior: "smooth" }); $("card-question").focus();
     } else if (deleteId) {
       const card = cards.find(c => c.id === deleteId); if (!card) return;
