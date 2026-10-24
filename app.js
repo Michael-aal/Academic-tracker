@@ -160,7 +160,7 @@
       if(!item)return;if(item.type==="EXAM"){alert("Keep one final exam in the setup. You can change its name and maximum mark.");return;}
       if(!confirm("Remove "+item.name+" from this subject? Its saved marks for this assessment will also be removed."))return;
       state.assessments[sid]=list.filter(x=>x.id!==item.id);
-      Object.values(state.scores).forEach(record=>{delete record[item.id];});
+      Object.keys(state.scores).forEach(key=>{if(key.endsWith("|"+sid))delete state.scores[key][item.id];});
       await save();
     }
     if(action==="apply-assessment-all") {
