@@ -26,14 +26,14 @@
     } catch(e) { console.warn("Could not load saved records",e); }
     render();
   }
-  async function save() {
+  async function save(renderAfter = true) {
     state.updatedAt = new Date().toISOString();
     try {
       const db = await dbOpen();
       if (db) { await new Promise((resolve,reject) => { const tx=db.transaction(STORE,"readwrite"); tx.objectStore(STORE).put(state,KEY); tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error); }); db.close(); }
       else localStorage.setItem(KEY,JSON.stringify(state));
     } catch(e) { alert("Could not save your changes. Please check available device storage and export a backup."); console.error(e); }
-    render();
+    if (renderAfter) render();
   }
   const id = () => (crypto.randomUUID ? crypto.randomUUID() : "s"+Date.now()+Math.random().toString(16).slice(2));
   const defaultAssessments = (sid) => { const old= sid ? subjectScore(sid) : {}; return [
@@ -188,20 +188,20 @@
         if(item&&(!Number.isFinite(value)||value<0||value>num(item.max))){alert("Score must be between 0 and "+item.max+".");t.value="";return;}
         state.scores[key][c]=value;
       }
-      save();
+      save(false);
     }
     if(t.matches("[data-assessment-name]")) {
       const list=itemsFor(t.dataset.assessmentName),item=list.find(x=>x.id===t.dataset.assessmentId);
       if(item&&t.value.trim())item.name=t.value.trim().slice(0,50);
-      save();
+      save(false);
     }
     if(t.matches("[data-assessment-max]")) {
       const list=itemsFor(t.dataset.assessmentMax),item=list.find(x=>x.id===t.dataset.assessmentId),m=Number(t.value);
       if(!Number.isFinite(m)||m<=0||m>100){alert("Assessment maximum must be between 1 and 100.");return;}
       if(item&&subjectScore(t.dataset.assessmentMax)[item.id]!=null&&Number(subjectScore(t.dataset.assessmentMax)[item.id])>m){alert("Maximum cannot be lower than the saved score.");t.value=item.max;return;}
-      if(item)item.max=m;save();
+      if(item)item.max=m;save(false);
     }
-    if(t.matches("[data-target]")) {state.targets[t.dataset.target]=Number(t.value)||0;save();}
+    if(t.matches("[data-target]")) {state.targets[t.dataset.target]=Number(t.value)||0;save(false);}
   });
   if("serviceWorker" in navigator && location.protocol!=="file:") window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(e=>console.warn("Offline caching unavailable",e)));
   load();
