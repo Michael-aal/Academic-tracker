@@ -1,0 +1,1 @@
+ALTER TABLE "university_courses" ADD COLUMN "target_score" INTEGER NOT NULL DEFAULT 70;
