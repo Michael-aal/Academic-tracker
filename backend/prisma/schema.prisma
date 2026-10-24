@@ -19,6 +19,7 @@ model User {
   updatedAt             DateTime              @updatedAt @map("updated_at")
   subjects              Subject[]
   assessmentScores      AssessmentScore[]
+  assessmentGoals       AssessmentGoal[]
   supportConversation   SupportConversation?
   supportMessages       SupportMessage[]      @relation("SupportMessageSender")
 
@@ -35,6 +36,7 @@ model Subject {
   updatedAt         DateTime          @updatedAt @map("updated_at")
   user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   assessmentScores  AssessmentScore[]
+  assessmentGoals   AssessmentGoal[]
 
   @@unique([id, userId])
   @@unique([userId, normalizedName])
@@ -92,4 +94,29 @@ model SupportMessage {
   @@index([conversationId, createdAt])
   @@index([senderId, readAt])
   @@map("support_messages")
+}
+
+model AssessmentGoal {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  subjectId       String   @map("subject_id")
+  academicYear    String   @map("academic_year") @db.VarChar(30)
+  term            String   @db.VarChar(20)
+  assessmentType  String   @map("assessment_type") @db.VarChar(20)
+  targetScore     Float    @map("target_score")
+  maxScore        Float    @map("max_score")
+  actualScore     Float?   @map("actual_score")
+  assessmentDate  DateTime? @map("assessment_date") @db.Date
+  reflectionReason String? @map("reflection_reason") @db.VarChar(1000)
+  improvementPlan String?  @map("improvement_plan") @db.VarChar(2000)
+  completedAt     DateTime? @map("completed_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject         Subject  @relation(fields: [subjectId, userId], references: [id, userId], onDelete: Cascade)
+
+  @@unique([subjectId, academicYear, term, assessmentType])
+  @@index([userId, academicYear, term])
+  @@index([userId, assessmentDate])
+  @@map("assessment_goals")
 }
