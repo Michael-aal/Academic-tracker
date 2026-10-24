@@ -2,6 +2,7 @@ const express = require("express");
 const rateLimit = require("express-rate-limit");
 const { requireAuth } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/admin");
+const { prisma } = require("../prisma");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -17,22 +18,27 @@ const aiLimiter = rateLimit({
   message: { error: "You've reached the AI learning limit for now. Please try again in 15 minutes." }
 });
 
-function buildPrompt({ action, subject, topic, content, level, questionCount }) {
+function buildPrompt({ action, subject, topic, content, level, questionCount, studentProfile }) {
   const context = [
     "Subject: " + (subject || "Not specified"),
     "Topic: " + (topic || "Not specified"),
-    "Student level: " + (level || "secondary school"),
+    "Student level: " + (level || studentProfile.educationTrack || "secondary school"),
+    "Student name: " + (studentProfile.name || "Not provided"),
+    "Institution: " + (studentProfile.institutionName || "Not provided"),
+    "Programme: " + (studentProfile.programme || "Not provided"),
+    "Current level/year: " + (studentProfile.studyLevel || "Not provided"),
+    "Registered courses, targets and recent saved results: " + (studentProfile.courses.length ? studentProfile.courses.map(c => { const recent = c.results.map(r => { const total = r.caScore !== null && r.examScore !== null ? r.caScore + r.examScore : null; const grade = total === null ? "incomplete" : total >= 70 ? "A" : total >= 60 ? "B" : total >= 50 ? "C" : total >= 45 ? "D" : total >= 40 ? "E" : "F"; return r.academicYear + " " + r.semester + ": " + (total === null ? "incomplete assessment" : total + "/100, grade " + grade); }).join(", "); return c.code + " — " + c.title + " (" + c.creditUnits + " credit units; target " + c.targetScore + "/100" + (recent ? "; recent results: " + recent : "") + ")"; }).join("; ") : "No saved higher-institution courses"),
   ].join("\n\n");
 
   const tasks = {
-    tutor: "Act as a patient secondary-school tutor. Answer the student's question accurately in simple steps, define important terms, give one worked example where useful, and end with one short check-for-understanding question. If the question is ambiguous, state your assumption. Do not pretend certainty when unsure.",
-    quiz: "Create exactly " + questionCount + " useful revision questions based on the supplied subject/topic/material. Mix recall and application where suitable. Number every question, provide a clear answer key and brief explanations in a separate section, and do not invent facts unsupported by the material. If notes are absent, use established subject knowledge and say so.",
+    tutor: "Act as a patient tutor appropriate to the student's education track and programme. For higher-institution students, use university-level depth and their registered course context; for secondary students, explain at their school level. Address the student by their first name naturally when useful. Answer the student's question accurately in simple steps, define important terms, give one worked example where useful, and end with one short check-for-understanding question. If the question is ambiguous, state your assumption. Do not pretend certainty when unsure.",
+    quiz: "Create exactly " + questionCount + " useful revision questions at the student's education level, based on the supplied subject/topic/material and programme context. Mix recall and application where suitable. Number every question, provide a clear answer key and brief explanations in a separate section, and do not invent facts unsupported by the material. If notes are absent, use established subject knowledge and say so.",
     summarize: "Summarize the supplied study material for revision. Use a short overview, key facts/definitions, important steps or formulas, and 3 quick self-test questions with answers at the end. Preserve the meaning; do not add unsupported claims. If no notes were supplied, ask the student to paste notes.",
-    "study-plan": "Create a realistic, encouraging 7-day study plan for the supplied subject/topic. Use short sessions, active recall, practice questions and review days. Include a clear daily task and a simple way to check understanding. Do not assume the student's available hours; suggest flexible 20–30 minute blocks."
+    "study-plan": "Create a realistic, encouraging 7-day study plan for the supplied subject/topic, considering the student's programme, registered courses and target grades when relevant. Use short sessions, active recall, practice questions and review days. Include a clear daily task and a simple way to check understanding. Do not assume the student's available hours; suggest flexible 20–30 minute blocks."
   };
 
   return [
-    "You are Academic Tracker's AI learning assistant for secondary-school students.",
+    "You are Academic Tracker's personalized AI learning assistant. Adapt to the signed-in student's education track and course context. Profile details are private context for this response, not information to reveal to other users.",
     "Be supportive, accurate, age-appropriate, and clear. Never shame a learner. Show steps rather than only answers.",
     "Do not claim to be a human teacher. If you are unsure, say so and recommend checking the student's textbook or teacher.",
     "Do not provide assistance for cheating during a live test or exam; redirect to explaining the concept or practice.",
@@ -81,6 +87,10 @@ router.post("/", aiLimiter, async (req, res) => {
   const timeout = setTimeout(() => controller.abort(), 45000);
 
   try {
+    const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } });
+    if (!user) return res.status(401).json({ error: "Account not found. Please sign in again." });
+    const courses = user.educationTrack === "HIGHER" ? await prisma.universityCourse.findMany({ where: { userId: req.userId }, select: { code: true, title: true, creditUnits: true, targetScore: true, results: { orderBy: { updatedAt: "desc" }, take: 6, select: { academicYear: true, semester: true, caScore: true, examScore: true } } }, orderBy: { code: "asc" }, take: 60 }) : [];
+    const studentProfile = { ...user, courses };
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       signal: controller.signal,
@@ -92,7 +102,7 @@ router.post("/", aiLimiter, async (req, res) => {
       },
       body: JSON.stringify({
         model,
-        messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount }) }],
+        messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, studentProfile }) }],
         temperature: 0.4,
         max_tokens: 1800
       })

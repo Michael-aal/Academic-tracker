@@ -9,7 +9,20 @@
   const password = document.getElementById('password');
   const toggle = document.getElementById('toggle-password');
   const confirm = document.getElementById('confirm-password');
+  const trackInputs = [...document.querySelectorAll('input[name="educationTrack"]')];
+  const higherFields = document.getElementById('higher-fields');
+  const institutionName = document.getElementById('institution-name');
+  const programme = document.getElementById('programme');
+  const studyLevel = document.getElementById('study-level');
   const showMessage = (box, message) => { errorBox.classList.remove('show'); successBox.classList.remove('show'); box.textContent = message; box.classList.add('show'); };
+  const selectedTrack = () => trackInputs.find(input => input.checked)?.value || 'SECONDARY';
+  const syncTrackFields = () => {
+    const higher = selectedTrack() === 'HIGHER';
+    if (higherFields) higherFields.hidden = !higher;
+    [institutionName, programme, studyLevel].forEach(input => { if (input) input.required = higher; });
+  };
+  trackInputs.forEach(input => input.addEventListener('change', syncTrackFields));
+  syncTrackFields();
   toggle?.addEventListener('click', () => {
     const visible = password.type === 'password'; password.type = visible ? 'text' : 'password';
     if (confirm) confirm.type = visible ? 'text' : 'password';
@@ -20,28 +33,25 @@
     const name = document.getElementById('name')?.value.trim();
     const email = document.getElementById('email').value.trim().toLowerCase();
     const pass = password.value;
+    const higher = mode === 'register' && selectedTrack() === 'HIGHER';
     if (mode === 'register' && pass !== confirm.value) return showMessage(errorBox, 'Your passwords do not match.');
     if (pass.length < 10) return showMessage(errorBox, 'Use at least 10 characters for your password.');
+    if (higher && (!institutionName.value.trim() || !programme.value.trim() || !studyLevel.value)) return showMessage(errorBox, 'Enter your institution, programme, and current level.');
+    const body = mode === 'register' ? { name, email, password: pass, educationTrack: selectedTrack(), institutionName: institutionName?.value.trim(), programme: programme?.value.trim(), studyLevel: studyLevel?.value } : { email, password: pass };
     submit.disabled = true; submit.textContent = mode === 'register' ? 'Creating your account…' : 'Signing you in…';
     try {
-      const response = await fetch(API_BASE + '/api/auth/' + (mode === 'register' ? 'register' : 'login'), {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mode === 'register' ? { name, email, password: pass } : { email, password: pass })
-      });
+      const response = await fetch(API_BASE + '/api/auth/' + (mode === 'register' ? 'register' : 'login'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'We could not complete that request. Please try again.');
       if (!data.token || !data.user) throw new Error('The server response was incomplete. Please try again.');
       localStorage.setItem('academic-tracker-token', data.token);
       localStorage.setItem('academic-tracker-user', JSON.stringify(data.user));
       showMessage(successBox, mode === 'register' ? 'Account created. Opening your study space…' : 'Welcome back. Opening your study space…');
-      window.location.replace(mode === 'login' && data.user.isAdmin ? 'admin-support.html' : 'dashboard.html');
+      const destination = data.user.isAdmin ? 'admin-support.html' : data.user.educationTrack === 'HIGHER' ? 'university-dashboard.html' : 'dashboard.html';
+      window.location.replace(destination);
     } catch (error) {
-      const message = error instanceof TypeError
-        ? 'Could not reach the API. Check your connection and confirm the Render API allows this website in its CORS settings.'
-        : error.message;
+      const message = error instanceof TypeError ? 'Could not reach the API. Check your connection and confirm the Render API allows this website in its CORS settings.' : error.message;
       showMessage(errorBox, message);
-    } finally {
-      submit.disabled = false; submit.textContent = mode === 'register' ? 'Create my account →' : 'Log in to my tracker →';
-    }
+    } finally { submit.disabled = false; submit.textContent = mode === 'register' ? 'Create my account →' : 'Log in to my tracker →'; }
   });
 })();

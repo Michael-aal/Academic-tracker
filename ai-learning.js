@@ -87,7 +87,7 @@
           subject: $("subject").value.trim(),
           topic,
           content,
-          level: "secondary school",
+          level: user.educationTrack === "HIGHER" ? "higher institution / university" : "secondary school",
           questionCount: Number($("question-count").value)
         })
       });
