@@ -1,10 +1,11 @@
-const CACHE_NAME = "academic-tracker-v4";
+const CACHE_NAME = "academic-tracker-v5";
 const APP_SHELL = [
   "./", "./index.html", "./landing.css", "./landing.js",
   "./login.html", "./register.html", "./auth.css", "./auth.js",
   "./dashboard.html", "./dashboard-auth.js",
   "./styles.css", "./ui-polish.css", "./app.js",
-  "./manifest.webmanifest", "./assets/icon.svg"
+  "./manifest.webmanifest", "./assets/icon.svg",
+  "./pwa.js", "./calculator.html", "./calculator.css", "./calculator.js"
 ];
 
 self.addEventListener("install", event => {
