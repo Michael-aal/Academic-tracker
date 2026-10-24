@@ -27,7 +27,7 @@ function buildPrompt({ action, subject, topic, content, level, questionCount, st
     "Institution: " + (studentProfile.institutionName || "Not provided"),
     "Programme: " + (studentProfile.programme || "Not provided"),
     "Current level/year: " + (studentProfile.studyLevel || "Not provided"),
-    "Registered courses and targets: " + (studentProfile.courses.length ? studentProfile.courses.map(c => c.code + " — " + c.title + " (" + c.creditUnits + " credit units; target " + c.targetScore + "/100)").join("; ") : "No saved higher-institution courses"),
+    "Registered courses, targets and recent saved results: " + (studentProfile.courses.length ? studentProfile.courses.map(c => { const recent = c.results.map(r => { const total = r.caScore !== null && r.examScore !== null ? r.caScore + r.examScore : null; const grade = total === null ? "incomplete" : total >= 70 ? "A" : total >= 60 ? "B" : total >= 50 ? "C" : total >= 45 ? "D" : total >= 40 ? "E" : "F"; return r.academicYear + " " + r.semester + ": " + (total === null ? "incomplete assessment" : total + "/100, grade " + grade); }).join(", "); return c.code + " — " + c.title + " (" + c.creditUnits + " credit units; target " + c.targetScore + "/100" + (recent ? "; recent results: " + recent : "") + ")"; }).join("; ") : "No saved higher-institution courses"),
   ].join("\n\n");
 
   const tasks = {
@@ -89,7 +89,7 @@ router.post("/", aiLimiter, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } });
     if (!user) return res.status(401).json({ error: "Account not found. Please sign in again." });
-    const courses = user.educationTrack === "HIGHER" ? await prisma.universityCourse.findMany({ where: { userId: req.userId }, select: { code: true, title: true, creditUnits: true, targetScore: true }, orderBy: { code: "asc" }, take: 60 }) : [];
+    const courses = user.educationTrack === "HIGHER" ? await prisma.universityCourse.findMany({ where: { userId: req.userId }, select: { code: true, title: true, creditUnits: true, targetScore: true, results: { orderBy: { updatedAt: "desc" }, take: 6, select: { academicYear: true, semester: true, caScore: true, examScore: true } } }, orderBy: { code: "asc" }, take: 60 }) : [];
     const studentProfile = { ...user, courses };
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
