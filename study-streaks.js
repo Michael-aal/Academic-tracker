@@ -41,19 +41,18 @@
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
     catch (error) { console.warn("Could not save study streaks and points on this device.", error); }
   };
-  const escaped = value => String(value).replace(/[&<>"']/g, ch => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[ch]));
   const isCheckedInToday = () => state.lastCheckIn === localDateKey();
   const visibleStreak = () => {
     const today = localDateKey();
     return state.lastCheckIn === today || state.lastCheckIn === shiftDate(today, -1) ? state.currentStreak : 0;
   };
   const render = () => {
-    const old = document.getElementById("study-streak-card");
-    if (old) old.remove();
     const stats = host.querySelector(".stats-grid");
-    if (!stats) return;
+    const old = document.getElementById("study-streak-card");
+    if (!stats) { if (old) old.remove(); return; }
+    if (old && old.previousElementSibling === stats) return;
+    if (old) old.remove();
+
     const checkedIn = isCheckedInToday();
     const streak = visibleStreak();
     const card = document.createElement("section");
@@ -86,6 +85,8 @@
       if (!state.checkInDates.includes(today)) state.checkInDates.push(today);
       state.checkInDates = state.checkInDates.slice(-400);
       save();
+      const existing = document.getElementById("study-streak-card");
+      if (existing) existing.remove();
       render();
     });
   };
