@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0c1210">
+<meta name="description" content="Scientific calculator for school Mathematics and Physics.">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="ui-polish.css"><link rel="stylesheet" href="calculator.css">
+<title>Scientific Calculator · Academic Tracker</title>
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar"><a class="brand" href="dashboard.html"><span class="brand-mark">A</span><span>Academic<span class="muted"> Tracker</span></span></a>
+<nav class="side-nav" aria-label="Main navigation">
+<a class="nav-link" href="dashboard.html">▦ <span>Dashboard</span></a><a class="nav-link" href="ai-learning.html">✦ <span>AI learning</span></a><a class="nav-link" href="memory-mastery.html">◎ <span>Memory Mastery</span></a><a class="nav-link" href="educational-videos.html">▷ <span>Educational videos</span></a><a class="nav-link" href="academic-goals.html">◎ <span>Goals &amp; results</span></a><a class="nav-link active" href="calculator.html">∑ <span>Scientific calculator</span></a>
+</nav><div class="sidebar-note"><span class="status-dot"></span> A handy tool for your study sessions.</div></aside>
+<main class="main"><header class="topbar"><div class="page-heading"><p class="eyebrow">MATHEMATICS &amp; PHYSICS</p><h1>Scientific calculator</h1></div><a class="button secondary" href="dashboard.html">← Dashboard</a></header>
+<section class="calculator-layout"><div class="calculator-card">
+<div class="calculator-heading"><div><h2>Calculate with confidence</h2><p>Trigonometry, logarithms, powers, roots and more.</p></div><span class="calc-icon">∑</span></div>
+<div class="calc-display" aria-live="polite"><div id="expression" class="calc-expression">Ready to calculate</div><output id="display" class="calc-result" aria-label="Calculator display">0</output></div>
+<div class="calc-mode-row"><button id="angle-mode" class="mode-toggle" type="button" aria-pressed="false">Angle: DEG</button><span>DEG for degrees · RAD for radians</span></div>
+<div class="calc-keys scientific-keys" id="keys">
+<button type="button" class="calc-key utility" data-action="clear">AC</button><button type="button" class="calc-key utility" data-action="backspace" aria-label="Delete last digit">⌫</button><button type="button" class="calc-key utility" data-action="sign">±</button><button type="button" class="calc-key utility" data-action="percent">%</button><button type="button" class="calc-key operator" data-op="÷">÷</button>
+<button type="button" class="calc-key scientific" data-fn="sin">sin</button><button type="button" class="calc-key scientific" data-fn="cos">cos</button><button type="button" class="calc-key scientific" data-fn="tan">tan</button><button type="button" class="calc-key scientific" data-fn="sqrt">√x</button><button type="button" class="calc-key operator" data-op="×">×</button>
+<button type="button" class="calc-key scientific" data-fn="asin">sin⁻¹</button><button type="button" class="calc-key scientific" data-fn="acos">cos⁻¹</button><button type="button" class="calc-key scientific" data-fn="atan">tan⁻¹</button><button type="button" class="calc-key scientific" data-fn="square">x²</button><button type="button" class="calc-key operator" data-op="−">−</button>
+<button type="button" class="calc-key scientific" data-fn="ln">ln</button><button type="button" class="calc-key scientific" data-fn="log">log</button><button type="button" class="calc-key scientific" data-fn="factorial">x!</button><button type="button" class="calc-key scientific" data-fn="reciprocal">1/x</button><button type="button" class="calc-key operator" data-op="+">+</button>
+<button type="button" class="calc-key scientific" data-constant="pi">π</button><button type="button" class="calc-key scientific" data-constant="e">e</button><button type="button" class="calc-key scientific" data-fn="abs">|x|</button><button type="button" class="calc-key operator" data-op="^">xʸ</button><button type="button" class="calc-key equals" data-action="equals">=</button>
+<button type="button" class="calc-key" data-digit="7">7</button><button type="button" class="calc-key" data-digit="8">8</button><button type="button" class="calc-key" data-digit="9">9</button><button type="button" class="calc-key" data-digit="4">4</button><button type="button" class="calc-key" data-digit="5">5</button>
+<button type="button" class="calc-key" data-digit="6">6</button><button type="button" class="calc-key" data-digit="1">1</button><button type="button" class="calc-key" data-digit="2">2</button><button type="button" class="calc-key" data-digit="3">3</button><button type="button" class="calc-key" data-digit="0">0</button>
+<button type="button" class="calc-key utility" data-action="decimal">.</button><button type="button" class="calc-key utility" data-action="open-paren">(</button><button type="button" class="calc-key utility" data-action="close-paren">)</button><button type="button" class="calc-key utility" data-action="ans">Ans</button><button type="button" class="calc-key utility" data-action="clear">C</button>
+</div><p class="calc-hint">Keyboard: numbers, + − * / ^, Enter to calculate, Esc to clear. Scientific functions apply to the displayed number.</p></div>
+<aside class="calculator-side"><article class="card"><h3>Quick percentage</h3><p class="side-copy">Find a score as a percentage.</p><label class="calc-field">Your score<input id="score" type="number" min="0" step="any" placeholder="e.g. 8"></label><label class="calc-field">Maximum marks<input id="total" type="number" min="0.000001" step="any" value="10"></label><div class="percent-result"><span>Percentage</span><strong id="score-percent">—</strong></div><p class="side-copy">For example, 8 out of 10 marks is 80%.</p></article>
+<article class="card"><h3>Recent calculations</h3><div id="history" class="calc-history"><p class="side-copy">Your recent calculations appear here while this page is open.</p></div><button id="clear-history" class="button secondary" type="button">Clear history</button></article>
+<article class="card"><h3>Scientific tips</h3><p class="side-copy">Check whether your question uses degrees or radians before calculating trigonometric values. Factorial is defined for whole numbers from 0 to 170.</p></article></aside>
+</section><footer><span>Use calculations to check your work and keep learning.</span><span id="year-label"></span></footer></main></div>
+<nav class="mobile-nav" aria-label="Mobile navigation"><a href="dashboard.html"><span>▦</span>Home</a><a href="academic-goals.html"><span>◎</span>Goals</a><a href="calculator.html" class="active"><span>∑</span>Calculator</a><a href="ai-learning.html"><span>✦</span>AI learning</a><a href="memory-mastery.html"><span>◉</span>Memory</a></nav>
+<script src="calculator.js"></script>
+</body></html>
