@@ -11,6 +11,7 @@ const supportRoutes = require("./routes/support");
 const adminRoutes = require("./routes/admin");
 const aiRoutes = require("./routes/ai");
 const videoRoutes = require("./routes/videos");
+const goalRoutes = require("./routes/goals");
 
 const app = express();
 app.disable("x-powered-by");
@@ -61,6 +62,7 @@ app.use("/api/support", messageLimiter, supportRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/videos", videoRoutes);
+app.use("/api/goals", goalRoutes);
 
 app.use((_req, res) => res.status(404).json({ error: "Route not found." }));
 
