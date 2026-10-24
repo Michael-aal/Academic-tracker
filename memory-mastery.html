@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07110d">
+  <meta name="description" content="Build lasting memory with active recall, spaced repetition, and practice.">
+  <link rel="stylesheet" href="memory-mastery.css">
+  <title>Memory Mastery · Academic Tracker</title>
+</head>
+<body>
+  <div class="mm-shell">
+    <header class="mm-topbar">
+      <a class="mm-brand" href="dashboard.html"><span class="mm-brand-mark">A</span><span>Academic <span>Tracker</span></span></a>
+      <nav><a href="dashboard.html">My tracker</a><a href="ai-learning.html">AI learning</a><button id="signout" type="button">Sign out</button></nav>
+    </header>
+    <main>
+      <section class="mm-hero">
+        <div class="eyebrow"><span class="eyebrow-dot"></span> MEMORY MASTERY</div>
+        <h1>Don't just study it.<br><span>Remember it.</span></h1>
+        <p>Practise retrieving what you learn, revisit it over time, and use it in new problems. Consistent effort beats cramming.</p>
+        <div class="mm-principles"><span><b>01</b> Learn</span><span><b>02</b> Recall</span><span><b>03</b> Review</span><span><b>04</b> Apply</span></div>
+      </section>
+
+      <section class="mm-stats" aria-label="Memory progress">
+        <article class="mm-stat"><span>Cards in your library</span><strong id="stat-total">0</strong><small>Only cards you create</small></article>
+        <article class="mm-stat"><span>Due for review</span><strong id="stat-due">0</strong><small>Keep your memory fresh</small></article>
+        <article class="mm-stat"><span>Mastered</span><strong id="stat-mastered">0</strong><small>Reviewed successfully 5+ times</small></article>
+        <article class="mm-stat"><span>Recall accuracy</span><strong id="stat-accuracy">—</strong><small id="stat-reviewed">No reviews yet</small></article>
+      </section>
+
+      <section class="mm-grid">
+        <section class="mm-panel mm-review">
+          <div class="mm-panel-heading"><div><p class="section-kicker">DAILY PRACTICE</p><h2>Recall session</h2><p>Try to answer from memory before revealing the back.</p></div><span class="mm-count" id="queue-count">0 due</span></div>
+          <div id="empty-review" class="mm-empty"><span class="mm-empty-icon">✦</span><h3>Your review queue is clear</h3><p>Add your first card or come back when a review is due. Your queue uses real cards saved in this browser.</p><button class="mm-primary" type="button" data-scroll-form>Add a memory card</button></div>
+          <div id="review-stage" hidden>
+            <div class="mm-card-meta"><span id="review-subject">Subject</span><span id="review-progress">Card 1</span></div>
+            <div class="mm-flashcard">
+              <span class="mm-face-label">QUESTION · RECALL WITHOUT LOOKING</span>
+              <h3 id="review-question"></h3>
+              <p id="review-topic"></p>
+              <button id="reveal-answer" class="mm-secondary" type="button">Reveal answer</button>
+              <div id="answer-area" hidden><div class="mm-answer-divider"></div><span class="mm-face-label">ANSWER · CHECK YOUR UNDERSTANDING</span><p id="review-answer"></p><div class="mm-rating-title">How well did you remember?</div><div class="mm-ratings"><button data-rating="again" type="button"><strong>Again</strong><small>Forgot it</small></button><button data-rating="hard" type="button"><strong>Hard</strong><small>Struggled</small></button><button data-rating="good" type="button"><strong>Good</strong><small>Got it</small></button><button data-rating="easy" type="button"><strong>Easy</strong><small>Very clear</small></button></div></div>
+            </div>
+            <p class="mm-review-tip">Be honest with your rating. A difficult recall is useful feedback, not a failure.</p>
+          </div>
+        </section>
+
+        <section class="mm-panel mm-add" id="add-card">
+          <div class="mm-panel-heading"><div><p class="section-kicker">BUILD YOUR MEMORY</p><h2>Add a memory card</h2><p>Turn a lesson into a question you can practise later.</p></div></div>
+          <form id="card-form">
+            <label>Subject <input id="card-subject" maxlength="80" placeholder="e.g. Physics" required></label>
+            <label>Topic <input id="card-topic" maxlength="120" placeholder="e.g. Newton's laws"></label>
+            <label>Question or prompt <textarea id="card-question" rows="3" maxlength="700" placeholder="e.g. What does Newton's second law state?" required></textarea></label>
+            <label>Answer in your own words <textarea id="card-answer" rows="4" maxlength="1800" placeholder="Write the key idea, steps, or formula you need to remember…" required></textarea></label>
+            <button class="mm-primary mm-full" type="submit">＋ Save memory card</button>
+            <p class="mm-form-note">Cards are saved in this browser on this device, under the signed-in account's local profile. They are not uploaded to the server.</p>
+          </form>
+          <div id="form-notice" class="mm-notice" role="status"></div>
+        </section>
+      </section>
+
+      <section class="mm-panel mm-library">
+        <div class="mm-panel-heading"><div><p class="section-kicker">YOUR STUDY MATERIAL</p><h2>Memory library</h2><p>Manage the cards you have created and see their next review.</p></div><div class="mm-library-actions"><input id="library-search" type="search" placeholder="Search cards" aria-label="Search memory cards"><button id="export-cards" class="mm-secondary" type="button">Export backup</button><button id="import-cards" class="mm-secondary" type="button">Import backup</button><input id="import-file" type="file" accept="application/json,.json" hidden></div></div>
+        <div id="library-list" class="mm-library-list"></div>
+        <div id="library-empty" class="mm-empty mm-library-empty"><h3>Your library starts with you</h3><p>Cards you create will appear here. No sample cards or made-up progress are included.</p></div>
+      </section>
+      <footer>Memory Mastery · Small recall sessions, repeated over time.</footer>
+    </main>
+  </div>
+  <script src="memory-mastery.js"></script>
+</body>
+</html>
