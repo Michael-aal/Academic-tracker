@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07110d"><link rel="stylesheet" href="ai-learning.css">
+  <title>AI Service Status · Academic Tracker</title>
+  <style>
+    .admin-wrap{max-width:850px;margin:54px auto;padding:0 22px}.admin-card{background:#0d1913;border:1px solid #22372b;border-radius:18px;padding:26px}.admin-card h1{font-size:32px;letter-spacing:-.04em;margin:8px 0}.admin-card>p{color:#a3b6a8}.status-row{display:flex;justify-content:space-between;gap:20px;padding:17px 0;border-bottom:1px solid #22372b}.status-row:last-of-type{border:0}.status-row span{color:#9fb2a4}.status-value{font-weight:750}.status-value.good{color:#b8f36b}.status-value.bad{color:#ffaaa5}.setup-note{background:#101f17;border:1px solid #2b4332;border-radius:12px;padding:16px;margin-top:24px;color:#c5d5c9;font-size:13px;white-space:pre-wrap}.admin-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}.admin-actions a,.admin-actions button{padding:10px 13px;border-radius:10px;border:1px solid #35513b;background:#17281c;color:#f0f6f1;cursor:pointer}.admin-error{color:#ffaaa5}
+  </style>
+</head>
+<body>
+  <header class="ai-topbar"><a class="ai-brand" href="dashboard.html"><span class="ai-brand-mark">A</span><span>Academic <span>Tracker</span></span></a><nav><a href="ai-learning.html">AI learning</a><a href="admin-support.html">Support inbox</a><button id="signout" type="button">Sign out</button></nav></header>
+  <main class="admin-wrap">
+    <div class="eyebrow"><span class="eyebrow-dot"></span> ADMINISTRATOR TOOLS</div>
+    <section class="admin-card">
+      <p class="section-kicker">AI SERVICE CONFIGURATION</p>
+      <h1>AI learning status</h1>
+      <p>This page reads server-side configuration only. The provider secret is never returned to the browser.</p>
+      <div class="status-row"><span>Provider</span><strong class="status-value" id="provider">Checking…</strong></div>
+      <div class="status-row"><span>API key configured</span><strong class="status-value" id="configured">Checking…</strong></div>
+      <div class="status-row"><span>Configured model</span><strong class="status-value" id="model">—</strong></div>
+      <div class="status-row"><span>Request limit</span><strong class="status-value" id="limit">—</strong></div>
+      <div id="setup-note" class="setup-note" role="status">Checking the backend…</div>
+      <div class="admin-actions"><button id="refresh" type="button">Refresh status</button><a href="ai-learning.html">Open student AI tools</a></div>
+    </section>
+  </main>
+  <script>
+  (() => {
+    const API_BASE = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\\/$/, "");
+    const token = localStorage.getItem("academic-tracker-token");
+    if (!token) { window.location.replace("login.html"); return; }
+    let user = {}; try { user = JSON.parse(localStorage.getItem("academic-tracker-user") || "{}"); } catch {}
+    if (user.role !== "ADMIN" && !user.isAdmin) { document.getElementById("setup-note").textContent = "Administrator access is required."; document.getElementById("setup-note").classList.add("admin-error"); }
+    const el = id => document.getElementById(id);
+    async function load() {
+      el("setup-note").textContent = "Checking the backend…";
+      try {
+        const response = await fetch(API_BASE + "/api/ai/status", { headers: { Authorization: "Bearer " + token } });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "Could not load AI service status.");
+        el("provider").textContent = data.provider;
+        el("configured").textContent = data.configured ? "Configured" : "Not configured";
+        el("configured").className = "status-value " + (data.configured ? "good" : "bad");
+        el("model").textContent = data.model;
+        el("limit").textContent = data.requestsPer15Minutes + " requests per account / 15 minutes";
+        el("setup-note").textContent = data.note;
+      } catch (error) {
+        el("setup-note").textContent = error.message;
+        el("setup-note").classList.add("admin-error");
+      }
+    }
+    el("refresh").addEventListener("click", load);
+    el("signout").addEventListener("click", () => { localStorage.removeItem("academic-tracker-token"); localStorage.removeItem("academic-tracker-user"); window.location.replace("login.html"); });
+    load();
+  })();
+  </script>
+</body>
+</html>
