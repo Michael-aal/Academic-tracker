@@ -26,7 +26,7 @@ router.get("/", async (req, res, next) => {
     if (!year || year.length > 30 || !semesters.has(semester)) return res.status(400).json({ error: "Choose a valid academic year and semester." });
     const courses = await prisma.universityCourse.findMany({ where: { userId: req.userId }, orderBy: { code: "asc" }, include: { results: { where: { userId: req.userId } } } });
     const allResults = courses.flatMap(c => c.results.map(r => ({ ...r, course: { id: c.id, code: c.code, title: c.title, creditUnits: c.creditUnits } })));
-    const semesterResults = allResults.filter(r => r.academicYear === year && r.semester === semester).map(present);
+    const semesterResults = allResults.filter(r => r.academicYear === year && r.semester === semester).map(presentResult);
     const overall = summary(allResults.map(r => ({ ...r, course: { ...r.course } })));
     const semesterSummary = summary(allResults.filter(r => r.academicYear === year && r.semester === semester).map(r => ({ ...r, course: { ...r.course } })));
     res.json({ academicYear: year, semester, courses: courses.map(({ results, ...c }) => c), results: semesterResults, semesterGpa: semesterSummary.gpa, cgpa: overall.gpa, completedCourses: overall.completedCourses, completedUnits: overall.completedUnits });
