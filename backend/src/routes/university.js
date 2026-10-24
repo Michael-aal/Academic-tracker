@@ -59,17 +59,45 @@ router.put("/courses/:courseId/result", async (req, res, next) => {
     if (!course) return res.status(404).json({ error: "Course not found." });
     const { academicYear, semester } = req.body || {};
     if (typeof academicYear !== "string" || !academicYear.trim() || academicYear.trim().length > 30 || !semesters.has(semester)) return res.status(400).json({ error: "Choose a valid academic year and semester." });
-    const caMax = req.body?.caMax ?? 30;
-    const examMax = req.body?.examMax ?? 70;
-    const caScore = req.body?.caScore === "" || req.body?.caScore === undefined || req.body?.caScore === null ? null : req.body.caScore;
-    const examScore = req.body?.examScore === "" || req.body?.examScore === undefined || req.body?.examScore === null ? null : req.body.examScore;
-    for (const [name, value] of [["caMax", caMax], ["examMax", examMax]]) if (typeof value !== "number" || !Number.isFinite(value) || value <= 0 || value > 100) return res.status(400).json({ error: name + " must be greater than 0 and no more than 100." });
-    for (const [name, value, max] of [["caScore", caScore, caMax], ["examScore", examScore, examMax]]) if (value !== null && (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > max)) return res.status(400).json({ error: name + " must be blank or between 0 and " + max + "." });
-    if (Math.abs((caMax + examMax) - 100) > 0.001) return res.status(400).json({ error: "CA maximum and exam maximum must add up to 100." });
+    let assessments = null;
+    let caMax, examMax, caScore, examScore;
+    if (Array.isArray(req.body?.assessments)) {
+      assessments = req.body.assessments;
+      if (!assessments.length || assessments.length > 20) return res.status(400).json({ error: "Add between 1 and 20 assessment items." });
+      const ids = new Set();
+      let exams = 0;
+      for (const item of assessments) {
+        if (!item || typeof item.id !== "string" || !item.id.trim() || item.id.length > 80 || ids.has(item.id)) return res.status(400).json({ error: "Every assessment needs a unique ID." });
+        ids.add(item.id);
+        if (typeof item.name !== "string" || !item.name.trim() || item.name.length > 60) return res.status(400).json({ error: "Every assessment needs a name of 1–60 characters." });
+        if (!["CA", "EXAM"].includes(item.type)) return res.status(400).json({ error: "Assessment type must be CA or EXAM." });
+        if (item.type === "EXAM") exams++;
+        if (typeof item.max !== "number" || !Number.isFinite(item.max) || item.max <= 0 || item.max > 100) return res.status(400).json({ error: "Each assessment maximum must be greater than 0 and no more than 100." });
+        if (item.score !== null && item.score !== undefined && (typeof item.score !== "number" || !Number.isFinite(item.score) || item.score < 0 || item.score > item.max)) return res.status(400).json({ error: "An assessment score must be blank or within its maximum mark." });
+      }
+      if (exams !== 1) return res.status(400).json({ error: "Each course must have exactly one final exam." });
+      if (Math.abs(assessments.reduce((sum, item) => sum + item.max, 0) - 100) > 0.001) return res.status(400).json({ error: "Assessment maximums must add up to 100. Adjust the CA and exam maximums." });
+      const caItems = assessments.filter(item => item.type === "CA");
+      if (!caItems.length) return res.status(400).json({ error: "Keep at least one continuous-assessment item as well as the final exam." });
+      const examItem = assessments.find(item => item.type === "EXAM");
+      caMax = caItems.reduce((sum, item) => sum + item.max, 0);
+      examMax = examItem.max;
+      caScore = caItems.length && caItems.every(item => item.score !== null && item.score !== undefined) ? caItems.reduce((sum, item) => sum + item.score, 0) : null;
+      examScore = examItem.score === undefined ? null : examItem.score;
+    } else {
+      caMax = req.body?.caMax ?? 30;
+      examMax = req.body?.examMax ?? 70;
+      caScore = req.body?.caScore === "" || req.body?.caScore === undefined || req.body?.caScore === null ? null : req.body.caScore;
+      examScore = req.body?.examScore === "" || req.body?.examScore === undefined || req.body?.examScore === null ? null : req.body.examScore;
+      for (const [name, value] of [["caMax", caMax], ["examMax", examMax]]) if (typeof value !== "number" || !Number.isFinite(value) || value <= 0 || value > 100) return res.status(400).json({ error: name + " must be greater than 0 and no more than 100." });
+      for (const [name, value, max] of [["caScore", caScore, caMax], ["examScore", examScore, examMax]]) if (value !== null && (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > max)) return res.status(400).json({ error: name + " must be blank or between 0 and " + max + "." });
+      if (Math.abs((caMax + examMax) - 100) > 0.001) return res.status(400).json({ error: "CA maximum and exam maximum must add up to 100." });
+    }
+    const writeData = { caScore, caMax, examScore, examMax, ...(assessments ? { assessments } : {}) };
     const result = await prisma.universityCourseResult.upsert({
       where: { courseId_academicYear_semester: { courseId: course.id, academicYear: academicYear.trim(), semester } },
-      create: { userId: req.userId, courseId: course.id, academicYear: academicYear.trim(), semester, caScore, caMax, examScore, examMax },
-      update: { caScore, caMax, examScore, examMax }
+      create: { userId: req.userId, courseId: course.id, academicYear: academicYear.trim(), semester, ...writeData },
+      update: writeData
     });
     res.json({ result: presentResult({ ...result, course }) });
   } catch (error) { next(error); }
