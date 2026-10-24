@@ -9,6 +9,7 @@ const subjectRoutes = require("./routes/subjects");
 const scoreRoutes = require("./routes/scores");
 const supportRoutes = require("./routes/support");
 const adminRoutes = require("./routes/admin");
+const aiRoutes = require("./routes/ai");
 
 const app = express();
 app.disable("x-powered-by");
@@ -57,6 +58,7 @@ app.use("/api/subjects", subjectRoutes);
 app.use("/api/scores", scoreRoutes);
 app.use("/api/support", messageLimiter, supportRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/ai", aiRoutes);
 
 app.use((_req, res) => res.status(404).json({ error: "Route not found." }));
 

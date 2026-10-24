@@ -69,3 +69,14 @@ For the simplest first deployment, use Neon's direct PostgreSQL connection strin
 ## Important current limitation
 
 This creates the backend and database schema; it does **not yet connect the existing browser UI to these endpoints**. The current frontend still reads/writes IndexedDB. The next stage is to add registration/login screens and replace local-only persistence for authenticated users with these API calls, while keeping the existing design and backup/import capability.
+
+
+## AI learning (optional)
+
+The AI learning routes are authenticated and use OpenRouter from the server; the provider key is never sent to the browser. To enable the student tutor, quiz generator, notes summarizer, and study planner, set these environment variables on the backend host:
+
+- `OPENROUTER_API_KEY` — private OpenRouter API key. Never add this to frontend code or commit a real value.
+- `OPENROUTER_MODEL` — optional model identifier; defaults to `openai/gpt-4o-mini`.
+- `AI_SITE_URL` — optional site URL sent as provider metadata.
+
+The `/api/ai` endpoint accepts `tutor`, `quiz`, `summarize`, and `study-plan` actions, limits supplied text to 12,000 characters, and allows 10 requests per account per 15 minutes. The admin-only `GET /api/ai/status` endpoint reports configuration status without exposing credentials. No new database tables or migrations are required. AI is disabled until the server-side key is configured.
