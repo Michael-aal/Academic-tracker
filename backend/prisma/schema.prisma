@@ -80,6 +80,7 @@ model UniversityCourse {
   code        String                   @db.VarChar(30)
   title       String                   @db.VarChar(120)
   creditUnits Int                      @map("credit_units")
+  targetScore Int                      @default(70) @map("target_score")
   createdAt   DateTime                 @default(now()) @map("created_at")
   updatedAt   DateTime                 @updatedAt @map("updated_at")
   user        User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
