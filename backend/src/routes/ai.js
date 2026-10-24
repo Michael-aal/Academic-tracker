@@ -74,10 +74,6 @@ router.post("/", aiLimiter, async (req, res) => {
     : 5;
 
   if (!ACTIONS.has(action)) return res.status(400).json({ error: "Choose a supported AI learning task." });
-  const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } });
-  if (!user) return res.status(401).json({ error: "Account not found. Please sign in again." });
-  const courses = user.educationTrack === "HIGHER" ? await prisma.universityCourse.findMany({ where: { userId: req.userId }, select: { code: true, title: true, creditUnits: true, targetScore: true }, orderBy: { code: "asc" }, take: 60 }) : [];
-  const studentProfile = { ...user, courses };
   if (content.length > MAX_INPUT_CHARS) {
     return res.status(413).json({ error: "Your request is too long. Keep your question or notes under 12,000 characters." });
   }
@@ -91,6 +87,10 @@ router.post("/", aiLimiter, async (req, res) => {
   const timeout = setTimeout(() => controller.abort(), 45000);
 
   try {
+    const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } });
+    if (!user) return res.status(401).json({ error: "Account not found. Please sign in again." });
+    const courses = user.educationTrack === "HIGHER" ? await prisma.universityCourse.findMany({ where: { userId: req.userId }, select: { code: true, title: true, creditUnits: true, targetScore: true }, orderBy: { code: "asc" }, take: 60 }) : [];
+    const studentProfile = { ...user, courses };
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       signal: controller.signal,
