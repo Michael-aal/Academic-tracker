@@ -31,15 +31,27 @@ router.post("/courses", async (req, res, next) => {
     const code = typeof req.body?.code === "string" ? req.body.code.trim().toUpperCase().slice(0, 30) : "";
     const title = typeof req.body?.title === "string" ? req.body.title.trim().slice(0, 120) : "";
     const creditUnits = req.body?.creditUnits;
+    const targetScore = req.body?.targetScore === undefined ? 70 : req.body.targetScore;
     if (!/^[A-Z0-9][A-Z0-9 -]{1,29}$/.test(code)) return res.status(400).json({ error: "Enter a valid course code, for example CSC 201." });
     if (title.length < 2) return res.status(400).json({ error: "Enter the course title." });
     if (!Number.isInteger(creditUnits) || creditUnits < 1 || creditUnits > 12) return res.status(400).json({ error: "Credit units must be a whole number from 1 to 12." });
-    const course = await prisma.universityCourse.create({ data: { userId: req.userId, code, title, creditUnits } });
+    if (!Number.isInteger(targetScore) || targetScore < 0 || targetScore > 100) return res.status(400).json({ error: "Target score must be a whole number from 0 to 100." });
+    const course = await prisma.universityCourse.create({ data: { userId: req.userId, code, title, creditUnits, targetScore } });
     res.status(201).json({ course });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return res.status(409).json({ error: "That course code already exists in your course list." });
     next(error);
   }
+});
+router.patch("/courses/:courseId/target", async (req, res, next) => {
+  try {
+    const targetScore = req.body?.targetScore;
+    if (!Number.isInteger(targetScore) || targetScore < 0 || targetScore > 100) return res.status(400).json({ error: "Target score must be a whole number from 0 to 100." });
+    const result = await prisma.universityCourse.updateMany({ where: { id: req.params.courseId, userId: req.userId }, data: { targetScore } });
+    if (!result.count) return res.status(404).json({ error: "Course not found." });
+    const course = await prisma.universityCourse.findFirst({ where: { id: req.params.courseId, userId: req.userId } });
+    res.json({ course });
+  } catch (error) { next(error); }
 });
 router.put("/courses/:courseId/result", async (req, res, next) => {
   try {
