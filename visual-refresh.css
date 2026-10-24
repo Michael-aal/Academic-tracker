@@ -1,0 +1,193 @@
+/* Academic Tracker — shared visual system
+   Loaded after page-specific styles to keep the app visually consistent. */
+:root {
+  --ui-bg: #0a100d;
+  --ui-surface: #111a15;
+  --ui-surface-raised: #17231b;
+  --ui-surface-soft: #1b2b21;
+  --ui-border: rgba(184, 218, 193, .13);
+  --ui-text: #f3f7f4;
+  --ui-muted: #a0b0a5;
+  --ui-accent: #a8f0c2;
+  --ui-accent-strong: #62d895;
+  --ui-radius: 20px;
+  --ui-shadow: 0 18px 48px rgba(0, 0, 0, .20);
+}
+html { scroll-behavior: smooth; }
+body {
+  color: var(--ui-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+a { text-underline-offset: 4px; }
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--ui-accent) !important;
+  outline-offset: 3px;
+}
+:where(button, .button, input, select, textarea) { border-radius: 12px; }
+:where(input, select, textarea) {
+  max-width: 100%;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+:where(input, select, textarea):focus {
+  border-color: rgba(168, 240, 194, .65) !important;
+  box-shadow: 0 0 0 3px rgba(98, 216, 149, .10);
+}
+:where(button, .button) { transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease; }
+:where(button, .button):active { transform: translateY(1px); }
+:where(.card, .auth-card, .profile-hero, .profile-card, .ai-hero, .workspace, .task-picker, .mm-stat, .ev-search-panel, .ev-video-card) {
+  border-color: var(--ui-border);
+}
+.app-shell { min-height: 100svh; }
+.app-shell .sidebar {
+  border-right-color: var(--ui-border);
+}
+.app-shell .main {
+  width: 100%;
+  min-width: 0;
+}
+.app-shell .topbar {
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.app-shell .topbar h1,
+.app-shell .page-heading h1 {
+  letter-spacing: -.045em;
+  line-height: 1.12;
+}
+.app-shell .card {
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+}
+.app-shell .button,
+.auth-main .button,
+.ai-shell button,
+.mm-shell button,
+.ev-shell button {
+  min-height: 42px;
+}
+.app-shell .nav-link,
+.app-shell .dropdown-item {
+  border-radius: 12px;
+}
+.app-shell .nav-link:focus-visible,
+.app-shell .dropdown-item:focus-visible {
+  outline-offset: 2px;
+}
+.app-shell .sidebar-note { line-height: 1.65; }
+.app-shell .eyebrow { letter-spacing: .12em; }
+.auth-side {
+  background:
+    radial-gradient(ellipse at 18% 20%, rgba(81, 163, 105, .17), transparent 42%),
+    linear-gradient(155deg, #101c14, #09100c 75%);
+}
+.auth-card {
+  border: 1px solid var(--ui-border);
+  border-radius: 24px;
+  box-shadow: var(--ui-shadow);
+}
+.auth-form .field { gap: 9px; }
+.auth-form input { min-height: 48px; }
+.ai-shell, .mm-shell, .ev-shell {
+  min-height: 100svh;
+}
+.ai-topbar, .mm-topbar, .ev-topbar {
+  min-height: 72px;
+  gap: 20px;
+  border-bottom-color: var(--ui-border);
+}
+.ai-topbar nav, .mm-topbar nav, .ev-topbar nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.ai-topbar nav a, .mm-topbar nav a, .ev-topbar nav a {
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background .18s ease, color .18s ease;
+}
+.ai-shell main, .mm-shell main, .ev-shell main {
+  width: min(100% - 40px, 1160px);
+  margin-inline: auto;
+}
+.ai-hero, .mm-hero, .ev-hero {
+  padding-block: clamp(34px, 6vw, 68px);
+}
+.ai-hero h1, .mm-hero h1, .ev-hero h1 {
+  letter-spacing: -.055em;
+  line-height: 1.04;
+  text-wrap: balance;
+}
+.ai-hero p, .mm-hero p, .ev-hero p {
+  max-width: 680px;
+  line-height: 1.75;
+}
+.workspace {
+  gap: 22px;
+  align-items: start;
+}
+.task-picker, .ai-workspace, .mm-stat, .ev-search-panel {
+  border-radius: var(--ui-radius);
+}
+.tool-choice {
+  border-radius: 14px;
+  text-align: left;
+}
+.mm-stats {
+  gap: 16px;
+}
+.mm-stat {
+  padding: 22px;
+  background: linear-gradient(145deg, rgba(25, 40, 30, .96), rgba(16, 25, 19, .96));
+  box-shadow: var(--ui-shadow);
+}
+.mm-stat strong { letter-spacing: -.04em; }
+.ev-search-panel { padding: clamp(18px, 3vw, 30px); }
+.ev-search-row { gap: 10px; }
+.ev-search-row input { min-height: 48px; }
+.ev-video-grid { gap: 18px; }
+.ev-video-card { overflow: hidden; border-radius: 18px; }
+.profile-hero { gap: 24px; }
+:where(.profile-main, .main) h2 { letter-spacing: -.035em; }
+:where(.profile-main, .main) p { line-height: 1.7; }
+@media (hover: hover) {
+  .app-shell .card:hover,
+  .mm-stat:hover,
+  .ev-video-card:hover {
+    border-color: rgba(168, 240, 194, .24);
+  }
+  .ai-topbar nav a:hover, .mm-topbar nav a:hover, .ev-topbar nav a:hover {
+    background: rgba(168, 240, 194, .08);
+  }
+}
+@media (max-width: 900px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .app-shell .sidebar { display: none; }
+  .app-shell .main { padding-inline: clamp(16px, 4vw, 28px); }
+  .ai-topbar, .mm-topbar, .ev-topbar { align-items: flex-start; padding-block: 14px; }
+  .ai-topbar nav, .mm-topbar nav, .ev-topbar nav { gap: 6px; }
+  .ai-shell main, .mm-shell main, .ev-shell main { width: min(100% - 28px, 760px); }
+}
+@media (max-width: 600px) {
+  .app-shell .main { padding: 20px 14px calc(28px + env(safe-area-inset-bottom)); }
+  .app-shell .topbar { align-items: flex-start; }
+  .app-shell .topbar h1, .app-shell .page-heading h1 { font-size: clamp(25px, 7vw, 34px); }
+  .app-shell .top-actions { width: 100%; }
+  .app-shell .top-actions .button { min-height: 42px; }
+  .auth-main { padding: 20px 14px; }
+  .auth-card { width: 100%; padding: clamp(20px, 6vw, 30px); }
+  .ai-topbar, .mm-topbar, .ev-topbar { padding-inline: 14px; }
+  .ai-topbar nav, .mm-topbar nav, .ev-topbar nav { width: 100%; }
+  .ai-shell main, .mm-shell main, .ev-shell main { width: calc(100% - 28px); }
+  .ai-hero, .mm-hero, .ev-hero { padding-block: 34px; }
+  .ai-hero h1, .mm-hero h1, .ev-hero h1 { font-size: clamp(32px, 9vw, 46px); }
+  .ev-search-row { flex-direction: column; }
+  .ev-search-row input, .ev-search-row button { width: 100%; }
+  .mm-stat { padding: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
