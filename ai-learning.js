@@ -5,7 +5,7 @@
   if (!token) { window.location.replace("login.html"); return; }
 
   const $ = id => document.getElementById(id);
-  const state = { action: "tutor", answer: "", speechUtterance: null };
+  const state = { action: "tutor", answer: "", speechUtterance: null, quiz: null };
   const SPEECH_SETTINGS_KEY = "academic-tracker-voice-settings";
   const taskCopy = {
     tutor: { title: "Ask your tutor", description: "Tell me what you're learning and where you're stuck.", label: "What would you like help understanding?", placeholder: "e.g. Explain Newton's second law and show me a simple example…", button: "Help me understand", result: "Your explanation" },
@@ -170,9 +170,107 @@
     }
   }
 
+
+  function parseQuizAnswer(raw) {
+    const cleaned = String(raw || "").trim().replace(/^\x60{3}(?:json)?\s*/i, "").replace(/\s*\x60{3}$/i, "");
+    let parsed;
+    try { parsed = JSON.parse(cleaned); } catch { throw new Error("The quiz came back in an unexpected format. Please generate it again."); }
+    const list = Array.isArray(parsed) ? parsed : parsed.questions;
+    if (!Array.isArray(list) || !list.length) throw new Error("The AI did not return any quiz questions. Please try again.");
+    return list.map((item, index) => {
+      const entries = Array.isArray(item.options)
+        ? item.options.map((value, i) => [String.fromCharCode(65 + i), value])
+        : Object.entries(item.options || {});
+      const options = entries.slice(0, 4).map(([key, value], i) => ({
+        key: /^[A-D]$/i.test(String(key)) ? String(key).toUpperCase() : String.fromCharCode(65 + i),
+        text: String(value == null ? "" : value).trim()
+      })).filter(option => option.text);
+      const rawAnswer = String(item.answer ?? item.correctAnswer ?? "").trim();
+      const answer = /^[A-D]$/i.test(rawAnswer) ? rawAnswer.toUpperCase() :
+        (options.find(option => option.text.toLowerCase() === rawAnswer.toLowerCase()) || {}).key;
+      if (!item || typeof item.question !== "string" || options.length !== 4 || !answer) {
+        throw new Error("Question " + (index + 1) + " is incomplete. Please generate the quiz again.");
+      }
+      return { question: item.question.trim(), options, answer, explanation: String(item.explanation || "Review the topic in your notes for more detail.") };
+    });
+  }
+
+  function renderQuiz() {
+    const view = $("quiz-view");
+    const quiz = state.quiz;
+    if (!quiz) { view.hidden = true; return; }
+    view.hidden = false;
+    $("result-content").hidden = true;
+    if (quiz.finished) {
+      const score = quiz.questions.reduce((total, question, index) => total + (quiz.answers[index] === question.answer ? 1 : 0), 0);
+      view.innerHTML = '<div class="quiz-finish"><span class="quiz-kicker">QUIZ COMPLETE</span><h4>You scored ' + score + ' out of ' + quiz.questions.length + '</h4><p>' +
+        (score === quiz.questions.length ? 'Excellent work — you got every question right.' : score >= Math.ceil(quiz.questions.length * .7) ? 'Good progress. Review the questions you missed to strengthen your understanding.' : 'Keep practising. Read the explanations below, then try another round.') +
+        '</p><div class="quiz-review">' + quiz.questions.map((q, i) => {
+          const chosen = quiz.answers[i];
+          const correct = chosen === q.answer;
+          const chosenText = q.options.find(o => o.key === chosen)?.text || "Not answered";
+          const answerText = q.options.find(o => o.key === q.answer)?.text || "";
+          return '<article class="quiz-review-item"><strong>' + (i + 1) + '. ' + escapeHTML(q.question) + '</strong><p class="' + (correct ? 'quiz-correct-text' : 'quiz-wrong-text') + '">' +
+            (correct ? 'Correct' : 'Your answer: ' + escapeHTML(chosenText)) + '</p>' +
+            (correct ? '' : '<p>Correct answer: ' + escapeHTML(q.answer + '. ' + answerText) + '</p>') +
+            '<p>' + escapeHTML(q.explanation) + '</p></article>';
+        }).join("") + '</div><button class="quiz-next" type="button" data-quiz-restart>Try again</button></div>';
+      return;
+    }
+    const i = quiz.index;
+    const q = quiz.questions[i];
+    const chosen = quiz.answers[i];
+    const answered = Boolean(chosen);
+    view.innerHTML = '<div class="quiz-progress-row"><span class="quiz-kicker">QUESTION ' + (i + 1) + ' OF ' + quiz.questions.length +
+      '</span><span>' + Math.round(i / quiz.questions.length * 100) + '%</span></div><div class="quiz-progress"><span style="width:' +
+      ((i + 1) / quiz.questions.length * 100) + '%"></span></div><h4 class="quiz-question">' + escapeHTML(q.question) +
+      '</h4><div class="quiz-options-list">' + q.options.map(o => {
+        const correct = o.key === q.answer;
+        const selected = o.key === chosen;
+        const cls = answered && correct ? ' is-correct' : answered && selected && !correct ? ' is-wrong' : '';
+        return '<button class="quiz-option' + cls + (selected ? ' is-selected' : '') + '" type="button" data-quiz-option="' + o.key +
+          '"' + (answered ? ' disabled' : '') + '><span class="quiz-option-letter">' + o.key + '</span><span>' + escapeHTML(o.text) +
+          '</span>' + (answered && correct ? '<span class="quiz-option-mark" aria-label="Correct answer">✓</span>' : '') + '</button>';
+      }).join("") + '</div>' + (answered
+        ? '<div class="quiz-feedback ' + (chosen === q.answer ? 'feedback-correct' : 'feedback-wrong') + '"><strong>' +
+          (chosen === q.answer ? 'That’s correct!' : 'Not quite — keep going.') + '</strong><p>Correct answer: ' +
+          escapeHTML(q.answer + '. ' + q.options.find(o => o.key === q.answer).text) + '</p><p>' + escapeHTML(q.explanation) +
+          '</p></div><button class="quiz-next" type="button" data-quiz-next>' +
+          (i === quiz.questions.length - 1 ? 'See my score' : 'Next question') + ' <span aria-hidden="true">→</span></button>'
+        : '<p class="quiz-hint">Choose one answer to see your feedback.</p>');
+  }
+
+  function handleQuizClick(event) {
+    const option = event.target.closest("[data-quiz-option]");
+    if (option && state.quiz && !state.quiz.finished && !state.quiz.answers[state.quiz.index]) {
+      state.quiz.answers[state.quiz.index] = option.dataset.quizOption;
+      renderQuiz();
+      return;
+    }
+    if (event.target.closest("[data-quiz-next]") && state.quiz) {
+      if (state.quiz.index >= state.quiz.questions.length - 1) state.quiz.finished = true;
+      else state.quiz.index += 1;
+      renderQuiz();
+      $("quiz-view").scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (event.target.closest("[data-quiz-restart]") && state.quiz) {
+      state.quiz.index = 0;
+      state.quiz.answers = [];
+      state.quiz.finished = false;
+      renderQuiz();
+    }
+  }
+
+  $("quiz-view").addEventListener("click", handleQuizClick);
+
   function setAction(action) {
     stopSpeech("Ready to read aloud");
     state.action = action;
+    state.quiz = null;
+    $("quiz-view").hidden = true;
+    $("quiz-view").innerHTML = "";
+    $("result-content").hidden = false;
     const copy = taskCopy[action];
     document.querySelectorAll("[data-action]").forEach(button => button.classList.toggle("active", button.dataset.action === action));
     $("task-title").textContent = copy.title;
@@ -249,7 +347,17 @@
       });
       if (typeof data.answer !== "string" || !data.answer.trim()) throw new Error("The AI returned an empty response. Please try again.");
       state.answer = data.answer;
-      $("result-content").innerHTML = renderMarkdown(data.answer);
+      if (state.action === "quiz") {
+        state.quiz = { questions: parseQuizAnswer(data.answer), index: 0, answers: [], finished: false };
+        $("result-content").innerHTML = "";
+        $("result-content").hidden = true;
+        renderQuiz();
+      } else {
+        state.quiz = null;
+        $("quiz-view").hidden = true;
+        $("result-content").hidden = false;
+        $("result-content").innerHTML = renderMarkdown(data.answer);
+      }
       $("result-panel").hidden = false;
       $("notice").textContent = "Response ready. Review it alongside your school materials.";
       updateSpeechButtons();
