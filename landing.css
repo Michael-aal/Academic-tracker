@@ -5,3 +5,34 @@
 @media(min-width:1001px){.feature-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.feature-card{min-height:285px}}
 .feature-card p{font-size:12px}
 @media(max-width:720px){.feature-card p{font-size:11px}}
+
+/* Landing-page polish: one consistent green arrow language, without icon borders. */
+.arrow-icon{display:inline-block;width:18px;height:18px;flex:0 0 18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;transition:transform .2s ease}
+.button .arrow-icon{color:#0a2115}
+.button:hover .arrow-icon{transform:translateX(3px)}
+.site-nav .button .arrow-icon{width:16px;height:16px}
+.chip-icon{display:grid;place-items:center;width:31px;height:31px;border:0!important;border-radius:10px;background:#254632;color:var(--mint);font-size:17px}
+.chip-icon .arrow-icon{width:18px;height:18px}
+.check-icon{background:#254632!important;color:var(--mint)!important;border:0!important}
+.chart-trend{display:inline-flex;align-items:center;gap:4px;color:var(--mint)!important}
+.chart-trend .arrow-icon{width:14px;height:14px}
+.why-section{padding-top:112px;padding-bottom:112px}
+.why-heading{max-width:760px;margin-bottom:34px}
+.why-heading h2{font:800 clamp(32px,4.2vw,48px)/1.15 Manrope,sans-serif;letter-spacing:-1.8px;margin:15px 0}
+.why-heading>p{max-width:700px;color:#a2b3a7;font-size:14px;line-height:1.9}
+.why-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.why-card{display:flex;gap:17px;padding:23px;border:1px solid #293c2e;border-radius:17px;background:linear-gradient(145deg,#121e16,#0c1510)}
+.why-index{display:grid;place-items:center;flex:0 0 37px;height:37px;border-radius:11px;background:#1d3b28;color:var(--mint);font:800 11px Manrope,sans-serif}
+.why-card h3{font-size:15px;margin:2px 0 9px;letter-spacing:-.3px}
+.why-card p{font-size:12px;line-height:1.8;color:#95a89a;margin:0}
+.pathway-panel{margin-top:20px;padding:clamp(22px,4vw,38px);border:1px solid #31503a;border-radius:20px;background:radial-gradient(ellipse at 100% 0%,#193725 0,transparent 48%),#0e1912;display:grid;grid-template-columns:1fr .85fr;gap:25px;align-items:center}
+.pathway-copy h3{font-size:23px;line-height:1.25;margin:12px 0}
+.pathway-copy p{color:#9dafA3;font-size:12px;line-height:1.8;margin:0}
+.pathway-controls{display:flex;gap:8px;flex-wrap:wrap}
+.pathway-tab{padding:10px 13px;border:1px solid #304536;border-radius:999px;background:#101c14;color:#a9b9ad;font-size:11px;font-weight:700;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.pathway-tab:hover,.pathway-tab.active{background:#21432d;color:#d9ffe4;border-color:#4c8a5d}
+.pathway-points{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;list-style:none;margin:0;padding:0}
+.pathway-points li{padding:13px 14px;border-radius:12px;background:#142219;color:#bdcfc1;font-size:11px;line-height:1.7}
+.pathway-points li:before{content:"✓";display:inline-block;margin-right:8px;color:var(--mint);font-weight:800}
+@media(max-width:720px){.why-section{padding-top:78px;padding-bottom:78px}.why-grid{grid-template-columns:1fr}.why-card{padding:19px}.pathway-panel{grid-template-columns:1fr;gap:20px}.pathway-points{grid-template-columns:1fr}.pathway-tab{flex:1 1 auto}}
+@media(prefers-reduced-motion:reduce){.arrow-icon{transition:none}}
