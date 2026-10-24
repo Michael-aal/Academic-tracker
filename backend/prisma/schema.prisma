@@ -13,12 +13,19 @@ model User {
   email                 String                @unique @db.VarChar(254)
   passwordHash          String                @map("password_hash")
   role                  String                @default("USER") @db.VarChar(20)
+  educationTrack        String                @default("SECONDARY") @map("education_track") @db.VarChar(20)
+  institutionName       String?               @map("institution_name") @db.VarChar(160)
+  programme             String?               @db.VarChar(160)
+  studyLevel            String?               @map("study_level") @db.VarChar(40)
   currentAcademicYear   String                @default("2026–2027") @map("current_academic_year") @db.VarChar(30)
   currentTerm           String                @default("Term 1") @map("current_term") @db.VarChar(20)
+  currentSemester       String                @default("Semester 1") @map("current_semester") @db.VarChar(20)
   createdAt             DateTime              @default(now()) @map("created_at")
   updatedAt             DateTime              @updatedAt @map("updated_at")
   subjects              Subject[]
   assessmentScores      AssessmentScore[]
+  universityCourses     UniversityCourse[]
+  universityResults     UniversityCourseResult[]
   supportConversation   SupportConversation?
   supportMessages       SupportMessage[]      @relation("SupportMessageSender")
 
@@ -64,6 +71,43 @@ model AssessmentScore {
   @@unique([subjectId, academicYear, term])
   @@index([userId, academicYear, term])
   @@map("assessment_scores")
+}
+
+
+model UniversityCourse {
+  id          String                   @id @default(cuid())
+  userId      String                   @map("user_id")
+  code        String                   @db.VarChar(30)
+  title       String                   @db.VarChar(120)
+  creditUnits Int                      @map("credit_units")
+  createdAt   DateTime                 @default(now()) @map("created_at")
+  updatedAt   DateTime                 @updatedAt @map("updated_at")
+  user        User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  results     UniversityCourseResult[]
+
+  @@unique([userId, code])
+  @@index([userId, createdAt])
+  @@map("university_courses")
+}
+
+model UniversityCourseResult {
+  id           String           @id @default(cuid())
+  userId       String           @map("user_id")
+  courseId     String           @map("course_id")
+  academicYear String           @map("academic_year") @db.VarChar(30)
+  semester     String           @db.VarChar(20)
+  caScore      Float?           @map("ca_score")
+  caMax        Float            @default(30) @map("ca_max")
+  examScore    Float?           @map("exam_score")
+  examMax      Float            @default(70) @map("exam_max")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course       UniversityCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, academicYear, semester])
+  @@index([userId, academicYear, semester])
+  @@map("university_course_results")
 }
 
 model SupportConversation {
