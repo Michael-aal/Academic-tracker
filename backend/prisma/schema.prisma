@@ -101,6 +101,7 @@ model UniversityCourseResult {
   caMax        Float            @default(30) @map("ca_max")
   examScore    Float?           @map("exam_score")
   examMax      Float            @default(70) @map("exam_max")
+  assessments  Json?
   createdAt    DateTime         @default(now()) @map("created_at")
   updatedAt    DateTime         @updatedAt @map("updated_at")
   user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
