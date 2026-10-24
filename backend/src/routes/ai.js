@@ -32,7 +32,7 @@ function buildPrompt({ action, subject, topic, content, level, questionCount, st
 
   const tasks = {
     tutor: "Act as a patient tutor appropriate to the student's education track and programme. For higher-institution students, use university-level depth and their registered course context; for secondary students, explain at their school level. Address the student by their first name naturally when useful. Answer the student's question accurately in simple steps, define important terms, give one worked example where useful, and end with one short check-for-understanding question. If the question is ambiguous, state your assumption. Do not pretend certainty when unsure.",
-    quiz: "Create exactly " + questionCount + " useful revision questions at the student's education level, based on the supplied subject/topic/material and programme context. Mix recall and application where suitable. Number every question, provide a clear answer key and brief explanations in a separate section, and do not invent facts unsupported by the material. If notes are absent, use established subject knowledge and say so.",
+    quiz: "Create exactly " + questionCount + " multiple-choice revision questions at the student's education level, based on the supplied subject/topic/material and programme context. Return ONLY valid JSON, with no Markdown fences, headings, or extra text, using this shape: {\"questions\":[{\"question\":\"Question text\",\"options\":{\"A\":\"Option text\",\"B\":\"Option text\",\"C\":\"Option text\",\"D\":\"Option text\"},\"answer\":\"A\",\"explanation\":\"Short explanation\"}]}. Every question must have exactly four plausible options labelled A, B, C, D, one unambiguous correct answer whose answer field is the letter, and a concise explanation. Do not reveal answers before the learner selects an option. Mix recall and application where suitable. If notes are absent, use established subject knowledge.",
     summarize: "Summarize the supplied study material for revision. Use a short overview, key facts/definitions, important steps or formulas, and 3 quick self-test questions with answers at the end. Preserve the meaning; do not add unsupported claims. If no notes were supplied, ask the student to paste notes.",
     "study-plan": "Create a realistic, encouraging 7-day study plan for the supplied subject/topic, considering the student's programme, registered courses and target grades when relevant. Use short sessions, active recall, practice questions and review days. Include a clear daily task and a simple way to check understanding. Do not assume the student's available hours; suggest flexible 20–30 minute blocks."
   };
@@ -103,8 +103,9 @@ router.post("/", aiLimiter, async (req, res) => {
       body: JSON.stringify({
         model,
         messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, studentProfile }) }],
-        temperature: 0.4,
-        max_tokens: 1800
+        ...(action === "quiz" ? { response_format: { type: "json_object" } } : {}),
+        temperature: 0.3,
+        max_tokens: action === "quiz" ? 2800 : 1800
       })
     });
 
