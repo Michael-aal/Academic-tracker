@@ -4,7 +4,7 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0a100d"><meta name="description" content="Your personal academic accountability tracker.">
   <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="ui-polish.css"><link rel="stylesheet" href="dashboard-menus.css">
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="ui-polish.css"><link rel="stylesheet" href="dashboard-menus.css"><link rel="stylesheet" href="study-streaks.css">
   <title>Academic Tracker · Dashboard</title>
 </head>
 <body>
@@ -66,5 +66,6 @@
     <label>Target total (out of 100)<input id="subject-target" type="number" min="0" max="100" value="75" required inputmode="numeric"></label>
     <div class="dialog-actions"><button class="button secondary" type="button" id="cancel-subject">Cancel</button><button class="button primary" id="save-subject" value="default">Add subject</button></div>
   </form></dialog>
-  <input id="import-file" type="file" accept="application/json,.json" hidden><script src="app.js"></script><script src="dashboard-auth.js"></script><script src="profile-widget.js"></script><script src="dashboard-menus.js"></script>
+  <input id="import-file" type="file" accept="application/json,.json" hidden>
+  <script src="app.js"></script><script src="dashboard-auth.js"></script><script src="profile-widget.js"></script><script src="dashboard-menus.js"></script><script src="study-streaks.js"></script>
 </body></html>
