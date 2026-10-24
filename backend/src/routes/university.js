@@ -2,34 +2,28 @@ const express = require("express");
 const { Prisma } = require("@prisma/client");
 const { prisma } = require("../prisma");
 const { requireAuth } = require("../middleware/auth");
+const { gradeFor, summarizeResults, presentResult } = require("../university-grading");
 const router = express.Router();
 router.use(requireAuth);
 
 const semesters = new Set(["Semester 1", "Semester 2"]);
-const gradeFor = score => score >= 70 ? { grade: "A", gradePoint: 5 } : score >= 60 ? { grade: "B", gradePoint: 4 } : score >= 50 ? { grade: "C", gradePoint: 3 } : score >= 45 ? { grade: "D", gradePoint: 2 } : score >= 40 ? { grade: "E", gradePoint: 1 } : { grade: "F", gradePoint: 0 };
-function summary(results) {
-  const completed = results.filter(r => r.caScore !== null && r.examScore !== null);
-  const points = completed.reduce((sum, r) => sum + (r.course.creditUnits * gradeFor((r.caScore || 0) + (r.examScore || 0)).gradePoint), 0);
-  const units = completed.reduce((sum, r) => sum + r.course.creditUnits, 0);
-  return { gpa: units ? Number((points / units).toFixed(2)) : null, completedCourses: completed.length, completedUnits: units };
-}
-function present(r) {
-  const total = r.caScore !== null && r.examScore !== null ? r.caScore + r.examScore : null;
-  const grade = total === null ? null : gradeFor(total);
-  return { ...r, totalScore: total, grade: grade?.grade ?? null, gradePoint: grade?.gradePoint ?? null, qualityPoints: grade ? grade.gradePoint * r.course.creditUnits : null };
-}
 router.get("/", async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { currentAcademicYear: true, currentSemester: true } });
+    if (!user) return res.status(401).json({ error: "Account not found. Please log in again." });
     const year = typeof req.query.academicYear === "string" ? req.query.academicYear.trim() : user.currentAcademicYear;
     const semester = typeof req.query.semester === "string" ? req.query.semester : user.currentSemester;
     if (!year || year.length > 30 || !semesters.has(semester)) return res.status(400).json({ error: "Choose a valid academic year and semester." });
     const courses = await prisma.universityCourse.findMany({ where: { userId: req.userId }, orderBy: { code: "asc" }, include: { results: { where: { userId: req.userId } } } });
-    const allResults = courses.flatMap(c => c.results.map(r => ({ ...r, course: { id: c.id, code: c.code, title: c.title, creditUnits: c.creditUnits } })));
-    const semesterResults = allResults.filter(r => r.academicYear === year && r.semester === semester).map(presentResult);
-    const overall = summary(allResults.map(r => ({ ...r, course: { ...r.course } })));
-    const semesterSummary = summary(allResults.filter(r => r.academicYear === year && r.semester === semester).map(r => ({ ...r, course: { ...r.course } })));
-    res.json({ academicYear: year, semester, courses: courses.map(({ results, ...c }) => c), results: semesterResults, semesterGpa: semesterSummary.gpa, cgpa: overall.gpa, completedCourses: overall.completedCourses, completedUnits: overall.completedUnits });
+    const allResults = courses.flatMap(course => course.results.map(result => ({ ...result, course: { id: course.id, code: course.code, title: course.title, creditUnits: course.creditUnits } })));
+    const semesterResults = allResults.filter(result => result.academicYear === year && result.semester === semester).map(presentResult);
+    const overall = summarizeResults(allResults);
+    const semesterSummary = summarizeResults(allResults.filter(result => result.academicYear === year && result.semester === semester));
+    res.json({
+      academicYear: year, semester, courses: courses.map(({ results, ...course }) => course),
+      results: semesterResults, semesterGpa: semesterSummary.gpa, cgpa: overall.gpa,
+      completedCourses: overall.completedCourses, completedUnits: overall.completedUnits
+    });
   } catch (error) { next(error); }
 });
 router.post("/courses", async (req, res, next) => {
@@ -65,7 +59,7 @@ router.put("/courses/:courseId/result", async (req, res, next) => {
       create: { userId: req.userId, courseId: course.id, academicYear: academicYear.trim(), semester, caScore, caMax, examScore, examMax },
       update: { caScore, caMax, examScore, examMax }
     });
-    res.json({ result: present({ ...result, course }) });
+    res.json({ result: presentResult({ ...result, course }) });
   } catch (error) { next(error); }
 });
 router.delete("/courses/:courseId", async (req, res, next) => {
