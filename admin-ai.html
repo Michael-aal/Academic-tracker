@@ -26,7 +26,7 @@
   </main>
   <script>
   (() => {
-    const API_BASE = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\\/$/, "");
+    const API_BASE = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
     const token = localStorage.getItem("academic-tracker-token");
     if (!token) { window.location.replace("login.html"); return; }
     let user = {}; try { user = JSON.parse(localStorage.getItem("academic-tracker-user") || "{}"); } catch {}
