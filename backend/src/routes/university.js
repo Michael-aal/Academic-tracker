@@ -78,6 +78,7 @@ router.put("/courses/:courseId/result", async (req, res, next) => {
       if (exams !== 1) return res.status(400).json({ error: "Each course must have exactly one final exam." });
       if (Math.abs(assessments.reduce((sum, item) => sum + item.max, 0) - 100) > 0.001) return res.status(400).json({ error: "Assessment maximums must add up to 100. Adjust the CA and exam maximums." });
       const caItems = assessments.filter(item => item.type === "CA");
+      if (!caItems.length) return res.status(400).json({ error: "Keep at least one continuous-assessment item as well as the final exam." });
       const examItem = assessments.find(item => item.type === "EXAM");
       caMax = caItems.reduce((sum, item) => sum + item.max, 0);
       examMax = examItem.max;
