@@ -3,7 +3,7 @@
   --bg: #070914;
   --panel: #070914;
   --panel2: #070914;
-  --line: #29392f;
+  --line: #282d49;
   --green: #b69cff;
   --green2: #28213f;
   --radius: 20px;
@@ -69,7 +69,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .section-heading h2 { letter-spacing: -.55px; }
 .subject-row { gap: 14px; }
 .subject-icon { flex-shrink: 0; }
-.progress-track { background: #26352b; }
+.progress-track { background: #282d49; }
 .progress-fill { box-shadow: 0 0 12px rgba(96, 212, 147, .14); }
 .button {
   min-height: 42px;
@@ -123,7 +123,7 @@ footer {
   background: var(--green);
 }
 @media (hover: hover) and (pointer: fine) {
-  .card:hover { border-color: #354b3b; }
+  .card:hover { border-color: #34304d; }
   .subject-row:hover { background: rgba(255, 255, 255, .012); }
 }
 @media (max-width: 680px) {
