@@ -9,7 +9,7 @@
 .menu-trigger svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .menu-trigger:hover,.menu-trigger[aria-expanded="true"]{border-color:#171d34;background:#070914;color:var(--green)}
 .menu-trigger:active{transform:scale(.97)}
-.dropdown-menu{position:absolute;top:calc(100% + 9px);z-index:30;width:min(280px,calc(100vw - 28px));padding:9px;border:1px solid #304436;border-radius:17px;background:rgba(13,22,16,.98);box-shadow:0 24px 65px rgba(0,0,0,.48);backdrop-filter:blur(22px);animation:menu-in .14s ease-out}
+.dropdown-menu{position:absolute;top:calc(100% + 9px);z-index:30;width:min(280px,calc(100vw - 28px));padding:9px;border:1px solid #34304d;border-radius:17px;background:rgba(13,22,16,.98);box-shadow:0 24px 65px rgba(0,0,0,.48);backdrop-filter:blur(22px);animation:menu-in .14s ease-out}
 .dropdown-menu[hidden]{display:none}
 .navigation-menu{left:0}
 .account-menu{right:0;width:min(290px,calc(100vw - 28px))}
@@ -20,7 +20,7 @@
 .dropdown-symbol{display:grid;place-items:center;flex:0 0 25px;width:25px;height:25px;border:1px solid #101426;border-radius:8px;color:var(--green);font-size:14px}
 .menu-status{display:flex;align-items:center;padding:8px 11px 10px;color:#9eb2a3;font-size:11px}
 .menu-status .status-dot{margin-right:9px}
-.menu-separator{height:1px;margin:10px 5px;background:#28392d}
+.menu-separator{height:1px;margin:10px 5px;background:#282d49}
 .account-menu-heading{display:flex;align-items:center;gap:11px;padding:8px 9px 4px}
 .account-menu-heading>span:last-child{display:grid;gap:4px}
 .account-menu-heading strong{font-size:12px;color:#b69cff}
