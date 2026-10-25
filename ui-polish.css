@@ -78,7 +78,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .button:hover { filter: brightness(1.06); transform: translateY(-1px); }
 .button:active, .icon-button:active { transform: translateY(0) scale(.98); }
 .primary { box-shadow: 0 5px 15px rgba(128,87,245,.10); }
-.empty { background: rgba(12, 20, 15, .32); }
+.empty { background: rgba(13,27,53,.32); }
 .callout { border-radius: 15px; }
 .badge { white-space: nowrap; }
 .table-wrap { box-shadow: inset 0 1px rgba(255,255,255,.015); }
@@ -93,11 +93,11 @@ footer {
   flex-wrap: wrap;
   gap: 8px;
   padding-top: 14px;
-  border-top: 1px solid rgba(41, 57, 47, .55);
+  border-top: 1px solid rgba(20,38,74,.55);
 }
 .mobile-nav {
   padding-top: 10px;
-  background: rgba(10, 16, 13, .92);
+  background: rgba(13,27,53,.92);
   box-shadow: 0 -12px 34px rgba(0, 0, 0, .20);
 }
 .mobile-nav button {
@@ -181,7 +181,7 @@ footer {
 
 
 /* Profile shortcut and account identity */
-.profile-shortcut{display:flex;align-items:center;gap:10px;min-width:0;padding:5px 10px 5px 5px;border:1px solid var(--line);border-radius:14px;background:rgba(20,29,23,.9);color:var(--text);text-decoration:none;transition:border-color .18s ease,background .18s ease,transform .18s ease}
+.profile-shortcut{display:flex;align-items:center;gap:10px;min-width:0;padding:5px 10px 5px 5px;border:1px solid var(--line);border-radius:14px;background:rgba(13,27,53,.9);color:var(--text);text-decoration:none;transition:border-color .18s ease,background .18s ease,transform .18s ease}
 .profile-shortcut:hover{border-color:#14264A;background:#071426;transform:translateY(-1px)}
 .profile-shortcut-avatar{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#b69cff,#28213f);color:#071426;font:800 12px Manrope,sans-serif}
 .profile-shortcut-copy{display:grid;gap:3px;min-width:0}
