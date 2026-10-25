@@ -5,9 +5,9 @@
 .page-heading .eyebrow{margin:0 0 4px;font-size:9px;letter-spacing:1.35px}
 .page-heading h1{overflow-wrap:anywhere}
 .compact-actions{gap:8px}
-.menu-trigger{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border:1px solid var(--line);border-radius:13px;background:linear-gradient(145deg,#1b2a20,#111b14);color:var(--text);cursor:pointer;transition:background .18s ease,border-color .18s ease,transform .18s ease}
+.menu-trigger{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border:1px solid var(--line);border-radius:13px;background:linear-gradient(145deg,#070914,#070914);color:var(--text);cursor:pointer;transition:background .18s ease,border-color .18s ease,transform .18s ease}
 .menu-trigger svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.menu-trigger:hover,.menu-trigger[aria-expanded="true"]{border-color:#5c8d6a;background:#203426;color:var(--green)}
+.menu-trigger:hover,.menu-trigger[aria-expanded="true"]{border-color:#171d34;background:#070914;color:var(--green)}
 .menu-trigger:active{transform:scale(.97)}
 .dropdown-menu{position:absolute;top:calc(100% + 9px);z-index:30;width:min(280px,calc(100vw - 28px));padding:9px;border:1px solid #304436;border-radius:17px;background:rgba(13,22,16,.98);box-shadow:0 24px 65px rgba(0,0,0,.48);backdrop-filter:blur(22px);animation:menu-in .14s ease-out}
 .dropdown-menu[hidden]{display:none}
@@ -15,15 +15,15 @@
 .account-menu{right:0;width:min(290px,calc(100vw - 28px))}
 @keyframes menu-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 .menu-caption{margin:8px 10px 7px;color:#789081;font-size:9px;font-weight:800;letter-spacing:1.4px}
-.dropdown-item{display:flex;align-items:center;gap:12px;width:100%;min-height:43px;padding:10px 11px;border:0;border-radius:11px;background:transparent;color:#dce8df;text-align:left;text-decoration:none;font:600 13px 'DM Sans',sans-serif;cursor:pointer}
-.dropdown-item:hover,.dropdown-item:focus-visible,.dropdown-item.active{background:#1d3023;color:var(--green);outline:none}
-.dropdown-symbol{display:grid;place-items:center;flex:0 0 25px;width:25px;height:25px;border:1px solid #2d4333;border-radius:8px;color:var(--green);font-size:14px}
+.dropdown-item{display:flex;align-items:center;gap:12px;width:100%;min-height:43px;padding:10px 11px;border:0;border-radius:11px;background:transparent;color:#b69cff;text-align:left;text-decoration:none;font:600 13px 'DM Sans',sans-serif;cursor:pointer}
+.dropdown-item:hover,.dropdown-item:focus-visible,.dropdown-item.active{background:#070914;color:var(--green);outline:none}
+.dropdown-symbol{display:grid;place-items:center;flex:0 0 25px;width:25px;height:25px;border:1px solid #101426;border-radius:8px;color:var(--green);font-size:14px}
 .menu-status{display:flex;align-items:center;padding:8px 11px 10px;color:#9eb2a3;font-size:11px}
 .menu-status .status-dot{margin-right:9px}
 .menu-separator{height:1px;margin:10px 5px;background:#28392d}
 .account-menu-heading{display:flex;align-items:center;gap:11px;padding:8px 9px 4px}
 .account-menu-heading>span:last-child{display:grid;gap:4px}
-.account-menu-heading strong{font-size:12px;color:#f0f7f1}
+.account-menu-heading strong{font-size:12px;color:#b69cff}
 .account-menu-heading small{font-size:10px;color:#8da193}
 .account-menu .profile-shortcut-avatar{flex:0 0 34px;width:34px;height:34px}
 .account-menu .signout-item{color:#ffc0b7}
