@@ -46,10 +46,16 @@
   const sourceAvatar = document.getElementById("profile-shortcut-avatar");
   const targetAvatar = document.getElementById("menu-profile-avatar");
   const targetName = document.getElementById("menu-profile-name");
+  const supportMenuLink = document.getElementById("workspace-support-menu");
+  const adminAiLink = document.getElementById("admin-ai-menu-link");
+  const adminSupportLink = document.getElementById("admin-support-menu-link");
   try {
     const user = JSON.parse(localStorage.getItem("academic-tracker-user") || "null");
     if (user) {
       const name = String(user.name || "Student");
+      if (supportMenuLink) { supportMenuLink.href = user.isAdmin ? "admin-support.html" : "support.html"; supportMenuLink.innerHTML = '<span class="dropdown-symbol">✉</span>' + (user.isAdmin ? "Admin messages" : "Support inbox"); }
+      if (adminAiLink) adminAiLink.hidden = !user.isAdmin;
+      if (adminSupportLink) adminSupportLink.hidden = !user.isAdmin;
       if (targetName) targetName.textContent = name;
       if (targetAvatar && sourceAvatar) targetAvatar.textContent = sourceAvatar.textContent;
     }
