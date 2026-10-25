@@ -1,0 +1,36 @@
+/* Academic Tracker — unified site-wide design system */
+:root{
+ color-scheme:dark;--bg:#070914;--panel:#101426;--panel2:#171d34;--line:rgba(163,170,221,.15);
+ --text:#f5f5ff;--muted:#a0a6c2;--mint:#b69cff;--green:#b69cff;--green2:#8057f5;
+ --purple:#b69cff;--orange:#f5c58a;--blue:#83a8ff;--radius:20px;
+ --ui-bg:#070914;--ui-surface:#101426;--ui-surface-raised:#171d34;--ui-surface-soft:#202747;
+ --ui-border:rgba(163,170,221,.15);--ui-text:#f5f5ff;--ui-muted:#a0a6c2;--ui-accent:#b69cff;--ui-accent-strong:#8057f5;--ui-radius:20px;
+}
+html{scroll-behavior:smooth;scroll-padding-top:90px;background:var(--bg)}
+body{background-color:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+::selection{background:rgba(137,92,246,.4);color:#fff}
+:focus-visible{outline:2px solid #b69cff!important;outline-offset:3px}
+a{transition:color .18s ease}
+button,input,select,textarea{font:inherit}
+button,.button,[role=button]{touch-action:manipulation}
+button:disabled,.button:disabled{opacity:.48;cursor:not-allowed}
+input,select,textarea{max-width:100%;border-radius:12px}
+.card,.panel,.auth-card,.auth-side,.uni-card,.tool-card,.resource-card,.support-card{border-color:var(--line)}
+.button,.btn,.button-primary,.primary{border-radius:12px}
+.button-primary,.button.primary,.primary,.button-small{
+ background:linear-gradient(135deg,#895cf6,#6038d5);color:#fff;border-color:transparent;
+}
+.button-primary:hover,.button.primary:hover,.primary:hover,.button-small:hover{filter:brightness(1.12)}
+.secondary,.button-secondary{background:#202541;color:#e2dcff;border-color:rgba(164,145,255,.2)}
+.brand-icon,.brand-mark{background:linear-gradient(145deg,#a78bfa,#6942dc)!important;color:#fff!important;box-shadow:0 8px 24px rgba(112,75,228,.2)}
+.brand-muted,.muted{color:var(--muted)}
+.badge,.pill{border-radius:999px}
+hr{border:0;border-top:1px solid var(--line)}
+@media(max-width:760px){
+ html{scroll-padding-top:76px}
+ button,.button,.btn{min-height:44px}
+ input,select,textarea{font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}

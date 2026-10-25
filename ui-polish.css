@@ -1,11 +1,11 @@
 /* Academic Tracker UI polish: layered surfaces, clearer focus states, and mobile ergonomics. */
 :root {
-  --bg: #0a100d;
-  --panel: #131c17;
-  --panel2: #19251e;
-  --line: #29392f;
-  --green: #a8f0c2;
-  --green2: #60d493;
+  --bg: #070914;
+  --panel: #070914;
+  --panel2: #070914;
+  --line: #282d49;
+  --green: #b69cff;
+  --green2: #28213f;
   --radius: 20px;
   --shadow-card: 0 14px 36px rgba(0, 0, 0, .14);
 }
@@ -47,7 +47,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   box-shadow: 0 7px 18px rgba(0, 0, 0, .14);
   transition: border-color .18s ease, background .18s ease, transform .18s ease;
 }
-.icon-button:hover { border-color: #4b7659; transform: translateY(-1px); }
+.icon-button:hover { border-color: #171d34; transform: translateY(-1px); }
 .card {
   position: relative;
   overflow: hidden;
@@ -69,7 +69,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .section-heading h2 { letter-spacing: -.55px; }
 .subject-row { gap: 14px; }
 .subject-icon { flex-shrink: 0; }
-.progress-track { background: #26352b; }
+.progress-track { background: #282d49; }
 .progress-fill { box-shadow: 0 0 12px rgba(96, 212, 147, .14); }
 .button {
   min-height: 42px;
@@ -123,7 +123,7 @@ footer {
   background: var(--green);
 }
 @media (hover: hover) and (pointer: fine) {
-  .card:hover { border-color: #354b3b; }
+  .card:hover { border-color: #34304d; }
   .subject-row:hover { background: rgba(255, 255, 255, .012); }
 }
 @media (max-width: 680px) {
@@ -182,8 +182,8 @@ footer {
 
 /* Profile shortcut and account identity */
 .profile-shortcut{display:flex;align-items:center;gap:10px;min-width:0;padding:5px 10px 5px 5px;border:1px solid var(--line);border-radius:14px;background:rgba(20,29,23,.9);color:var(--text);text-decoration:none;transition:border-color .18s ease,background .18s ease,transform .18s ease}
-.profile-shortcut:hover{border-color:#4b7659;background:#1a2a20;transform:translateY(-1px)}
-.profile-shortcut-avatar{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#a8f0c2,#54ce88);color:#102117;font:800 12px Manrope,sans-serif}
+.profile-shortcut:hover{border-color:#171d34;background:#070914;transform:translateY(-1px)}
+.profile-shortcut-avatar{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#b69cff,#28213f);color:#070914;font:800 12px Manrope,sans-serif}
 .profile-shortcut-copy{display:grid;gap:3px;min-width:0}
 .profile-shortcut-copy strong{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
 .profile-shortcut-copy small{color:var(--muted);font-size:10px}
