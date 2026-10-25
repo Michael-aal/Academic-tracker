@@ -36,17 +36,23 @@
         <section class="learning-panel">
           <div class="panel-heading"><div><p class="section-kicker">AI STUDY ASSISTANT</p><h2 id="task-title">Ask your tutor</h2><p id="task-description">Tell me what you're learning and where you're stuck.</p></div><span class="online-pill"><i></i> AI learning</span></div>
           <form id="learning-form">
-            <div class="form-grid">
-              <label>Subject <input id="subject" maxlength="100" placeholder="e.g. Physics"></label>
-              <label>Topic <input id="topic" maxlength="160" placeholder="e.g. Newton's laws"></label>
-            </div>
+            <div class="form-grid"><label>Subject <input id="subject" maxlength="100" placeholder="e.g. Physics"></label><label>Topic <input id="topic" maxlength="160" placeholder="e.g. Newton's laws"></label></div>
             <label class="full-label" for="content" id="content-label">What would you like help understanding?</label>
-            <textarea id="content" rows="7" maxlength="12000" placeholder="Ask a question, or paste your notes here…" required></textarea>
+            <textarea id="content" rows="7" maxlength="12000" placeholder="Ask a question, or paste your notes here…"></textarea>
             <div class="form-foot"><span id="char-count">0 / 12,000 characters</span><span>Be specific for a better explanation.</span></div>
             <div id="quiz-options" class="quiz-options" hidden><label for="question-count">Number of questions</label><select id="question-count"><option value="3">3 questions</option><option value="5" selected>5 questions</option><option value="8">8 questions</option><option value="10">10 questions</option></select></div>
             <div class="submit-row"><p>AI can make mistakes. Check important facts with your textbook or teacher.</p><button id="submit-learning" type="submit"><span>✦</span> <span id="submit-label">Help me understand</span></button></div>
           </form>
-          <section id="result-panel" class="result-panel" aria-live="polite" hidden><div class="result-top"><div><span class="result-label">YOUR STUDY RESPONSE</span><h3 id="result-title">Ready to learn</h3></div><button id="copy-result" type="button">Copy answer</button></div><div id="result-content" class="result-content"></div></section>
+          <section id="result-panel" class="result-panel" aria-live="polite" hidden>
+            <div class="result-top"><div><span class="result-label">YOUR STUDY RESPONSE</span><h3 id="result-title">Ready to learn</h3></div><button id="copy-result" type="button">Copy answer</button></div>
+            <div id="voice-tools" class="voice-tools" aria-label="Voice playback controls">
+              <div class="voice-actions"><button id="speak-result" class="voice-primary" type="button" aria-label="Read explanation aloud"><span aria-hidden="true">▶</span> Listen</button><button id="pause-speech" type="button" disabled>Pause</button><button id="stop-speech" type="button" disabled>Stop</button><span id="speech-status" role="status" aria-live="polite">Ready to read aloud</span></div>
+              <div class="voice-settings"><label class="auto-speak-setting"><input id="auto-speak" type="checkbox"> Automatically read new explanations</label><label class="voice-select-label" for="voice-select">Voice<select id="voice-select"><option value="">System default voice</option></select></label><label class="rate-setting" for="speech-rate">Speed <output id="speech-rate-value" for="speech-rate">1×</output><input id="speech-rate" type="range" min="0.8" max="1.2" step="0.1" value="1"></label></div>
+              <p class="voice-note">Voice availability depends on your browser and device. Code stays visible in the written answer; the reader focuses on the explanation.</p>
+            </div>
+            <section id="quiz-view" class="quiz-view" aria-live="polite" hidden></section>
+            <div id="result-content" class="result-content"></div>
+          </section>
           <div id="notice" class="notice" role="status"></div>
         </section>
       </section>
