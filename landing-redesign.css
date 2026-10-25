@@ -1,6 +1,6 @@
 /* Landing page — aligned with the Academic Tracker premium dashboard */
-:root{--bg:#070914;--panel:#101426;--panel2:#171d34;--line:rgba(163,170,221,.15);--text:#f5f5ff;--muted:#a0a6c2;--mint:#b69cff;--green:#b69cff;--green2:#8057f5;--purple:#b69cff;--radius:22px}
-body{background:radial-gradient(ellipse at 88% 4%,rgba(91,65,202,.29),transparent 36rem),radial-gradient(ellipse at 8% 52%,rgba(57,66,133,.12),transparent 32rem),#070914;color:#f5f5ff}
+:root{--bg:#071426;--panel:#0D1B35;--panel2:#14264A;--line:rgba(163,170,221,.15);--text:#f5f5ff;--muted:#a0a6c2;--mint:#b69cff;--green:#b69cff;--green2:#8057f5;--purple:#b69cff;--radius:22px}
+body{background:radial-gradient(ellipse at 88% 4%,rgba(91,65,202,.29),transparent 36rem),radial-gradient(ellipse at 8% 52%,rgba(57,66,133,.12),transparent 32rem),#071426;color:#f5f5ff}
 .site-header{background:rgba(7,9,20,.86);border-bottom-color:rgba(163,170,221,.13)}
 .brand-icon{background:linear-gradient(145deg,#a78bfa,#6942dc);color:#fff;box-shadow:0 8px 24px rgba(112,75,228,.28)}
 .brand-muted{color:#a0a6c2}
@@ -9,7 +9,7 @@ body{background:radial-gradient(ellipse at 88% 4%,rgba(91,65,202,.29),transparen
 .button{min-height:48px;border-radius:13px;background:linear-gradient(135deg,#895cf6,#6038d5);color:#fff;box-shadow:0 8px 24px rgba(108,65,222,.22)}
 .button:hover{filter:brightness(1.12)}
 .nav-login{color:#d3d6ee}
-.menu-toggle{border:1px solid var(--line);background:#151a30;color:#d9d4ff;border-radius:12px;min-width:44px;min-height:44px}
+.menu-toggle{border:1px solid var(--line);background:#10203C;color:#d9d4ff;border-radius:12px;min-width:44px;min-height:44px}
 .hero,.hero-section{position:relative}
 .eyebrow,.section-kicker{color:#b69cff}
 .gradient-text{background:linear-gradient(100deg,#b69cff 0%,#8b8cff 65%,#77a9ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}

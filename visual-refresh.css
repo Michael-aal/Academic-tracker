@@ -1,10 +1,10 @@
 /* Academic Tracker — shared visual system
    Loaded after page-specific styles to keep the app visually consistent. */
 :root {
-  --ui-bg: #070914;
-  --ui-surface: #070914;
-  --ui-surface-raised: #070914;
-  --ui-surface-soft: #070914;
+  --ui-bg: #071426;
+  --ui-surface: #071426;
+  --ui-surface-raised: #071426;
+  --ui-surface-soft: #071426;
   --ui-border: rgba(184, 218, 193, .13);
   --ui-text: #b69cff;
   --ui-muted: #a0b0a5;
@@ -81,7 +81,7 @@ a { text-underline-offset: 4px; }
 .auth-side {
   background:
     radial-gradient(ellipse at 18% 20%, rgba(81, 163, 105, .17), transparent 42%),
-    linear-gradient(155deg, #070914, #070914 75%);
+    linear-gradient(155deg, #071426, #071426 75%);
 }
 .auth-card {
   border: 1px solid var(--ui-border);
@@ -196,9 +196,9 @@ a { text-underline-offset: 4px; }
 /* Final theme-consistency pass: navy surfaces + violet accents across legacy pages. */
 :root {
   color-scheme: dark;
-  --bg: #070914;
-  --panel: #101426;
-  --panel2: #171d34;
+  --bg: #071426;
+  --panel: #0D1B35;
+  --panel2: #14264A;
   --line: rgba(163,170,221,.15);
   --text: #f5f5ff;
   --muted: #a0a6c2;
@@ -206,10 +206,10 @@ a { text-underline-offset: 4px; }
   --green: #b69cff;
   --green2: #8057f5;
   --purple: #b69cff;
-  --ui-bg: #070914;
-  --ui-surface: #101426;
-  --ui-surface-raised: #171d34;
-  --ui-surface-soft: #202747;
+  --ui-bg: #071426;
+  --ui-surface: #0D1B35;
+  --ui-surface-raised: #14264A;
+  --ui-surface-soft: #1B2C50;
   --ui-border: rgba(163,170,221,.15);
   --ui-text: #f5f5ff;
   --ui-muted: #a0a6c2;
@@ -221,7 +221,7 @@ body { background-color: var(--ui-bg); color: var(--ui-text); }
   border-color: var(--ui-border);
 }
 .auth-side {
-  background: radial-gradient(ellipse at 18% 20%, rgba(128,87,245,.20), transparent 42%), linear-gradient(155deg,#101426,#070914 75%);
+  background: radial-gradient(ellipse at 18% 20%, rgba(128,87,245,.20), transparent 42%), linear-gradient(155deg,#0D1B35,#071426 75%);
 }
 :where(.app-shell .sidebar, .app-shell .topbar, .ai-topbar, .mm-topbar, .ev-topbar) { border-color: var(--ui-border); }
 :where(.app-shell .card, .auth-card, .profile-card, .profile-hero, .ai-hero, .workspace, .task-picker, .mm-stat, .ev-search-panel, .ev-video-card, .admin-card) {
@@ -246,12 +246,12 @@ body { background-color: var(--ui-bg); color: var(--ui-text); }
 :where(.ai-topbar nav a:hover, .mm-topbar nav a:hover, .ev-topbar nav a:hover, .app-shell .card:hover, .mm-stat:hover, .ev-video-card:hover) {
   border-color: rgba(182,156,255,.3);
 }
-:where(.admin-card, .admin-actions a, .admin-actions button) { background-color: #101426; }
+:where(.admin-card, .admin-actions a, .admin-actions button) { background-color: #0D1B35; }
 .admin-card .status-row { border-bottom-color: var(--ui-border); }
 .admin-card .status-row span { color: var(--ui-muted); }
 .admin-card .status-value.good { color: #b69cff; }
 .admin-card .status-value.bad, .admin-card .admin-error { color: #ffaaa5; }
-.admin-card .setup-note { background: #171d34; color: var(--ui-text); }
+.admin-card .setup-note { background: #14264A; color: var(--ui-text); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
@@ -259,13 +259,13 @@ body { background-color: var(--ui-bg); color: var(--ui-text); }
 
 /* Higher-specificity fixes for legacy inline admin styles. */
 .admin-wrap .admin-card {
-  background: linear-gradient(145deg,#141a31,#101426);
+  background: linear-gradient(145deg,#141a31,#0D1B35);
   border-color: var(--ui-border);
   color: var(--ui-text);
 }
 .admin-wrap .admin-card .admin-actions a,
 .admin-wrap .admin-card .admin-actions button {
-  background: #202747;
+  background: #1B2C50;
   color: #f5f5ff;
   border-color: rgba(163,170,221,.2);
 }
@@ -278,7 +278,7 @@ body { background-color: var(--ui-bg); color: var(--ui-text); }
 .admin-wrap .admin-card .status-value.bad,
 .admin-wrap .admin-card .admin-error { color: #ffaaa5; }
 .admin-wrap .admin-card .setup-note {
-  background: #171d34;
+  background: #14264A;
   border-color: var(--ui-border);
   color: var(--ui-text);
 }

@@ -1,19 +1,19 @@
 /* Premium dashboard redesign — layered navy surfaces, violet accents, responsive-first. */
 :root {
   color-scheme: dark;
-  --bg: #070914;
-  --panel: #101426;
-  --panel2: #171d34;
+  --bg: #071426;
+  --panel: #0D1B35;
+  --panel2: #14264A;
   --line: rgba(163, 170, 221, .14);
   --text: #f5f5ff;
   --muted: #a0a6c2;
   --green: #b69cff;
   --green2: #8057f5;
   --radius: 20px;
-  --ui-bg: #070914;
-  --ui-surface: #101426;
-  --ui-surface-raised: #171d34;
-  --ui-surface-soft: #202747;
+  --ui-bg: #071426;
+  --ui-surface: #0D1B35;
+  --ui-surface-raised: #14264A;
+  --ui-surface-soft: #1B2C50;
   --ui-border: rgba(163, 170, 221, .14);
   --ui-text: #f5f5ff;
   --ui-muted: #a0a6c2;
@@ -81,7 +81,7 @@ body {
 .page-heading h1 { font-size: clamp(27px,3vw,36px); line-height: 1.12; letter-spacing: -.055em; }
 .menu-trigger {
   border-color: var(--line); border-radius: 13px;
-  background: #151a30; color: #d9d4ff;
+  background: #10203C; color: #d9d4ff;
 }
 .menu-trigger:hover, .menu-trigger[aria-expanded="true"] {
   border-color: rgba(167,139,250,.6); background: #252044; color: #c6b4ff;
@@ -125,7 +125,7 @@ body {
   box-shadow: 0 7px 20px rgba(108,65,222,.22);
 }
 .primary:hover { background: linear-gradient(135deg,#9d79ff,#7048e7); }
-.secondary { color: #dedaff; border: 1px solid rgba(164,145,255,.18); background: #202541; }
+.secondary { color: #dedaff; border: 1px solid rgba(164,145,255,.18); background: #1A2A4B; }
 .danger { color: #ffb8c0; background: rgba(156,51,81,.18); border: 1px solid rgba(255,125,152,.13); }
 .subject-row { gap: 13px; padding: 15px 2px; border-color: var(--line); }
 .subject-icon {
