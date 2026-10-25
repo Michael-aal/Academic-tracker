@@ -69,7 +69,7 @@
     trigger.setAttribute("aria-expanded", String(open));
   });
   document.addEventListener("click", event => {
-    if (!topbar.contains(event.target)) closeMenu();
+    if (!topbar.contains(event.target) && !mobileNav.contains(event.target)) closeMenu();
     const link = event.target.closest(".workspace-menu-item");
     if (link) closeMenu();
   });
