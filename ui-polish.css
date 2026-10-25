@@ -12,8 +12,8 @@
 html { scroll-behavior: smooth; }
 body {
   background:
-    radial-gradient(ellipse at 78% -12%, rgba(63, 125, 82, .22), transparent 39%),
-    radial-gradient(ellipse at 0% 45%, rgba(35, 74, 52, .10), transparent 35%),
+    radial-gradient(ellipse at 78% -12%, rgba(128,87,245,.22), transparent 39%),
+    radial-gradient(ellipse at 0% 45%, rgba(27,44,80,.10), transparent 35%),
     var(--bg);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -25,7 +25,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 .app-shell { min-height: 100svh; }
 .sidebar {
-  background: rgba(11, 19, 14, .88);
+  background: rgba(13,27,53,.88);
   backdrop-filter: blur(18px);
 }
 .brand { letter-spacing: -.35px; }
@@ -40,7 +40,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .topbar .eyebrow { margin-bottom: 9px; }
 .top-actions { flex-shrink: 0; }
 .local-pill {
-  background: rgba(19, 28, 23, .78);
+  background: rgba(13,27,53,.78);
   white-space: nowrap;
 }
 .icon-button {
@@ -52,7 +52,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-card);
-  background: linear-gradient(145deg, rgba(25, 37, 30, .96), rgba(17, 25, 20, .98));
+  background: linear-gradient(145deg, rgba(20,38,74,.96), rgba(13,27,53,.98));
   transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
 }
 .stats-grid .card::before {
