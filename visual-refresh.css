@@ -255,3 +255,30 @@ body { background-color: var(--ui-bg); color: var(--ui-text); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+
+/* Higher-specificity fixes for legacy inline admin styles. */
+.admin-wrap .admin-card {
+  background: linear-gradient(145deg,#141a31,#101426);
+  border-color: var(--ui-border);
+  color: var(--ui-text);
+}
+.admin-wrap .admin-card .admin-actions a,
+.admin-wrap .admin-card .admin-actions button {
+  background: #202747;
+  color: #f5f5ff;
+  border-color: rgba(163,170,221,.2);
+}
+.admin-wrap .admin-card .admin-actions a:hover,
+.admin-wrap .admin-card .admin-actions button:hover {
+  background: #2a2450;
+  border-color: rgba(182,156,255,.5);
+}
+.admin-wrap .admin-card .status-value.good { color: #8ee0b0; }
+.admin-wrap .admin-card .status-value.bad,
+.admin-wrap .admin-card .admin-error { color: #ffaaa5; }
+.admin-wrap .admin-card .setup-note {
+  background: #171d34;
+  border-color: var(--ui-border);
+  color: var(--ui-text);
+}
