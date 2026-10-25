@@ -88,3 +88,7 @@ body { background: radial-gradient(ellipse at 78% 0%,rgba(128,87,245,.18) 0,tran
 @media(max-width:720px) {
  .site-nav { background:#0a0d1c; border-bottom-color:var(--line); }
 }
+
+
+/* Keep inline SVG chart artwork on the same violet palette as the rest of the site. */
+.preview-window svg stop[stop-color], .preview-window svg path[stroke] { stop-color: #b69cff !important; stroke: #8f70f5 !important; }
