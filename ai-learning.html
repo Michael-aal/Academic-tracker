@@ -45,7 +45,7 @@
           </form>
           <section id="result-panel" class="result-panel" aria-live="polite" hidden>
             <div class="result-top"><div><span class="result-label">YOUR STUDY RESPONSE</span><h3 id="result-title">Ready to learn</h3></div><button id="copy-result" type="button">Copy answer</button></div>
-            <div class="voice-tools" aria-label="Voice playback controls">
+            <div id="voice-tools" class="voice-tools" aria-label="Voice playback controls">
               <div class="voice-actions"><button id="speak-result" class="voice-primary" type="button" aria-label="Read explanation aloud"><span aria-hidden="true">▶</span> Listen</button><button id="pause-speech" type="button" disabled>Pause</button><button id="stop-speech" type="button" disabled>Stop</button><span id="speech-status" role="status" aria-live="polite">Ready to read aloud</span></div>
               <div class="voice-settings"><label class="auto-speak-setting"><input id="auto-speak" type="checkbox"> Automatically read new explanations</label><label class="voice-select-label" for="voice-select">Voice<select id="voice-select"><option value="">System default voice</option></select></label><label class="rate-setting" for="speech-rate">Speed <output id="speech-rate-value" for="speech-rate">1×</output><input id="speech-rate" type="range" min="0.8" max="1.2" step="0.1" value="1"></label></div>
               <p class="voice-note">Voice availability depends on your browser and device. Code stays visible in the written answer; the reader focuses on the explanation.</p>
