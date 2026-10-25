@@ -70,7 +70,7 @@ body {
   border-radius: 14px; background: rgba(255,255,255,.025);
   color: #939ab8; font-size: 11px;
 }
-.status-dot { background: #70dfb0; box-shadow: 0 0 12px rgba(112,223,176,.35); }
+.status-dot { background: #b69cff; box-shadow: 0 0 12px rgba(182,156,255,.35); }
 .main { width: 100%; max-width: 1500px; min-width: 0; margin: 0 auto; padding: 28px clamp(20px,3vw,46px) 24px; }
 .compact-topbar {
   position: relative; z-index: 10; margin-bottom: 28px; padding: 12px 0;
