@@ -2,7 +2,7 @@
 :root{
  color-scheme:dark;--bg:#071426;--panel:#0D1B35;--panel2:#14264A;--line:rgba(163,170,221,.15);
  --text:#f5f5ff;--muted:#a0a6c2;--mint:#b69cff;--green:#b69cff;--green2:#8057f5;
- --purple:#b69cff;--orange:#f5c58a;--blue:#83a8ff;--radius:20px;
+ --purple:#b69cff;--orange:#b69cff;--blue:#83a8ff;--radius:20px;
  --ui-bg:#071426;--ui-surface:#0D1B35;--ui-surface-raised:#14264A;--ui-surface-soft:#1B2C50;
  --ui-border:rgba(163,170,221,.15);--ui-text:#f5f5ff;--ui-muted:#a0a6c2;--ui-accent:#b69cff;--ui-accent-strong:#8057f5;--ui-radius:20px;
 }
