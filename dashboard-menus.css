@@ -10,8 +10,8 @@
 .menu-trigger:hover,.menu-trigger[aria-expanded="true"]{border-color:#5c8d6a;background:#203426;color:var(--green)}
 .menu-trigger:active{transform:scale(.97)}
 .dropdown-menu{position:absolute;top:calc(100% + 9px);z-index:30;width:min(280px,calc(100vw - 28px));padding:9px;border:1px solid #304436;border-radius:17px;background:rgba(13,22,16,.98);box-shadow:0 24px 65px rgba(0,0,0,.48);backdrop-filter:blur(22px);animation:menu-in .14s ease-out}
-.dropdown-menu[hidden]{display:none}
-.navigation-menu{left:0}
+.dropdown-menu[hidden]{display:none}.dropdown-item[hidden]{display:none!important}
+.navigation-menu{left:0;max-height:calc(100dvh - 130px);overflow:auto}
 .account-menu{right:0;width:min(290px,calc(100vw - 28px))}
 @keyframes menu-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 .menu-caption{margin:8px 10px 7px;color:#789081;font-size:9px;font-weight:800;letter-spacing:1.4px}
