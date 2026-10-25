@@ -249,7 +249,7 @@ body { background-color: var(--ui-bg); color: var(--ui-text); }
 :where(.admin-card, .admin-actions a, .admin-actions button) { background-color: #101426; }
 .admin-card .status-row { border-bottom-color: var(--ui-border); }
 .admin-card .status-row span { color: var(--ui-muted); }
-.admin-card .status-value.good { color: #8ee0b0; }
+.admin-card .status-value.good { color: #b69cff; }
 .admin-card .status-value.bad, .admin-card .admin-error { color: #ffaaa5; }
 .admin-card .setup-note { background: #171d34; color: var(--ui-text); }
 @media (prefers-reduced-motion: reduce) {
@@ -274,7 +274,7 @@ body { background-color: var(--ui-bg); color: var(--ui-text); }
   background: #2a2450;
   border-color: rgba(182,156,255,.5);
 }
-.admin-wrap .admin-card .status-value.good { color: #8ee0b0; }
+.admin-wrap .admin-card .status-value.good { color: #b69cff; }
 .admin-wrap .admin-card .status-value.bad,
 .admin-wrap .admin-card .admin-error { color: #ffaaa5; }
 .admin-wrap .admin-card .setup-note {
