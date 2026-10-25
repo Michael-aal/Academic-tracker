@@ -5,7 +5,7 @@
   if (!token) { window.location.replace("login.html"); return; }
 
   const $ = (id) => document.getElementById(id);
-  const state = { action: "tutor", answer: "" };
+  const state = { action: "tutor", answer: "", quiz: null, selections: {}, submitted: false };
   const taskCopy = {
     tutor: { title: "Ask your tutor", description: "Tell me what you're learning and where you're stuck.", label: "What would you like help understanding?", placeholder: "e.g. Explain Newton's second law and show me a simple example…", button: "Help me understand", result: "Your explanation", required: true },
     quiz: { title: "Build a revision quiz", description: "Create practice questions from a topic or your own notes.", label: "Paste your notes or describe the topic", placeholder: "Paste your notes here, or describe the topic you want to practise…", button: "Generate my quiz", result: "Your practice quiz", required: true },
@@ -54,6 +54,111 @@
     $("notice").classList.remove("error");
   }
 
+
+  function renderQuiz(quiz) {
+    const host = $("result-content");
+    host.replaceChildren();
+    state.quiz = quiz;
+    state.selections = {};
+    state.submitted = false;
+    const questions = quiz.questions;
+    const intro = document.createElement("p");
+    intro.className = "quiz-intro";
+    intro.textContent = "Choose one answer for each question. Your score appears when you submit.";
+    host.append(intro);
+    const progress = document.createElement("div");
+    progress.className = "quiz-progress";
+    progress.setAttribute("aria-live", "polite");
+    progress.textContent = "0 of " + questions.length + " answered";
+    host.append(progress);
+    const cards = document.createElement("div");
+    cards.className = "generated-quiz";
+    questions.forEach((question, index) => {
+      const card = document.createElement("article");
+      card.className = "question-card";
+      const heading = document.createElement("div");
+      heading.className = "question-meta";
+      heading.textContent = "QUESTION " + String(index + 1).padStart(2, "0") + " OF " + questions.length;
+      const title = document.createElement("h4");
+      title.className = "question-title";
+      title.textContent = question.question;
+      const options = document.createElement("div");
+      options.className = "answer-options";
+      const feedback = document.createElement("div");
+      feedback.className = "question-feedback";
+      feedback.hidden = true;
+      question.options.forEach(option => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "answer-option";
+        button.dataset.answer = option.label;
+        const letter = document.createElement("span");
+        letter.className = "answer-letter";
+        letter.textContent = option.label;
+        const text = document.createElement("span");
+        text.className = "answer-text";
+        text.textContent = option.text;
+        button.append(letter, text);
+        button.setAttribute("aria-pressed", "false");
+        button.addEventListener("click", () => {
+          if (state.submitted) return;
+          state.selections[index] = option.label;
+          options.querySelectorAll(".answer-option").forEach(item => {
+            const selected = item.dataset.answer === option.label;
+            item.classList.toggle("selected", selected);
+            item.setAttribute("aria-pressed", String(selected));
+          });
+          progress.textContent = Object.keys(state.selections).length + " of " + questions.length + " answered";
+        });
+        options.append(button);
+      });
+      card.append(heading, title, options, feedback);
+      cards.append(card);
+    });
+    host.append(cards);
+    const actions = document.createElement("div");
+    actions.className = "quiz-submit-row";
+    const submit = document.createElement("button");
+    submit.type = "button";
+    submit.className = "quiz-submit";
+    submit.textContent = "Submit answers";
+    const score = document.createElement("p");
+    score.className = "quiz-score";
+    score.hidden = true;
+    submit.addEventListener("click", () => {
+      if (state.submitted) return;
+      const answered = Object.keys(state.selections).length;
+      if (answered !== questions.length) {
+        progress.textContent = "Answer all " + questions.length + " questions first (" + answered + " answered).";
+        return;
+      }
+      state.submitted = true;
+      let correct = 0;
+      cards.querySelectorAll(".question-card").forEach((card, index) => {
+        const q = questions[index];
+        const picked = state.selections[index];
+        const isCorrect = picked === q.correctAnswer;
+        if (isCorrect) correct++;
+        card.querySelectorAll(".answer-option").forEach(option => {
+          option.disabled = true;
+          if (option.dataset.answer === q.correctAnswer) option.classList.add("answer-correct");
+          else if (option.dataset.answer === picked) option.classList.add("answer-incorrect");
+        });
+        const feedback = card.querySelector(".question-feedback");
+        feedback.hidden = false;
+        feedback.classList.add(isCorrect ? "feedback-correct" : "feedback-incorrect");
+        feedback.textContent = (isCorrect ? "Correct. " : "Not quite. Correct answer: " + q.correctAnswer + ". ") + q.explanation;
+      });
+      progress.textContent = "Quiz completed";
+      score.hidden = false;
+      score.textContent = "Your score: " + correct + " / " + questions.length + " (" + Math.round(correct / questions.length * 100) + "%)";
+      submit.disabled = true;
+      submit.textContent = "Quiz submitted";
+    });
+    actions.append(submit, score);
+    host.append(actions);
+  }
+
   document.querySelectorAll("[data-action]").forEach(button => button.addEventListener("click", () => setAction(button.dataset.action)));
   $("content").addEventListener("input", () => { $("char-count").textContent = $("content").value.length.toLocaleString() + " / 12,000 characters"; });
   $("signout").addEventListener("click", () => {
@@ -91,8 +196,9 @@
           questionCount: Number($("question-count").value)
         })
       });
-      state.answer = data.answer;
-      $("result-content").textContent = data.answer;
+      state.answer = data.answer || JSON.stringify(data.quiz || {}, null, 2);
+      if (state.action === "quiz" && data.quiz) renderQuiz(data.quiz);
+      else { state.quiz = null; $("result-content").textContent = data.answer || "No response was returned."; }
       $("result-panel").hidden = false;
       $("notice").textContent = "Response ready. Review it alongside your school materials.";
       $("result-panel").scrollIntoView({ behavior: "smooth", block: "start" });
