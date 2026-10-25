@@ -5,7 +5,8 @@
   const KEY = "main";
   const defaults = () => ({version:2, academicYear:"2026–2027", term:"Term 1", subjects:[], scores:{}, targets:{}, assessments:{}, updatedAt:new Date().toISOString()});
   let state = defaults();
-  let view = "dashboard";
+  const requestedView = new URLSearchParams(window.location.search).get("view");
+  let view = ["dashboard", "scores", "subjects", "reports", "settings"].includes(requestedView) ? requestedView : "dashboard";
   const $ = s => document.querySelector(s);
   const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const num = v => Number.isFinite(Number(v)) ? Number(v) : 0;
