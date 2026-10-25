@@ -1,0 +1,39 @@
+/* Landing page — aligned with the Academic Tracker premium dashboard */
+:root{--bg:#070914;--panel:#101426;--panel2:#171d34;--line:rgba(163,170,221,.15);--text:#f5f5ff;--muted:#a0a6c2;--mint:#b69cff;--green:#b69cff;--green2:#8057f5;--purple:#b69cff;--radius:22px}
+body{background:radial-gradient(ellipse at 88% 4%,rgba(91,65,202,.29),transparent 36rem),radial-gradient(ellipse at 8% 52%,rgba(57,66,133,.12),transparent 32rem),#070914;color:#f5f5ff}
+.site-header{background:rgba(7,9,20,.86);border-bottom-color:rgba(163,170,221,.13)}
+.brand-icon{background:linear-gradient(145deg,#a78bfa,#6942dc);color:#fff;box-shadow:0 8px 24px rgba(112,75,228,.28)}
+.brand-muted{color:#a0a6c2}
+.site-nav{color:#b2b7d0}
+.site-nav>a:not(.button):hover,.site-footer a:hover{color:#c8b6ff}
+.button{min-height:48px;border-radius:13px;background:linear-gradient(135deg,#895cf6,#6038d5);color:#fff;box-shadow:0 8px 24px rgba(108,65,222,.22)}
+.button:hover{filter:brightness(1.12)}
+.nav-login{color:#d3d6ee}
+.menu-toggle{border:1px solid var(--line);background:#151a30;color:#d9d4ff;border-radius:12px;min-width:44px;min-height:44px}
+.hero,.hero-section{position:relative}
+.eyebrow,.section-kicker{color:#b69cff}
+.gradient-text{background:linear-gradient(100deg,#b69cff 0%,#8b8cff 65%,#77a9ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero h1,.hero-title{letter-spacing:-.065em}
+.hero p,.section-intro,.section-heading p{color:#a0a6c2}
+.hero-visual,.hero-card,.preview-window,.dashboard-preview,.feature-card,.step-card,.faq-item,.stat-card,.testimonial-card,.cta-panel{
+ background:linear-gradient(145deg,rgba(24,30,54,.94),rgba(14,19,37,.98));border:1px solid var(--line);border-radius:22px;box-shadow:0 18px 48px rgba(0,0,0,.2)
+}
+.hero-visual,.dashboard-preview{overflow:hidden}
+.feature-card,.step-card,.faq-item,.testimonial-card{transition:transform .2s ease,border-color .2s ease,background .2s ease}
+.feature-card:hover,.step-card:hover{transform:translateY(-3px);border-color:rgba(167,139,250,.32)}
+.feature-icon,.step-number,.icon-box{background:rgba(128,87,245,.16);color:#c6b4ff;border:1px solid rgba(167,139,250,.16);border-radius:14px}
+section{scroll-margin-top:90px}
+.section-title,.section-heading h2{letter-spacing:-.045em}
+.site-footer{background:rgba(8,11,25,.7);border-top:1px solid var(--line);color:#a0a6c2}
+.site-footer a{color:#d0d3eb}
+.faq-item[open],.faq-item:hover{border-color:rgba(167,139,250,.3)}
+@media(max-width:760px){
+ .site-header{padding:12px 16px}
+ .site-nav{background:rgba(12,15,32,.98);border:1px solid var(--line);border-radius:17px;box-shadow:0 22px 60px rgba(0,0,0,.42);padding:14px}
+ .site-nav a{min-height:44px;display:flex;align-items:center}
+ .hero{padding-top:48px}
+ .button{width:100%;justify-content:center;min-height:48px}
+ .site-nav .button{width:100%}
+ section{scroll-margin-top:76px}
+}
+@media(prefers-reduced-motion:reduce){.feature-card,.step-card{transition:none}}
