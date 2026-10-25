@@ -36,3 +36,55 @@
 .pathway-points li:before{content:"✓";display:inline-block;margin-right:8px;color:var(--mint);font-weight:800}
 @media(max-width:720px){.why-section{padding-top:78px;padding-bottom:78px}.why-grid{grid-template-columns:1fr}.why-card{padding:19px}.pathway-panel{grid-template-columns:1fr;gap:20px}.pathway-points{grid-template-columns:1fr}.pathway-tab{flex:1 1 auto}}
 @media(prefers-reduced-motion:reduce){.arrow-icon{transition:none}}
+
+
+/* Theme cleanup: remove legacy green/orange/blue decorative styling from the landing page. */
+:root { --bg:#070914; --panel:#101426; --panel2:#171d34; --line:rgba(163,170,221,.15); --text:#f5f5ff; --muted:#a0a6c2; --mint:#b69cff; --green:#b69cff; --purple:#b69cff; --orange:#b69cff; --blue:#b69cff; }
+body { background: radial-gradient(ellipse at 78% 0%,rgba(128,87,245,.18) 0,transparent 34%),var(--bg); color:var(--text); }
+.site-header { background:rgba(7,9,20,.88); border-bottom-color:var(--line); }
+.brand-icon { background:linear-gradient(135deg,#b69cff,#8057f5); color:#fff; box-shadow:0 7px 22px rgba(128,87,245,.2); }
+.site-nav { color:#c0c3dc; }
+.site-nav>a:not(.button):hover,.site-footer a:hover,.text-link:hover { color:#cbbaff; }
+.button { border-color:transparent; background:linear-gradient(135deg,#a991ff,#8057f5); color:#fff; box-shadow:0 8px 28px rgba(128,87,245,.2); }
+.button:hover { box-shadow:0 12px 34px rgba(128,87,245,.3); }
+.button .arrow-icon { color:#fff; }
+.gradient-text { background-image:linear-gradient(100deg,#eee7ff 0%,#b69cff 48%,#8f70f5 100%); }
+.eyebrow { color:#c0aaff; }
+.pulse,.live-pill i { background:#b69cff; box-shadow:0 0 0 5px rgba(182,156,255,.12); }
+.play-icon { border-color:rgba(182,156,255,.38); color:#cbbaff; }
+.avatar-stack span,.avatar-stack span:nth-child(2),.avatar-stack span:nth-child(3) { background:#28213f; color:#d6caff; }
+.preview-window { border-color:var(--line); background:linear-gradient(145deg,#171d34,#0d1225); box-shadow:0 35px 90px #0008,0 0 80px rgba(128,87,245,.09); }
+.preview-top,.chart-card,.mini-stats>div,.feature-card,.why-card,.value-strip,.how-section,.cta-panel,.site-footer { border-color:var(--line); }
+.preview-top { color:#a0a6c2; }
+.window-dots i,.window-dots i:nth-child(2),.window-dots i:nth-child(3) { background:#7162a6; }
+.live-pill,.mini-stats .mint,.chart-heading span+span,.chart-trend,.step-count,.step-symbol { color:#b69cff!important; }
+.mini-avatar,.chip-icon,.check-icon,.value-icon,.feature-icon,.feature-icon.icon-green,.feature-icon.icon-purple,.feature-icon.icon-orange,.feature-icon.icon-blue,.step-symbol { background:#28213f!important; color:#cbbaff!important; border-color:transparent; }
+.mini-stats>div,.chart-card,.preview-content,.float-chip,.value-strip,.feature-card,.why-card,.pathway-panel,.pathway-points li { background-color:#101426; }
+.mini-stats span,.mini-stats small,.chart-labels,.float-chip small,.value-strip small,.feature-card p,.offline-art small,.section-intro>p,.how-layout .section-intro>p,.step p,.cta-panel>p,.faq-item p { color:#a0a6c2; }
+.mini-stats strong,.chart-heading,.preview-subjects b,.feature-card h3,.why-card h3,.step h3 { color:#f5f5ff; }
+.preview-subjects>div { color:#b9bdd4; }
+.subject-dot,.dot-a,.dot-b,.dot-c { background:#b69cff; }
+.bar,.bar i { background:#2a2544; }
+.bar i,.report-art i { background:linear-gradient(90deg,#8057f5,#b69cff); }
+.float-chip { border-color:var(--line); }
+.orbit { border-color:rgba(182,156,255,.14); }
+.hero-glow,.cta-orb { background:rgba(128,87,245,.15); }
+.value-strip { background:linear-gradient(100deg,#101426,#12172c); }
+.feature-card { background:linear-gradient(145deg,#12172c,#0c1020); }
+.feature-card:hover { border-color:rgba(182,156,255,.38); background:linear-gradient(145deg,#191d37,#0d1225); }
+.score-art span,.report-art,.offline-art { border-color:var(--line); }
+.score-art b { color:#d4c7ff; }
+.offline-art { background:#101426; }
+.offline-art i { color:#b69cff; }
+.signal { background:#28213f; color:#cbbaff; }
+.how-section { background:linear-gradient(180deg,#0c1020,#090b18 80%); }
+.steps,.step,.faq-list,.faq-item { border-color:var(--line); }
+.cta-panel { background:radial-gradient(ellipse at 50% 0%,rgba(128,87,245,.2),#101426 55%,#0e1120); }
+.faq-item summary:after { color:#b69cff; }
+.site-footer { background:#080a17; }
+.pathway-tab { border-color:var(--line); background:#101426; color:#b8bbd4; }
+.pathway-tab:hover,.pathway-tab.active { background:#28213f; color:#e4dcff; border-color:#8057f5; }
+.pathway-points li:before { color:#b69cff; }
+@media(max-width:720px) {
+ .site-nav { background:#0a0d1c; border-bottom-color:var(--line); }
+}
