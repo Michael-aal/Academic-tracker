@@ -173,17 +173,17 @@
 
   function stripQuizFormatting(value) {
     return String(value ?? "")
-      .replace(/^\\s{0,3}#{1,6}\\s+/gm, "")
-      .replace(/\\*\\*(.*?)\\*\\*/g, "$1")
+      .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+      .replace(/\*\*(.*?)\*\*/g, "$1")
       .replace(/__(.*?)__/g, "$1")
-      .replace(/(^|[^*])\\*([^*\\n]+)\\*/g, "$1$2")
-      .replace(/(^|[^_])_([^_\\n]+)_/g, "$1$2")
+      .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1$2")
+      .replace(/(^|[^_])_([^_\n]+)_/g, "$1$2")
       .replace(/`([^`]+)`/g, "$1")
       .trim();
   }
 
   function parseQuizAnswer(raw, expectedCount) {
-    const cleaned = String(raw || "").trim().replace(/^```(?:json)?\\s*/i, "").replace(/\\s*```$/i, "");
+    const cleaned = String(raw || "").trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
     let parsed;
     try { parsed = JSON.parse(cleaned); } catch { throw new Error("The quiz came back in an unexpected format. Please generate it again."); }
     const list = Array.isArray(parsed) ? parsed : parsed?.questions;
