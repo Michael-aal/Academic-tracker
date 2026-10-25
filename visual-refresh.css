@@ -141,7 +141,7 @@ a { text-underline-offset: 4px; }
 }
 .mm-stat {
   padding: 22px;
-  background: linear-gradient(145deg, rgba(25, 40, 30, .96), rgba(16, 25, 19, .96));
+  background: linear-gradient(145deg, rgba(20,38,74,.96), rgba(13,27,53,.96));
   box-shadow: var(--ui-shadow);
 }
 .mm-stat strong { letter-spacing: -.04em; }
