@@ -32,7 +32,7 @@ function buildPrompt({ action, subject, topic, content, level, questionCount, st
 
   const tasks = {
     tutor: "Act as a patient tutor appropriate to the student's education track and programme. For higher-institution students, use university-level depth and their registered course context; for secondary students, explain at their school level. Address the student by their first name naturally when useful. Answer the student's question accurately in simple steps, define important terms, give one worked example where useful, and end with one short check-for-understanding question. If the question is ambiguous, state your assumption. Do not pretend certainty when unsure.",
-    quiz: "Create exactly " + questionCount + " useful revision questions at the student's education level, based on the supplied subject/topic/material and programme context. Mix recall and application where suitable. Number every question, provide a clear answer key and brief explanations in a separate section, and do not invent facts unsupported by the material. If notes are absent, use established subject knowledge and say so.",
+    quiz: "Generate exactly " + questionCount + " multiple-choice questions at the student's education level. Return ONLY valid JSON without Markdown fences, shaped as {\"title\":\"short quiz title\",\"questions\":[{\"question\":\"question text\",\"options\":[{\"label\":\"A\",\"text\":\"option text\"},{\"label\":\"B\",\"text\":\"option text\"},{\"label\":\"C\",\"text\":\"option text\"},{\"label\":\"D\",\"text\":\"option text\"}],\"correctAnswer\":\"A\",\"explanation\":\"short explanation\"}]}. Include exactly " + questionCount + " distinct questions. Each must have exactly four plausible options labelled A, B, C, D and exactly one correctAnswer matching one label. Verify each answer and use the supplied material or established subject knowledge.";
     summarize: "Summarize the supplied study material for revision. Use a short overview, key facts/definitions, important steps or formulas, and 3 quick self-test questions with answers at the end. Preserve the meaning; do not add unsupported claims. If no notes were supplied, ask the student to paste notes.",
     "study-plan": "Create a realistic, encouraging 7-day study plan for the supplied subject/topic, considering the student's programme, registered courses and target grades when relevant. Use short sessions, active recall, practice questions and review days. Include a clear daily task and a simple way to check understanding. Do not assume the student's available hours; suggest flexible 20–30 minute blocks."
   };
@@ -104,7 +104,7 @@ router.post("/", aiLimiter, async (req, res) => {
         model,
         messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, studentProfile }) }],
         temperature: 0.4,
-        max_tokens: 1800
+        max_tokens: action === "quiz" ? 3500 : 1800
       })
     });
 
@@ -124,6 +124,23 @@ router.post("/", aiLimiter, async (req, res) => {
     const answer = data?.choices?.[0]?.message?.content;
     if (typeof answer !== "string" || !answer.trim()) {
       return res.status(502).json({ error: "The AI service returned an empty answer. Please try again." });
+    }
+    if (action === "quiz") {
+      let quiz;
+      try {
+        const cleaned = answer.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+        quiz = JSON.parse(cleaned);
+        const labels = ["A", "B", "C", "D"];
+        if (!quiz || !Array.isArray(quiz.questions) || quiz.questions.length !== questionCount ||
+            quiz.questions.some(q => !q || typeof q.question !== "string" || !Array.isArray(q.options) ||
+              q.options.length !== 4 || !labels.includes(q.correctAnswer) ||
+              !q.options.every((o, i) => o && o.label === labels[i] && typeof o.text === "string" && o.text.trim()) ||
+              typeof q.explanation !== "string")) throw new Error("Quiz schema validation failed");
+      } catch (parseError) {
+        console.error("AI quiz JSON validation failed:", parseError.message);
+        return res.status(502).json({ error: "The AI returned a quiz in an unexpected format. Please generate it again." });
+      }
+      return res.json({ quiz, action, model });
     }
     res.json({ answer: answer.trim(), action, model });
   } catch (error) {
