@@ -28,7 +28,7 @@
 .workspace-signout{margin-left:auto;border:1px solid #523532;border-radius:9px;background:#241815;color:#ffb9ad;padding:7px 9px;font-size:10px;font-weight:750}
 .workspace-signout:hover{background:#38201c}
 .workspace-mobile-nav{display:none}
-.workspace-nav-enabled .ai-topbar,.workspace-nav-enabled .ev-topbar,.workspace-nav-enabled .mm-topbar,.workspace-nav-enabled .uni-sidebar,.workspace-nav-enabled .support-top,.workspace-nav-enabled .profile-page .sidebar{display:none!important}
+.workspace-nav-enabled .ai-topbar,.workspace-nav-enabled .ev-topbar,.workspace-nav-enabled .mm-topbar,.workspace-nav-enabled .uni-sidebar,.workspace-nav-enabled .support-top,.workspace-nav-enabled.profile-page .sidebar{display:none!important}
 .workspace-nav-enabled .app-shell{display:block}
 .workspace-nav-enabled .uni-shell{display:block}
 .workspace-nav-enabled .uni-main{max-width:1440px;margin:auto;padding:26px clamp(14px,3vw,40px)}
