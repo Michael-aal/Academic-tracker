@@ -34,3 +34,11 @@
 @media(max-width:380px){.compact-topbar{gap:8px;padding:10px}.topbar-main{gap:8px}.page-heading .eyebrow{max-width:150px}.menu-trigger{width:36px;height:36px;flex-basis:36px}}
 @media(prefers-reduced-motion:reduce){.dropdown-menu{animation:none}.menu-trigger{transition:none}}
 @media print{.compact-topbar{display:none!important}}
+
+/* More breathing room for the dashboard summary cards on phones. */
+.stats-grid{gap:12px}
+.stats-grid .card{padding:17px}
+.stats-grid .stat-value{font-size:clamp(23px,2.4vw,29px);margin:10px 0 5px}
+.stats-grid .stat-label{line-height:1.45}
+@media(max-width:680px){.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stats-grid .card{padding:13px;border-radius:14px}.stats-grid .stat-value{font-size:clamp(21px,6vw,25px);letter-spacing:-.7px;margin:9px 0 4px}.stats-grid .stat-label{font-size:11px}.stats-grid .stat-foot{font-size:10px;line-height:1.45}}
+@media(max-width:350px){.stats-grid{gap:8px}.stats-grid .card{padding:11px}.stats-grid .stat-value{font-size:21px}}
