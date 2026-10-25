@@ -171,27 +171,56 @@
   }
 
 
-  function parseQuizAnswer(raw) {
-    const cleaned = String(raw || "").trim().replace(/^\x60{3}(?:json)?\s*/i, "").replace(/\s*\x60{3}$/i, "");
+  function stripQuizFormatting(value) {
+    return String(value ?? "")
+      .replace(/^\\s{0,3}#{1,6}\\s+/gm, "")
+      .replace(/\\*\\*(.*?)\\*\\*/g, "$1")
+      .replace(/__(.*?)__/g, "$1")
+      .replace(/(^|[^*])\\*([^*\\n]+)\\*/g, "$1$2")
+      .replace(/(^|[^_])_([^_\\n]+)_/g, "$1$2")
+      .replace(/`([^`]+)`/g, "$1")
+      .trim();
+  }
+
+  function parseQuizAnswer(raw, expectedCount) {
+    const cleaned = String(raw || "").trim().replace(/^```(?:json)?\\s*/i, "").replace(/\\s*```$/i, "");
     let parsed;
     try { parsed = JSON.parse(cleaned); } catch { throw new Error("The quiz came back in an unexpected format. Please generate it again."); }
-    const list = Array.isArray(parsed) ? parsed : parsed.questions;
-    if (!Array.isArray(list) || !list.length) throw new Error("The AI did not return any quiz questions. Please try again.");
+    const list = Array.isArray(parsed) ? parsed : parsed?.questions;
+    if (!Array.isArray(list) || list.length !== expectedCount) {
+      throw new Error("The AI did not return exactly " + expectedCount + " questions. Please generate the quiz again.");
+    }
     return list.map((item, index) => {
-      const entries = Array.isArray(item.options)
-        ? item.options.map((value, i) => [String.fromCharCode(65 + i), value])
-        : Object.entries(item.options || {});
-      const options = entries.slice(0, 4).map(([key, value], i) => ({
-        key: /^[A-D]$/i.test(String(key)) ? String(key).toUpperCase() : String.fromCharCode(65 + i),
-        text: String(value == null ? "" : value).trim()
-      })).filter(option => option.text);
-      const rawAnswer = String(item.answer ?? item.correctAnswer ?? "").trim();
-      const answer = /^[A-D]$/i.test(rawAnswer) ? rawAnswer.toUpperCase() :
-        (options.find(option => option.text.toLowerCase() === rawAnswer.toLowerCase()) || {}).key;
-      if (!item || typeof item.question !== "string" || options.length !== 4 || !answer) {
+      if (!item || typeof item !== "object" || typeof item.question !== "string") {
         throw new Error("Question " + (index + 1) + " is incomplete. Please generate the quiz again.");
       }
-      return { question: item.question.trim(), options, answer, explanation: String(item.explanation || "Review the topic in your notes for more detail.") };
+      const rawOptions = item.options;
+      let entries;
+      if (Array.isArray(rawOptions)) {
+        if (rawOptions.length !== 4) throw new Error("Question " + (index + 1) + " must have four options.");
+        entries = rawOptions.map((value, i) => [String.fromCharCode(65 + i), value]);
+      } else if (rawOptions && typeof rawOptions === "object") {
+        const keys = Object.keys(rawOptions);
+        if (keys.length !== 4 || ["A", "B", "C", "D"].some(key => !Object.prototype.hasOwnProperty.call(rawOptions, key))) {
+          throw new Error("Question " + (index + 1) + " must have options A, B, C and D.");
+        }
+        entries = ["A", "B", "C", "D"].map(key => [key, rawOptions[key]]);
+      } else {
+        throw new Error("Question " + (index + 1) + " has no valid options.");
+      }
+      const options = entries.map(([key, value]) => ({ key, text: stripQuizFormatting(value) }));
+      if (options.some(option => !option.text) || new Set(options.map(option => option.key)).size !== 4) {
+        throw new Error("Question " + (index + 1) + " has invalid options.");
+      }
+      const rawAnswer = String(item.answer ?? item.correctAnswer ?? "").trim();
+      const answer = /^[A-D]$/i.test(rawAnswer) ? rawAnswer.toUpperCase() :
+        (options.find(option => option.text.toLowerCase() === stripQuizFormatting(rawAnswer).toLowerCase()) || {}).key;
+      if (!answer || !options.some(option => option.key === answer)) {
+        throw new Error("Question " + (index + 1) + " has no valid correct answer.");
+      }
+      const question = stripQuizFormatting(item.question);
+      if (!question) throw new Error("Question " + (index + 1) + " has no question text.");
+      return { question, options, answer, explanation: stripQuizFormatting(item.explanation || "Review this topic in your notes for more detail.") };
     });
   }
 
@@ -280,6 +309,8 @@
     $("submit-label").textContent = copy.button;
     $("result-title").textContent = copy.result;
     $("quiz-options").hidden = action !== "quiz";
+    $("copy-result").hidden = action === "quiz";
+    $("voice-tools").hidden = action === "quiz";
     $("content").value = "";
     $("char-count").textContent = "0 / 12,000 characters";
     $("result-panel").hidden = true;
@@ -331,6 +362,10 @@
     const topic = $("topic").value.trim();
     if (!content && !topic) { $("notice").textContent = "Enter a question, topic, or notes first."; $("notice").classList.add("error"); return; }
     const button = $("submit-learning");
+    button.disabled = true;
+    document.querySelectorAll("[data-action]").forEach(choice => { choice.disabled = true; });
+    state.quiz = null;
+    $("quiz-view").hidden = true;
     button.disabled = true; $("submit-label").textContent = "Working on your request…";
     $("notice").textContent = "Preparing your study response. This may take a few seconds.";
     $("notice").classList.remove("error");
@@ -348,7 +383,7 @@
       if (typeof data.answer !== "string" || !data.answer.trim()) throw new Error("The AI returned an empty response. Please try again.");
       state.answer = data.answer;
       if (state.action === "quiz") {
-        state.quiz = { questions: parseQuizAnswer(data.answer), index: 0, answers: [], finished: false };
+        state.quiz = { questions: parseQuizAnswer(data.answer, Number($("question-count").value)), index: 0, answers: [], finished: false };
         $("result-content").innerHTML = "";
         $("result-content").hidden = true;
         renderQuiz();
@@ -362,12 +397,13 @@
       $("notice").textContent = "Response ready. Review it alongside your school materials.";
       updateSpeechButtons();
       $("result-panel").scrollIntoView({ behavior: "smooth", block: "start" });
-      if (speechSettings.autoSpeak && speechSupported()) speakResult(true);
+      if (speechSettings.autoSpeak && speechSupported() && state.action !== "quiz") speakResult(true);
     } catch (error) {
       $("notice").textContent = error.message || "The request could not be completed.";
       $("notice").classList.add("error");
     } finally {
       button.disabled = false;
+      document.querySelectorAll("[data-action]").forEach(choice => { choice.disabled = false; });
       $("submit-label").textContent = taskCopy[state.action].button;
     }
   });
