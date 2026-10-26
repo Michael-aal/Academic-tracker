@@ -20,7 +20,93 @@
     link.href = "admin-ai.html"; link.textContent = "AI admin"; nav.insertBefore(link, nav.children[1] || null);
   }
 
-  async function api(path, options = {}) {
+
+  function appendInlineMarkdown(parent, value) {
+    const pattern = /(`[^`]*`|\*\*[^*]+\*\*|\*[^*]+\*)/g;
+    let cursor = 0;
+    let match;
+    while ((match = pattern.exec(value))) {
+      if (match.index > cursor) parent.append(document.createTextNode(value.slice(cursor, match.index)));
+      const token = match[0];
+      let node;
+      if (token.startsWith("`")) {
+        node = document.createElement("code");
+        node.textContent = token.slice(1, -1);
+      } else if (token.startsWith("**")) {
+        node = document.createElement("strong");
+        node.textContent = token.slice(2, -2);
+      } else {
+        node = document.createElement("em");
+        node.textContent = token.slice(1, -1);
+      }
+      parent.append(node);
+      cursor = match.index + token.length;
+    }
+    if (cursor < value.length) parent.append(document.createTextNode(value.slice(cursor)));
+  }
+
+  function renderSafeMarkdown(host, markdown) {
+    host.replaceChildren();
+    const lines = String(markdown ?? "").replace(/\r\n?/g, "\n").split("\n");
+    let paragraph = [];
+    let list = null;
+    let codeLines = null;
+    const flushParagraph = () => {
+      if (!paragraph.length) return;
+      const p = document.createElement("p");
+      appendInlineMarkdown(p, paragraph.join(" "));
+      host.append(p);
+      paragraph = [];
+    };
+    const flushList = () => {
+      if (list) { host.append(list); list = null; }
+    };
+    lines.forEach(line => {
+      if (/^\s*```/.test(line)) {
+        flushParagraph(); flushList();
+        if (codeLines) {
+          const pre = document.createElement("pre");
+          const code = document.createElement("code");
+          code.textContent = codeLines.join("\n");
+          pre.append(code); host.append(pre); codeLines = null;
+        } else codeLines = [];
+        return;
+      }
+      if (codeLines) { codeLines.push(line); return; }
+      if (!line.trim()) { flushParagraph(); flushList(); return; }
+      const heading = /^(#{1,6})\s+(.+)$/.exec(line);
+      if (heading) {
+        flushParagraph(); flushList();
+        const h = document.createElement("h" + heading[1].length);
+        appendInlineMarkdown(h, heading[2].trim());
+        host.append(h);
+        return;
+      }
+      const unordered = /^\s*[-*+]\s+(.+)$/.exec(line);
+      const ordered = /^\s*\d+[.)]\s+(.+)$/.exec(line);
+      if (unordered || ordered) {
+        flushParagraph();
+        const type = unordered ? "ul" : "ol";
+        if (!list || list.tagName.toLowerCase() !== type) {
+          flushList(); list = document.createElement(type);
+        }
+        const item = document.createElement("li");
+        appendInlineMarkdown(item, (unordered || ordered)[1]);
+        list.append(item);
+        return;
+      }
+      flushList();
+      paragraph.push(line.trim());
+    });
+    flushParagraph(); flushList();
+    if (codeLines) {
+      const pre = document.createElement("pre");
+      const code = document.createElement("code");
+      code.textContent = codeLines.join("\n");
+      pre.append(code); host.append(pre);
+    }
+  }
+\n  async function api(path, options = {}) {
     const response = await fetch(API_BASE + path, {
       ...options,
       headers: { Authorization: "Bearer " + token, ...(options.body ? { "Content-Type": "application/json" } : {}), ...(options.headers || {}) }
@@ -323,7 +409,7 @@
         renderQuiz(data.quiz, data.attemptId);
       } else {
         state.answer = data.answer || "";
-        $("result-content").textContent = data.answer || "No response was returned.";
+        renderSafeMarkdown($("result-content"), data.answer || "No response was returned.");
         $("result-panel").hidden = false;
       }
       setNotice("Response ready. Review it alongside your school materials.");
