@@ -36,3 +36,5 @@ jobs:
         run: npx prisma generate
       - name: Run unit tests
         run: npm test
+      - name: Check AI learning frontend JavaScript syntax
+        run: node --check ../ai-learning.js
