@@ -33,7 +33,7 @@ function buildPrompt({ action, subject, topic, content, level, questionCount, di
 
   const tasks = {
     tutor: "Act as a patient tutor appropriate to the student's education track and programme. For higher-institution students, use university-level depth and their registered course context; for secondary students, explain at their school level. Address the student by their first name naturally when useful. Answer the student's question accurately in simple steps, define important terms, give one worked example where useful, and end with one short check-for-understanding question. If the question is ambiguous, state your assumption. Do not pretend certainty when unsure.",
-    quiz: "Generate exactly " + questionCount + " unique, complete, academically accurate multiple-choice questions for the specified subject, topic, level, and " + difficulty + " difficulty. Use provided notes when present and never invent facts. Return ONLY valid JSON shaped as {\\"title\\":\\"short title\\",\\"questions\\":[{\\"id\\":\\"q1\\",\\"question\\":\\"complete question\\",\\"options\\":[{\\"id\\":\\"A\\",\\"text\\":\\"option\\\"},{\\"id\\":\\"B\\",\\"text\\":\\"option\\\"},{\\"id\\":\\"C\\",\\"text\\":\\"option\\\"},{\\"id\\":\\"D\\",\\"text\\":\\"option\\\"}],\\"correctAnswer\\":\\"A\\",\\"explanation\\":\\"brief explanation\\",\\"hint\\":\\"optional non-revealing hint\\"}]}. Include exactly " + questionCount + " unique questions; each needs four distinct plausible options, exactly one correct option ID, a factually accurate explanation, and a hint that does not reveal the answer. Check all facts before returning JSON."
+    quiz: "Return only a JSON object with a title and questions array. Generate exactly " + questionCount + " unique, complete, academically accurate multiple-choice questions for the specified subject, topic, academic level, and " + difficulty + " difficulty. Use supplied notes when present and never invent facts. Every question object must contain id (unique string), question (complete text), options (exactly four objects with IDs A, B, C, and D and distinct meaningful text), correctAnswer (exactly one valid option ID), explanation (brief accurate explanation), and hint (optional clue that does not reveal the answer). Avoid duplicate questions, ambiguity, and meaningless distractors. Verify the answer key before returning JSON."
     summarize: "Summarize the supplied study material for revision. Use a short overview, key facts/definitions, important steps or formulas, and 3 quick self-test questions with answers at the end. Preserve the meaning; do not add unsupported claims. If no notes were supplied, ask the student to paste notes.",
     "study-plan": "Create a realistic, encouraging 7-day study plan for the supplied subject/topic, considering the student's programme, registered courses and target grades when relevant. Use short sessions, active recall, practice questions and review days. Include a clear daily task and a simple way to check understanding. Do not assume the student's available hours; suggest flexible 20–30 minute blocks."
   };
@@ -68,7 +68,18 @@ router.get("/status", requireAdmin, (_req, res) => {
 router.get("/attempts/:attemptId", async (req, res) => {
   const attempt = await prisma.aiQuizAttempt.findFirst({ where: { id: req.params.attemptId, userId: req.userId } });
   if (!attempt) return res.status(404).json({ error: "Quiz attempt not found." });
-  return res.json({ attemptId: attempt.id, status: attempt.status, quiz: publicQuiz(attempt.questionData), submittedAnswers: attempt.submittedAnswers, result: attempt.resultData, createdAt: attempt.createdAt, completedAt: attempt.completedAt });
+  const savedAnswers = Array.isArray(attempt.submittedAnswers) ? attempt.submittedAnswers : [];
+  const feedbackByQuestion = {};
+  for (const answer of savedAnswers) {
+    const question = attempt.questionData.questions.find(item => item.id === answer.questionId);
+    if (!question) continue;
+    feedbackByQuestion[question.id] = {
+      isCorrect: answer.optionId === question.correctAnswer,
+      correctAnswer: question.correctAnswer,
+      explanation: question.explanation
+    };
+  }
+  return res.json({ attemptId: attempt.id, status: attempt.status, quiz: publicQuiz(attempt.questionData), submittedAnswers: savedAnswers, feedbackByQuestion, result: attempt.resultData, createdAt: attempt.createdAt, completedAt: attempt.completedAt });
 });
 
 
