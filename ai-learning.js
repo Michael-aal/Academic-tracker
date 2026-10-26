@@ -202,7 +202,7 @@
     hintButton.addEventListener("click", () => {
       const question = state.quiz.questions[state.index];
       if (!question.hint) { hintText.textContent = "No hint was provided for this question."; }
-      else hintText.textContent = question.hint;
+      else { hintText.replaceChildren(); appendInlineMarkdown(hintText, question.hint); }
       hintText.hidden = !hintText.hidden;
       hintButton.textContent = hintText.hidden ? "Show hint" : "Hide hint";
     });
@@ -219,7 +219,9 @@
       progress.textContent = "Question " + (state.index + 1) + " of " + state.quiz.questions.length + " · " + Object.keys(state.answered).length + " answered";
       progressFill.style.width = (Object.keys(state.answered).length / state.quiz.questions.length * 100) + "%";
       card.querySelector(".question-meta").textContent = "QUESTION " + (state.index + 1) + " OF " + state.quiz.questions.length;
-      card.querySelector(".question-title").textContent = question.question;
+      const questionTitle = card.querySelector(".question-title");
+      questionTitle.replaceChildren();
+      appendInlineMarkdown(questionTitle, question.question);
       optionHost.replaceChildren();
       question.options.forEach(option => {
         const button = el("button", "answer-option");
@@ -227,7 +229,8 @@
         button.dataset.optionId = option.id;
         button.setAttribute("aria-pressed", String(state.selected[question.id] === option.id || state.answered[question.id] === option.id));
         const letter = el("span", "answer-letter", option.id);
-        const text = el("span", "answer-text", option.text);
+        const text = el("span", "answer-text");
+        appendInlineMarkdown(text, option.text);
         button.append(letter, text);
         const selected = state.selected[question.id] === option.id;
         const answeredChoice = state.answered[question.id] === option.id;
@@ -264,7 +267,9 @@
     function showFeedback(data) {
       feedback.hidden = false;
       feedback.className = "question-feedback " + (data.isCorrect ? "feedback-correct" : "feedback-incorrect");
-      feedback.textContent = (data.isCorrect ? "Correct. " : "Not quite. Correct answer: " + data.correctAnswer + ". ") + data.explanation;
+      feedback.replaceChildren();
+      feedback.append(document.createTextNode(data.isCorrect ? "Correct. " : "Not quite. Correct answer: " + data.correctAnswer + ". "));
+      appendInlineMarkdown(feedback, data.explanation);
       optionHost.querySelectorAll(".answer-option").forEach(option => {
         option.disabled = true;
         if (option.dataset.optionId === data.correctAnswer) option.classList.add("answer-correct");
@@ -339,10 +344,21 @@
     const reviewList = el("div", "quiz-review-list");
     result.review.forEach((item, index) => {
       const card = el("article", "quiz-review-card " + (item.isCorrect ? "review-correct" : item.selectedAnswer ? "review-incorrect" : "review-unanswered"));
-      card.append(el("p", "question-meta", "QUESTION " + (index + 1)), el("h5", "question-title", item.question));
-      card.append(el("p", "review-line", "Your answer: " + (item.selectedText || "Not answered")));
-      card.append(el("p", "review-line", "Correct answer: " + item.correctAnswer + ". " + item.correctText));
-      card.append(el("p", "review-explanation", item.explanation));
+      card.append(el("p", "question-meta", "QUESTION " + (index + 1)));
+      const reviewQuestion = el("h5", "question-title");
+      appendInlineMarkdown(reviewQuestion, item.question);
+      card.append(reviewQuestion);
+      const yourAnswer = el("p", "review-line");
+      yourAnswer.append(document.createTextNode("Your answer: "));
+      appendInlineMarkdown(yourAnswer, item.selectedText || "Not answered");
+      card.append(yourAnswer);
+      const correctAnswer = el("p", "review-line");
+      correctAnswer.append(document.createTextNode("Correct answer: " + item.correctAnswer + ". "));
+      appendInlineMarkdown(correctAnswer, item.correctText);
+      card.append(correctAnswer);
+      const explanation = el("p", "review-explanation");
+      appendInlineMarkdown(explanation, item.explanation);
+      card.append(explanation);
       reviewList.append(card);
     });
     host.append(reviewList);
