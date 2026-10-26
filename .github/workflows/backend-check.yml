@@ -12,6 +12,9 @@ on:
   pull_request:
     paths:
       - "backend/**"
+      - "calculator-engine.js"
+      - "calculator.js"
+      - "ai-learning.js"
       - ".github/workflows/backend-check.yml"
   workflow_dispatch:
 
