@@ -218,7 +218,6 @@
         const data = await api("/api/ai/attempts/" + encodeURIComponent(state.attemptId) + "/submit", { method: "POST", body: JSON.stringify({}) });
         state.submitted = true;
         state.result = data.result;
-        localStorage.removeItem(ATTEMPT_KEY);
         renderResults(data.result);
         setNotice("Quiz completed. Your results were saved to your account.");
       } catch (error) {
@@ -264,6 +263,7 @@
     const retry = el("button", "quiz-submit", "Retry quiz");
     retry.type = "button";
     retry.addEventListener("click", () => {
+      localStorage.removeItem(ATTEMPT_KEY);
       state.attemptId = null;
       state.quiz = null;
       $("result-panel").hidden = true;
