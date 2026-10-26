@@ -28,6 +28,7 @@ model User {
   universityResults     UniversityCourseResult[]
   supportConversation   SupportConversation?
   supportMessages       SupportMessage[]      @relation("SupportMessageSender")
+  aiQuizAttempts        AiQuizAttempt[]
 
   @@map("users")
 }
@@ -138,4 +139,25 @@ model SupportMessage {
   @@index([conversationId, createdAt])
   @@index([senderId, readAt])
   @@map("support_messages")
+}
+
+
+model AiQuizAttempt {
+  id                String   @id @default(cuid())
+  userId            String   @map("user_id")
+  title             String   @db.VarChar(120)
+  subject           String   @default("") @db.VarChar(100)
+  topic             String   @default("") @db.VarChar(160)
+  difficulty        String   @default("medium") @db.VarChar(20)
+  questionData      Json     @map("question_data")
+  submittedAnswers  Json?    @map("submitted_answers")
+  resultData        Json?    @map("result_data")
+  status            String   @default("IN_PROGRESS") @db.VarChar(20)
+  createdAt         DateTime @default(now()) @map("created_at")
+  completedAt       DateTime? @map("completed_at")
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@map("ai_quiz_attempts")
 }
