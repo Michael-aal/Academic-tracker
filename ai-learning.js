@@ -374,7 +374,7 @@
   });
   $("copy-result").addEventListener("click", async () => {
     try {
-      await navigator.clipboard.writeText(state.answer);
+      await navigator.clipboard.writeText($("result-content").innerText || $("result-content").textContent || state.answer);
       $("copy-result").textContent = "Copied";
       setTimeout(() => { $("copy-result").textContent = "Copy answer"; }, 1800);
     } catch { setNotice("Copy was blocked by your browser. Select the answer and copy it manually.", true); }
