@@ -106,7 +106,8 @@
       pre.append(code); host.append(pre);
     }
   }
-\n  async function api(path, options = {}) {
+
+  async function api(path, options = {}) {
     const response = await fetch(API_BASE + path, {
       ...options,
       headers: { Authorization: "Bearer " + token, ...(options.body ? { "Content-Type": "application/json" } : {}), ...(options.headers || {}) }
