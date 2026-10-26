@@ -80,14 +80,15 @@
     clearError();
     if (!state.expression.trim()) { error("Enter a calculation first."); return; }
     try {
-      const result = CalculatorEngine.evaluate(state.expression);
+      const completedExpression = state.expression;
+      const result = CalculatorEngine.evaluate(completedExpression);
       const formatted = CalculatorEngine.format(result);
-      addHistory(state.expression, formatted);
+      addHistory(completedExpression, formatted);
       state.lastResult = formatted;
       state.expression = formatted;
       state.justCalculated = true;
       $("display").textContent = formatted;
-      $("expression").textContent = displayExpression(state.expression) + " =";
+      $("expression").textContent = displayExpression(completedExpression) + " =";
       clearError();
     } catch (e) {
       error(e instanceof Error ? e.message : "That calculation could not be completed.");
