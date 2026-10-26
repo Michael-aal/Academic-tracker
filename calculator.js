@@ -1,25 +1,164 @@
 (() => {
-"use strict";
-const $=id=>document.getElementById(id);
-let current="0", stored=null, operator=null, waiting=false, expression="", history=[], answer=0, radians=false;
-const symbols={"+":"+","−":"−","×":"×","÷":"÷","^":"^"};
-function fmt(n){if(!Number.isFinite(n))return "Error";const r=Number.parseFloat(n.toPrecision(11));return String(Object.is(r,-0)?0:r);}
-function show(){$("display").textContent=current;$("expression").textContent=expression||"Ready to calculate";}
-function clear(){current="0";stored=null;operator=null;waiting=false;expression="";show();}
-function digit(d){if(current==="Error")clear();if(waiting){current=d;waiting=false;}else if(current==="0")current=d;else if(current.length<22)current+=d;show();}
-function decimal(){if(current==="Error")clear();if(waiting){current="0.";waiting=false;}else if(!current.includes("."))current+=".";show();}
-function calc(a,b,op){switch(op){case "+":return a+b;case "−":return a-b;case "×":return a*b;case "÷":return b===0?NaN:a/b;case "^":return Math.pow(a,b);default:return b;}}
-function choose(op){const n=Number(current);if(!Number.isFinite(n))return;if(operator&&!waiting){const v=calc(stored,n,operator);current=fmt(v);stored=Number(current);if(current==="Error"){operator=null;waiting=true;expression="Invalid operation";show();return;}}else stored=n;operator=op;waiting=true;expression=fmt(stored)+" "+symbols[op];show();}
-function addHistory(expr,result){history.unshift({expr,result});history=history.slice(0,8);renderHistory();}
-function equals(){if(!operator||stored===null||current==="Error")return;const a=stored,b=Number(current),op=operator,v=calc(a,b,op);expression=fmt(a)+" "+symbols[op]+" "+fmt(b)+" =";current=fmt(v);operator=null;stored=null;waiting=true;show();if(current!=="Error"){answer=Number(current);addHistory(expression,current);}}
-function factorial(n){if(n<0||!Number.isInteger(n)||n>170)return NaN;let r=1;for(let i=2;i<=n;i++)r*=i;return r;}
-function fn(name){const x=Number(current);let v;switch(name){case "sin":v=Math.sin(radians?x:x*Math.PI/180);break;case "cos":v=Math.cos(radians?x:x*Math.PI/180);break;case "tan":v=Math.tan(radians?x:x*Math.PI/180);break;case "asin":v=Math.asin(x);if(!radians)v=v*180/Math.PI;break;case "acos":v=Math.acos(x);if(!radians)v=v*180/Math.PI;break;case "atan":v=Math.atan(x);if(!radians)v=v*180/Math.PI;break;case "sqrt":v=x<0?NaN:Math.sqrt(x);break;case "square":v=x*x;break;case "ln":v=x<=0?NaN:Math.log(x);break;case "log":v=x<=0?NaN:Math.log10(x);break;case "factorial":v=factorial(x);break;case "reciprocal":v=x===0?NaN:1/x;break;case "abs":v=Math.abs(x);break;default:return;}expression=name+"("+fmt(x)+")";current=fmt(v);waiting=true;show();if(current!=="Error"){answer=Number(current);addHistory(expression,current);}else expression="Undefined for this input";show();}
-function action(name){if(name==="clear"){clear();return;}if(name==="decimal"){decimal();return;}if(name==="equals"){equals();return;}if(name==="sign"){if(current!=="0"&&current!=="Error")current=fmt(-Number(current));show();return;}if(name==="percent"){if(current!=="Error")current=fmt(Number(current)/100);show();return;}if(name==="backspace"){if(!waiting)current=current.length>1?current.slice(0,-1):"0";if(current==="-")current="0";show();return;}if(name==="ans"){current=fmt(answer);waiting=false;show();return;}}
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function renderHistory(){$("history").innerHTML=history.length?history.map(i=>'<div class="history-item"><span>'+escapeHtml(i.expr)+'</span><strong>'+escapeHtml(i.result)+'</strong></div>').join(""):'<p class="history-empty">Your recent calculations appear here while this page is open.</p>';}
-$("keys").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.digit!==undefined)digit(b.dataset.digit);else if(b.dataset.op)choose(b.dataset.op);else if(b.dataset.fn)fn(b.dataset.fn);else if(b.dataset.constant){current=fmt(b.dataset.constant==="pi"?Math.PI:Math.E);waiting=false;expression=b.dataset.constant==="pi"?"π":"e";show();}else if(b.dataset.action)action(b.dataset.action);});
-$("angle-mode").addEventListener("click",()=>{radians=!radians;$("angle-mode").textContent="Angle: "+(radians?"RAD":"DEG");$("angle-mode").setAttribute("aria-pressed",String(radians));});
-document.addEventListener("keydown",e=>{if(e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;if(/^[0-9]$/.test(e.key)){digit(e.key);return;}if(e.key==="."){decimal();return;}if(e.key==="Enter"||e.key==="="){e.preventDefault();equals();return;}if(e.key==="Escape"){clear();return;}if(e.key==="Backspace"){action("backspace");return;}const ops={"+":"+","-":"−","*":"×","/":"÷","^":"^"};if(ops[e.key]){e.preventDefault();choose(ops[e.key]);}});
-function percentage(){const s=$("score").value,t=$("total").value;if(s===""||t===""||!Number.isFinite(Number(s))||!Number.isFinite(Number(t))||Number(t)<=0||Number(s)<0){$("score-percent").textContent="—";return;}const p=Number(s)/Number(t)*100;$("score-percent").textContent=Number.isFinite(p)?fmt(p)+"%":"—";}
-$("score").addEventListener("input",percentage);$("total").addEventListener("input",percentage);$("clear-history").addEventListener("click",()=>{history=[];renderHistory();});$("year-label").textContent=new Date().getFullYear();show();renderHistory();
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const state = { expression: "", justCalculated: false, lastResult: 0, history: [] };
+  const operators = ["+", "-", "*", "/"];
+  const displayExpression = value => value.replace(/\*/g, "×").replace(/\//g, "÷").replace(/-/g, "−");
+
+  function render() {
+    $("expression").textContent = state.expression ? displayExpression(state.expression) : "Ready to calculate";
+    $("display").textContent = state.justCalculated ? state.lastResult : (state.expression || "0");
+  }
+  function clearError() { $("calc-error").hidden = true; $("calc-error").textContent = ""; }
+  function error(message) {
+    $("calc-error").textContent = message || "Check the expression and try again.";
+    $("calc-error").hidden = false;
+    $("display").textContent = "—";
+  }
+  function appendDigit(digit) {
+    clearError();
+    if (state.justCalculated) { state.expression = ""; state.justCalculated = false; }
+    const match = state.expression.match(/(?:^|[+\-*/(])(-?\d*\.?\d*)$/);
+    const current = match ? match[1] : "";
+    if (digit === "." && current.includes(".")) return;
+    if (digit === "." && (!current || current === "-")) state.expression += "0";
+    state.expression += digit;
+    render();
+  }
+  function appendOperator(op) {
+    clearError();
+    if (state.justCalculated) { state.expression = String(state.lastResult); state.justCalculated = false; }
+    if (!state.expression) {
+      if (op === "-") state.expression = "-";
+      else return;
+    } else if (operators.includes(state.expression.slice(-1))) {
+      if (op === "-" && state.expression.slice(-1) !== "-") state.expression += op;
+      else state.expression = state.expression.slice(0, -1) + op;
+    } else if (state.expression.endsWith("(")) {
+      if (op === "-") state.expression += op;
+      else return;
+    } else state.expression += op;
+    render();
+  }
+  function appendParen(paren) {
+    clearError();
+    if (state.justCalculated) { state.expression = ""; state.justCalculated = false; }
+    if (paren === "(" && /[\d.)%]$/.test(state.expression)) state.expression += "*";
+    state.expression += paren;
+    render();
+  }
+  function toggleSign() {
+    clearError();
+    if (state.justCalculated) { state.expression = String(-state.lastResult); state.justCalculated = false; render(); return; }
+    const match = state.expression.match(/(\d*\.?\d+(?:e[+-]?\d+)?)$/i);
+    if (!match) {
+      if (!state.expression || /[+\-*/(]$/.test(state.expression)) state.expression += "-";
+      render(); return;
+    }
+    const start = match.index;
+    const prefix = state.expression.slice(0, start);
+    const negative = prefix.endsWith("-") && (prefix.length === 1 || /[+*/(]$/.test(prefix.slice(0, -1)));
+    state.expression = negative ? prefix.slice(0, -1) + match[1] : prefix + "-" + match[1];
+    render();
+  }
+  function addHistory(expression, result) {
+    state.history.unshift({ expression: displayExpression(expression), result });
+    state.history = state.history.slice(0, 8);
+    renderHistory();
+  }
+  function calculate() {
+    clearError();
+    if (!state.expression.trim()) { error("Enter a calculation first."); return; }
+    try {
+      const result = CalculatorEngine.evaluate(state.expression);
+      const formatted = CalculatorEngine.format(result);
+      addHistory(state.expression, formatted);
+      state.lastResult = formatted;
+      state.expression = formatted;
+      state.justCalculated = true;
+      $("display").textContent = formatted;
+      $("expression").textContent = displayExpression(state.expression) + " =";
+      clearError();
+    } catch (e) {
+      error(e instanceof Error ? e.message : "That calculation could not be completed.");
+    }
+  }
+  function backspace() {
+    clearError();
+    if (state.justCalculated) { state.expression = ""; state.justCalculated = false; }
+    else state.expression = state.expression.slice(0, -1);
+    render();
+  }
+  function percent() {
+    clearError();
+    if (state.justCalculated) { state.expression = String(Number(state.lastResult) / 100); state.lastResult = state.expression; state.justCalculated = true; render(); return; }
+    if (!state.expression || operators.includes(state.expression.slice(-1))) return;
+    state.expression += "%";
+    render();
+  }
+  function renderHistory() {
+    const host = $("history");
+    host.replaceChildren();
+    if (!state.history.length) {
+      const empty = document.createElement("p");
+      empty.className = "history-empty";
+      empty.textContent = "Your calculations will appear here.";
+      host.append(empty);
+      return;
+    }
+    state.history.forEach(item => {
+      const row = document.createElement("div");
+      row.className = "history-item";
+      const expression = document.createElement("span");
+      expression.textContent = item.expression;
+      const result = document.createElement("strong");
+      result.textContent = item.result;
+      row.append(expression, result);
+      host.append(row);
+    });
+  }
+  function percentage() {
+    const score = $("score").value;
+    const total = $("total").value;
+    if (score === "" || total === "" || !Number.isFinite(Number(score)) || !Number.isFinite(Number(total)) || Number(total) <= 0 || Number(score) < 0) {
+      $("score-percent").textContent = "—";
+      return;
+    }
+    const value = Number(score) / Number(total) * 100;
+    $("score-percent").textContent = Number.isFinite(value) ? CalculatorEngine.format(value) + "%" : "—";
+  }
+  $("keys").addEventListener("click", event => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    if (button.dataset.digit !== undefined) appendDigit(button.dataset.digit);
+    else if (button.dataset.op) appendOperator(button.dataset.op);
+    else {
+      switch (button.dataset.action) {
+        case "clear": state.expression = ""; state.justCalculated = false; clearError(); render(); break;
+        case "backspace": backspace(); break;
+        case "decimal": appendDigit("."); break;
+        case "equals": calculate(); break;
+        case "percent": percent(); break;
+        case "sign": toggleSign(); break;
+        case "left-paren": appendParen("("); break;
+        case "right-paren": appendParen(")"); break;
+      }
+    }
+  });
+  document.addEventListener("keydown", event => {
+    if (event.target && /^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName)) return;
+    if (/^\d$/.test(event.key)) { appendDigit(event.key); return; }
+    if (event.key === ".") { appendDigit("."); return; }
+    if (operators.includes(event.key)) { event.preventDefault(); appendOperator(event.key); return; }
+    if (event.key === "%") { percent(); return; }
+    if (event.key === "(" || event.key === ")") { appendParen(event.key); return; }
+    if (event.key === "Enter" || event.key === "=") { event.preventDefault(); calculate(); return; }
+    if (event.key === "Escape") { state.expression = ""; state.justCalculated = false; clearError(); render(); return; }
+    if (event.key === "Backspace") { event.preventDefault(); backspace(); }
+  });
+  $("score").addEventListener("input", percentage);
+  $("total").addEventListener("input", percentage);
+  $("clear-history").addEventListener("click", () => { state.history = []; renderHistory(); });
+  $("year-label").textContent = new Date().getFullYear();
+  render(); renderHistory();
 })();
