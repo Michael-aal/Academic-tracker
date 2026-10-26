@@ -71,16 +71,44 @@ router.get("/attempts/:attemptId", async (req, res) => {
   return res.json({ attemptId: attempt.id, status: attempt.status, quiz: publicQuiz(attempt.questionData), submittedAnswers: attempt.submittedAnswers, result: attempt.resultData, createdAt: attempt.createdAt, completedAt: attempt.completedAt });
 });
 
+
+router.post("/attempts/:attemptId/answer", async (req, res) => {
+  const attempt = await prisma.aiQuizAttempt.findFirst({ where: { id: req.params.attemptId, userId: req.userId } });
+  if (!attempt) return res.status(404).json({ error: "Quiz attempt not found." });
+  if (attempt.status !== "IN_PROGRESS") return res.status(409).json({ error: "This quiz has already been completed." });
+  const { questionId, optionId } = req.body || {};
+  const quiz = attempt.questionData;
+  const question = quiz.questions.find(item => item.id === questionId);
+  if (!question || !question.options.some(option => option.id === optionId)) return res.status(400).json({ error: "Choose a valid answer for this question." });
+  const existing = Array.isArray(attempt.submittedAnswers) ? attempt.submittedAnswers : [];
+  if (existing.some(answer => answer.questionId === questionId)) return res.status(409).json({ error: "This question has already been submitted." });
+  const answer = { questionId, optionId };
+  const updated = await prisma.aiQuizAttempt.updateMany({
+    where: { id: attempt.id, userId: req.userId, status: "IN_PROGRESS" },
+    data: { submittedAnswers: [...existing, answer] }
+  });
+  if (!updated.count) return res.status(409).json({ error: "Your answer could not be saved. Please try again." });
+  return res.json({
+    questionId,
+    isCorrect: optionId === question.correctAnswer,
+    correctAnswer: question.correctAnswer,
+    correctText: question.options.find(option => option.id === question.correctAnswer).text,
+    explanation: question.explanation,
+    answeredCount: existing.length + 1,
+    totalQuestions: quiz.questions.length
+  });
+});
+
 router.post("/attempts/:attemptId/submit", async (req, res) => {
   const attempt = await prisma.aiQuizAttempt.findFirst({ where: { id: req.params.attemptId, userId: req.userId } });
   if (!attempt) return res.status(404).json({ error: "Quiz attempt not found." });
   if (attempt.status === "COMPLETED") return res.json({ attemptId: attempt.id, status: attempt.status, result: attempt.resultData, alreadyCompleted: true });
   let result;
-  try { result = markQuiz(attempt.questionData, req.body?.answers); }
+  try { result = markQuiz(attempt.questionData, Array.isArray(attempt.submittedAnswers) ? attempt.submittedAnswers : []); }
   catch (error) { return res.status(400).json({ error: error.message || "Answers are invalid." }); }
   const updated = await prisma.aiQuizAttempt.updateMany({
     where: { id: attempt.id, userId: req.userId, status: "IN_PROGRESS" },
-    data: { submittedAnswers: req.body.answers, resultData: result, status: "COMPLETED", completedAt: new Date() }
+    data: { resultData: result, status: "COMPLETED", completedAt: new Date() }
   });
   if (!updated.count) {
     const latest = await prisma.aiQuizAttempt.findFirst({ where: { id: attempt.id, userId: req.userId } });
