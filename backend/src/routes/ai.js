@@ -3,6 +3,7 @@ const rateLimit = require("express-rate-limit");
 const { requireAuth } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/admin");
 const { prisma } = require("../prisma");
+const { validateQuiz, publicQuiz, markQuiz } = require("../quiz-schema");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -18,7 +19,7 @@ const aiLimiter = rateLimit({
   message: { error: "You've reached the AI learning limit for now. Please try again in 15 minutes." }
 });
 
-function buildPrompt({ action, subject, topic, content, level, questionCount, studentProfile }) {
+function buildPrompt({ action, subject, topic, content, level, questionCount, difficulty, studentProfile }) {
   const context = [
     "Subject: " + (subject || "Not specified"),
     "Topic: " + (topic || "Not specified"),
@@ -32,7 +33,7 @@ function buildPrompt({ action, subject, topic, content, level, questionCount, st
 
   const tasks = {
     tutor: "Act as a patient tutor appropriate to the student's education track and programme. For higher-institution students, use university-level depth and their registered course context; for secondary students, explain at their school level. Address the student by their first name naturally when useful. Answer the student's question accurately in simple steps, define important terms, give one worked example where useful, and end with one short check-for-understanding question. If the question is ambiguous, state your assumption. Do not pretend certainty when unsure.",
-    quiz: "Generate exactly " + questionCount + " multiple-choice questions at the student's education level. Return ONLY valid JSON without Markdown fences, shaped as {\"title\":\"short quiz title\",\"questions\":[{\"question\":\"question text\",\"options\":[{\"label\":\"A\",\"text\":\"option text\"},{\"label\":\"B\",\"text\":\"option text\"},{\"label\":\"C\",\"text\":\"option text\"},{\"label\":\"D\",\"text\":\"option text\"}],\"correctAnswer\":\"A\",\"explanation\":\"short explanation\"}]}. Include exactly " + questionCount + " distinct questions. Each must have exactly four plausible options labelled A, B, C, D and exactly one correctAnswer matching one label. Verify each answer and use the supplied material or established subject knowledge.";
+    quiz: "Generate exactly " + questionCount + " unique, complete, academically accurate multiple-choice questions for the specified subject, topic, level, and " + difficulty + " difficulty. Use provided notes when present and never invent facts. Return ONLY valid JSON shaped as {\\"title\\":\\"short title\\",\\"questions\\":[{\\"id\\":\\"q1\\",\\"question\\":\\"complete question\\",\\"options\\":[{\\"id\\":\\"A\\",\\"text\\":\\"option\\\"},{\\"id\\":\\"B\\",\\"text\\":\\"option\\\"},{\\"id\\":\\"C\\",\\"text\\":\\"option\\\"},{\\"id\\":\\"D\\",\\"text\\":\\"option\\\"}],\\"correctAnswer\\":\\"A\\",\\"explanation\\":\\"brief explanation\\",\\"hint\\":\\"optional non-revealing hint\\"}]}. Include exactly " + questionCount + " unique questions; each needs four distinct plausible options, exactly one correct option ID, a factually accurate explanation, and a hint that does not reveal the answer. Check all facts before returning JSON."
     summarize: "Summarize the supplied study material for revision. Use a short overview, key facts/definitions, important steps or formulas, and 3 quick self-test questions with answers at the end. Preserve the meaning; do not add unsupported claims. If no notes were supplied, ask the student to paste notes.",
     "study-plan": "Create a realistic, encouraging 7-day study plan for the supplied subject/topic, considering the student's programme, registered courses and target grades when relevant. Use short sessions, active recall, practice questions and review days. Include a clear daily task and a simple way to check understanding. Do not assume the student's available hours; suggest flexible 20–30 minute blocks."
   };
@@ -63,17 +64,44 @@ router.get("/status", requireAdmin, (_req, res) => {
   });
 });
 
+
+router.get("/attempts/:attemptId", async (req, res) => {
+  const attempt = await prisma.aiQuizAttempt.findFirst({ where: { id: req.params.attemptId, userId: req.userId } });
+  if (!attempt) return res.status(404).json({ error: "Quiz attempt not found." });
+  return res.json({ attemptId: attempt.id, status: attempt.status, quiz: publicQuiz(attempt.questionData), submittedAnswers: attempt.submittedAnswers, result: attempt.resultData, createdAt: attempt.createdAt, completedAt: attempt.completedAt });
+});
+
+router.post("/attempts/:attemptId/submit", async (req, res) => {
+  const attempt = await prisma.aiQuizAttempt.findFirst({ where: { id: req.params.attemptId, userId: req.userId } });
+  if (!attempt) return res.status(404).json({ error: "Quiz attempt not found." });
+  if (attempt.status === "COMPLETED") return res.json({ attemptId: attempt.id, status: attempt.status, result: attempt.resultData, alreadyCompleted: true });
+  let result;
+  try { result = markQuiz(attempt.questionData, req.body?.answers); }
+  catch (error) { return res.status(400).json({ error: error.message || "Answers are invalid." }); }
+  const updated = await prisma.aiQuizAttempt.updateMany({
+    where: { id: attempt.id, userId: req.userId, status: "IN_PROGRESS" },
+    data: { submittedAnswers: req.body.answers, resultData: result, status: "COMPLETED", completedAt: new Date() }
+  });
+  if (!updated.count) {
+    const latest = await prisma.aiQuizAttempt.findFirst({ where: { id: attempt.id, userId: req.userId } });
+    if (latest?.status === "COMPLETED") return res.json({ attemptId: latest.id, status: latest.status, result: latest.resultData, alreadyCompleted: true });
+    return res.status(409).json({ error: "This quiz could not be submitted. Please reload the attempt." });
+  }
+  return res.json({ attemptId: attempt.id, status: "COMPLETED", result });
+});
+
 router.post("/", aiLimiter, async (req, res) => {
   const action = typeof req.body?.action === "string" ? req.body.action : "";
   const subject = typeof req.body?.subject === "string" ? req.body.subject.trim().slice(0, 100) : "";
   const topic = typeof req.body?.topic === "string" ? req.body.topic.trim().slice(0, 160) : "";
   const content = typeof req.body?.content === "string" ? req.body.content.trim() : "";
   const level = typeof req.body?.level === "string" ? req.body.level.trim().slice(0, 80) : "secondary school";
-  const questionCount = Number.isInteger(req.body?.questionCount)
-    ? Math.min(10, Math.max(3, req.body.questionCount))
-    : 5;
+  const questionCount = req.body?.questionCount === undefined ? 5 : req.body.questionCount;
+  const difficulty = typeof req.body?.difficulty === "string" ? req.body.difficulty.toLowerCase() : "medium";
 
   if (!ACTIONS.has(action)) return res.status(400).json({ error: "Choose a supported AI learning task." });
+  if (action === "quiz" && (!Number.isInteger(questionCount) || questionCount < 1 || questionCount > 10)) return res.status(400).json({ error: "Choose between 1 and 10 quiz questions." });
+  if (action === "quiz" && !["easy", "medium", "hard"].includes(difficulty)) return res.status(400).json({ error: "Choose easy, medium, or hard difficulty." });
   if (content.length > MAX_INPUT_CHARS) {
     return res.status(413).json({ error: "Your request is too long. Keep your question or notes under 12,000 characters." });
   }
@@ -102,7 +130,7 @@ router.post("/", aiLimiter, async (req, res) => {
       },
       body: JSON.stringify({
         model,
-        messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, studentProfile }) }],
+        messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, difficulty, studentProfile }) }],
         temperature: 0.4,
         max_tokens: action === "quiz" ? 3500 : 1800
       })
@@ -128,19 +156,14 @@ router.post("/", aiLimiter, async (req, res) => {
     if (action === "quiz") {
       let quiz;
       try {
-        const cleaned = answer.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
-        quiz = JSON.parse(cleaned);
-        const labels = ["A", "B", "C", "D"];
-        if (!quiz || !Array.isArray(quiz.questions) || quiz.questions.length !== questionCount ||
-            quiz.questions.some(q => !q || typeof q.question !== "string" || !Array.isArray(q.options) ||
-              q.options.length !== 4 || !labels.includes(q.correctAnswer) ||
-              !q.options.every((o, i) => o && o.label === labels[i] && typeof o.text === "string" && o.text.trim()) ||
-              typeof q.explanation !== "string")) throw new Error("Quiz schema validation failed");
-      } catch (parseError) {
-        console.error("AI quiz JSON validation failed:", parseError.message);
-        return res.status(502).json({ error: "The AI returned a quiz in an unexpected format. Please generate it again." });
+        const cleaned = answer.trim().replace(/^```(?:json)?\\s*/i, "").replace(/\\s*```$/, "");
+        quiz = validateQuiz(JSON.parse(cleaned), questionCount);
+      } catch (validationError) {
+        console.error("AI quiz validation failed:", validationError.message);
+        return res.status(502).json({ error: "The AI returned an incomplete or invalid quiz. No quiz was created; please try again." });
       }
-      return res.json({ quiz, action, model });
+      const attempt = await prisma.aiQuizAttempt.create({ data: { userId: req.userId, title: quiz.title, subject, topic, difficulty, questionData: quiz, status: "IN_PROGRESS" }, select: { id: true } });
+      return res.status(201).json({ quiz: publicQuiz(quiz), attemptId: attempt.id, action, model });
     }
     res.json({ answer: answer.trim(), action, model });
   } catch (error) {
