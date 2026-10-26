@@ -5,6 +5,9 @@ on:
     branches: [main, feature/backend-prisma]
     paths:
       - "backend/**"
+      - "calculator-engine.js"
+      - "calculator.js"
+      - "ai-learning.js"
       - ".github/workflows/backend-check.yml"
   pull_request:
     paths:
@@ -36,5 +39,5 @@ jobs:
         run: npx prisma generate
       - name: Run unit tests
         run: npm test
-      - name: Check AI learning frontend JavaScript syntax
-        run: node --check ../ai-learning.js
+      - name: Check calculator and AI learning JavaScript syntax
+        run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../ai-learning.js
