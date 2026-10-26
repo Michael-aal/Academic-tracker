@@ -267,9 +267,8 @@
       state.attemptId = null;
       state.quiz = null;
       $("result-panel").hidden = true;
-      setAction("quiz");
-      $("topic").focus();
       $("learning-form").scrollIntoView({ behavior: "smooth", block: "start" });
+      $("submit-learning").click();
     });
     const dashboard = el("a", "quiz-dashboard-button", "Return to dashboard");
     dashboard.href = "dashboard.html";
