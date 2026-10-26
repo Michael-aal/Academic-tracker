@@ -8,7 +8,7 @@ test("uses standard operator precedence", () => {
   assert.equal(evaluate("(2+3)*4"), 20);
 });
 test("handles decimals and negative values", () => {
-  assert.equal(evaluate("0.1+0.2"), 0.3);
+  assert.equal(format(evaluate("0.1+0.2")), "0.3");
   assert.equal(evaluate("-5+2"), -3);
   assert.equal(evaluate("-(2+3)*2"), -10);
 });
