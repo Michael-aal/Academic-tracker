@@ -7,7 +7,12 @@
 
   function render() {
     $("expression").textContent = state.expression ? displayExpression(state.expression) : "Ready to calculate";
-    $("display").textContent = state.justCalculated ? state.lastResult : (state.expression || "0");
+    if (state.justCalculated) {
+      $("display").textContent = state.lastResult;
+    } else {
+      const currentEntry = state.expression.match(/(-?(?:\d+\.?\d*|\.\d+)%?)$/);
+      $("display").textContent = currentEntry ? currentEntry[1] : "0";
+    }
   }
   function clearError() { $("calc-error").hidden = true; $("calc-error").textContent = ""; }
   function error(message) {
