@@ -10,8 +10,13 @@
     if (state.justCalculated) {
       $("display").textContent = state.lastResult;
     } else {
-      const currentEntry = state.expression.match(/(-?(?:\d+\.?\d*|\.\d+)%?)$/);
-      $("display").textContent = currentEntry ? currentEntry[1] : "0";
+      const currentEntry = state.expression.match(/(\d*\.?\d+%?)$/);
+      let entry = currentEntry ? currentEntry[1] : "";
+      if (currentEntry) {
+        const prefix = state.expression.slice(0, currentEntry.index);
+        if (prefix.endsWith("-") && (prefix.length === 1 || /[+\-*/(]$/.test(prefix.slice(0, -1)))) entry = "-" + entry;
+      }
+      $("display").textContent = entry || "0";
     }
   }
   function clearError() { $("calc-error").hidden = true; $("calc-error").textContent = ""; }
@@ -62,7 +67,7 @@
     }
     const start = match.index;
     const prefix = state.expression.slice(0, start);
-    const negative = prefix.endsWith("-") && (prefix.length === 1 || /[+*/(]$/.test(prefix.slice(0, -1)));
+    const negative = prefix.endsWith("-") && (prefix.length === 1 || /[+\-*/(]$/.test(prefix.slice(0, -1)));
     state.expression = negative ? prefix.slice(0, -1) + match[1] : prefix + "-" + match[1];
     render();
   }
