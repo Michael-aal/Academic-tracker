@@ -64,7 +64,7 @@
     setNotice("");
   }
 
-  function renderQuiz(quiz, attemptId, submittedAnswers = [], result = null) {
+  function renderQuiz(quiz, attemptId, submittedAnswers = [], result = null, feedbackByQuestion = {}) {
     state.quiz = quiz;
     state.attemptId = attemptId;
     state.index = 0;
@@ -72,6 +72,7 @@
     state.answered = {};
     state.submitted = false;
     state.result = result;
+    state.feedbackByQuestion = feedbackByQuestion || {};
     (submittedAnswers || []).forEach(answer => { state.answered[answer.questionId] = answer.optionId; });
     localStorage.setItem(ATTEMPT_KEY, attemptId);
     $("result-title").textContent = quiz.title || "Your practice quiz";
@@ -183,7 +184,6 @@
         else if (option.dataset.optionId === state.answered[state.quiz.questions[state.index].id]) option.classList.add("answer-incorrect");
       });
     }
-    state.feedbackByQuestion = {};
     submitAnswer.addEventListener("click", async () => {
       const question = state.quiz.questions[state.index];
       const optionId = state.selected[question.id];
