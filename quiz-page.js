@@ -13,6 +13,7 @@
   let feedback = {};
   let result = null;
   let busy = false;
+  const selectionKey = () => "academic-tracker-quiz-selections-" + attemptId;
 
   if (!localStorage.getItem(TOKEN_KEY)) { window.location.replace("login.html"); return; }
   if (!attemptId) attemptId = localStorage.getItem(ATTEMPT_KEY);
@@ -98,6 +99,7 @@
       button.addEventListener("click", () => {
         if (answered || busy) return;
         selected[question.id] = option.id;
+        try { localStorage.setItem(selectionKey(), JSON.stringify(selected)); } catch {}
         renderQuestion();
       });
       host.append(button);
@@ -115,6 +117,7 @@
     result = data;
     $("quiz-results").replaceChildren();
     $("quiz-results").hidden = false;
+    try { localStorage.removeItem(selectionKey()); } catch {}
     const title = el("h2", "", "Your results");
     const intro = el("p", "", "You scored " + data.score + " out of " + data.totalQuestions + " (" + data.percentage + "%). Review the explanations below.");
     const stats = el("div", "quiz-result-summary");
@@ -166,6 +169,15 @@
       quiz = data.quiz;
       if (!quiz || !Array.isArray(quiz.questions) || !quiz.questions.length) throw new Error("The saved quiz has no valid questions.");
       (data.submittedAnswers || []).forEach(a => { submittedAnswers[a.questionId] = a.optionId; });
+      try {
+        const savedSelections = JSON.parse(localStorage.getItem(selectionKey()) || "{}");
+        if (savedSelections && typeof savedSelections === "object" && !Array.isArray(savedSelections)) {
+          quiz.questions.forEach(question => {
+            const optionId = savedSelections[question.id];
+            if (!submittedAnswers[question.id] && question.options.some(option => option.id === optionId)) selected[question.id] = optionId;
+          });
+        }
+      } catch {}
       feedback = data.feedbackByQuestion || {};
       $("quiz-loading").hidden = true;
       $("quiz-workspace").hidden = false;
@@ -190,6 +202,7 @@
         });
         submittedAnswers[question.id] = optionId;
         delete selected[question.id];
+        try { localStorage.setItem(selectionKey(), JSON.stringify(selected)); } catch {}
       }
       const data = await api("/api/ai/attempts/" + encodeURIComponent(attemptId) + "/submit", {method:"POST",body:JSON.stringify({})});
       if (!data.result) throw new Error("The server did not return quiz results. Reload this page to check your saved attempt.");
