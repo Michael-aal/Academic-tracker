@@ -37,3 +37,14 @@ section{scroll-margin-top:90px}
  section{scroll-margin-top:76px}
 }
 @media(prefers-reduced-motion:reduce){.feature-card,.step-card{transition:none}}
+
+
+/* Keep every landing accent within the dark-purple palette. */
+:root{--bg:#0B0812;--panel:#110D1B;--panel2:#171123;--line:rgba(167,139,250,.18);--text:#F5F3FF;--muted:#B8AEC9;--mint:#A78BFA;--green:#8B5CF6;--green2:#6D28D9;--purple:#A78BFA}
+body{background:radial-gradient(ellipse at 88% 4%,rgba(109,40,217,.24),transparent 36rem),radial-gradient(ellipse at 8% 52%,rgba(139,92,246,.09),transparent 32rem),#0B0812;color:#F5F3FF}
+.site-header{background:rgba(11,8,18,.88);border-bottom-color:rgba(167,139,250,.16)}
+.menu-toggle{background:#20172F;color:#fff;border-color:rgba(167,139,250,.2)}
+.gradient-text{background:linear-gradient(100deg,#F5F3FF 0%,#C4B5FD 55%,#A78BFA 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-visual,.hero-card,.preview-window,.dashboard-preview,.feature-card,.step-card,.faq-item,.stat-card,.testimonial-card,.cta-panel{background:linear-gradient(145deg,rgba(32,23,47,.94),rgba(17,13,27,.98));border-color:rgba(167,139,250,.17)}
+.feature-icon,.step-number,.icon-box{background:linear-gradient(145deg,#8B5CF6,#6D28D9);color:#fff;border:1px solid rgba(221,214,254,.22)}
+@media(max-width:760px){.site-nav{background:rgba(17,13,27,.99);border-color:rgba(167,139,250,.2)}}
