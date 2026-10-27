@@ -9,6 +9,7 @@ on:
       - "calculator.js"
       - "ai-learning.js"
       - "quiz-page.js"
+      - "quiz-page.js"
       - ".github/workflows/backend-check.yml"
   pull_request:
     paths:
@@ -16,6 +17,7 @@ on:
       - "calculator-engine.js"
       - "calculator.js"
       - "ai-learning.js"
+      - "quiz-page.js"
       - ".github/workflows/backend-check.yml"
   workflow_dispatch:
 
