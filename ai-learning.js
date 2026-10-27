@@ -384,11 +384,6 @@
 
   document.querySelectorAll("[data-action]").forEach(button => button.addEventListener("click", () => setAction(button.dataset.action)));
   $("content").addEventListener("input", () => { $("char-count").textContent = $("content").value.length.toLocaleString() + " / 12,000 characters"; });
-  $("signout").addEventListener("click", () => {
-    localStorage.removeItem("academic-tracker-token");
-    localStorage.removeItem("academic-tracker-user");
-    window.location.replace("login.html");
-  });
   $("copy-result").addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText($("result-content").innerText || $("result-content").textContent || state.answer);
@@ -447,6 +442,7 @@
     window.location.replace("quiz.html?attempt=" + encodeURIComponent(attemptId));
   }
 
-  setAction("tutor");
-  resumeActiveQuiz();
+  const initialTool = document.body.dataset.aiTool || "tutor";
+  setAction(taskCopy[initialTool] ? initialTool : "tutor");
+  if (initialTool === "quiz") resumeActiveQuiz();
 })();
