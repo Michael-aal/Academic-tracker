@@ -33,7 +33,7 @@ function buildPrompt({ action, subject, topic, content, level, questionCount, ca
 
   const tasks = {
     tutor: "Act as a patient, conversational teacher appropriate to the student's education track and programme. For higher-institution students, use university-level depth and their registered course context; for secondary students, explain at their school level. Teach the concept the student asks about or the class notes they paste: organize the ideas, define key terms, explain why and how things work, break difficult steps down, and use clear examples or analogies. Keep the conversation natural and remember the prior conversation included in the student material. Answer follow-up questions directly and adapt when the student says they are confused. Do not create quizzes, tests, multiple-choice questions, or homework questions; the separate quiz generator handles those. Do not end with a test question. Instead, offer a useful next explanation or ask whether they want one part explained differently. When a relevant educational video would help, mention that a related video link is available in the interface. If the question is ambiguous, state your assumption. Do not pretend certainty when unsure.",
-    quiz: "Return only a JSON object with a title and questions array. Generate exactly " + questionCount + " unique, complete, academically accurate multiple-choice questions for the specified subject, topic, academic level, and " + difficulty + " difficulty. Use supplied notes when present and never invent facts. Every question object must contain id (unique string), question (complete text), options (exactly four objects with IDs A, B, C, and D and distinct meaningful text), correctAnswer (exactly one valid option ID), explanation (brief accurate explanation), and hint (optional clue that does not reveal the answer). Avoid duplicate questions, ambiguity, and meaningless distractors. Verify the answer key before returning JSON.",
+    quiz: "Return ONLY one complete valid JSON object, with no Markdown or surrounding text, using exactly this schema: {\\"title\\":\\"Quiz title\\",\\"questions\\":[{\\"id\\":\\"q1\\",\\"question\\":\\"A complete question\\",\\"options\\":[{\\"id\\":\\"A\\",\\"text\\":\\"Option text\\\"},{\\"id\\":\\"B\\",\\"text\\":\\"Option text\\\"},{\\"id\\":\\"C\\",\\"text\\":\\"Option text\\\"},{\\"id\\":\\"D\\",\\"text\\":\\"Option text\\"}],\\"correctAnswer\\":\\"A\\",\\"explanation\\":\\"Why the correct answer is correct\\",\\"hint\\":\\"A clue that does not reveal the answer\\"}]}. Generate exactly " + questionCount + " unique, complete, academically accurate multiple-choice questions for the specified subject, topic, academic level, and " + difficulty + " difficulty. Every question must have exactly four options; each option must use the keys id and text, and the IDs must be A, B, C, D exactly once. correctAnswer must be one of those four IDs. Every question needs a unique string id, a complete question, a brief accurate explanation, and a non-empty hint. Do not omit fields, abbreviate the JSON, use alternative property names, duplicate questions/options, or stop before closing every brace and bracket. Use supplied notes as the primary source when present and do not invent facts. Check the exact question count and answer keys before returning JSON.",
     summarize: "Summarize the supplied study material for revision. Start with a short overview, then organize the main ideas under clear headings with important facts, definitions, steps, and formulas where relevant. Keep the summary focused on the supplied topic and subject, preserve the meaning, and do not add unsupported claims. Do not generate quiz questions, tests, flashcards, or self-test questions. If no notes were supplied, ask the student to paste notes.",
     flashcards: "Return only a JSON object with a cards array. Generate exactly " + cardCount + " accurate study flashcards for the specified subject and topic, using the supplied notes as the primary source when present. Each card must contain a concise question field and an accurate answer field. Make cards useful for active recall: definitions, processes, causes, formulas, distinctions, and key facts. Do not write multiple-choice options, quiz scores, or a test. Do not invent details absent from the notes when notes are provided. Keep each question under 700 characters and each answer under 1800 characters.",
     "study-plan": "Create a realistic, encouraging 7-day study plan for the supplied subject/topic, considering the student's programme, registered courses and target grades when relevant. Use short sessions, active recall, practice questions and review days. Include a clear daily task and a simple way to check understanding. Do not assume the student's available hours; suggest flexible 20–30 minute blocks."
@@ -235,8 +235,10 @@ router.post("/", aiLimiter, async (req, res) => {
     }
     if (action === "quiz") {
       let quiz;
-      try {
-        const cleaned = answer.trim().replace(/^\x60{3}(?:json)?\s*/i, "").replace(/\s*\x60{3}$/i, "").trim();
+      const parseAndValidate = (rawAnswer, finishReason) => {
+        if (finishReason === "length") throw new Error("The AI response was cut off before the quiz was complete.");
+        if (typeof rawAnswer !== "string" || !rawAnswer.trim()) throw new Error("The AI returned an empty quiz.");
+        const cleaned = rawAnswer.trim().replace(/^\x60{3}(?:json)?\s*/i, "").replace(/\s*\x60{3}$/i, "").trim();
         let parsed;
         try {
           parsed = JSON.parse(cleaned);
@@ -247,13 +249,50 @@ router.post("/", aiLimiter, async (req, res) => {
           if (firstBrace < 0 || lastBrace <= firstBrace) throw parseError;
           parsed = JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
         }
-        if (data?.choices?.[0]?.finish_reason === "length") {
-          throw new Error("The AI response was cut off before the quiz was complete.");
+        return validateQuiz(parsed, questionCount);
+      };
+
+      try {
+        quiz = parseAndValidate(answer, data?.choices?.[0]?.finish_reason);
+      } catch (firstValidationError) {
+        console.warn("Initial AI quiz response failed validation; attempting one regeneration:", firstValidationError.message);
+        // A single structured retry helps recover from malformed JSON or a model that
+        // omitted fields. Never save a quiz until the same strict validator passes.
+        const retryController = new AbortController();
+        const retryTimeout = setTimeout(() => retryController.abort(), 45000);
+        try {
+          const retryPrompt = buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) +
+            "\\n\\nFINAL OUTPUT CHECK: Your previous attempt did not satisfy the required schema. Regenerate the entire quiz from scratch. Return only valid JSON with exactly " + questionCount +
+            " questions. Each question must include id, question, options (exactly four {id,text} objects with IDs A/B/C/D), correctAnswer (one of A/B/C/D), explanation, and a non-empty hint. Do not return partial JSON or Markdown fences.";
+          const retryResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            signal: retryController.signal,
+            headers: {
+              Authorization: "Bearer " + process.env.OPENROUTER_API_KEY,
+              "Content-Type": "application/json",
+              "HTTP-Referer": process.env.AI_SITE_URL || "https://academic-tracker-nu.vercel.app",
+              "X-Title": "Academic Tracker"
+            },
+            body: JSON.stringify({
+              model,
+              messages: [{ role: "user", content: retryPrompt }],
+              temperature: 0.1,
+              response_format: { type: "json_object" },
+              max_tokens: 7000
+            })
+          });
+          const retryData = await retryResponse.json().catch(() => ({}));
+          if (!retryResponse.ok) {
+            const retryMessage = retryData?.error?.message;
+            throw new Error("Retry provider request failed (" + retryResponse.status + "): " + (typeof retryMessage === "string" ? retryMessage.slice(0, 180) : "no provider message"));
+          }
+          quiz = parseAndValidate(retryData?.choices?.[0]?.message?.content, retryData?.choices?.[0]?.finish_reason);
+        } catch (retryError) {
+          console.error("AI quiz retry failed validation:", retryError.message);
+          return res.status(502).json({ error: "The AI could not produce a complete quiz after retrying. No quiz was created; please try again with a shorter topic or fewer questions." });
+        } finally {
+          clearTimeout(retryTimeout);
         }
-        quiz = validateQuiz(parsed, questionCount);
-      } catch (validationError) {
-        console.error("AI quiz validation failed:", validationError.message);
-        return res.status(502).json({ error: "The AI returned an incomplete or invalid quiz. No quiz was created; please try again." });
       }
       const attempt = await prisma.aiQuizAttempt.create({ data: { userId: req.userId, title: quiz.title, subject, topic, difficulty, questionData: quiz, status: "IN_PROGRESS" }, select: { id: true } });
       return res.status(201).json({ quiz: publicQuiz(quiz), attemptId: attempt.id, action, model });
