@@ -67,7 +67,7 @@ body{background-image:radial-gradient(ellipse at 88% 0%,rgba(109,40,217,.13),tra
 @media(max-width:700px){
   :where(.mm-topbar,.ev-topbar,.ai-topbar){gap:12px}
   :where(.mm-topbar nav,.ev-topbar nav){overflow-x:auto;overflow-y:hidden;white-space:nowrap;scrollbar-width:thin;scrollbar-color:var(--purple) transparent;-webkit-overflow-scrolling:touch;justify-content:flex-start;padding:4px 0}
-  :where(.mm-topbar nav::-webkit-scrollbar,.ev-topbar nav::-webkit-scrollbar){height:3px}
-  :where(.mm-topbar nav::-webkit-scrollbar-thumb,.ev-topbar nav::-webkit-scrollbar-thumb){background:rgba(167,139,250,.45);border-radius:99px}
+  .mm-topbar nav::-webkit-scrollbar,.ev-topbar nav::-webkit-scrollbar{height:3px}
+  .mm-topbar nav::-webkit-scrollbar-thumb,.ev-topbar nav::-webkit-scrollbar-thumb{background:rgba(167,139,250,.45);border-radius:99px}
   :where(#signout,#profile-signout,#uni-signout,#quiz-signout,.profile-signout){min-height:38px!important;padding:0 11px!important}
 }
