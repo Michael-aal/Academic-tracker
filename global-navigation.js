@@ -2,6 +2,8 @@
 (() => {
   "use strict";
   if (document.body.classList.contains("at-has-global-navigation")) return;
+  const initialFile = location.pathname.split("/").pop() || "dashboard.html";
+  if (initialFile === "login.html" || initialFile === "register.html") return;
   document.body.classList.add("at-has-global-navigation");
 
   const routes = [
