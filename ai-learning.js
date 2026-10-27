@@ -417,7 +417,12 @@
         })
       });
       if (state.action === "quiz") {
-        if (!data.quiz || !data.attemptId || !Array.isArray(data.quiz.questions)) throw new Error("The server returned an incomplete quiz response. Please try again.");
+        const expectedCount = Number($("question-count").value);
+        const validQuiz = data.quiz && typeof data.quiz.title === "string" && Array.isArray(data.quiz.questions) && data.quiz.questions.length === expectedCount && data.quiz.questions.every(question => question && typeof question.id === "string" && typeof question.question === "string" && Array.isArray(question.options) && question.options.length === 4 && question.options.every(option => option && typeof option.id === "string" && typeof option.text === "string"));
+        if (!validQuiz || typeof data.attemptId !== "string" || !data.attemptId) {
+          console.error("Quiz API returned an unexpected response shape.", { hasQuiz: Boolean(data.quiz), hasAttemptId: Boolean(data.attemptId), questionCount: Array.isArray(data.quiz?.questions) ? data.quiz.questions.length : null, expectedCount });
+          throw new Error("The quiz service returned incomplete data. Please try once more. If it keeps happening, the backend deployment needs updating.");
+        }
         localStorage.setItem(ATTEMPT_KEY, data.attemptId);
         window.location.assign("quiz.html?attempt=" + encodeURIComponent(data.attemptId));
         return;
