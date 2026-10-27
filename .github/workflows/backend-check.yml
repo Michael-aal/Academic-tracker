@@ -21,6 +21,7 @@ on:
   pull_request:
     paths:
       - "backend/**"
+      - "premium-theme.css"
       - "calculator-engine.js"
       - "calculator.js"
       - "ai-learning.js"
