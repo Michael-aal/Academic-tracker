@@ -92,3 +92,49 @@ body { background: radial-gradient(ellipse at 78% 0%,rgba(128,87,245,.18) 0,tran
 
 /* Keep inline SVG chart artwork on the same violet palette as the rest of the site. */
 .preview-window svg stop[stop-color], .preview-window svg path[stroke] { stop-color: #b69cff !important; stroke: #8f70f5 !important; }
+
+
+/* Premium violet-only icon language and polished landing-page surfaces. */
+:root{--bg:#0B0812;--panel:#110D1B;--panel2:#171123;--line:rgba(167,139,250,.18);--text:#F5F3FF;--muted:#B8AEC9;--mint:#A78BFA;--green:#8B5CF6;--green2:#6D28D9;--purple:#A78BFA;--orange:#A78BFA;--blue:#A78BFA}
+body{background:radial-gradient(ellipse at 78% 0%,rgba(109,40,217,.22),transparent 35rem),radial-gradient(ellipse at 4% 46%,rgba(139,92,246,.09),transparent 30rem),#0B0812;color:#F5F3FF}
+.site-header{background:rgba(11,8,18,.88);border-bottom-color:rgba(167,139,250,.16)}
+.brand-icon{background:linear-gradient(145deg,#8B5CF6,#6D28D9);color:#fff;box-shadow:0 8px 28px rgba(109,40,217,.3)}
+.brand-muted{color:#B8AEC9}
+.site-nav{color:#B8AEC9}
+.site-nav>a:not(.button):hover,.site-footer a:hover{color:#A78BFA}
+.button{background:linear-gradient(135deg,#8B5CF6,#6D28D9);color:#fff;border-color:rgba(196,181,253,.3);box-shadow:0 10px 30px rgba(109,40,217,.22)}
+.button:hover{box-shadow:0 14px 36px rgba(109,40,217,.3)}
+.menu-toggle{border:1px solid rgba(167,139,250,.2);background:#20172F;color:#fff}
+.eyebrow,.section-kicker{color:#A78BFA}
+.gradient-text{background:linear-gradient(100deg,#F5F3FF 0%,#C4B5FD 48%,#A78BFA 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-visual,.hero-card,.preview-window,.dashboard-preview,.feature-card,.step-card,.faq-item,.stat-card,.testimonial-card,.cta-panel{background:linear-gradient(145deg,rgba(32,23,47,.94),rgba(17,13,27,.98));border-color:rgba(167,139,250,.17);box-shadow:0 20px 56px rgba(0,0,0,.28)}
+.feature-card{min-height:300px;border-radius:20px}
+.feature-card:hover,.step-card:hover{border-color:rgba(167,139,250,.5);background:linear-gradient(145deg,#20172F,#110D1B)}
+.feature-icon,.step-number,.icon-box,.chip-icon,.check-icon,.value-icon,.step-symbol,.signal{
+ display:grid;place-items:center;background:linear-gradient(145deg,#8B5CF6,#6D28D9)!important;color:#fff!important;border:1px solid rgba(221,214,254,.22)!important;border-radius:14px;box-shadow:0 7px 20px rgba(109,40,217,.18)
+}
+.feature-icon{width:48px;height:48px;border-radius:15px;margin-bottom:14px}
+.feature-icon svg,.step-symbol svg{display:block;width:22px;height:22px;color:#fff;stroke:currentColor}
+.step-symbol{width:38px;height:38px;flex:0 0 38px;font-size:0}
+.step-symbol svg{width:19px;height:19px}
+.chip-icon,.check-icon,.value-icon{width:34px;height:34px;border-radius:11px}
+.float-chip{background:rgba(17,13,27,.94);border-color:rgba(167,139,250,.24);backdrop-filter:blur(18px)}
+.preview-window{background:linear-gradient(145deg,#171123,#0B0812)}
+.preview-top,.chart-card,.mini-stats>div,.feature-card,.why-card,.value-strip,.how-section,.cta-panel,.site-footer{border-color:rgba(167,139,250,.16)}
+.mini-stats>div,.chart-card,.preview-content,.value-strip,.feature-card,.why-card,.pathway-panel,.pathway-points li{background-color:#110D1B}
+.mini-avatar{background:linear-gradient(145deg,#8B5CF6,#6D28D9)!important;color:#fff!important}
+.mini-stats span,.mini-stats small,.chart-labels,.float-chip small,.value-strip small,.feature-card p,.offline-art small,.section-intro>p,.how-layout .section-intro>p,.step p,.cta-panel>p,.faq-item p{color:#B8AEC9}
+.mini-stats strong,.chart-heading,.preview-subjects b,.feature-card h3,.why-card h3,.step h3{color:#F5F3FF}
+.subject-dot,.dot-a,.dot-b,.dot-c{background:#A78BFA}
+.bar,.bar i{background:#302440}
+.bar i,.report-art i{background:linear-gradient(90deg,#6D28D9,#A78BFA)}
+.orbit{border-color:rgba(167,139,250,.18)}
+.hero-glow,.cta-orb{background:rgba(139,92,246,.16)}
+.value-strip{background:linear-gradient(100deg,#171123,#110D1B)}
+.how-section{background:linear-gradient(180deg,#110D1B,#0B0812 80%)}
+.cta-panel{background:radial-gradient(ellipse at 50% 0%,rgba(139,92,246,.2),#110D1B 55%,#0B0812)}
+.site-footer{background:#090611;color:#B8AEC9}
+.pathway-tab{border-color:rgba(167,139,250,.2);background:#110D1B;color:#B8AEC9}
+.pathway-tab:hover,.pathway-tab.active{background:#20172F;color:#F5F3FF;border-color:#8B5CF6}
+.pathway-points li:before,.faq-item summary:after{color:#A78BFA}
+@media(max-width:720px){.site-nav{background:rgba(17,13,27,.99);border-color:rgba(167,139,250,.2)}.feature-icon{width:44px;height:44px}}
