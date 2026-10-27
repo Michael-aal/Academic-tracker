@@ -29,6 +29,14 @@ on:
   pull_request:
     paths:
       - "backend/**"
+      - "index.html"
+      - "landing.css"
+      - "landing-redesign.css"
+      - "login.html"
+      - "register.html"
+      - "auth.css"
+      - "quiz.html"
+      - "quiz-page.css"
       - "premium-theme.css"
       - "calculator-engine.js"
       - "calculator.js"
