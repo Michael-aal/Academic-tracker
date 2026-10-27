@@ -33,6 +33,18 @@
         <article class="mm-stat"><span>Recall accuracy</span><strong id="stat-accuracy">—</strong><small id="stat-reviewed">No reviews yet</small></article>
       </section>
 
+        <section class="mm-panel mm-add mm-ai-generate">
+          <div class="mm-panel-heading"><div><p class="section-kicker">AI-ASSISTED STUDY</p><h2>Generate memory cards</h2><p>Give AI your topic or class notes. Review the cards it creates before studying them.</p></div></div>
+          <form id="generate-cards-form">
+            <label>Subject <input id="ai-card-subject" maxlength="80" placeholder="e.g. Biology" required></label>
+            <label>Topic <input id="ai-card-topic" maxlength="120" placeholder="e.g. Cell structure" required></label>
+            <label>Class notes (optional) <textarea id="ai-card-notes" rows="5" maxlength="12000" placeholder="Paste your notes here so the cards match what you studied…"></textarea></label>
+            <label>Number of cards <select id="ai-card-count"><option value="5">5 cards</option><option value="10" selected>10 cards</option><option value="15">15 cards</option><option value="20">20 cards</option></select></label>
+            <button id="generate-cards-button" class="mm-primary mm-full" type="submit">Generate cards with AI</button>
+            <p id="ai-generation-status" class="mm-form-note" role="status">Generated cards are added to this device's Memory Mastery library.</p>
+          </form>
+        </section>
+
       <section class="mm-grid">
         <section class="mm-panel mm-review">
           <div class="mm-panel-heading"><div><p class="section-kicker">DAILY PRACTICE</p><h2>Recall session</h2><p>Try to answer from memory before revealing the back.</p></div><span class="mm-count" id="queue-count">0 due</span></div>
@@ -48,18 +60,6 @@
             </div>
             <p class="mm-review-tip">Be honest with your rating. A difficult recall is useful feedback, not a failure.</p>
           </div>
-        </section>
-
-        <section class="mm-panel mm-add mm-ai-generate">
-          <div class="mm-panel-heading"><div><p class="section-kicker">AI-ASSISTED STUDY</p><h2>Generate memory cards</h2><p>Give AI your topic or class notes. Review the cards it creates before studying them.</p></div></div>
-          <form id="generate-cards-form">
-            <label>Subject <input id="ai-card-subject" maxlength="80" placeholder="e.g. Biology" required></label>
-            <label>Topic <input id="ai-card-topic" maxlength="120" placeholder="e.g. Cell structure" required></label>
-            <label>Class notes (optional) <textarea id="ai-card-notes" rows="5" maxlength="12000" placeholder="Paste your notes here so the cards match what you studied…"></textarea></label>
-            <label>Number of cards <select id="ai-card-count"><option value="5">5 cards</option><option value="10" selected>10 cards</option><option value="15">15 cards</option><option value="20">20 cards</option></select></label>
-            <button id="generate-cards-button" class="mm-primary mm-full" type="submit">Generate cards with AI</button>
-            <p id="ai-generation-status" class="mm-form-note" role="status">Generated cards are added to this device's Memory Mastery library.</p>
-          </form>
         </section>
 
         <section class="mm-panel mm-add" id="add-card">
