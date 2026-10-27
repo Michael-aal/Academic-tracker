@@ -7,8 +7,9 @@
   <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="ui-polish.css"><link rel="stylesheet" href="dashboard-menus.css">
   <title>Academic Tracker · Dashboard</title>
   <link rel="stylesheet" href="visual-refresh.css"><link rel="stylesheet" href="dashboard-redesign.css">
-<link rel="stylesheet" href="site-design-system.css">  <link rel="stylesheet" href="premium-theme.css">
+<link rel="stylesheet" href="site-design-system.css">  <link rel="stylesheet" href="premium-theme.css"><link rel="stylesheet" href="responsive-navbar.css">
   <script src="icon-system.js" defer></script>
+  <link rel="stylesheet" href="global-navigation.css">
 </head>
 <body>
   <div class="app-shell">
@@ -29,7 +30,7 @@
     </aside>
     <main class="main">
       <header class="topbar compact-topbar">
-        <div class="topbar-main">
+        <div class="topbar-main"><a class="nav-brand" href="dashboard.html" aria-label="Academic Tracker home"><span class="nav-brand-mark" aria-hidden="true">A</span><span class="nav-brand-name">Academic <span>Tracker</span></span></a>
           <button class="menu-trigger" id="navigation-menu-trigger" type="button" aria-label="Open main menu" aria-expanded="false" aria-controls="navigation-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
           <div class="page-heading"><p class="eyebrow">YOUR PERSONAL STUDY SPACE</p><h1 id="page-title">Dashboard</h1></div>
         </div>
@@ -63,7 +64,7 @@
     </main>
   </div>
   <nav class="mobile-nav" aria-label="Mobile navigation">
-    <button class="active" data-view="dashboard"><span>▦</span>Home</button><a href="calculator.html"><span>＋</span>Calculator</a><button data-view="scores"><span>▤</span>Scores</button><button data-view="subjects"><span>◈</span>Subjects</button><button data-view="reports"><span>▥</span>Reports</button><button data-view="settings"><span>⚙</span>More</button><a class="mobile-profile-link" href="profile.html"><span>◉</span>Profile</a>
+    <button class="active" data-view="dashboard" aria-current="page"><span data-nav-icon="home">Home icon</span><span>Home</span></button><a href="calculator.html"><span data-nav-icon="calculator">Calculator icon</span><span>Calculator</span></a><a href="ai-learning.html"><span data-nav-icon="learn">AI Learning icon</span><span>AI Learn</span></a><a href="ai-quiz-setup.html"><span data-nav-icon="quiz">Quiz icon</span><span>Quiz</span></a><button id="mobile-more-trigger" type="button" aria-label="Open more navigation" aria-expanded="false"><span data-nav-icon="more">More icon</span><span>More</span></button>
   </nav>
   <dialog id="subject-dialog" aria-labelledby="subject-dialog-title"><form method="dialog" id="subject-form">
     <div class="dialog-head"><div><p class="eyebrow">BUILD YOUR TRACKER</p><h2 id="subject-dialog-title">Add a subject</h2></div><button class="icon-button" type="button" id="close-subject-dialog" aria-label="Close">×</button></div>
@@ -71,5 +72,6 @@
     <label>Target total (out of 100)<input id="subject-target" type="number" min="0" max="100" value="75" required inputmode="numeric"></label>
     <div class="dialog-actions"><button class="button secondary" type="button" id="cancel-subject">Cancel</button><button class="button primary" id="save-subject" value="default">Add subject</button></div>
   </form></dialog>
-  <input id="import-file" type="file" accept="application/json,.json" hidden><script src="app.js"></script><script src="dashboard-auth.js"></script><script src="profile-widget.js"></script><script src="dashboard-menus.js"></script>
+  <input id="import-file" type="file" accept="application/json,.json" hidden><script src="app.js"></script><script src="dashboard-auth.js"></script><script src="profile-widget.js"></script><script src="dashboard-menus.js"></script><script src="responsive-navbar.js"></script>
+  <script src="global-navigation.js"></script>
 </body></html>

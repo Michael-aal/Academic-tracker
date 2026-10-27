@@ -1,0 +1,51 @@
+/* Academic Tracker responsive navbar refresh */
+:root{--nav-bg:#0b0812;--nav-panel:#171123;--nav-elevated:#20172f;--nav-accent:#8b5cf6;--nav-accent-soft:#a78bfa;--nav-border:#302440}
+.compact-topbar{background:rgba(17,13,27,.94);border-color:var(--nav-border);border-radius:16px;min-height:68px;padding:12px 16px;gap:16px}
+.topbar-main{gap:14px}
+.nav-brand{display:flex;align-items:center;gap:10px;min-width:0;color:#f5f3ff;text-decoration:none;font:800 15px Manrope,'DM Sans',sans-serif;white-space:nowrap}
+.nav-brand-mark{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:linear-gradient(145deg,#a78bfa,#6d28d9);color:#fff;font-size:18px;box-shadow:0 5px 18px #6d28d933}
+.nav-brand-name span{color:#a78bfa}
+.compact-topbar .page-heading .eyebrow{color:#a78bfa}
+.compact-topbar .menu-trigger{background:#20172f;border-color:#302440;color:#f5f3ff}
+.compact-topbar .menu-trigger:hover,.compact-topbar .menu-trigger[aria-expanded=true]{border-color:#8b5cf6;background:#2a1b40;color:#c4b5fd}
+.dropdown-menu{background:rgba(17,13,27,.99);border-color:#392b4d}
+.menu-caption{color:#a78bfa}
+.dropdown-item{color:#e5def5}
+.dropdown-item:hover,.dropdown-item:focus-visible,.dropdown-item.active{background:#2a1b40;color:#c4b5fd}
+.dropdown-symbol{border-color:#392b4d;color:#a78bfa;background:#20172f}
+.menu-separator{background:#302440}
+.account-menu-heading strong{color:#f5f3ff}
+.account-menu-heading small,.menu-status{color:#b8aec9}
+.mobile-nav{display:none}
+@media(min-width:681px){
+ .app-shell{display:block}.sidebar{display:none}
+ .main{max-width:1480px;padding:22px clamp(18px,3.4vw,48px) 24px}
+ .compact-topbar{margin-bottom:24px}
+ .topbar-main{flex:1}
+ .nav-brand{margin-right:8px}
+ .page-heading{margin-left:auto}
+}
+@media(max-width:680px){
+ body{padding-bottom:calc(82px + env(safe-area-inset-bottom))}
+ .main{padding:12px 13px 24px}
+ .compact-topbar{position:sticky;top:8px;z-index:40;padding:10px 11px;margin-bottom:18px;min-height:60px;gap:8px;border-radius:15px;background:rgba(17,13,27,.96);box-shadow:0 8px 26px #0003}
+ .topbar-main{gap:9px;flex:1}
+ .nav-brand{gap:8px;font-size:13px}
+ .nav-brand-mark{width:33px;height:33px;border-radius:10px;font-size:16px}
+ .nav-brand-name{display:none}
+ .page-heading{margin-left:0}
+ .page-heading .eyebrow{display:none}
+ .page-heading h1{font-size:clamp(19px,5vw,25px);letter-spacing:-.5px}
+ .menu-trigger{width:38px;height:38px;flex-basis:38px}
+ .dropdown-menu{position:fixed;top:76px;left:12px;right:12px;width:auto;max-height:min(70vh,520px);overflow:auto}
+ .account-menu{left:auto;right:12px;width:min(290px,calc(100vw - 24px))}
+ .mobile-nav{position:fixed;z-index:50;left:10px;right:10px;bottom:calc(9px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;padding:7px;border:1px solid #302440;border-radius:20px;background:rgba(17,13,27,.97);box-shadow:0 12px 35px #0008;backdrop-filter:blur(22px)}
+ .mobile-nav a,.mobile-nav button{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;min-width:0;min-height:53px;padding:5px 2px;border:0;border-radius:13px;background:transparent;color:#b8aec9;text-decoration:none;font:600 10px 'DM Sans',sans-serif;white-space:nowrap}
+ .mobile-nav a span,.mobile-nav button span{display:grid;place-items:center;width:23px;height:23px;font-size:0}
+ .mobile-nav svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+ .mobile-nav a.active,.mobile-nav button.active,.mobile-nav a[aria-current=page],.mobile-nav button[aria-current=page]{background:linear-gradient(145deg,#6d28d9,#8b5cf6);color:#fff;box-shadow:0 4px 14px #6d28d933}
+ footer{padding-bottom:8px}
+}
+@media(max-width:360px){.mobile-nav{left:6px;right:6px;padding:5px}.mobile-nav a,.mobile-nav button{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.mobile-nav *{scroll-behavior:auto;transition:none!important}}
+@media print{.mobile-nav{display:none!important}body{padding-bottom:0}}
