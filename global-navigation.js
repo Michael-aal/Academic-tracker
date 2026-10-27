@@ -13,13 +13,13 @@
     ["AI Learning","ai-learning.html","learn"],
     ["AI Tutor","ai-tutor.html","tutor"],
     ["AI Quiz","ai-quiz-setup.html","quiz"],
-    ["Revision Quiz","quiz.html","quiz-page"],
+    ["Revision Quiz","quiz.html","quiz"],
     ["Educational Videos","educational-videos.html","videos"],
     ["Memory Mastery","memory-mastery.html","memory"],
     ["Study Planner","study-plan.html","planner"],
     ["Notes Summary","notes-summary.html","notes"],
     ["University Dashboard","university-dashboard.html","university"],
-    ["Profile","profile.html","profile"],
+    ["Profile","profile.html","user"],
     ["Support & Messages","support.html","support"]
   ];
   const icons = {
