@@ -37,3 +37,12 @@ body{background-image:radial-gradient(ellipse at 88% 0%,rgba(109,40,217,.13),tra
 :where(.support-brand,.ai-brand,.brand){color:var(--text)}
 :where(.message-form textarea){background:var(--panel);color:var(--text);border-color:var(--line)}
 @media(max-width:680px){.app-shell .mobile-nav{background:rgba(17,13,27,.98)}}
+
+
+/* Mobile navigation stays on one line and can be swiped horizontally. */
+.mobile-nav{display:flex!important;flex-wrap:nowrap!important;justify-content:flex-start!important;align-items:stretch;gap:4px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--purple) transparent;padding-left:8px!important;padding-right:8px!important}
+.mobile-nav>a,.mobile-nav>button{flex:0 0 auto!important;min-width:68px;max-width:112px;white-space:nowrap}
+.mobile-nav>*{overflow:visible}
+.mobile-nav::-webkit-scrollbar{height:3px}.mobile-nav::-webkit-scrollbar-thumb{background:rgba(167,139,250,.45);border-radius:99px}
+@media(max-width:420px){.mobile-nav>a,.mobile-nav>button{min-width:64px;padding-left:8px;padding-right:8px;font-size:10px}}
+@media(min-width:681px){.mobile-nav{overflow-x:auto}}
