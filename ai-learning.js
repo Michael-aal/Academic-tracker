@@ -443,7 +443,7 @@
 
   async function resumeActiveQuiz() {
     const attemptId = localStorage.getItem(ATTEMPT_KEY);
-    if (!attemptId) return;
+    if (!attemptId || new URLSearchParams(window.location.search).get("new") === "1") return;
     window.location.replace("quiz.html?attempt=" + encodeURIComponent(attemptId));
   }
 
