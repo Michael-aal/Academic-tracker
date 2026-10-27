@@ -5,6 +5,14 @@ on:
     branches: [main, feature/backend-prisma]
     paths:
       - "backend/**"
+      - "quiz-page.css"
+      - "quiz.html"
+      - "auth.css"
+      - "register.html"
+      - "login.html"
+      - "landing-redesign.css"
+      - "landing.css"
+      - "index.html"
       - "calculator-engine.js"
       - "calculator.js"
       - "ai-learning.js"
