@@ -182,7 +182,7 @@ router.post("/", aiLimiter, async (req, res) => {
         ...(action === "quiz" ? { response_format: { type: "json_object" } } : {}),
         // Ten complete questions plus explanations can exceed 3,500 tokens. Leave room
         // for the closing JSON braces so the client never receives a truncated quiz.
-        max_tokens: action === "quiz" ? 7000 : action === "flashcards" ? 3500 : 1800
+        max_tokens: action === "quiz" ? 7000 : action === "flashcards" ? 5000 : 1800
       })
     });
 
