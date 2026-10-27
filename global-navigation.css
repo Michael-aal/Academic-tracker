@@ -1,0 +1,91 @@
+/* Academic Tracker — shared application navigation.
+   Loaded after page styles so every app route gets the same responsive shell. */
+:root {
+  --at-nav-bg: rgba(17, 13, 27, .97);
+  --at-nav-surface: #171123;
+  --at-nav-elevated: #20172f;
+  --at-nav-border: #302440;
+  --at-nav-text: #f5f3ff;
+  --at-nav-muted: #b8aec9;
+  --at-nav-accent: #a78bfa;
+  --at-nav-accent-strong: #6d28d9;
+}
+.at-global-header, .at-global-header * { box-sizing: border-box; }
+.at-global-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: 68px;
+  padding: 10px clamp(14px, 3vw, 36px);
+  color: var(--at-nav-text);
+  background: var(--at-nav-bg);
+  border-bottom: 1px solid var(--at-nav-border);
+  box-shadow: 0 8px 28px rgba(0,0,0,.16);
+  backdrop-filter: blur(18px);
+}
+.at-nav-brand { display:flex; align-items:center; gap:10px; min-width:0; color:inherit; text-decoration:none; font:800 15px/1.2 Manrope,"DM Sans",system-ui,sans-serif; white-space:nowrap; }
+.at-nav-brand-mark { display:grid; place-items:center; flex:0 0 36px; width:36px; height:36px; border-radius:12px; color:#fff; background:linear-gradient(145deg,#a78bfa,#6d28d9); }
+.at-nav-brand-name span { color:var(--at-nav-accent); }
+.at-nav-page-title { min-width:0; margin:0 auto; overflow:hidden; color:var(--at-nav-muted); font-size:13px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+.at-nav-actions { display:flex; align-items:center; gap:8px; }
+.at-nav-icon-button { display:grid; place-items:center; flex:0 0 42px; width:42px; height:42px; padding:0; border:1px solid var(--at-nav-border); border-radius:12px; color:var(--at-nav-text); background:var(--at-nav-elevated); cursor:pointer; }
+.at-nav-icon-button:hover, .at-nav-icon-button[aria-expanded="true"] { border-color:var(--at-nav-accent); background:#2a1b40; }
+.at-nav-icon-button:focus-visible, .at-nav-menu a:focus-visible, .at-nav-menu button:focus-visible, .at-mobile-nav a:focus-visible, .at-mobile-nav button:focus-visible { outline:2px solid var(--at-nav-accent)!important; outline-offset:3px; }
+.at-nav-icon-button svg, .at-mobile-nav svg, .at-nav-menu svg { width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.at-nav-popover { position:absolute; top:calc(100% + 8px); right:clamp(12px,3vw,36px); z-index:120; width:min(340px,calc(100vw - 24px)); max-height:min(72vh,560px); overflow:auto; padding:10px; border:1px solid var(--at-nav-border); border-radius:18px; color:var(--at-nav-text); background:#110d1b; box-shadow:0 22px 55px rgba(0,0,0,.48); }
+.at-nav-popover[hidden] { display:none!important; }
+.at-nav-menu-heading { padding:10px 12px 8px; color:var(--at-nav-accent); font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+.at-nav-menu a, .at-nav-menu button { display:flex; align-items:center; gap:11px; width:100%; min-height:44px; padding:10px 12px; border:0; border-radius:11px; color:#e5def5; background:transparent; font:600 13px/1.35 "DM Sans",system-ui,sans-serif; text-align:left; text-decoration:none; cursor:pointer; }
+.at-nav-menu a:hover, .at-nav-menu button:hover, .at-nav-menu a[aria-current="page"] { color:#fff; background:#2a1b40; }
+.at-nav-menu a[aria-current="page"] { box-shadow:inset 3px 0 var(--at-nav-accent); }
+.at-nav-menu-separator { height:1px; margin:8px 5px; background:var(--at-nav-border); }
+.at-nav-menu .at-nav-danger { color:#fecaca; }
+.at-mobile-nav { display:none; }
+.at-has-global-navigation .app-shell { display:block!important; grid-template-columns:minmax(0,1fr)!important; min-height:calc(100svh - 68px); }
+.at-has-global-navigation .app-shell > .sidebar,
+.at-has-global-navigation .sidebar,
+.at-has-global-navigation .mobile-nav,
+.at-has-global-navigation .ai-mobile-menu,
+.at-has-global-navigation .ai-global-nav { display:none!important; }
+.at-has-global-navigation .main { width:100%; max-width:1480px; margin-inline:auto; padding:clamp(18px,3vw,36px) clamp(14px,3vw,36px) 32px; }
+.at-has-global-navigation .ai-shell { min-height:calc(100svh - 68px); }
+.at-has-global-navigation .ai-shell > main,
+.at-has-global-navigation .quiz-page-shell > main { width:min(100% - 28px,1160px); margin-inline:auto; }
+.at-has-global-navigation .quiz-page-shell { min-height:calc(100svh - 68px); }
+.at-has-global-navigation .quiz-page-footer { padding-bottom:24px; }
+.at-has-global-navigation .at-legacy-header { display:none!important; }
+.at-has-global-navigation .at-legacy-sidebar { display:none!important; }
+.at-has-global-navigation :where(input,select,textarea) { max-width:100%; }
+@media (max-width:760px) {
+  .at-global-header { min-height:60px; padding:8px 12px; gap:9px; }
+  .at-nav-brand { gap:8px; font-size:13px; }
+  .at-nav-brand-mark { flex-basis:33px; width:33px; height:33px; border-radius:10px; }
+  .at-nav-brand-name { display:none; }
+  .at-nav-page-title { margin-left:0; margin-right:auto; font-size:12px; }
+  .at-nav-actions { gap:6px; }
+  .at-nav-icon-button { flex-basis:40px; width:40px; height:40px; }
+  .at-nav-popover { position:fixed; top:68px; right:10px; left:10px; width:auto; max-height:calc(100dvh - 150px); }
+  .at-mobile-nav { position:fixed; z-index:110; left:10px; right:10px; bottom:calc(8px + env(safe-area-inset-bottom)); display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:3px; padding:6px; border:1px solid var(--at-nav-border); border-radius:19px; background:rgba(17,13,27,.97); box-shadow:0 12px 35px rgba(0,0,0,.42); backdrop-filter:blur(20px); }
+  .at-mobile-nav a, .at-mobile-nav button { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:4px; min-width:0; min-height:52px; padding:5px 2px; border:0; border-radius:12px; color:var(--at-nav-muted); background:transparent; font:600 10px/1.15 "DM Sans",system-ui,sans-serif; text-align:center; text-decoration:none; cursor:pointer; }
+  .at-mobile-nav svg { width:21px; height:21px; }
+  .at-mobile-nav .at-nav-label { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .at-mobile-nav a[aria-current="page"], .at-mobile-nav button[aria-expanded="true"], .at-mobile-nav .at-nav-active { color:#fff; background:linear-gradient(145deg,#6d28d9,#8b5cf6); }
+  .at-has-global-navigation { padding-bottom:calc(82px + env(safe-area-inset-bottom)); }
+  .at-has-global-navigation .main { padding:18px 13px 26px; }
+  .at-has-global-navigation .ai-shell > main,
+  .at-has-global-navigation .quiz-page-shell > main { width:calc(100% - 26px); }
+}
+@media(max-width:360px) {
+  .at-mobile-nav { left:6px; right:6px; padding:4px; }
+  .at-mobile-nav a, .at-mobile-nav button { font-size:9px; }
+  .at-nav-page-title { max-width:34vw; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .at-global-header *, .at-mobile-nav * { scroll-behavior:auto!important; animation:none!important; transition:none!important; }
+}
+@media print { .at-global-header,.at-mobile-nav,.at-nav-popover { display:none!important; } .at-has-global-navigation { padding-bottom:0; } }
