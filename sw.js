@@ -50,3 +50,17 @@ self.addEventListener("fetch", event => {
       })
   );
 });
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  event.waitUntil((async () => {
+    const clientsList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const client of clientsList) {
+      if ("focus" in client) {
+        await client.focus();
+        if ("navigate" in client) await client.navigate(new URL("./study-plan.html", self.location.origin).href);
+        return;
+      }
+    }
+    if (self.clients.openWindow) await self.clients.openWindow(new URL("./study-plan.html", self.location.origin).href);
+  })());
+});
