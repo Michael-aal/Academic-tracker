@@ -8,6 +8,7 @@ on:
       - "calculator-engine.js"
       - "calculator.js"
       - "ai-learning.js"
+      - "quiz-page.js"
       - ".github/workflows/backend-check.yml"
   pull_request:
     paths:
@@ -43,4 +44,4 @@ jobs:
       - name: Run unit tests
         run: npm test
       - name: Check calculator and AI learning JavaScript syntax
-        run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../ai-learning.js
+        run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../ai-learning.js && node --check ../quiz-page.js
