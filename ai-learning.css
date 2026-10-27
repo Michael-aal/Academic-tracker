@@ -89,3 +89,36 @@
 .result-content code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.92em;background:#101f39;border:1px solid var(--line);border-radius:5px;padding:2px 5px;overflow-wrap:anywhere}
 .result-content pre{max-width:100%;overflow:auto;padding:14px;border:1px solid var(--line);border-radius:12px;background:#050d1a;white-space:pre}
 .result-content pre code{padding:0;border:0;background:transparent;white-space:pre}
+
+
+/* Unified premium-purple palette: remove legacy green/navy quiz surfaces. */
+:root{color-scheme:dark;--bg:#0B0812;--panel:#110D1B;--panel2:#171123;--line:#302440;--text:#F5F3FF;--muted:#B8AEC9;--accent:#8B5CF6;--accent2:#20172F;--danger:#F87171}
+body{background:#0B0812!important;background-image:radial-gradient(ellipse at 75% 0%,rgba(109,40,217,.16),transparent 42rem)!important;color:#F5F3FF}
+.ai-topbar{border-bottom-color:#302440}
+.task-picker,.learning-panel{background:#110D1B!important;border-color:#302440!important}
+.tool-choice{color:#F5F3FF}
+.tool-choice.active,.tool-choice:hover{background:rgba(139,92,246,.13)!important;border-color:rgba(167,139,250,.3)!important}
+.tool-icon,.tool-note{background:#20172F!important;border-color:#302440!important;color:#A78BFA!important}
+.tool-note p,.tool-choice small,.ai-hero>p,.privacy-line,.panel-heading>div>p:last-child,.form-foot,.submit-row>p{color:#B8AEC9!important}
+input,textarea,select{background:#110D1B!important;border-color:#302440!important;color:#F5F3FF!important}
+input:focus,textarea:focus,select:focus{border-color:#8B5CF6!important;box-shadow:0 0 0 3px rgba(139,92,246,.16)!important}
+.submit-row button,.quiz-submit{background:linear-gradient(135deg,#8B5CF6,#6D28D9)!important;color:white!important}
+.result-panel,.question-card,.quiz-result-stat,.quiz-review-card,.quiz-hint,.quiz-progress-wrap{background:#171123!important;border-color:#302440!important}
+.quiz-progress-track{background:#302440!important}
+.quiz-progress-fill{background:linear-gradient(90deg,#6D28D9,#A78BFA)!important}
+.answer-option,.quiz-nav-button,.quiz-dashboard-button{background:#110D1B!important;border-color:#302440!important;color:#F5F3FF!important}
+.answer-option:hover:not(:disabled),.answer-option.selected{background:rgba(139,92,246,.14)!important;border-color:#8B5CF6!important}
+.answer-letter{background:#20172F!important;border-color:#49385F!important;color:#A78BFA!important}
+.answer-option.selected .answer-letter,.answer-option.answer-correct .answer-letter{background:#8B5CF6!important;border-color:#8B5CF6!important;color:white!important}
+.answer-option.answer-correct,.feedback-correct,.quiz-review-card.review-correct{border-color:rgba(167,139,250,.45)!important;background:rgba(139,92,246,.12)!important}
+.feedback-correct{color:#EDE9FE!important}
+.answer-option.answer-incorrect,.feedback-incorrect,.quiz-review-card.review-incorrect{border-color:rgba(248,113,113,.4)!important;background:rgba(248,113,113,.08)!important}
+.quiz-finish{background:linear-gradient(135deg,#8B5CF6,#6D28D9)!important;border-color:transparent!important;color:#fff!important}
+.quiz-hint-button,.result-label,.quiz-score{color:#A78BFA!important}
+.quiz-result-stat strong,.review-heading,.question-title,.result-content h1,.result-content h2,.result-content h3{color:#F5F3FF!important}
+.quiz-review-card{background:#171123!important}
+.result-content code{background:#20172F!important;border-color:#302440!important}
+.result-content pre{background:#0B0812!important;border-color:#302440!important}
+.notice.error{color:#F87171!important}
+.ai-topbar nav{gap:18px;min-width:0}
+@media(max-width:680px){.ai-topbar{padding:0 15px;gap:12px}.ai-topbar nav{max-width:60%;overflow-x:auto;white-space:nowrap;gap:14px;scrollbar-width:thin;padding:8px 0}.ai-topbar nav a,.ai-topbar nav button{flex:0 0 auto}.ai-hero{padding-top:35px}.workspace{grid-template-columns:minmax(0,1fr)!important}.task-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.task-picker>.section-kicker,.task-note{grid-column:1/-1}.tool-choice{margin:0;padding:10px 8px}.tool-choice small{line-height:1.35}}
