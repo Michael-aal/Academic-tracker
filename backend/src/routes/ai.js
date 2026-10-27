@@ -262,7 +262,7 @@ router.post("/", aiLimiter, async (req, res) => {
         const retryTimeout = setTimeout(() => retryController.abort(), 45000);
         try {
           const retryPrompt = buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) +
-            "\\n\\nFINAL OUTPUT CHECK: Your previous attempt did not satisfy the required schema. Regenerate the entire quiz from scratch. Return only valid JSON with exactly " + questionCount +
+            "\n\nFINAL OUTPUT CHECK: Your previous attempt did not satisfy the required schema. Regenerate the entire quiz from scratch. Return only valid JSON with exactly " + questionCount +
             " questions. Each question must include id, question, options (exactly four {id,text} objects with IDs A/B/C/D), correctAnswer (one of A/B/C/D), explanation, and a non-empty hint. Do not return partial JSON or Markdown fences.";
           const retryResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
