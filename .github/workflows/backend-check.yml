@@ -11,6 +11,7 @@ on:
       - "quiz-page.js"
       - "ai-navigation.js"
       - "ai-tool-pages.css"
+      - "premium-theme.css"
       - "ai-learning.html"
       - "ai-tutor.html"
       - "ai-quiz-setup.html"
