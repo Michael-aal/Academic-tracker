@@ -91,6 +91,61 @@
     $("review-answer").textContent = current.answer;
     $("queue-count").textContent = (queue.length + 1) + " left";
   }
+  const API_BASE = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
+  $("generate-cards-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    const subject = $("ai-card-subject").value.trim();
+    const topic = $("ai-card-topic").value.trim();
+    const content = $("ai-card-notes").value.trim();
+    const cardCount = Number($("ai-card-count").value);
+    const button = $("generate-cards-button");
+    const status = $("ai-generation-status");
+    if (!subject || !topic) { status.textContent = "Enter a subject and topic first."; return; }
+    if (!content && topic.length < 2) { status.textContent = "Add a topic or some class notes."; return; }
+    button.disabled = true;
+    button.textContent = "Generating cards…";
+    status.textContent = "Asking AI to prepare your memory cards…";
+    try {
+      const response = await fetch(API_BASE + "/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ action: "flashcards", subject, topic, content, cardCount, level: user.educationTrack === "HIGHER" ? "higher institution / university" : "secondary school" })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        localStorage.removeItem("academic-tracker-token");
+        localStorage.removeItem("academic-tracker-user");
+        window.location.replace("login.html");
+        return;
+      }
+      if (!response.ok) throw new Error(data.error || "Could not generate memory cards.");
+      if (!Array.isArray(data.cards) || data.cards.length !== cardCount || data.cards.some(card => !card || typeof card.question !== "string" || typeof card.answer !== "string")) {
+        throw new Error("The AI response was incomplete. No cards were added; please try again.");
+      }
+      const timestamp = now();
+      const generated = data.cards.map((card, index) => ({
+        id: crypto.randomUUID ? crypto.randomUUID() : String(timestamp + index) + Math.random().toString(16).slice(2),
+        subject, topic, question: card.question.trim(), answer: card.answer.trim(),
+        createdAt: timestamp, dueAt: timestamp, repetitions: 0, intervalDays: 0,
+        lastReviewedAt: null, lastRating: null
+      }));
+      const knownQuestions = new Set(cards.map(card => card.question.trim().toLocaleLowerCase()));
+      const uniqueGenerated = generated.filter(card => !knownQuestions.has(card.question.toLocaleLowerCase()));
+      if (!uniqueGenerated.length) throw new Error("These questions already exist in your library. Try a different topic or notes.");
+      cards.unshift(...uniqueGenerated);
+      persist();
+      buildQueue();
+      renderLibrary();
+      $("ai-card-notes").value = "";
+      status.textContent = "Added " + uniqueGenerated.length + " AI-generated card(s) to your library. Check the answers and edit anything that needs correction.";
+    } catch (error) {
+      status.textContent = error.message || "Could not generate memory cards. Please try again.";
+    } finally {
+      button.disabled = false;
+      button.textContent = "Generate cards with AI";
+    }
+  });
+
   function addCard(values) {
     cards.unshift({ id: crypto.randomUUID ? crypto.randomUUID() : String(now()) + Math.random().toString(16).slice(2), subject: values.subject.trim(), topic: values.topic.trim(), question: values.question.trim(), answer: values.answer.trim(), createdAt: now(), dueAt: now(), repetitions: 0, intervalDays: 0, lastReviewedAt: null, lastRating: null });
     persist(); buildQueue(); renderLibrary();

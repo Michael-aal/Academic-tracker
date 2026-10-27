@@ -9,7 +9,7 @@ const router = express.Router();
 router.use(requireAuth);
 
 const MAX_INPUT_CHARS = 12000;
-const ACTIONS = new Set(["tutor", "quiz", "summarize", "study-plan"]);
+const ACTIONS = new Set(["tutor", "quiz", "summarize", "study-plan", "flashcards"]);
 const aiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
@@ -19,7 +19,7 @@ const aiLimiter = rateLimit({
   message: { error: "You've reached the AI learning limit for now. Please try again in 15 minutes." }
 });
 
-function buildPrompt({ action, subject, topic, content, level, questionCount, difficulty, studentProfile }) {
+function buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) {
   const context = [
     "Subject: " + (subject || "Not specified"),
     "Topic: " + (topic || "Not specified"),
@@ -35,6 +35,7 @@ function buildPrompt({ action, subject, topic, content, level, questionCount, di
     tutor: "Act as a patient, conversational teacher appropriate to the student's education track and programme. For higher-institution students, use university-level depth and their registered course context; for secondary students, explain at their school level. Teach the concept the student asks about or the class notes they paste: organize the ideas, define key terms, explain why and how things work, break difficult steps down, and use clear examples or analogies. Keep the conversation natural and remember the prior conversation included in the student material. Answer follow-up questions directly and adapt when the student says they are confused. Do not create quizzes, tests, multiple-choice questions, or homework questions; the separate quiz generator handles those. Do not end with a test question. Instead, offer a useful next explanation or ask whether they want one part explained differently. When a relevant educational video would help, mention that a related video link is available in the interface. If the question is ambiguous, state your assumption. Do not pretend certainty when unsure.",
     quiz: "Return only a JSON object with a title and questions array. Generate exactly " + questionCount + " unique, complete, academically accurate multiple-choice questions for the specified subject, topic, academic level, and " + difficulty + " difficulty. Use supplied notes when present and never invent facts. Every question object must contain id (unique string), question (complete text), options (exactly four objects with IDs A, B, C, and D and distinct meaningful text), correctAnswer (exactly one valid option ID), explanation (brief accurate explanation), and hint (optional clue that does not reveal the answer). Avoid duplicate questions, ambiguity, and meaningless distractors. Verify the answer key before returning JSON.",
     summarize: "Summarize the supplied study material for revision. Start with a short overview, then organize the main ideas under clear headings with important facts, definitions, steps, and formulas where relevant. Keep the summary focused on the supplied topic and subject, preserve the meaning, and do not add unsupported claims. Do not generate quiz questions, tests, flashcards, or self-test questions. If no notes were supplied, ask the student to paste notes.",
+    flashcards: "Return only a JSON object with a cards array. Generate exactly " + cardCount + " accurate study flashcards for the specified subject and topic, using the supplied notes as the primary source when present. Each card must contain a concise question field and an accurate answer field. Make cards useful for active recall: definitions, processes, causes, formulas, distinctions, and key facts. Do not write multiple-choice options, quiz scores, or a test. Do not invent details absent from the notes when notes are provided. Keep each question under 700 characters and each answer under 1800 characters.",
     "study-plan": "Create a realistic, encouraging 7-day study plan for the supplied subject/topic, considering the student's programme, registered courses and target grades when relevant. Use short sessions, active recall, practice questions and review days. Include a clear daily task and a simple way to check understanding. Do not assume the student's available hours; suggest flexible 20–30 minute blocks."
   };
 
@@ -141,10 +142,12 @@ router.post("/", aiLimiter, async (req, res) => {
   const content = typeof req.body?.content === "string" ? req.body.content.trim() : "";
   const level = typeof req.body?.level === "string" ? req.body.level.trim().slice(0, 80) : "secondary school";
   const questionCount = req.body?.questionCount === undefined ? 5 : req.body.questionCount;
+  const cardCount = req.body?.cardCount === undefined ? 10 : req.body.cardCount;
   const difficulty = typeof req.body?.difficulty === "string" ? req.body.difficulty.toLowerCase() : "medium";
 
   if (!ACTIONS.has(action)) return res.status(400).json({ error: "Choose a supported AI learning task." });
   if (action === "quiz" && (!Number.isInteger(questionCount) || questionCount < 1 || questionCount > 10)) return res.status(400).json({ error: "Choose between 1 and 10 quiz questions." });
+  if (action === "flashcards" && (!Number.isInteger(cardCount) || cardCount < 1 || cardCount > 20)) return res.status(400).json({ error: "Choose between 1 and 20 memory cards." });
   if (action === "quiz" && !["easy", "medium", "hard"].includes(difficulty)) return res.status(400).json({ error: "Choose easy, medium, or hard difficulty." });
   if (content.length > MAX_INPUT_CHARS) {
     return res.status(413).json({ error: "Your request is too long. Keep your question or notes under 12,000 characters." });
@@ -174,12 +177,12 @@ router.post("/", aiLimiter, async (req, res) => {
       },
       body: JSON.stringify({
         model,
-        messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, difficulty, studentProfile }) }],
+        messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) }],
         temperature: action === "quiz" ? 0.2 : 0.4,
         ...(action === "quiz" ? { response_format: { type: "json_object" } } : {}),
         // Ten complete questions plus explanations can exceed 3,500 tokens. Leave room
         // for the closing JSON braces so the client never receives a truncated quiz.
-        max_tokens: action === "quiz" ? 7000 : 1800
+        max_tokens: action === "quiz" ? 7000 : action === "flashcards" ? 5000 : 1800
       })
     });
 
@@ -199,6 +202,36 @@ router.post("/", aiLimiter, async (req, res) => {
     const answer = data?.choices?.[0]?.message?.content;
     if (typeof answer !== "string" || !answer.trim()) {
       return res.status(502).json({ error: "The AI service returned an empty answer. Please try again." });
+    }
+    if (action === "flashcards") {
+      try {
+        const cleaned = answer.trim().replace(/^\x60{3}(?:json)?\s*/i, "").replace(/\s*\x60{3}$/i, "").trim();
+        let parsed;
+        try { parsed = JSON.parse(cleaned); }
+        catch (parseError) {
+          const firstBrace = cleaned.indexOf("{");
+          const lastBrace = cleaned.lastIndexOf("}");
+          if (firstBrace < 0 || lastBrace <= firstBrace) throw parseError;
+          parsed = JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+        }
+        if (data?.choices?.[0]?.finish_reason === "length") throw new Error("The AI response was cut off.");
+        if (!parsed || !Array.isArray(parsed.cards) || parsed.cards.length !== cardCount) throw new Error("The AI returned the wrong number of cards.");
+        const seen = new Set();
+        const cards = parsed.cards.map((card, index) => {
+          const question = typeof card?.question === "string" ? card.question.trim() : "";
+          const answerText = typeof card?.answer === "string" ? card.answer.trim() : "";
+          const normalized = question.toLocaleLowerCase().replace(/\s+/g, " ");
+          if (question.length < 5 || question.length > 700 || answerText.length < 1 || answerText.length > 1800 || seen.has(normalized)) {
+            throw new Error("Memory card " + (index + 1) + " is invalid or duplicated.");
+          }
+          seen.add(normalized);
+          return { question, answer: answerText };
+        });
+        return res.json({ cards, action, model });
+      } catch (validationError) {
+        console.error("AI flashcard validation failed:", validationError.message);
+        return res.status(502).json({ error: "The AI returned incomplete or invalid memory cards. No cards were added; please try again." });
+      }
     }
     if (action === "quiz") {
       let quiz;

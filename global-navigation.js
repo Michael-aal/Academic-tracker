@@ -15,7 +15,6 @@
     ["AI Learning","ai-learning.html","learn"],
     ["AI Tutor","ai-tutor.html","tutor"],
     ["AI Quiz","ai-quiz-setup.html","quiz"],
-    ["Revision Quiz","quiz.html","quiz"],
     ["Educational Videos","educational-videos.html","videos"],
     ["Memory Mastery","memory-mastery.html","memory"],
     ["Study Planner","study-plan.html","planner"],
