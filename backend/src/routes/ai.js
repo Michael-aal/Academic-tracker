@@ -177,7 +177,7 @@ router.post("/", aiLimiter, async (req, res) => {
       },
       body: JSON.stringify({
         model,
-        messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, difficulty, studentProfile }) }],
+        messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) }],
         temperature: action === "quiz" ? 0.2 : 0.4,
         ...(action === "quiz" ? { response_format: { type: "json_object" } } : {}),
         // Ten complete questions plus explanations can exceed 3,500 tokens. Leave room
