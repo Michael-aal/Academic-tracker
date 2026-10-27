@@ -159,7 +159,7 @@
   // Reuse the existing sign-out implementation rather than duplicating auth logic.
   const signOut = header.querySelector("#at-nav-signout");
   if (signOut) {
-    const existingSignOut = document.querySelector("#signout, #mobile-signout, #quiz-signout, #signout-button, #logout-button, [data-action='signout']");
+    const existingSignOut = document.querySelector("#signout, #mobile-signout, #quiz-signout, #profile-signout, #uni-signout, #signout-button, #logout-button, [data-action='signout']");
     if (!existingSignOut) signOut.hidden = true;
     else signOut.addEventListener("click", () => existingSignOut.click());
   }
