@@ -9,7 +9,13 @@ on:
       - "calculator.js"
       - "ai-learning.js"
       - "quiz-page.js"
-      - "quiz-page.js"
+      - "ai-navigation.js"
+      - "ai-tool-pages.css"
+      - "ai-learning.html"
+      - "ai-tutor.html"
+      - "ai-quiz-setup.html"
+      - "notes-summary.html"
+      - "study-plan.html"
       - ".github/workflows/backend-check.yml"
   pull_request:
     paths:
@@ -18,6 +24,13 @@ on:
       - "calculator.js"
       - "ai-learning.js"
       - "quiz-page.js"
+      - "ai-navigation.js"
+      - "ai-tool-pages.css"
+      - "ai-learning.html"
+      - "ai-tutor.html"
+      - "ai-quiz-setup.html"
+      - "notes-summary.html"
+      - "study-plan.html"
       - ".github/workflows/backend-check.yml"
   workflow_dispatch:
 
@@ -46,4 +59,4 @@ jobs:
       - name: Run unit tests
         run: npm test
       - name: Check calculator and AI learning JavaScript syntax
-        run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../ai-learning.js && node --check ../quiz-page.js
+        run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../ai-learning.js && node --check ../quiz-page.js && node --check ../ai-navigation.js
