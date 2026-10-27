@@ -33,6 +33,7 @@
   };
   const icon = (name) => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + (icons[name] || icons.more) + '</svg>';
   const file = location.pathname.split("/").pop() || "dashboard.html";
+  if (file.startsWith("admin-")) routes.push(["Admin AI","admin-ai.html","more"],["Admin setup","admin-setup.html","more"],["Admin support","admin-support.html","more"]);
   const authPage = file === "login.html" || file === "register.html";
   const currentTitle = (document.title || "Academic Tracker").replace(/\s*[·|—-]\s*Academic Tracker.*$/i, "").replace(/\s*[·|—-]\s*Academic Tracker$/i, "").trim() || "Workspace";
   const header = document.createElement("header");
@@ -69,7 +70,7 @@
     el.classList.add("at-legacy-header");
     el.setAttribute("aria-hidden","true");
   });
-  document.querySelectorAll(".sidebar, .mobile-nav, .ai-mobile-menu").forEach(el => {
+  document.querySelectorAll(".sidebar, .mobile-nav, .ai-mobile-menu, .uni-sidebar, .uni-nav").forEach(el => {
     el.classList.add("at-legacy-sidebar");
     el.setAttribute("aria-hidden","true");
   });
@@ -82,7 +83,7 @@
     <a href="calculator.html" data-at-bottom="calculator">${icon("calculator")}<span class="at-nav-label">Calculator</span></a>
     <a href="ai-learning.html" data-at-bottom="learn">${icon("learn")}<span class="at-nav-label">AI Learn</span></a>
     <a href="ai-quiz-setup.html" data-at-bottom="quiz">${icon("quiz")}<span class="at-nav-label">Quiz</span></a>
-    <button type="button" id="at-nav-more-toggle" aria-label="Open more pages" aria-expanded="false" aria-controls="at-nav-menu">${icon("more")}<span class="at-nav-label">More</span></button>`;
+    <button type="button" id="at-nav-more-toggle" data-at-bottom="more" aria-label="Open more pages" aria-expanded="false" aria-controls="at-nav-menu">${icon("more")}<span class="at-nav-label">More</span></button>`;
   document.body.appendChild(bottom);
 
   const menuToggle = header.querySelector("#at-nav-menu-toggle");
