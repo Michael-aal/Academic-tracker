@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0B0812">
+  <meta name="description" content="Study with an AI tutor, generate revision quizzes, and summarize your own notes.">
+  <link rel="stylesheet" href="ai-learning.css">
+  <title>Study Planner · Academic Tracker</title>
+  <link rel="stylesheet" href="visual-refresh.css">
+<link rel="stylesheet" href="site-design-system.css">  <link rel="stylesheet" href="premium-theme.css">
+  <link rel="stylesheet" href="ai-tool-pages.css">
+  <script src="icon-system.js" defer></script>
+  <script src="ai-navigation.js" defer></script>
+</head>
+<body class="ai-tool-page" data-ai-tool="study-plan">
+  <div class="ai-shell">
+    <header class="ai-topbar">
+      <a class="ai-brand" href="dashboard.html"><span class="ai-brand-mark">A</span><span>Academic <span>Tracker</span></span></a>
+      <nav class="ai-global-nav" aria-label="Main navigation"><a href="dashboard.html">My tracker</a><a href="ai-learning.html">AI Learning</a><a href="profile.html">Profile</a><div class="ai-more-wrap"><button id="ai-more-toggle" type="button" aria-expanded="false" aria-controls="ai-more-menu">More <span aria-hidden="true">⌄</span></button><div class="ai-more-menu" id="ai-more-menu" hidden><a href="memory-mastery.html">Memory Mastery</a><a href="educational-videos.html">Educational videos</a><a href="calculator.html">Calculator</a><a href="support.html">Messages</a></div></div><button id="signout" type="button">Sign out</button></nav><button class="ai-mobile-menu-toggle" id="ai-mobile-menu-toggle" type="button" aria-expanded="false" aria-controls="ai-mobile-menu" aria-label="Open navigation menu">☰</button><div class="ai-mobile-menu" id="ai-mobile-menu" hidden><a href="dashboard.html">My tracker</a><a href="ai-learning.html">AI Learning home</a><a href="profile.html">Profile</a><a href="memory-mastery.html">Memory Mastery</a><a href="educational-videos.html">Educational videos</a><a href="calculator.html">Calculator</a><a href="support.html">Messages</a><button id="mobile-signout" type="button">Sign out</button></div>
+    </header>
+    <main>
+      <section class="ai-tool-page-hero"><a class="back-link" href="ai-learning.html">← All AI learning tools</a><h1>Study Planner</h1><p>Turn your subjects, topics, and deadlines into a manageable weekly plan.</p></section><section class="ai-hero">
+        <div class="eyebrow"><span class="eyebrow-dot"></span> YOUR PERSONAL LEARNING SPACE</div>
+        <h1>Understand it.<br><span>Then master it.</span></h1>
+        <p>Ask questions, practise what you're learning, and turn your own notes into revision material.</p>
+        <div class="privacy-line"><span aria-hidden="true">◆</span> Your requests are sent securely to the configured AI provider. Don't include passwords or private personal information.</div>
+      </section>
+      <section class="workspace">
+        <section class="learning-panel">
+          <div class="panel-heading"><div><p class="section-kicker">AI STUDY ASSISTANT</p><h2 id="task-title">Ask your tutor</h2><p id="task-description">Tell me what you're learning and where you're stuck.</p></div><span class="online-pill"><i></i> AI learning</span></div>
+          <form id="learning-form">
+            <div class="form-grid">
+              <label>Subject <input id="subject" maxlength="100" placeholder="e.g. Physics"></label>
+              <label>Topic <input id="topic" maxlength="160" placeholder="e.g. Newton's laws"></label>
+            </div>
+            <label class="full-label" for="content" id="content-label">What would you like help understanding?</label>
+            <textarea id="content" rows="7" maxlength="12000" placeholder="Ask a question, or paste your notes here…"></textarea>
+            <div class="form-foot"><span id="char-count">0 / 12,000 characters</span><span>Be specific for a better explanation.</span></div>
+            <div id="quiz-options" class="quiz-options" hidden><label for="question-count">Questions</label><select id="question-count"><option value="3">3 questions</option><option value="5" selected>5 questions</option><option value="8">8 questions</option><option value="10">10 questions</option></select><label for="quiz-difficulty">Difficulty</label><select id="quiz-difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
+            <div class="submit-row"><p>AI can make mistakes. Check important facts with your textbook or teacher.</p><button id="submit-learning" type="submit"><span>✦</span> <span id="submit-label">Help me understand</span></button></div>
+          </form>
+          <section id="result-panel" class="result-panel" aria-live="polite" hidden><div class="result-top"><div><span class="result-label">YOUR STUDY RESPONSE</span><h3 id="result-title">Ready to learn</h3></div><button id="copy-result" type="button">Copy answer</button></div><div id="result-content" class="result-content"></div></section>
+          <div id="notice" class="notice" role="status"></div>
+        </section>
+      </section>
+      <footer>Academic Tracker · AI-assisted learning, built around your progress.</footer>
+    </main>
+  </div>
+  <script src="ai-learning.js"></script>
+</body>
+</html>

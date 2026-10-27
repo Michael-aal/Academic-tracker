@@ -384,11 +384,6 @@
 
   document.querySelectorAll("[data-action]").forEach(button => button.addEventListener("click", () => setAction(button.dataset.action)));
   $("content").addEventListener("input", () => { $("char-count").textContent = $("content").value.length.toLocaleString() + " / 12,000 characters"; });
-  $("signout").addEventListener("click", () => {
-    localStorage.removeItem("academic-tracker-token");
-    localStorage.removeItem("academic-tracker-user");
-    window.location.replace("login.html");
-  });
   $("copy-result").addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText($("result-content").innerText || $("result-content").textContent || state.answer);
@@ -423,7 +418,9 @@
       });
       if (state.action === "quiz") {
         if (!data.quiz || !data.attemptId || !Array.isArray(data.quiz.questions)) throw new Error("The server returned an incomplete quiz response. Please try again.");
-        renderQuiz(data.quiz, data.attemptId);
+        localStorage.setItem(ATTEMPT_KEY, data.attemptId);
+        window.location.assign("quiz.html?attempt=" + encodeURIComponent(data.attemptId));
+        return;
       } else {
         state.answer = data.answer || "";
         renderSafeMarkdown($("result-content"), data.answer || "No response was returned.");
@@ -441,26 +438,11 @@
 
   async function resumeActiveQuiz() {
     const attemptId = localStorage.getItem(ATTEMPT_KEY);
-    if (!attemptId) return;
-    try {
-      const data = await api("/api/ai/attempts/" + encodeURIComponent(attemptId));
-      if (data.status === "COMPLETED" && data.result) {
-        state.attemptId = data.attemptId;
-        state.quiz = data.quiz;
-        renderResults(data.result);
-        $("result-panel").hidden = false;
-        return;
-      }
-      setAction("quiz");
-      renderQuiz(data.quiz, data.attemptId, data.submittedAnswers || []);
-      if (data.feedbackByQuestion) state.feedbackByQuestion = data.feedbackByQuestion;
-      $("result-panel").hidden = false;
-      setNotice("Your unfinished quiz has been restored.");
-    } catch {
-      localStorage.removeItem(ATTEMPT_KEY);
-    }
+    if (!attemptId || new URLSearchParams(window.location.search).get("new") === "1") return;
+    window.location.replace("quiz.html?attempt=" + encodeURIComponent(attemptId));
   }
 
-  setAction("tutor");
-  resumeActiveQuiz();
+  const initialTool = document.body.dataset.aiTool || "tutor";
+  setAction(taskCopy[initialTool] ? initialTool : "tutor");
+  if (initialTool === "quiz") resumeActiveQuiz();
 })();

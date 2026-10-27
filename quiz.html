@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0B0812">
+  <meta name="description" content="Take your personalized Academic Tracker revision quiz.">
+  <link rel="stylesheet" href="ai-learning.css">
+  <link rel="stylesheet" href="premium-theme.css">
+  <link rel="stylesheet" href="quiz-page.css">
+  <script src="icon-system.js" defer></script>
+  <title>Revision Quiz · Academic Tracker</title>
+</head>
+<body class="quiz-page-body">
+  <div class="quiz-page-shell">
+    <header class="quiz-page-header">
+      <a class="ai-brand" href="ai-learning.html?new=1"><span class="ai-brand-mark">A</span><span>Academic <span>Tracker</span></span></a>
+      <div class="quiz-header-actions">
+        <a class="quiz-exit-link icon-only-quiz-back" href="ai-learning.html?new=1" aria-label="Back to AI learning" title="Back to AI learning"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 19-7-7 7-7M5 12h14"/></svg></a>
+        <button id="quiz-signout" class="quiz-signout" type="button">Sign out</button>
+      </div>
+    </header>
+    <main class="quiz-main">
+      <section id="quiz-loading" class="quiz-loading-card" aria-live="polite">
+        <div class="quiz-loading-spinner" aria-hidden="true"></div>
+        <h1>Preparing your quiz</h1>
+        <p>Loading your saved questions and progress…</p>
+      </section>
+      <section id="quiz-error" class="quiz-loading-card quiz-error-card" hidden>
+        <h1>We couldn't open this quiz</h1>
+        <p id="quiz-error-message">The quiz may have expired or could not be loaded.</p>
+        <a class="quiz-primary-link" href="ai-learning.html?new=1">Back to AI learning</a>
+      </section>
+      <section id="quiz-workspace" hidden>
+        <div class="quiz-page-heading">
+          <p class="quiz-eyebrow"><span class="quiz-eyebrow-dot"></span> YOUR PRACTICE SESSION</p>
+          <h1 id="quiz-title">Revision quiz</h1>
+          <p id="quiz-subtitle">Choose the best answer for each question.</p>
+        </div>
+        <div class="quiz-overview-row">
+          <div><span class="quiz-overview-label">PROGRESS</span><strong id="quiz-progress-text">Question 1 of 5</strong></div>
+          <div class="quiz-progress-track" role="progressbar" aria-label="Quiz progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="quiz-progress-track"><span id="quiz-progress-fill"></span></div>
+          <span id="quiz-answered-count" class="quiz-answered-count">0 answered</span>
+        </div>
+        <article class="quiz-question-card" aria-live="polite">
+          <div class="quiz-question-meta"><span id="question-number">QUESTION 1</span><span id="question-status" class="question-status">Not answered</span></div>
+          <h2 id="question-text">Loading question…</h2>
+          <p class="quiz-select-prompt">Select one answer</p>
+          <div id="quiz-answer-options" class="quiz-answer-options"></div>
+          <div id="quiz-hint-wrap" class="quiz-hint-wrap" hidden><button id="quiz-hint-button" class="quiz-hint-button" type="button">Show hint</button><p id="quiz-hint-text" hidden></p></div>
+        </article>
+        <div class="quiz-page-navigation">
+          <button id="quiz-previous" class="quiz-nav-button" type="button">← Previous</button>
+          <span id="quiz-navigation-count">1 / 5</span>
+          <button id="quiz-next" class="quiz-next-button" type="button">Next question →</button>
+        </div>
+        <div class="quiz-finish-panel">
+          <div><strong>Ready to see your score?</strong><p>You can move between questions before you submit.</p></div>
+          <button id="quiz-finish" class="quiz-finish-button" type="button">Submit quiz <span aria-hidden="true">→</span></button>
+        </div>
+        <p id="quiz-notice" class="quiz-notice" role="status" aria-live="polite"></p>
+        <section id="quiz-results" class="quiz-results" hidden aria-live="polite"></section>
+      </section>
+    </main>
+    <footer class="quiz-page-footer"><span>Academic Tracker</span><span>Practice makes progress.</span></footer>
+  </div>
+  <script src="quiz-page.js"></script>
+</body>
+</html>

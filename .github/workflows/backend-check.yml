@@ -5,16 +5,50 @@ on:
     branches: [main, feature/backend-prisma]
     paths:
       - "backend/**"
+      - "quiz-page.css"
+      - "quiz.html"
+      - "auth.css"
+      - "register.html"
+      - "login.html"
+      - "landing-redesign.css"
+      - "landing.css"
+      - "index.html"
       - "calculator-engine.js"
       - "calculator.js"
       - "ai-learning.js"
+      - "quiz-page.js"
+      - "ai-navigation.js"
+      - "ai-tool-pages.css"
+      - "premium-theme.css"
+      - "ai-learning.html"
+      - "ai-tutor.html"
+      - "ai-quiz-setup.html"
+      - "notes-summary.html"
+      - "study-plan.html"
       - ".github/workflows/backend-check.yml"
   pull_request:
     paths:
       - "backend/**"
+      - "index.html"
+      - "landing.css"
+      - "landing-redesign.css"
+      - "login.html"
+      - "register.html"
+      - "auth.css"
+      - "quiz.html"
+      - "quiz-page.css"
+      - "premium-theme.css"
       - "calculator-engine.js"
       - "calculator.js"
       - "ai-learning.js"
+      - "quiz-page.js"
+      - "ai-navigation.js"
+      - "ai-tool-pages.css"
+      - "ai-learning.html"
+      - "ai-tutor.html"
+      - "ai-quiz-setup.html"
+      - "notes-summary.html"
+      - "study-plan.html"
       - ".github/workflows/backend-check.yml"
   workflow_dispatch:
 
@@ -43,4 +77,4 @@ jobs:
       - name: Run unit tests
         run: npm test
       - name: Check calculator and AI learning JavaScript syntax
-        run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../ai-learning.js
+        run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../ai-learning.js && node --check ../quiz-page.js && node --check ../ai-navigation.js
