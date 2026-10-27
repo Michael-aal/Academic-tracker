@@ -4,6 +4,23 @@
 <body class="study-planner-page"><main class="study-tool-main">
 <a class="tool-back" href="ai-learning.html">← AI Learning</a>
 <section class="study-tool-intro"><span class="tool-eyebrow">YOUR TIME, YOUR PLAN</span><h1>Study <span>Planner</span></h1><p>Plan when you will study and get reminders. This is a schedule tool—not a quiz generator.</p></section>
+
+<section class="planner-import-hub tool-card" aria-labelledby="planner-create-heading">
+  <div class="planner-card-heading"><div><span class="tool-eyebrow">ONE PLANNER · TWO WAYS</span><h2 id="planner-create-heading">Create your timetable</h2><p>Import your school timetable or enter study sessions yourself. Both end up in the same schedule below.</p></div></div>
+  <div class="planner-create-options">
+    <article class="planner-create-option"><div class="planner-option-icon" aria-hidden="true">▤</div><h3>Convert PDF to timetable</h3><p>Extract days, subjects and times from a text-based PDF, review the rows, then add the confirmed sessions.</p>
+      <label class="planner-upload-control" for="planner-pdf-file">Choose timetable PDF<input id="planner-pdf-file" type="file" accept="application/pdf,.pdf"></label>
+      <p class="planner-import-hint">Scanned/image-only PDFs may need OCR and may not extract automatically.</p>
+    </article>
+    <article class="planner-create-option"><div class="planner-option-icon" aria-hidden="true">＋</div><h3>Enter it manually</h3><p>Add one study session at a time, including the topic, date, time and reminder.</p><button type="button" class="secondary-tool-button" id="planner-manual-focus">Add a session manually</button></article>
+  </div>
+  <div id="planner-pdf-status" class="tool-status" role="status" aria-live="polite"></div>
+  <section id="planner-pdf-review" class="planner-pdf-review" hidden aria-labelledby="planner-pdf-review-heading">
+    <div class="planner-card-heading"><div><span class="tool-eyebrow">CHECK BEFORE SAVING</span><h3 id="planner-pdf-review-heading">Review extracted timetable</h3><p>Correct any unclear details. Rows are not saved until you confirm.</p></div></div>
+    <div class="planner-pdf-table-wrap"><table class="planner-pdf-table"><thead><tr><th>Subject / session</th><th>Date</th><th>Start</th><th>End</th><th></th></tr></thead><tbody id="planner-pdf-rows"></tbody></table></div>
+    <div class="planner-pdf-actions"><button type="button" class="primary-tool-button" id="planner-import-confirm">Add reviewed sessions</button><button type="button" class="secondary-tool-button" id="planner-import-cancel">Cancel import</button></div>
+  </section>
+</section>
 <section class="planner-layout">
 <section class="tool-card planner-form-card"><div class="planner-card-heading"><div><span class="tool-eyebrow">ADD A SESSION</span><h2>Schedule study time</h2></div><span class="planner-clock" aria-hidden="true">◷</span></div>
 <form id="planner-form">
@@ -20,4 +37,4 @@
 <div class="planner-filters"><button type="button" data-planner-filter="upcoming" class="active">Upcoming</button><button type="button" data-planner-filter="all">All sessions</button><button type="button" data-planner-filter="completed">Completed</button></div>
 <div id="planner-session-list" class="planner-session-list"></div></section>
 </section><p class="tool-disclaimer">Reminder delivery depends on browser permission, device settings, and whether the app can run. For dependable reminders when the site is closed, server-backed push scheduling is needed.</p>
-</main><script src="study-planner.js" defer></script><script src="global-navigation.js" defer></script></body></html>
+</main><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script><script src="study-planner.js" defer></script><script src="global-navigation.js" defer></script></body></html>
