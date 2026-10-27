@@ -21,3 +21,19 @@
 :where(button:disabled,.button:disabled,[aria-disabled=true]){opacity:.48;cursor:not-allowed}:where(button,.button,.btn,.icon-button,.menu-trigger,.nav-link){touch-action:manipulation}
 @media(max-width:760px){html{scroll-padding-top:76px}:where(button,.button,.btn,.nav-link){min-height:42px}:where(input,select,textarea){font-size:16px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+/* Page-specific surfaces inherit the same palette instead of retaining old navy values. */
+body{background-image:radial-gradient(ellipse at 88% 0%,rgba(109,40,217,.13),transparent 36rem)}
+:where(.auth-side,.ai-hero,.workspace,.task-picker,.chat-card,.calculator-card,.uni-hero,.uni-stat,.uni-course-row,.uni-result-card,.preview-window,.chart-card,.feature-card,.step-card,.faq-item,.testimonial-card,.stat-card,.cta-panel,.calculator-heading,.calc-display,.calc-history,.profile-hero,.profile-layout>.card,.support-heading,.message-list){border-color:var(--line)}
+:where(.auth-side,.ai-hero,.workspace,.task-picker,.chat-card,.calculator-card,.uni-stat,.uni-course-row,.uni-result-card,.preview-window,.chart-card,.feature-card,.step-card,.faq-item,.testimonial-card,.stat-card,.cta-panel,.calc-display,.calc-history,.profile-hero,.profile-layout>.card,.message-list){background-color:var(--panel)}
+:where(.auth-side){background-image:radial-gradient(ellipse at 18% 20%,rgba(109,40,217,.18),transparent 42%),linear-gradient(155deg,var(--bg),var(--bg) 75%)}
+:where(.uni-hero){background:linear-gradient(120deg,var(--panel),var(--bg))}
+:where(.calc-key,.calc-key.utility,.calc-key.operator){color:var(--text);background:var(--surface-elevated);border-color:var(--line)}
+:where(.calc-key.operator,.calc-key.equals){background:var(--purple-deep);color:#fff}
+:where(.calc-key:hover){border-color:var(--purple-soft)}
+:where(.tool-choice.active,.pathway-tab.active){color:var(--text);background:rgba(139,92,246,.15);border-color:rgba(167,139,250,.3)}
+:where(.status-pill,.secure-label,.local-pill){color:var(--muted);background:var(--surface-elevated);border-color:var(--line)}
+:where(.auth-form .field,.auth-form label,.field){color:var(--muted)}
+:where(.auth-form input,.auth-form select,.auth-form textarea){background:var(--panel);border-color:var(--line);color:var(--text)}
+:where(.support-brand,.ai-brand,.brand){color:var(--text)}
+:where(.message-form textarea){background:var(--panel);color:var(--text);border-color:var(--line)}
+@media(max-width:680px){.app-shell .mobile-nav{background:rgba(17,13,27,.98)}}
