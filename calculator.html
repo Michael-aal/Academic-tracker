@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071426">
+  <meta name="description" content="A simple, safe calculator for everyday calculations and study work.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="ui-polish.css">
+  <link rel="stylesheet" href="calculator.css">
+  <title>Calculator · Academic Tracker</title>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="dashboard.html"><span class="brand-mark">A</span><span>Academic<span class="muted"> Tracker</span></span></a>
+    <nav class="side-nav" aria-label="Main navigation">
+      <a class="nav-link" href="dashboard.html">▦ <span>Dashboard</span></a>
+      <a class="nav-link" href="ai-learning.html">✦ <span>AI learning</span></a>
+      <a class="nav-link" href="memory-mastery.html">◎ <span>Memory Mastery</span></a>
+      <a class="nav-link" href="educational-videos.html">▷ <span>Educational videos</span></a>
+      <a class="nav-link active" href="calculator.html" aria-current="page">＋ <span>Calculator</span></a>
+    </nav>
+    <div class="sidebar-note">A handy tool for your study sessions.</div>
+  </aside>
+  <main class="main calculator-main">
+    <header class="topbar">
+      <div class="page-heading"><p class="eyebrow">STUDY TOOLS</p><h1>Calculator</h1></div>
+      <a class="button secondary" href="dashboard.html">Back to dashboard</a>
+    </header>
+    <section class="calculator-layout">
+      <section class="calculator-card" aria-label="Calculator">
+        <div class="calculator-heading"><div><h2>Calculate</h2><p>Clear answers, without leaving your workspace.</p></div><span class="calc-icon" aria-hidden="true">＋</span></div>
+        <div class="calc-display">
+          <div id="expression" class="calc-expression" aria-label="Current expression">Ready to calculate</div>
+          <output id="display" class="calc-result" aria-live="polite" aria-label="Result">0</output>
+          <p id="calc-error" class="calc-error" role="status" hidden></p>
+        </div>
+        <div class="calc-keys" id="keys" aria-label="Calculator buttons">
+          <button class="calc-key utility" type="button" data-action="clear" aria-label="Clear calculation">C</button>
+          <button class="calc-key utility" type="button" data-action="backspace" aria-label="Delete last character">⌫</button>
+          <button class="calc-key utility" type="button" data-action="percent" aria-label="Percent">%</button>
+          <button class="calc-key operator" type="button" data-op="/">÷</button>
+          <button class="calc-key" type="button" data-digit="7">7</button>
+          <button class="calc-key" type="button" data-digit="8">8</button>
+          <button class="calc-key" type="button" data-digit="9">9</button>
+          <button class="calc-key operator" type="button" data-op="*">×</button>
+          <button class="calc-key" type="button" data-digit="4">4</button>
+          <button class="calc-key" type="button" data-digit="5">5</button>
+          <button class="calc-key" type="button" data-digit="6">6</button>
+          <button class="calc-key operator" type="button" data-op="-">−</button>
+          <button class="calc-key" type="button" data-digit="1">1</button>
+          <button class="calc-key" type="button" data-digit="2">2</button>
+          <button class="calc-key" type="button" data-digit="3">3</button>
+          <button class="calc-key operator" type="button" data-op="+">+</button>
+          <button class="calc-key utility" type="button" data-action="sign" aria-label="Change sign">±</button>
+          <button class="calc-key" type="button" data-digit="0">0</button>
+          <button class="calc-key" type="button" data-action="decimal">.</button>
+          <button class="calc-key equals" type="button" data-action="equals">=</button>
+          <button class="calc-key utility" type="button" data-action="left-paren">(</button>
+          <button class="calc-key utility" type="button" data-action="right-paren">)</button>
+        </div>
+        <p class="calc-hint">Keyboard supported: numbers, +, −, *, /, %, parentheses, Enter, Backspace and Esc. Percent means one hundredth of the entered value.</p>
+      </section>
+      <aside class="calculator-side">
+        <article class="card">
+          <h3>Quick percentage</h3><p class="side-copy">Find a mark as a percentage of the maximum score.</p>
+          <label class="calc-field">Your score<input id="score" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 8"></label>
+          <label class="calc-field">Maximum marks<input id="total" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 10" value="10"></label>
+          <div class="percent-result"><span>Percentage</span><strong id="score-percent">—</strong></div>
+        </article>
+        <article class="card">
+          <div class="history-heading"><div><h3>Recent calculations</h3><p class="side-copy">Available while this page is open.</p></div><button id="clear-history" class="button secondary" type="button">Clear</button></div>
+          <div id="history" class="calc-history"><p class="history-empty">Your calculations will appear here.</p></div>
+        </article>
+      </aside>
+    </section>
+    <footer><span>Use calculations to check your work and keep learning.</span><span id="year-label"></span></footer>
+  </main>
+</div>
+<nav class="mobile-nav" aria-label="Mobile navigation">
+  <a href="dashboard.html"><span>▦</span>Home</a>
+  <a href="calculator.html" class="active" aria-current="page"><span>＋</span>Calculator</a>
+  <a href="ai-learning.html"><span>✦</span>AI learning</a>
+  <a href="profile.html"><span>◉</span>Profile</a>
+</nav>
+<script src="calculator-engine.js"></script>
+<script src="calculator.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>
