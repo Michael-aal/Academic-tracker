@@ -21,10 +21,10 @@
       <nav class="ai-global-nav" aria-label="Main navigation"><a href="dashboard.html">My tracker</a><a href="ai-learning.html">AI Learning</a><a href="profile.html">Profile</a><div class="ai-more-wrap"><button id="ai-more-toggle" type="button" aria-expanded="false" aria-controls="ai-more-menu">More <span aria-hidden="true">⌄</span></button><div class="ai-more-menu" id="ai-more-menu" hidden><a href="memory-mastery.html">Memory Mastery</a><a href="educational-videos.html">Educational videos</a><a href="calculator.html">Calculator</a><a href="support.html">Messages</a></div></div><button id="signout" type="button">Sign out</button></nav><button class="ai-mobile-menu-toggle" id="ai-mobile-menu-toggle" type="button" aria-expanded="false" aria-controls="ai-mobile-menu" aria-label="Open navigation menu">☰</button><div class="ai-mobile-menu" id="ai-mobile-menu" hidden><a href="dashboard.html">My tracker</a><a href="ai-learning.html">AI Learning home</a><a href="profile.html">Profile</a><a href="memory-mastery.html">Memory Mastery</a><a href="educational-videos.html">Educational videos</a><a href="calculator.html">Calculator</a><a href="support.html">Messages</a><button id="mobile-signout" type="button">Sign out</button></div>
     </header>
     <main>
-      <section class="ai-tool-page-hero"><a class="back-link" href="ai-learning.html">← All AI learning tools</a><h1>AI Tutor</h1><p>Ask a question and get a clear explanation with examples.</p></section><section class="ai-hero">
+      <section class="ai-tool-page-hero"><a class="back-link" href="ai-learning.html">← All AI learning tools</a><h1>AI Tutor</h1><p>A patient, conversational teacher for your questions, class notes, and follow-up explanations.</p></section><section class="ai-hero">
         <div class="eyebrow"><span class="eyebrow-dot"></span> YOUR PERSONAL LEARNING SPACE</div>
         <h1>Understand it.<br><span>Then master it.</span></h1>
-        <p>Ask questions, practise what you're learning, and turn your own notes into revision material.</p>
+        <p>Tell me what you want to understand. Paste your notes, ask follow-up questions, and get guided explanations with examples.</p>
         <div class="privacy-line"><span aria-hidden="true">◆</span> Your requests are sent securely to the configured AI provider. Don't include passwords or private personal information.</div>
       </section>
       <section class="workspace">
@@ -36,7 +36,7 @@
               <label>Topic <input id="topic" maxlength="160" placeholder="e.g. Newton's laws"></label>
             </div>
             <label class="full-label" for="content" id="content-label">What would you like help understanding?</label>
-            <textarea id="content" rows="7" maxlength="12000" placeholder="Ask a question, or paste your notes here…"></textarea>
+            <textarea id="content" rows="7" maxlength="12000" placeholder="Ask your tutor anything, paste class notes, or say which part is confusing…"></textarea>
             <div class="form-foot"><span id="char-count">0 / 12,000 characters</span><span>Be specific for a better explanation.</span></div>
             <div id="quiz-options" class="quiz-options" hidden><label for="question-count">Questions</label><select id="question-count"><option value="3">3 questions</option><option value="5" selected>5 questions</option><option value="8">8 questions</option><option value="10">10 questions</option></select><label for="quiz-difficulty">Difficulty</label><select id="quiz-difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
             <div class="submit-row"><p>AI can make mistakes. Check important facts with your textbook or teacher.</p><button id="submit-learning" type="submit"><span>✦</span> <span id="submit-label">Help me understand</span></button></div>

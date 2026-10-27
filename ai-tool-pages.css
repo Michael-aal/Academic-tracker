@@ -59,3 +59,12 @@ body.ai-tool-page .panel-heading h2{color:var(--ai-text)}
 .ai-tool-page-hero .back-link{display:inline-grid;place-items:center;width:42px;height:42px;margin:0 0 2px;padding:0;border:1px solid rgba(167,139,250,.22);border-radius:13px;background:linear-gradient(145deg,#8B5CF6,#6D28D9);color:#fff!important;box-shadow:0 7px 20px rgba(109,40,217,.18);font-size:0}
 .ai-tool-page-hero .back-link svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .ai-tool-page-hero .back-link:hover{transform:translateX(-2px);color:#fff}
+
+
+/* Conversational tutor messages and recommended video action. */
+.tutor-message{padding:16px 17px;margin:0 0 14px;border:1px solid rgba(167,139,250,.18);border-radius:16px;background:rgba(30,23,44,.72)}
+.tutor-message-student{margin-left:clamp(0px,7vw,72px);background:rgba(109,40,217,.14);border-color:rgba(167,139,250,.28)}
+.tutor-message-label{margin:0 0 9px;color:#b9a3ff;font-size:10px;font-weight:800;letter-spacing:.13em}
+.tutor-message-body>*:first-child{margin-top:0}.tutor-message-body>*:last-child{margin-bottom:0}.tutor-message-body p{line-height:1.7}.tutor-message-body ul,.tutor-message-body ol{padding-left:22px;line-height:1.7}
+.tutor-video-link{display:inline-flex;align-items:center;gap:8px;margin-top:13px;padding:11px 14px;border:1px solid rgba(167,139,250,.32);border-radius:12px;color:#fff;background:linear-gradient(135deg,#6d28d9,#8b5cf6);font-weight:700;text-decoration:none}
+.tutor-video-link:hover{filter:brightness(1.1)}

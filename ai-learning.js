@@ -6,9 +6,9 @@
 
   const $ = id => document.getElementById(id);
   const ATTEMPT_KEY = "academic-tracker-active-quiz";
-  const state = { action: "tutor", answer: "", quiz: null, attemptId: null, index: 0, selected: {}, answered: {}, submitted: false, result: null };
+  const state = { action: "tutor", answer: "", conversation: [], quiz: null, attemptId: null, index: 0, selected: {}, answered: {}, submitted: false, result: null };
   const taskCopy = {
-    tutor: { title: "Ask your tutor", description: "Tell me what you're learning and where you're stuck.", label: "What would you like help understanding?", placeholder: "e.g. Explain Newton's second law and show me a simple example…", button: "Help me understand", result: "Your explanation" },
+    tutor: { title: "Talk to your AI tutor", description: "Ask questions, paste your class notes, and keep asking until it makes sense.", label: "What should we learn together?", placeholder: "Ask a question, paste your notes, or ask me to explain something more simply…", button: "Ask tutor", result: "Your tutoring conversation" },
     quiz: { title: "Build a revision quiz", description: "Create practice questions from a topic or your own notes.", label: "Paste your notes or describe the topic", placeholder: "Paste your notes here, or describe the topic you want to practise…", button: "Generate my quiz", result: "Your practice quiz" },
     summarize: { title: "Summarize my notes", description: "Make revision easier by finding the key ideas.", label: "Paste the notes you want to revise", placeholder: "Paste your lesson notes here…", button: "Summarize my notes", result: "Revision summary" },
     "study-plan": { title: "Plan my study week", description: "Break a topic into small, manageable study sessions.", label: "What do you need to study?", placeholder: "Tell me the subjects, topics, and any test date you want to prepare for…", button: "Create my study plan", result: "Your 7-day study plan" }
@@ -134,6 +134,7 @@
     return node;
   }
   function setAction(action) {
+    if (state.action !== action) state.conversation = [];
     state.action = action;
     const copy = taskCopy[action];
     document.querySelectorAll("[data-action]").forEach(button => button.classList.toggle("active", button.dataset.action === action));
@@ -149,6 +150,26 @@
     $("char-count").textContent = "0 / 12,000 characters";
     $("result-panel").hidden = true;
     setNotice("");
+  }
+
+  function renderTutorConversation(host, videoQuery, subject) {
+    host.replaceChildren();
+    state.conversation.forEach((message, index) => {
+      const card = el("article", "tutor-message tutor-message-" + message.role);
+      card.append(el("p", "tutor-message-label", message.role === "student" ? "YOU" : "AI TUTOR"));
+      const body = el("div", "tutor-message-body");
+      renderSafeMarkdown(body, message.content);
+      card.append(body);
+      if (message.role === "tutor" && index === state.conversation.length - 1) {
+        const query = [subject, videoQuery].filter(Boolean).join(" ").slice(0, 180);
+        if (query) {
+          const link = el("a", "tutor-video-link", "▶ Watch a related educational video");
+          link.href = "educational-videos.html?search=" + encodeURIComponent(query) + (subject ? "&subject=" + encodeURIComponent(subject) : "");
+          card.append(link);
+        }
+      }
+      host.append(card);
+    });
   }
 
   function renderQuiz(quiz, attemptId, submittedAnswers = [], result = null, feedbackByQuestion = {}) {
@@ -396,7 +417,7 @@
     event.preventDefault();
     const content = $("content").value.trim();
     const topic = $("topic").value.trim();
-    if (!content && !topic) { setNotice("Enter a question, topic, or notes first.", true); return; }
+    if ((!content && !topic) || (state.action === "tutor" && state.conversation.length && !content)) { setNotice(state.action === "tutor" && state.conversation.length ? "Ask a follow-up question or paste the next part of your notes first." : "Enter a question, topic, or notes first.", true); return; }
     const button = $("submit-learning");
     button.disabled = true;
     $("submit-label").textContent = state.action === "quiz" ? "Generating your quiz…" : "Working on your request…";
@@ -404,13 +425,15 @@
     $("result-panel").hidden = true;
     try {
       if (state.action === "quiz") localStorage.removeItem(ATTEMPT_KEY);
+      const history = state.action === "tutor" ? state.conversation.slice(-8).map(message => (message.role === "student" ? "Student" : "Tutor") + ":\n" + message.content).join("\n\n") : "";
+      const requestContent = history ? (history + "\n\nStudent's latest message:\n" + content).slice(-12000) : content;
       const data = await api("/api/ai", {
         method: "POST",
         body: JSON.stringify({
           action: state.action,
           subject: $("subject").value.trim(),
           topic,
-          content,
+          content: requestContent,
           level: user.educationTrack === "HIGHER" ? "higher institution / university" : "secondary school",
           questionCount: Number($("question-count").value),
           difficulty: $("quiz-difficulty").value
@@ -427,8 +450,18 @@
         window.location.assign("quiz.html?attempt=" + encodeURIComponent(data.attemptId));
         return;
       } else {
-        state.answer = data.answer || "";
-        renderSafeMarkdown($("result-content"), data.answer || "No response was returned.");
+        state.answer = data.answer || "No response was returned.";
+        if (state.action === "tutor") {
+          state.conversation.push({ role: "student", content: content || topic });
+          state.conversation.push({ role: "tutor", content: state.answer });
+          renderTutorConversation($("result-content"), topic || content, $("subject").value.trim());
+          $("result-title").textContent = "Your tutoring conversation";
+          $("content").value = "";
+          $("content").placeholder = "Ask a follow-up question or paste another part of your notes…";
+          $("char-count").textContent = "0 / 12,000 characters";
+        } else {
+          renderSafeMarkdown($("result-content"), state.answer);
+        }
         $("result-panel").hidden = false;
       }
       setNotice("Response ready. Review it alongside your school materials.");
