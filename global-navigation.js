@@ -24,6 +24,18 @@
     ["Profile","profile.html","user"],
     ["Support & Messages","support.html","support"]
   ];
+  const account = (() => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}"); } catch { return {}; } })();
+  const isHigherTrack = account.educationTrack === "HIGHER";
+  if (isHigherTrack) {
+    const dashboardIndex = routes.findIndex(route => route[1] === "dashboard.html");
+    if (dashboardIndex >= 0) routes.splice(dashboardIndex, 1, ["University Dashboard", "university-dashboard.html", "university"]);
+    for (let i = routes.length - 1; i >= 0; i--) {
+      if (["Subjects", "Scores", "Reports"].includes(routes[i][0]) || (routes[i][0] === "University Dashboard" && i !== dashboardIndex)) routes.splice(i, 1);
+    }
+  } else {
+    for (let i = routes.length - 1; i >= 0; i--) if (routes[i][0] === "University Dashboard") routes.splice(i, 1);
+  }
+
   const icons = {
     home:'<path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9M9 20v-6h6v6"/>',
     menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
@@ -92,7 +104,7 @@
   bottom.className = "at-mobile-nav";
   bottom.setAttribute("aria-label","Primary mobile navigation");
   bottom.innerHTML = `
-    <a href="dashboard.html" data-at-bottom="home">${icon("home")}<span class="at-nav-label">Home</span></a>
+    <a href="${isHigherTrack ? "university-dashboard.html" : "dashboard.html"}" data-at-bottom="home">${icon("home")}<span class="at-nav-label">Home</span></a>
     <a href="calculator.html" data-at-bottom="calculator">${icon("calculator")}<span class="at-nav-label">Calculator</span></a>
     <a href="ai-learning.html" data-at-bottom="learn">${icon("learn")}<span class="at-nav-label">AI Learn</span></a>
     <a href="ai-quiz-setup.html" data-at-bottom="quiz">${icon("quiz")}<span class="at-nav-label">Quiz</span></a>
@@ -145,7 +157,7 @@
 
   const currentView = new URLSearchParams(location.search).get("view");
   const normalizedFile = file === "ai-tutor.html" ? "ai-learning.html" : file === "quiz.html" ? "ai-quiz-setup.html" : file;
-  const bottomTarget = normalizedFile === "dashboard.html" ? "home" :
+  const bottomTarget = (normalizedFile === "dashboard.html" || (isHigherTrack && normalizedFile === "university-dashboard.html")) ? "home" :
     normalizedFile === "calculator.html" ? "calculator" :
     normalizedFile === "ai-learning.html" ? "learn" :
     normalizedFile === "ai-quiz-setup.html" ? "quiz" : "more";
