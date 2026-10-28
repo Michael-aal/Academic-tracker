@@ -3,52 +3,84 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0B0812">
-  <meta name="description" content="Study with an AI tutor, generate revision quizzes, and summarize your own notes.">
-  <link rel="stylesheet" href="ai-learning.css">
+  <meta name="theme-color" content="#08131f">
+  <meta name="description" content="Learn through a friendly, conversational AI tutor with clear explanations and examples.">
   <title>AI Tutor · Academic Tracker</title>
+  <link rel="stylesheet" href="ai-learning.css">
   <link rel="stylesheet" href="visual-refresh.css">
-<link rel="stylesheet" href="site-design-system.css">  <link rel="stylesheet" href="premium-theme.css">
+  <link rel="stylesheet" href="site-design-system.css">
+  <link rel="stylesheet" href="premium-theme.css">
   <link rel="stylesheet" href="ai-tool-pages.css">
+  <link rel="stylesheet" href="global-navigation.css">
+  <link rel="stylesheet" href="ai-tutor-redesign.css">
   <script src="icon-system.js" defer></script>
   <script src="ai-navigation.js" defer></script>
-  <link rel="stylesheet" href="global-navigation.css">
 </head>
-<body class="ai-tool-page" data-ai-tool="tutor">
+<body class="ai-tool-page ai-tutor-page" data-ai-tool="tutor">
   <div class="ai-shell">
     <header class="ai-topbar">
-      <a class="ai-brand" href="dashboard.html"><span class="ai-brand-mark">A</span><span>Academic <span>Tracker</span></span></a>
-      <nav class="ai-global-nav" aria-label="Main navigation"><a href="dashboard.html">My tracker</a><a href="ai-learning.html">AI Learning</a><a href="profile.html">Profile</a><div class="ai-more-wrap"><button id="ai-more-toggle" type="button" aria-expanded="false" aria-controls="ai-more-menu">More <span aria-hidden="true">⌄</span></button><div class="ai-more-menu" id="ai-more-menu" hidden><a href="memory-mastery.html">Memory Mastery</a><a href="educational-videos.html">Educational videos</a><a href="calculator.html">Calculator</a><a href="support.html">Messages</a></div></div><button id="signout" type="button">Sign out</button></nav><button class="ai-mobile-menu-toggle" id="ai-mobile-menu-toggle" type="button" aria-expanded="false" aria-controls="ai-mobile-menu" aria-label="Open navigation menu">☰</button><div class="ai-mobile-menu" id="ai-mobile-menu" hidden><a href="dashboard.html">My tracker</a><a href="ai-learning.html">AI Learning home</a><a href="profile.html">Profile</a><a href="memory-mastery.html">Memory Mastery</a><a href="educational-videos.html">Educational videos</a><a href="calculator.html">Calculator</a><a href="support.html">Messages</a><button id="mobile-signout" type="button">Sign out</button></div>
+      <a class="ai-brand" href="dashboard.html"><span class="ai-brand-mark" aria-hidden="true">A</span><span>Academic <span>Tracker</span></span></a>
+      <nav class="ai-global-nav" aria-label="Main navigation">
+        <a href="dashboard.html">My tracker</a><a href="ai-learning.html">AI Learning</a><a href="profile.html">Profile</a>
+        <div class="ai-more-wrap"><button id="ai-more-toggle" type="button" aria-expanded="false" aria-controls="ai-more-menu">More <span aria-hidden="true">⌄</span></button><div class="ai-more-menu" id="ai-more-menu" hidden><a href="memory-mastery.html">Memory Mastery</a><a href="educational-videos.html">Educational videos</a><a href="calculator.html">Calculator</a><a href="support.html">Messages</a></div></div>
+        <button id="signout" type="button">Sign out</button>
+      </nav>
+      <button class="ai-mobile-menu-toggle" id="ai-mobile-menu-toggle" type="button" aria-expanded="false" aria-controls="ai-mobile-menu" aria-label="Open navigation menu">☰</button>
+      <div class="ai-mobile-menu" id="ai-mobile-menu" hidden><a href="dashboard.html">My tracker</a><a href="ai-learning.html">AI Learning home</a><a href="profile.html">Profile</a><a href="memory-mastery.html">Memory Mastery</a><a href="educational-videos.html">Educational videos</a><a href="calculator.html">Calculator</a><a href="support.html">Messages</a><button id="mobile-signout" type="button">Sign out</button></div>
     </header>
-    <main>
-      <section class="ai-tool-page-hero"><a class="back-link" href="ai-learning.html">← All AI learning tools</a><h1>AI Tutor</h1><p>A patient, conversational teacher for your questions, class notes, and follow-up explanations.</p></section><section class="ai-hero">
-        <div class="eyebrow"><span class="eyebrow-dot"></span> YOUR PERSONAL LEARNING SPACE</div>
-        <h1>Understand it.<br><span>Then master it.</span></h1>
-        <p>Tell me what you want to understand. Paste your notes, ask follow-up questions, and get guided explanations with examples.</p>
-        <div class="privacy-line"><span aria-hidden="true">◆</span> Your requests are sent securely to the configured AI provider. Don't include passwords or private personal information.</div>
-      </section>
-      <section class="workspace">
-        <section class="learning-panel">
-          <div class="panel-heading"><div><p class="section-kicker">AI STUDY ASSISTANT</p><h2 id="task-title">Ask your tutor</h2><p id="task-description">Tell me what you're learning and where you're stuck.</p></div><span class="online-pill"><i></i> AI learning</span></div>
-          <form id="learning-form">
-            <div class="form-grid">
-              <label>Subject <input id="subject" maxlength="100" placeholder="e.g. Physics"></label>
-              <label>Topic <input id="topic" maxlength="160" placeholder="e.g. Newton's laws"></label>
-            </div>
-            <label class="full-label" for="content" id="content-label">What would you like help understanding?</label>
-            <textarea id="content" rows="7" maxlength="12000" placeholder="Ask your tutor anything, paste class notes, or say which part is confusing…"></textarea>
-            <div class="form-foot"><span id="char-count">0 / 12,000 characters</span><span>Be specific for a better explanation.</span></div>
+    <main class="tutor-layout">
+      <section class="tutor-main" aria-label="AI Tutor conversation">
+        <header class="tutor-heading">
+          <a class="tutor-back" href="ai-learning.html">← AI Learning</a>
+          <div class="tutor-title-row">
+            <div class="tutor-avatar" aria-hidden="true"><span>✦</span></div>
+            <div class="tutor-heading-copy"><p class="tutor-eyebrow">YOUR PERSONAL TEACHER</p><h1>AI Tutor</h1><p>Ask freely. Learn at your own pace.</p></div>
+            <span class="tutor-status"><i></i><span>Ready to help</span></span>
+          </div>
+          <div class="tutor-context">
+            <label for="subject">Subject <input id="subject" maxlength="100" placeholder="e.g. Physics"></label>
+            <label for="topic">What are you learning? <input id="topic" maxlength="160" placeholder="e.g. Newton's laws"></label>
+          </div>
+        </header>
+        <section id="result-panel" class="result-panel tutor-chat-panel" aria-live="polite" hidden>
+          <div class="result-top tutor-chat-top"><div><span class="result-label">YOUR LEARNING SESSION</span><h2 id="result-title">Your tutoring conversation</h2></div><button id="copy-result" type="button">Copy conversation</button></div>
+          <div id="result-content" class="result-content tutor-chat-messages"></div>
+        </section>
+        <section class="tutor-welcome" id="tutor-welcome">
+          <div class="welcome-orb" aria-hidden="true"><span>✦</span></div>
+          <p class="tutor-eyebrow">LET'S MAKE IT CLICK</p>
+          <h2>What are we learning today?</h2>
+          <p>Tell me what feels confusing. I’ll break it down, show examples, and explain it another way whenever you need.</p>
+          <div class="tutor-prompt-grid" aria-label="Ways to learn with your tutor">
+            <button type="button" data-tutor-prompt="Explain this topic in simple terms, step by step."> <span aria-hidden="true">◉</span><span><strong>Explain a topic</strong><small>Start with the basics</small></span><span class="prompt-arrow">↗</span></button>
+            <button type="button" data-tutor-prompt="Give me a clear worked example for this topic and explain every step."><span aria-hidden="true">∑</span><span><strong>Work through an example</strong><small>See how it works</small></span><span class="prompt-arrow">↗</span></button>
+            <button type="button" data-tutor-prompt="Help me understand my homework problem step by step without just giving me the final answer."><span aria-hidden="true">⌁</span><span><strong>Get homework help</strong><small>Understand the method</small></span><span class="prompt-arrow">↗</span></button>
+            <button type="button" data-tutor-prompt="Help me understand these class notes. Explain the main ideas in plain language."><span aria-hidden="true">▤</span><span><strong>Understand my notes</strong><small>Paste notes to begin</small></span><span class="prompt-arrow">↗</span></button>
+          </div>
+        </section>
+        <section class="learning-panel tutor-composer-panel">
+          <div class="panel-heading tutor-composer-heading"><div><p class="section-kicker">YOUR NEXT STEP</p><h2 id="task-title">Ask your tutor</h2><p id="task-description">Keep the conversation going until it makes sense.</p></div><span class="online-pill"><i></i> Learning mode</span></div>
+          <form id="learning-form" class="tutor-composer">
+            <label class="full-label" for="content" id="content-label">Message your tutor</label>
+            <textarea id="content" rows="3" maxlength="12000" placeholder="Ask anything, paste your notes, or tell me where you're stuck…"></textarea>
+            <div class="form-foot"><span id="char-count">0 / 12,000 characters</span><span>Enter a question or paste your notes</span></div>
             <div id="quiz-options" class="quiz-options" hidden><label for="question-count">Questions</label><select id="question-count"><option value="3">3 questions</option><option value="5" selected>5 questions</option><option value="8">8 questions</option><option value="10">10 questions</option></select><label for="quiz-difficulty">Difficulty</label><select id="quiz-difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
-            <div class="submit-row"><p>AI can make mistakes. Check important facts with your textbook or teacher.</p><button id="submit-learning" type="submit"><span>✦</span> <span id="submit-label">Help me understand</span></button></div>
+            <div class="tutor-composer-bottom"><p>AI can make mistakes. Check important facts with your textbook or teacher.</p><button id="submit-learning" type="submit" aria-label="Send message to AI Tutor"><span aria-hidden="true">↗</span><span id="submit-label">Send message</span></button></div>
           </form>
-          <section id="result-panel" class="result-panel" aria-live="polite" hidden><div class="result-top"><div><span class="result-label">YOUR STUDY RESPONSE</span><h3 id="result-title">Ready to learn</h3></div><button id="copy-result" type="button">Copy answer</button></div><div id="result-content" class="result-content"></div></section>
           <div id="notice" class="notice" role="status"></div>
         </section>
       </section>
-      <footer>Academic Tracker · AI-assisted learning, built around your progress.</footer>
+      <aside class="tutor-sidebar" aria-label="Learning assistance">
+        <section class="tutor-side-card current-topic-card"><div class="side-card-heading"><span class="side-icon" aria-hidden="true">▤</span><h2>Current topic</h2></div><p class="side-label">Study focus</p><p class="side-topic" id="current-topic-label">Choose a subject or topic above</p><p class="side-hint">Your tutor will use this to make explanations more relevant.</p><button type="button" class="side-outline-button" id="focus-topic">Set learning focus</button></section>
+        <section class="tutor-side-card"><div class="side-card-heading"><span class="side-icon" aria-hidden="true">✧</span><h2>Quick help</h2></div><div class="quick-help-list"><button type="button" data-tutor-prompt="Explain this in simpler words and define any difficult terms.">Explain simply <span>↗</span></button><button type="button" data-tutor-prompt="Give me two practical, real-life examples and explain how they connect to the topic.">Give real-life examples <span>↗</span></button><button type="button" data-tutor-prompt="Please go through the method step by step and explain why each step works.">Show every step <span>↗</span></button><button type="button" data-tutor-prompt="Summarise the key ideas we have covered so far in clear study notes.">Summarise this lesson <span>↗</span></button></div></section>
+        <section class="tutor-side-card tutor-tip-card"><div class="side-card-heading"><span class="side-icon" aria-hidden="true">☼</span><h2>Study tip</h2></div><p>You can ask follow-up questions at any time. If one explanation doesn’t click, ask your tutor to try a different example or simpler words.</p></section>
+        <p class="tutor-sidebar-note">Learning is a process. Take it one concept at a time.</p>
+      </aside>
     </main>
+    <footer class="tutor-footer">Academic Tracker <span>·</span> Learn with understanding, not memorisation alone.</footer>
   </div>
   <script src="ai-learning.js"></script>
+  <script src="ai-tutor-ui.js"></script>
   <script src="global-navigation.js"></script>
 </body>
 </html>
