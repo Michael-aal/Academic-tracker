@@ -463,3 +463,26 @@ html[data-theme="light"] .at-theme-toggle-landing:hover {
   html[data-theme="light"] .feature-card,
   html[data-theme="light"] .why-card { box-shadow: 0 5px 18px rgba(41,27,66,.035); }
 }
+
+
+/* Keep the light theme within the purple/white palette. Status feedback uses purple shades. */
+:root[data-theme="light"] {
+  --green: #7545c8;
+  --orange: #7545c8;
+  --blue: #7545c8;
+}
+html[data-theme="light"] :where(.answer-option.answer-correct,.quiz-review-card.review-correct,.feedback-correct) {
+  background: #f7f3ff !important;
+  color: #5b2ba8 !important;
+  border-color: #b99be9 !important;
+}
+html[data-theme="light"] :where(.quiz-review-card.review-incorrect,.answer-option.answer-incorrect,.feedback-incorrect) {
+  background: #eee5ff !important;
+  color: #4d258f !important;
+  border-color: #9b78d7 !important;
+}
+html[data-theme="light"] :where(.danger,.destructive,.error-text,.form-error,.calc-error,.form-success,.success-text,.warning,.warning-text) {
+  color: #5b2ba8 !important;
+  background-color: #f7f3ff !important;
+  border-color: #d9c9f1 !important;
+}
