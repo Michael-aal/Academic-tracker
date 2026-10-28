@@ -144,3 +144,7 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(109,40,217,.22),transpare
 :is(.feature-card,.why-card,.step-card,.tool-card,.resource-card,.stat-card,.uni-course-row,.uni-result-card) :is(a,button):has(>span>.arrow-icon){display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
 :is(.feature-card,.why-card,.step-card,.tool-card,.resource-card,.stat-card,.uni-course-row,.uni-result-card) :is(a,button) .arrow-icon{flex:0 0 18px;margin-left:auto}
 :is(.feature-card,.why-card,.step-card,.tool-card,.resource-card,.stat-card,.uni-course-row,.uni-result-card) :is(a,button):focus-visible{outline:2px solid var(--purple-soft,#b69cff);outline-offset:3px}
+
+/* Card and utility icons use one consistent purple line style without blue backgrounds. */
+:is(.feature-icon,.icon-green,.icon-purple,.icon-orange,.icon-blue,.step-symbol,.chip-icon,.check-icon,.value-icon,.play-icon,.mini-avatar){background:transparent!important;background-image:none!important;color:#b69cff!important;border:1px solid rgba(182,156,255,.22);box-shadow:none!important}
+.arrow-icon{background:transparent!important;box-shadow:none!important;border:0!important}
