@@ -207,3 +207,13 @@ html[data-theme="light"] {
     min-height: 44px;
   }
 }
+
+.at-nav-menu .at-nav-danger,
+.account-menu .signout-item { color: #fecaca !important; }
+.account-menu-heading small,
+.menu-status { color: var(--at-menu-muted) !important; }
+html[data-theme="light"] .at-nav-menu .at-nav-danger,
+html[data-theme="light"] .account-menu .signout-item { color: #9b2c45 !important; }
+@media (max-width: 760px) {
+  .at-global-header { z-index: 1300; }
+}
