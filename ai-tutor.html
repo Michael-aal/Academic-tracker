@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="premium-theme.css">
   <link rel="stylesheet" href="ai-tool-pages.css">
   <link rel="stylesheet" href="global-navigation.css">
-  <link rel="stylesheet" href="ai-tutor-redesign.css">\n  <link rel="stylesheet" href="ai-tutor-workspace.css">
+  <link rel="stylesheet" href="ai-tutor-workspace.css">
   <script src="icon-system.js" defer></script>
   <script src="ai-navigation.js" defer></script>
 </head>
@@ -31,9 +31,7 @@
     <main class="tutor-layout">
       <section class="tutor-main" aria-label="AI Tutor conversation">
         <header class="tutor-heading">
-          <a class="tutor-back" href="ai-learning.html">← AI Learning</a>
           <div class="tutor-title-row">
-            <div class="tutor-avatar" aria-hidden="true"><span>✦</span></div>
             <div class="tutor-heading-copy"><p class="tutor-eyebrow">YOUR PERSONAL TEACHER</p><h1>AI Tutor</h1><p>Ask freely. Learn at your own pace.</p></div>
             <span class="tutor-status"><i></i><span>Ready to help</span></span>
           </div>
@@ -47,8 +45,6 @@
           <div id="result-content" class="result-content tutor-chat-messages"></div>
         </section>
         <section class="tutor-welcome" id="tutor-welcome">
-          <div class="welcome-orb" aria-hidden="true"><span>✦</span></div>
-          <p class="tutor-eyebrow">LET'S MAKE IT CLICK</p>
           <h2>What are we learning today?</h2>
           <p>Tell me what feels confusing. I’ll break it down, show examples, and explain it another way whenever you need.</p>
           <div class="tutor-prompt-grid" aria-label="Ways to learn with your tutor">
@@ -59,7 +55,7 @@
           </div>
         </section>
         <section class="learning-panel tutor-composer-panel">
-          <div class="panel-heading tutor-composer-heading"><div><p class="section-kicker">YOUR NEXT STEP</p><h2 id="task-title">Ask your tutor</h2><p id="task-description">Keep the conversation going until it makes sense.</p></div><span class="online-pill"><i></i> Learning mode</span></div>
+          <div class="panel-heading tutor-composer-heading"><div><h2 id="task-title">Ask your tutor</h2><p id="task-description">Keep the conversation going until it makes sense.</p></div></div>
           <form id="learning-form" class="tutor-composer">
             <label class="full-label" for="content" id="content-label">Message your tutor</label>
             <textarea id="content" rows="3" maxlength="12000" placeholder="Ask anything, paste your notes, or tell me where you're stuck…"></textarea>
@@ -70,14 +66,7 @@
           <div id="notice" class="notice" role="status"></div>
         </section>
       </section>
-      <aside class="tutor-sidebar" aria-label="Learning assistance">
-        <section class="tutor-side-card current-topic-card"><div class="side-card-heading"><span class="side-icon" aria-hidden="true">▤</span><h2>Current topic</h2></div><p class="side-label">Study focus</p><p class="side-topic" id="current-topic-label">Choose a subject or topic above</p><p class="side-hint">Your tutor will use this to make explanations more relevant.</p><button type="button" class="side-outline-button" id="focus-topic">Set learning focus</button></section>
-        <section class="tutor-side-card"><div class="side-card-heading"><span class="side-icon" aria-hidden="true">✧</span><h2>Quick help</h2></div><div class="quick-help-list"><button type="button" data-tutor-prompt="Explain this in simpler words and define any difficult terms.">Explain simply <span>↗</span></button><button type="button" data-tutor-prompt="Give me two practical, real-life examples and explain how they connect to the topic.">Give real-life examples <span>↗</span></button><button type="button" data-tutor-prompt="Please go through the method step by step and explain why each step works.">Show every step <span>↗</span></button><button type="button" data-tutor-prompt="Summarise the key ideas we have covered so far in clear study notes.">Summarise this lesson <span>↗</span></button></div></section>
-        <section class="tutor-side-card tutor-tip-card"><div class="side-card-heading"><span class="side-icon" aria-hidden="true">☼</span><h2>Study tip</h2></div><p>You can ask follow-up questions at any time. If one explanation doesn’t click, ask your tutor to try a different example or simpler words.</p></section>
-        <p class="tutor-sidebar-note">Learning is a process. Take it one concept at a time.</p>
-      </aside>
     </main>
-    <footer class="tutor-footer">Academic Tracker <span>·</span> Learn with understanding, not memorisation alone.</footer>
   </div>
   <script src="ai-learning.js"></script>
   <script src="ai-tutor-ui.js"></script>
