@@ -1,16 +1,32 @@
 (() => {
   const menu = document.getElementById('menu-toggle');
   const nav = document.getElementById('site-nav');
-  if (menu && nav) menu.addEventListener('click', () => {
-    const open = nav.classList.toggle('open');
+  const menuIcon = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
+  const closeIcon = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg>';
+  const setMenuOpen = open => {
+    if (!menu || !nav) return;
+    nav.classList.toggle('open', open);
+    menu.innerHTML = open ? closeIcon : menuIcon;
     menu.setAttribute('aria-expanded', String(open));
     menu.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
-    menu.textContent = open ? '×' : '☰';
-  });
-  nav?.querySelectorAll('a').forEach(link => link.addEventListener('click', () => {
-    nav.classList.remove('open'); menu?.setAttribute('aria-expanded', 'false');
-    if (menu) { menu.textContent = '☰'; menu.setAttribute('aria-label', 'Open navigation'); }
-  }));
+    menu.setAttribute('title', open ? 'Close navigation' : 'Open navigation');
+  };
+  if (menu && nav) {
+    setMenuOpen(false);
+    menu.addEventListener('click', () => setMenuOpen(!nav.classList.contains('open')));
+    nav.querySelectorAll('a').forEach(link => link.addEventListener('click', () => setMenuOpen(false)));
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && nav.classList.contains('open')) {
+        setMenuOpen(false);
+        menu.focus();
+      }
+    });
+    document.addEventListener('click', event => {
+      if (nav.classList.contains('open') && !nav.contains(event.target) && !menu.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    });
+  }
   document.getElementById('footer-year').textContent = new Date().getFullYear();
   const reveal = document.querySelectorAll('.reveal');
   if ('IntersectionObserver' in window) {
