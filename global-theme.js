@@ -50,7 +50,7 @@
   }
 
   function ensureStylesheet() {
-    if (document.querySelector('link[data-global-light-mode]')) return;
+    if (document.querySelector('link[data-global-light-mode], link[href$="global-light-mode.css"]')) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.href = "global-light-mode.css";
