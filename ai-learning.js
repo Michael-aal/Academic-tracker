@@ -160,13 +160,13 @@
       const body = el("div", "tutor-message-body");
       renderSafeMarkdown(body, message.content);
       card.append(body);
-      if (message.role === "tutor" && index === state.conversation.length - 1) {
-        const query = [subject, videoQuery].filter(Boolean).join(" ").slice(0, 180);
-        if (query) {
-          const link = el("a", "tutor-video-link", "▶ Watch a related educational video");
-          link.href = "educational-videos.html?search=" + encodeURIComponent(query) + (subject ? "&subject=" + encodeURIComponent(subject) : "");
-          card.append(link);
-        }
+      if (message.role === "tutor") {
+        const query = [subject, videoQuery, "educational lesson explained"].filter(Boolean).join(" ").slice(0, 180);
+        const reference = message.videoReference;
+        const link = el("a", "tutor-video-link", reference?.label || "▶ Find a related educational video");
+        link.href = reference?.href || ("educational-videos.html?search=" + encodeURIComponent(query) + (subject ? "&subject=" + encodeURIComponent(subject) : ""));
+        link.setAttribute("aria-label", "Find an educational video related to this tutor response");
+        card.append(link);
       }
       host.append(card);
     });
@@ -453,7 +453,7 @@
         state.answer = data.answer || "No response was returned.";
         if (state.action === "tutor") {
           state.conversation.push({ role: "student", content: content || topic });
-          state.conversation.push({ role: "tutor", content: state.answer });
+          state.conversation.push({ role: "tutor", content: state.answer, videoReference: data.videoReference || null });
           renderTutorConversation($("result-content"), topic || content, $("subject").value.trim());
           $("result-title").textContent = "Your tutoring conversation";
           $("content").value = "";
