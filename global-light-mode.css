@@ -285,3 +285,83 @@ html[data-theme="light"] :where(.mm-topbar nav button,.quiz-signout) {
   color: var(--text-secondary) !important;
   border-color: var(--border-default) !important;
 }
+
+
+/* Additional page-specific surfaces: support, profile, university, videos and landing. */
+html[data-theme="light"] :where(.ai-tutor-page .tutor-workspace,.ai-tutor-page .chat-container,.ai-tutor-page .chat-messages,.ai-tutor-page .chat-input-area,.ai-tutor-page .tutor-sidebar,.ai-tutor-page .tutor-panel,.ai-tutor-page .message-list,.ai-tutor-page .chat-message,.ai-tutor-page .prompt-card,.ai-tutor-page .suggestion-card) {
+  background: #ffffff !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+}
+html[data-theme="light"] :where(.support-top,.chat-card,.people-card,.message-list,.message-form,.user-item,.user-avatar,.status-pill,.count-pill,.secure-label,.search-label,.admin-chat-tools select) {
+  background: #ffffff !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+}
+html[data-theme="light"] :where(.bubble,.theirs .bubble,.message-form textarea,.search-label input,.admin-chat-tools select) {
+  background: #ffffff !important;
+  color: var(--text-primary) !important;
+  border-color: #d8cee8 !important;
+}
+html[data-theme="light"] .mine .bubble {
+  background: #eee8f8 !important;
+  color: #33234e !important;
+  border-color: #c8b5e9 !important;
+}
+html[data-theme="light"] :where(.avatar,.user-avatar,.profile-avatar,.profile-shortcut-avatar) {
+  background: #eee8f8 !important;
+  color: #6038b5 !important;
+  border-color: #d8cee8 !important;
+}
+html[data-theme="light"] :where(.user-item:hover,.user-item.selected) {
+  background: #f0ebfa !important;
+  color: var(--text-primary) !important;
+}
+html[data-theme="light"] :where(.profile-hero,.profile-info-card,.profile-section,.profile-message,.profile-form input[readonly]) {
+  background: #ffffff !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+}
+html[data-theme="light"] :where(.profile-message.error-text) { background: #fff1f2 !important; color: #a32638 !important; border-color: #fecdd3 !important; }
+html[data-theme="light"] :where(.profile-message.success) { background: #edfdf4 !important; color: #216e4a !important; border-color: #b7ebca !important; }
+html[data-theme="light"] :where(.uni-hero,.uni-stat,.uni-add-form,.uni-course-row,.uni-result-card,.uni-credit-pill,.uni-empty,.uni-note,#uni-message,.uni-assessment-row) {
+  background: #ffffff !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+}
+html[data-theme="light"] :where(.uni-period input,.uni-period select,.uni-add-form input,.uni-result-form input,.uni-result-form select,.uni-course-actions input,.uni-assessment-row input,.uni-assessment-row select) {
+  background: #ffffff !important;
+  color: var(--text-primary) !important;
+  border-color: #d8cee8 !important;
+}
+html[data-theme="light"] :where(.uni-hero p,.uni-muted,.uni-section-heading p,.uni-stat span,.uni-stat small,.uni-course-name small,.uni-result-head small,.uni-note p,.uni-target-hint,.uni-assessment-help,.uni-empty) { color: var(--text-muted) !important; }
+html[data-theme="light"] :where(.uni-kicker,.uni-stat strong,.uni-result-grade,.uni-credit-pill) { color: #6038b5 !important; }
+html[data-theme="light"] :where(.ev-search-panel,.ev-player-panel,.ev-list-panel,.ev-other-sources,.ev-disclaimer,.ev-player-placeholder,.ev-study-tip,.ev-video-card,.ev-empty,.ev-source-grid a) {
+  background: #ffffff !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+}
+html[data-theme="light"] :where(.ev-search-row input,.ev-filters select) {
+  background: #ffffff !important;
+  color: var(--text-primary) !important;
+  border-color: #d8cee8 !important;
+}
+html[data-theme="light"] :where(.ev-hero > p,.ev-status,.ev-player-meta p:last-child,.ev-study-tip p,.ev-video-copy span,.ev-video-copy p,.ev-empty,.ev-other-sources > p:not(.ev-kicker),.ev-source-grid span) { color: var(--text-muted) !important; }
+html[data-theme="light"] :where(.ev-search-row button) { background: #7545c8 !important; color: #ffffff !important; }
+html[data-theme="light"] :where(.ev-source-grid strong,.ev-study-tip strong,.ev-player-meta > a) { color: #6038b5 !important; }
+html[data-theme="light"] :where(.mm-topbar,.ev-topbar,.support-top) { border-bottom-color: var(--border-default) !important; }
+html[data-theme="light"] :where(.site-footer,.value-strip,.cta-panel,.hero-visual,.dashboard-preview,.step-card,.testimonial-card,.preview-content,.float-chip,.chip-top,.chip-bottom) {
+  background: #ffffff !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+  box-shadow: 0 8px 28px rgba(47,28,82,.055);
+}
+html[data-theme="light"] :where(.hero-visual,.dashboard-preview,.preview-window) { background: #fbfaff !important; }
+html[data-theme="light"] :where(.preview-top,.chart-card,.mini-stats > div,.preview-subjects,.mini-dashboard,.score-art,.report-art,.offline-art) {
+  background: #f8f6fc !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-default) !important;
+}
+html[data-theme="light"] :where(.preview-window h3,.preview-window strong,.preview-window b,.preview-window .chart-heading,.preview-window .preview-subjects) { color: var(--text-primary) !important; }
+html[data-theme="light"] :where(.site-footer a,.site-footer p,.site-footer small,.value-strip strong,.value-strip small,.float-chip strong,.float-chip small) { color: var(--text-secondary) !important; }
+html[data-theme="light"] :where(.site-header .menu-toggle) { background: #f0ebfa !important; color: var(--text-secondary) !important; border-color: var(--border-default) !important; }
