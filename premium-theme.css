@@ -292,3 +292,169 @@ body {
 @media(prefers-reduced-motion:reduce) {
   *,*::before,*::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+
+/* Enforced purple-and-white theme: no dark-mode surfaces anywhere in the app. */
+:root,
+html[data-theme="dark"],
+html[data-theme="light"] {
+  color-scheme: light !important;
+  --bg: #ffffff !important;
+  --panel: #ffffff !important;
+  --panel2: #f7f3ff !important;
+  --surface-elevated: #f0e8ff !important;
+  --line: #e5dcf4 !important;
+  --text: #26163d !important;
+  --muted: #625673 !important;
+  --purple: #7545c8 !important;
+  --purple-soft: #8b63d2 !important;
+  --purple-deep: #5b2ba8 !important;
+  --ui-bg: #ffffff !important;
+  --ui-surface: #ffffff !important;
+  --ui-surface-raised: #f7f3ff !important;
+  --ui-surface-soft: #f0e8ff !important;
+  --ui-border: #e5dcf4 !important;
+  --ui-text: #26163d !important;
+  --ui-muted: #625673 !important;
+  --ui-accent: #7545c8 !important;
+}
+html,
+html[data-theme="dark"],
+html[data-theme="light"],
+body {
+  color-scheme: light !important;
+  background: #ffffff !important;
+  background-image: none !important;
+  color: #26163d !important;
+}
+body * {
+  background-image: none !important;
+}
+body :where(h1,h2,h3,h4,h5,h6,p,span,small,strong,em,label,legend,li,dt,dd,summary,a,figcaption,caption) {
+  color: #26163d !important;
+}
+.site-header,
+.topbar,
+.compact-topbar,
+.main,
+.main-content,
+.content,
+.content-area,
+.page,
+.page-shell,
+.app-shell,
+.auth-main,
+.auth-card,
+.auth-form,
+.dropdown-menu,
+.navigation-menu,
+.account-menu,
+.preview-window,
+.preview-content,
+.hero-visual,
+.float-chip,
+.feature-card,
+.step-card,
+.faq-item,
+.stat-card,
+.testimonial-card,
+.dashboard-preview,
+.chart-card,
+.mini-stats > div,
+.card,
+.panel,
+.surface,
+.section-card,
+.form-card,
+.modal,
+.dialog,
+.video-card,
+.calculator-shell,
+.tutor-shell,
+.chat-workspace {
+  background-color: #ffffff !important;
+  color: #26163d !important;
+  border-color: #e5dcf4 !important;
+  box-shadow: 0 8px 24px rgba(91,43,168,.07) !important;
+}
+section,
+main,
+article,
+footer,
+.section-wrap,
+.hero,
+.preview-content {
+  background-color: transparent !important;
+  color: #26163d !important;
+}
+.sidebar,
+.side-nav,
+.mobile-nav,
+.auth-side,
+.bottom-nav {
+  background-color: #7545c8 !important;
+  color: #ffffff !important;
+  border-color: #5b2ba8 !important;
+}
+.sidebar :where(*),
+.side-nav :where(*),
+.mobile-nav :where(*),
+.auth-side :where(*),
+.bottom-nav :where(*) {
+  color: #ffffff !important;
+}
+.sidebar .nav-link.active,
+.mobile-nav .active,
+.side-nav .active,
+.bottom-nav .active {
+  background-color: #5b2ba8 !important;
+  color: #ffffff !important;
+}
+button,
+input,
+select,
+textarea {
+  background-color: #ffffff !important;
+  color: #26163d !important;
+  border-color: #d9c9f1 !important;
+}
+button:hover,
+.dropdown-item:hover,
+.nav-link:hover {
+  background-color: #f0e8ff !important;
+  color: #5b2ba8 !important;
+}
+.button,
+.button-small,
+.submit-button,
+.primary-button,
+.btn-primary,
+button[type="submit"],
+a[role="button"] {
+  background-color: #7545c8 !important;
+  color: #ffffff !important;
+  border-color: #7545c8 !important;
+}
+.button :where(*),
+.button-small :where(*),
+.submit-button :where(*),
+.primary-button :where(*),
+.btn-primary :where(*),
+button[type="submit"] :where(*) {
+  color: #ffffff !important;
+}
+.feature-icon,
+.step-number,
+.icon-box,
+.track-card,
+.secondary-button,
+.btn-secondary {
+  background-color: #f0e8ff !important;
+  color: #5b2ba8 !important;
+  border-color: #d9c9f1 !important;
+}
+input::placeholder,
+textarea::placeholder {
+  color: #756786 !important;
+  opacity: 1 !important;
+}
