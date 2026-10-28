@@ -156,7 +156,15 @@ html[data-theme="light"] .site-header .brand,
 html[data-theme="light"] .site-nav a:not(.button) { color: var(--text-primary); }
 html[data-theme="light"] .auth-side { background: #f0ebfa; }
 html[data-theme="light"] .auth-card { background: #ffffff; border-color: var(--border-default); }
-.at-theme-toggle { display: inline-grid; place-items: center; }
+.at-theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  color: inherit;
+  background: transparent;
+  line-height: 1;
+  cursor: pointer;
+}
+.at-theme-toggle:focus-visible { outline: 2px solid #a78bfa; outline-offset: 3px; }
 .at-theme-toggle svg { width: 19px; height: 19px; }
 .at-theme-toggle-landing {
   flex: 0 0 40px; width: 40px; height: 40px; margin-inline: 8px;
