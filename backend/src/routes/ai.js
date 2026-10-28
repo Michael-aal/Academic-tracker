@@ -4,6 +4,7 @@ const { requireAuth } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/admin");
 const { prisma } = require("../prisma");
 const { validateQuiz, publicQuiz, markQuiz } = require("../quiz-schema");
+const { createChatCompletion, getCompletionText } = require("../services/ai-provider");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -166,27 +167,15 @@ router.post("/", aiLimiter, async (req, res) => {
     if (!user) return res.status(401).json({ error: "Account not found. Please sign in again." });
     const courses = user.educationTrack === "HIGHER" ? await prisma.universityCourse.findMany({ where: { userId: req.userId }, select: { code: true, title: true, creditUnits: true, targetScore: true, results: { orderBy: { updatedAt: "desc" }, take: 6, select: { academicYear: true, semester: true, caScore: true, examScore: true } } }, orderBy: { code: "asc" }, take: 60 }) : [];
     const studentProfile = { ...user, courses };
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
+    const { response, data } = await createChatCompletion({
+      model,
       signal: controller.signal,
-      headers: {
-        Authorization: "Bearer " + process.env.OPENROUTER_API_KEY,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.AI_SITE_URL || "https://academic-tracker-nu.vercel.app",
-        "X-Title": "Academic Tracker"
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) }],
-        temperature: action === "quiz" ? 0.2 : 0.4,
-        ...(action === "quiz" ? { response_format: { type: "json_object" } } : {}),
-        // Ten complete questions plus explanations can exceed 3,500 tokens. Leave room
-        // for the closing JSON braces so the client never receives a truncated quiz.
-        max_tokens: action === "quiz" ? 7000 : action === "flashcards" ? 5000 : 1800
-      })
+      prompt: buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }),
+      temperature: action === "quiz" ? 0.2 : 0.4,
+      responseFormat: action === "quiz" ? { type: "json_object" } : undefined,
+      // Leave room for complete quiz JSON and detailed flashcard answers.
+      maxTokens: action === "quiz" ? 7000 : action === "flashcards" ? 5000 : 1800
     });
-
-    const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       const upstreamMessage = data?.error?.message;
       console.error("OpenRouter request failed:", response.status, typeof upstreamMessage === "string" ? upstreamMessage.slice(0, 250) : "No provider message");
@@ -264,24 +253,14 @@ router.post("/", aiLimiter, async (req, res) => {
           const retryPrompt = buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) +
             "\n\nFINAL OUTPUT CHECK: Your previous attempt did not satisfy the required schema. Regenerate the entire quiz from scratch. Return only valid JSON with exactly " + questionCount +
             " questions. Each question must include id, question, options (exactly four {id,text} objects with IDs A/B/C/D), correctAnswer (one of A/B/C/D), explanation, and a non-empty hint. Do not return partial JSON or Markdown fences.";
-          const retryResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
+          const { response: retryResponse, data: retryData } = await createChatCompletion({
+            model,
             signal: retryController.signal,
-            headers: {
-              Authorization: "Bearer " + process.env.OPENROUTER_API_KEY,
-              "Content-Type": "application/json",
-              "HTTP-Referer": process.env.AI_SITE_URL || "https://academic-tracker-nu.vercel.app",
-              "X-Title": "Academic Tracker"
-            },
-            body: JSON.stringify({
-              model,
-              messages: [{ role: "user", content: retryPrompt }],
-              temperature: 0.1,
-              response_format: { type: "json_object" },
-              max_tokens: 7000
-            })
+            prompt: retryPrompt,
+            temperature: 0.1,
+            responseFormat: { type: "json_object" },
+            maxTokens: 7000
           });
-          const retryData = await retryResponse.json().catch(() => ({}));
           if (!retryResponse.ok) {
             const retryMessage = retryData?.error?.message;
             throw new Error("Retry provider request failed (" + retryResponse.status + "): " + (typeof retryMessage === "string" ? retryMessage.slice(0, 180) : "no provider message"));
