@@ -33,7 +33,6 @@
         <header class="tutor-heading">
           <div class="tutor-title-row">
             <div class="tutor-heading-copy"><p class="tutor-eyebrow">YOUR PERSONAL TEACHER</p><h1>AI Tutor</h1><p>Ask freely. Learn at your own pace.</p></div>
-            <span class="tutor-status"><i></i><span>Ready to help</span></span>
           </div>
           <div class="tutor-context">
             <label for="subject">Subject <input id="subject" maxlength="100" placeholder="e.g. Physics"></label>
@@ -59,7 +58,7 @@
           <form id="learning-form" class="tutor-composer">
             <label class="full-label" for="content" id="content-label">Message your tutor</label>
             <textarea id="content" rows="3" maxlength="12000" placeholder="Ask anything, paste your notes, or tell me where you're stuck…"></textarea>
-            <div class="form-foot"><span id="char-count">0 / 12,000 characters</span><span>Enter a question or paste your notes</span></div>
+            <div class="form-foot"><span id="char-count">0 / 12,000 characters</span></div>
             <div id="quiz-options" class="quiz-options" hidden><label for="question-count">Questions</label><select id="question-count"><option value="3">3 questions</option><option value="5" selected>5 questions</option><option value="8">8 questions</option><option value="10">10 questions</option></select><label for="quiz-difficulty">Difficulty</label><select id="quiz-difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
             <div class="tutor-composer-bottom"><p>AI can make mistakes. Check important facts with your textbook or teacher.</p><button id="submit-learning" type="submit" aria-label="Send message to AI Tutor"><span aria-hidden="true">↗</span><span id="submit-label">Send message</span></button></div>
           </form>
