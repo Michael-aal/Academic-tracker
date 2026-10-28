@@ -44,8 +44,9 @@
 }
 html[data-theme="light"] { background: var(--bg-primary); }
 html[data-theme="light"] body {
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  background: var(--bg-primary) !important;
+  background-image: none !important;
+  color: var(--text-primary) !important;
   color-scheme: light;
 }
 html[data-theme="light"] :where(main, section, .app-shell, .main, .auth-main, .auth-side, .ai-shell, .quiz-page-shell, .page-shell, .workspace) {
@@ -151,7 +152,7 @@ html[data-theme="light"] :where(.success,.form-success,[role="status"]) { color:
 html[data-theme="light"] ::selection { color: var(--text-primary); background: #ded0fa; }
 html[data-theme="light"] :focus-visible { outline-color: var(--accent-primary); }
 html[data-theme="light"] .gradient-text { color: var(--accent-primary); }
-html[data-theme="light"] .site-header { background: rgba(246,244,251,.96); border-color: var(--border-default); }
+html[data-theme="light"] .site-header { background: rgba(246,244,251,.96) !important; border-color: var(--border-default) !important; }
 html[data-theme="light"] .site-header .brand,
 html[data-theme="light"] .site-nav a:not(.button) { color: var(--text-primary); }
 html[data-theme="light"] .auth-side { background: #f0ebfa; }
