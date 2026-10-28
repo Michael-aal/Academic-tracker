@@ -4,7 +4,7 @@ const { requireAuth } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/admin");
 const { prisma } = require("../prisma");
 const { validateQuiz, publicQuiz, markQuiz } = require("../quiz-schema");
-const { createChatCompletion, getCompletionText } = require("../services/ai-provider");
+const { createChatCompletion } = require("../services/ai-provider");
 
 const router = express.Router();
 router.use(requireAuth);
