@@ -6,19 +6,13 @@
   const welcome = $("tutor-welcome");
   const topic = $("topic");
   const subject = $("subject");
-  const topicLabel = $("current-topic-label");
   if (!message || !form) return;
 
   const updateFocus = () => {
     const parts = [subject.value.trim(), topic.value.trim()].filter(Boolean);
-    topicLabel.textContent = parts.join(" · ") || "Choose a subject or topic above";
   };
   subject.addEventListener("input", updateFocus);
   topic.addEventListener("input", updateFocus);
-  $("focus-topic")?.addEventListener("click", () => {
-    topic.focus();
-    topic.scrollIntoView({ behavior: "smooth", block: "center" });
-  });
 
   document.querySelectorAll("[data-tutor-prompt]").forEach(button => {
     button.addEventListener("click", () => {
