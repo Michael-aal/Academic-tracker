@@ -130,3 +130,220 @@ html[data-theme="light"] .at-theme-toggle-landing {
 @media (prefers-reduced-motion: reduce) {
   .at-theme-toggle-landing { transition: none; }
 }
+
+
+/* Robust landing-page fixes: keep the mobile dropdown above the hero and make
+   every landing surface respond to the shared theme state. */
+.site-header {
+  position: sticky;
+  isolation: isolate;
+  z-index: 1000;
+}
+.site-nav.open {
+  z-index: 1001;
+  isolation: isolate;
+  opacity: 1;
+}
+@media (max-width: 720px) {
+  .site-nav:not(.open) { display: none !important; }
+  .site-nav.open {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    position: absolute;
+    top: calc(100% + 1px);
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: calc(100dvh - 100px);
+    overflow-y: auto;
+    padding: 12px;
+    gap: 3px;
+    border: 1px solid var(--landing-menu-border, #d9c9f5) !important;
+    border-radius: 16px;
+    background: var(--landing-menu-bg, #fff) !important;
+    color: var(--landing-menu-text, #291b42) !important;
+    box-shadow: 0 18px 42px rgba(47, 28, 82, .22);
+    opacity: 1 !important;
+    z-index: 1001;
+  }
+  .site-nav.open > a:not(.button) {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: inherit !important;
+  }
+  .site-nav.open > a:not(.button):hover,
+  .site-nav.open > a:not(.button):focus-visible {
+    background: var(--landing-menu-hover, #f1edf7) !important;
+  }
+  .hero {
+    position: relative;
+    z-index: 0;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding-top: 42px;
+    padding-bottom: 54px;
+  }
+  .hero-copy, .hero-visual { min-width: 0; max-width: 100%; }
+  .hero h1, .hero-copy h1 {
+    max-width: 100%;
+    font-size: clamp(2.45rem, 10.4vw, 3.75rem) !important;
+    line-height: 1.06 !important;
+    letter-spacing: -.055em !important;
+    overflow-wrap: break-word;
+    margin: 18px 0 18px;
+  }
+  .hero-lede {
+    max-width: 100%;
+    font-size: 15px;
+    line-height: 1.75;
+  }
+  .hero-actions { align-items: stretch; gap: 16px; }
+  .hero-actions > .button { width: 100%; justify-content: center; }
+  .trust-row { align-items: flex-start; }
+  .hero-visual { padding-inline: 0; }
+  .chip-top { right: 0; }
+  .chip-bottom { left: 0; }
+}
+
+/* Light mode: a genuinely light, purple-and-white palette across the landing page. */
+html[data-theme="light"] {
+  color-scheme: light;
+  --landing-menu-bg: #ffffff;
+  --landing-menu-text: #291b42;
+  --landing-menu-border: #e4d9f4;
+  --landing-menu-hover: #f1edf7;
+}
+html[data-theme="light"] body {
+  background: radial-gradient(ellipse at 82% 0%, rgba(196,181,253,.18), transparent 34rem), #ffffff !important;
+  color: #291b42 !important;
+}
+html[data-theme="light"] .site-header {
+  background: rgba(255,255,255,.97) !important;
+  border-bottom-color: #eae5f2 !important;
+  color: #291b42 !important;
+  box-shadow: 0 4px 24px rgba(41,27,66,.06);
+}
+html[data-theme="light"] .brand,
+html[data-theme="light"] .site-nav,
+html[data-theme="light"] .site-nav > a:not(.button),
+html[data-theme="light"] .nav-login { color: #4d3470 !important; }
+html[data-theme="light"] .hero {
+  background: radial-gradient(ellipse at 82% 18%, rgba(196,181,253,.14), transparent 36%), #fff !important;
+}
+html[data-theme="light"] .hero h1,
+html[data-theme="light"] .section-intro h2,
+html[data-theme="light"] .why-heading h2,
+html[data-theme="light"] .how-layout h2,
+html[data-theme="light"] .cta-panel h2,
+html[data-theme="light"] .feature-card h3,
+html[data-theme="light"] .why-card h3,
+html[data-theme="light"] .step h3,
+html[data-theme="light"] .pathway-panel h3,
+html[data-theme="light"] .faq-item summary {
+  color: #291b42 !important;
+}
+html[data-theme="light"] .hero-lede,
+html[data-theme="light"] .section-intro > p,
+html[data-theme="light"] .why-heading > p,
+html[data-theme="light"] .feature-card p,
+html[data-theme="light"] .why-card p,
+html[data-theme="light"] .step p,
+html[data-theme="light"] .pathway-panel p,
+html[data-theme="light"] .faq-item p,
+html[data-theme="light"] .trust-row p {
+  color: #625a70 !important;
+}
+html[data-theme="light"] :where(.value-strip, .why-card, .feature-card, .pathway-panel, .step, .faq-item, .cta-panel, .site-footer, .preview-window, .float-chip) {
+  background: #ffffff !important;
+  color: #291b42 !important;
+  border-color: #eae5f2 !important;
+  box-shadow: 0 8px 26px rgba(41,27,66,.045);
+}
+html[data-theme="light"] .how-section,
+html[data-theme="light"] .pathway-panel {
+  background-color: #f7f3fc !important;
+}
+html[data-theme="light"] :where(.value-strip strong, .feature-card h3, .feature-card .score-art b, .preview-window h3, .preview-window strong, .preview-window b, .float-chip strong) {
+  color: #291b42 !important;
+}
+html[data-theme="light"] :where(.value-strip small, .feature-number, .preview-window small, .preview-top, .float-chip small, .site-footer p, .site-footer small) {
+  color: #75698a !important;
+}
+html[data-theme="light"] .gradient-text {
+  background: none !important;
+  color: #7545c8 !important;
+  -webkit-text-fill-color: #7545c8 !important;
+}
+html[data-theme="light"] .at-theme-toggle-landing {
+  background: #ffffff !important;
+  color: #5b2ba8 !important;
+  border-color: #d9c9f5 !important;
+}
+
+/* Dark mode: remove legacy light-mode overrides and keep the brand purple. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --landing-menu-bg: #110d1b;
+  --landing-menu-text: #f5f3ff;
+  --landing-menu-border: rgba(167,139,250,.3);
+  --landing-menu-hover: #20172f;
+}
+html[data-theme="dark"] body {
+  background: radial-gradient(ellipse at 88% 4%, rgba(109,40,217,.24), transparent 36rem), #0b0812 !important;
+  color: #f5f3ff !important;
+}
+html[data-theme="dark"] .site-header {
+  background: rgba(11,8,18,.96) !important;
+  border-bottom-color: rgba(167,139,250,.18) !important;
+  color: #f5f3ff !important;
+}
+html[data-theme="dark"] .site-nav,
+html[data-theme="dark"] .site-nav > a:not(.button),
+html[data-theme="dark"] .nav-login { color: #e8e0ff !important; }
+html[data-theme="dark"] .hero {
+  background: radial-gradient(ellipse at 88% 4%, rgba(109,40,217,.13), transparent 36rem), transparent !important;
+}
+html[data-theme="dark"] .hero h1,
+html[data-theme="dark"] .section-intro h2,
+html[data-theme="dark"] .why-heading h2,
+html[data-theme="dark"] .how-layout h2,
+html[data-theme="dark"] .cta-panel h2,
+html[data-theme="dark"] .feature-card h3,
+html[data-theme="dark"] .why-card h3,
+html[data-theme="dark"] .step h3,
+html[data-theme="dark"] .pathway-panel h3,
+html[data-theme="dark"] .faq-item summary { color: #f5f3ff !important; }
+html[data-theme="dark"] .hero-lede,
+html[data-theme="dark"] .section-intro > p,
+html[data-theme="dark"] .why-heading > p,
+html[data-theme="dark"] .feature-card p,
+html[data-theme="dark"] .why-card p,
+html[data-theme="dark"] .step p,
+html[data-theme="dark"] .pathway-panel p,
+html[data-theme="dark"] .faq-item p,
+html[data-theme="dark"] .trust-row p { color: #b8aec9 !important; }
+html[data-theme="dark"] :where(.value-strip, .why-card, .feature-card, .pathway-panel, .step, .faq-item, .cta-panel, .site-footer, .preview-window, .float-chip) {
+  background: #171123 !important;
+  color: #f5f3ff !important;
+  border-color: #302440 !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,.22);
+}
+html[data-theme="dark"] .how-section,
+html[data-theme="dark"] .pathway-panel { background-color: #110d1b !important; }
+html[data-theme="dark"] .gradient-text {
+  background: linear-gradient(100deg, #f5f3ff 0%, #c4b5fd 55%, #a78bfa 100%) !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+html[data-theme="dark"] .at-theme-toggle-landing {
+  background: #20172f !important;
+  color: #f5f3ff !important;
+  border-color: rgba(167,139,250,.3) !important;
+}
