@@ -159,7 +159,9 @@ router.post("/", aiLimiter, async (req, res) => {
 
   const model = process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 45000);
+  // Ten-question quizzes need substantially more generation time than short tutor replies.
+  const requestTimeoutMs = action === "quiz" ? 90000 : 45000;
+  const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
 
   try {
     const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } });
@@ -180,9 +182,9 @@ router.post("/", aiLimiter, async (req, res) => {
         messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) }],
         temperature: action === "quiz" ? 0.2 : 0.4,
         ...(action === "quiz" ? { response_format: { type: "json_object" } } : {}),
-        // Ten complete questions plus explanations can exceed 3,500 tokens. Leave room
-        // for the closing JSON braces so the client never receives a truncated quiz.
-        max_tokens: action === "quiz" ? 7000 : action === "flashcards" ? 5000 : 1800
+        // Scale the output budget with the requested count; structured JSON needs room for
+        // every option, explanation, and closing delimiter at the maximum question count.
+        max_tokens: action === "quiz" ? Math.min(10000, 1800 + questionCount * 820) : action === "flashcards" ? 5000 : 1800
       })
     });
 
@@ -255,15 +257,15 @@ router.post("/", aiLimiter, async (req, res) => {
       try {
         quiz = parseAndValidate(answer, data?.choices?.[0]?.finish_reason);
       } catch (firstValidationError) {
-        console.warn("Initial AI quiz response failed validation; attempting one regeneration:", firstValidationError.message);
+        console.warn("Initial AI quiz response failed validation; attempting one regeneration:", firstValidationError.message, "finish_reason:", data?.choices?.[0]?.finish_reason || "missing");
         // A single structured retry helps recover from malformed JSON or a model that
         // omitted fields. Never save a quiz until the same strict validator passes.
         const retryController = new AbortController();
-        const retryTimeout = setTimeout(() => retryController.abort(), 45000);
+        const retryTimeout = setTimeout(() => retryController.abort(), 60000);
         try {
           const retryPrompt = buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) +
             "\n\nFINAL OUTPUT CHECK: Your previous attempt did not satisfy the required schema. Regenerate the entire quiz from scratch. Return only valid JSON with exactly " + questionCount +
-            " questions. Each question must include id, question, options (exactly four {id,text} objects with IDs A/B/C/D), correctAnswer (one of A/B/C/D), explanation, and a non-empty hint. Do not return partial JSON or Markdown fences.";
+            " questions. Each question must include id, question, options (exactly four {id,text} objects with IDs A/B/C/D), correctAnswer (one of A/B/C/D), explanation, and a non-empty hint. Keep each question and explanation concise, use short option text, do not repeat the topic as filler, and do not return partial JSON or Markdown fences.";
           const retryResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             signal: retryController.signal,
@@ -278,7 +280,7 @@ router.post("/", aiLimiter, async (req, res) => {
               messages: [{ role: "user", content: retryPrompt }],
               temperature: 0.1,
               response_format: { type: "json_object" },
-              max_tokens: 7000
+              max_tokens: Math.min(10000, 2200 + questionCount * 820)
             })
           });
           const retryData = await retryResponse.json().catch(() => ({}));
