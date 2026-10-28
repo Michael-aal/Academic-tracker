@@ -417,7 +417,7 @@
   $("learning-form").addEventListener("submit", async event => {
     event.preventDefault();
     const content = $("content").value.trim();
-    const topic = $("topic").value.trim();
+    const topic = ($("topic")?.value || "").trim();
     if ((!content && !topic) || (state.action === "tutor" && state.conversation.length && !content)) { setNotice(state.action === "tutor" && state.conversation.length ? "Ask a follow-up question or paste the next part of your notes first." : "Enter a question, topic, or notes first.", true); return; }
     const button = $("submit-learning");
     button.disabled = true;
@@ -432,7 +432,7 @@
         method: "POST",
         body: JSON.stringify({
           action: state.action,
-          subject: $("subject").value.trim(),
+          subject: ($("subject")?.value || "").trim(),
           topic,
           content: requestContent,
           level: user.educationTrack === "HIGHER" ? "higher institution / university" : "secondary school",
@@ -455,7 +455,7 @@
         if (state.action === "tutor") {
           state.conversation.push({ role: "student", content: content || topic });
           state.conversation.push({ role: "tutor", content: state.answer });
-          renderTutorConversation($("result-content"), topic || content, $("subject").value.trim());
+          renderTutorConversation($("result-content"), topic || content, ($("subject")?.value || "").trim());
           $("result-title").textContent = "Your tutoring conversation";
           $("content").value = "";
           $("content").placeholder = "Ask a follow-up question or paste another part of your notes…";
