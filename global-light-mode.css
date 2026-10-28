@@ -9,10 +9,10 @@
   --text: #291b42;
   --muted: #75698a;
   --mint: #7545c8;
-  --green: #7545c8;
+  --green: #217a4b;
   --green2: #5b2ba8;
   --purple: #7545c8;
-  --orange: #7545c8;
+  --orange: #925400;
   --blue: #5366ad;
   --bg-primary: #f7f5fc;
   --bg-surface: #ffffff;
@@ -227,10 +227,16 @@ html[data-theme="light"] :where(.quiz-progress-track,.progress-track,.quiz-progr
 html[data-theme="light"] :where(.quiz-progress-fill,.progress-fill) {
   background: linear-gradient(90deg,#5b2ba8,#9873dc) !important;
 }
-html[data-theme="light"] :where(.answer-option.answer-correct,.quiz-review-card.review-correct,.feedback-correct,.quiz-review-card.review-incorrect,.answer-option.answer-incorrect,.feedback-incorrect) {
-  background: #f5f0fc !important;
-  color: var(--text-primary) !important;
-  border-color: #c8b5e9 !important;
+/* Keep assessment feedback semantic: correct = green, incorrect = red. */
+html[data-theme="light"] :where(.answer-option.answer-correct,.quiz-review-card.review-correct,.feedback-correct) {
+  background: #ecfdf3 !important;
+  color: #166534 !important;
+  border-color: #86d5a5 !important;
+}
+html[data-theme="light"] :where(.quiz-review-card.review-incorrect,.answer-option.answer-incorrect,.feedback-incorrect) {
+  background: #fff1f2 !important;
+  color: #9f1239 !important;
+  border-color: #fda4af !important;
 }
 html[data-theme="light"] :where(.calc-display,.calculator-display,.calculator-screen) {
   background: #f1edf7 !important;
