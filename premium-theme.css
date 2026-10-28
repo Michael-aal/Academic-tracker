@@ -71,3 +71,163 @@ body{background-image:radial-gradient(ellipse at 88% 0%,rgba(109,40,217,.13),tra
   .mm-topbar nav::-webkit-scrollbar-thumb,.ev-topbar nav::-webkit-scrollbar-thumb{background:rgba(167,139,250,.45);border-radius:99px}
   :where(#signout,#profile-signout,#uni-signout,#quiz-signout,.profile-signout){min-height:38px!important;padding:0 11px!important}
 }
+
+
+/* Purple + white visual system: white is the canvas, purple is the accent.
+   Dark backgrounds are intentionally removed across every page that loads this file. */
+:root {
+  color-scheme: light !important;
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --panel2: #f7f3ff;
+  --surface-elevated: #f0e8ff;
+  --line: #e5dcf4;
+  --text: #26163d;
+  --muted: #625673;
+  --muted-strong: #756786;
+  --purple: #7545c8;
+  --purple-soft: #8b63d2;
+  --purple-deep: #5b2ba8;
+  --green: #7545c8;
+  --orange: #7545c8;
+  --red: #7545c8;
+  --blue: #7545c8;
+  --mint: #8b63d2;
+  --green2: #5b2ba8;
+  --ui-bg: #ffffff;
+  --ui-surface: #ffffff;
+  --ui-surface-raised: #f7f3ff;
+  --ui-surface-soft: #f0e8ff;
+  --ui-border: #e5dcf4;
+  --ui-text: #26163d;
+  --ui-muted: #625673;
+  --ui-accent: #7545c8;
+  --ui-accent-strong: #5b2ba8;
+  --ui-shadow: 0 10px 28px rgba(91,43,168,.08);
+}
+html, body {
+  color-scheme: light !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #26163d !important;
+}
+body { background-image: none !important; }
+:where(.app-shell,.main,.main-content,.page-shell,.page-content,.content,.workspace,.workspace-main,
+  .auth-main,.tutor-layout,.tutor-main,.ai-shell,.quiz-page-shell,.quiz-layout,.study-tools-shell,
+  .profile-layout,.support-layout,.uni-layout,.container,.section-wrap,.hero,.features,.how-it-works,
+  .faq-section,.site-main,.dashboard-content) {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #26163d !important;
+}
+:where(.site-header,.site-footer,.topbar,.compact-topbar,.ai-topbar,.mm-topbar,.ev-topbar,
+  .at-global-header,.at-nav-popover,.at-nav-menu,.dropdown-menu,.navigation-menu,.account-menu,
+  .ai-mobile-menu,.at-mobile-nav) {
+  background: #ffffff !important;
+  background-image: none !important;
+  color: #26163d !important;
+  border-color: #e5dcf4 !important;
+  box-shadow: 0 6px 24px rgba(91,43,168,.07) !important;
+}
+:where(.sidebar,.site-nav,.mobile-nav,.at-mobile-nav,.at-nav-active,.nav-link.active,
+  .mobile-nav button.active,.mobile-nav a[aria-current=page]) {
+  background: #7545c8 !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  border-color: #7545c8 !important;
+}
+:where(.sidebar a,.sidebar button,.site-nav a:not(.button),.mobile-nav a,.mobile-nav button,
+  .at-mobile-nav a,.at-mobile-nav button,.nav-link.active,.mobile-nav button.active,
+  .mobile-nav a[aria-current=page]) { color: #ffffff !important; }
+:where(.card,.panel,.auth-card,.auth-side,.uni-card,.tool-card,.resource-card,.support-card,
+  .profile-card,.task-picker,.chat-card,.calculator-card,.feature-card,.step-card,.faq-item,
+  .testimonial-card,.stat-card,.cta-panel,.chart-card,.preview-window,.question-card,.quiz-card,
+  .note-card,.planner-card,.summary-card,.flashcard,.chat-container,.tutor-workspace,
+  .modal,.modal-content,.dropdown-menu,.result-panel,.tutor-chat-panel,.message-list,
+  .profile-hero,.profile-layout>.card,.workspace-card,.report-card,.subject-card,.score-card,
+  .study-card,.tool-panel,.learning-card,.video-card,.memory-card,.university-card) {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #26163d !important;
+  border-color: #e5dcf4 !important;
+  box-shadow: 0 8px 28px rgba(91,43,168,.06) !important;
+}
+:where(input,select,textarea,.form-control,[contenteditable=true],.calc-display,.calculator-display,
+  .calculator-screen,.message-form textarea) {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #26163d !important;
+  border-color: #d9c9f1 !important;
+}
+:where(input,textarea)::placeholder { color: #756786 !important; opacity: 1 !important; }
+:where(.button,.btn,.button-primary,.button-small,.primary,.submit-button,.button.primary,
+  .btn-primary,.button:not(.secondary):not(.button-secondary):not(.btn-secondary),
+  .hero-actions .button,.cta-button) {
+  color: #ffffff !important;
+  background: #7545c8 !important;
+  background-image: linear-gradient(135deg,#7545c8,#5b2ba8) !important;
+  border-color: #7545c8 !important;
+}
+:where(.secondary,.button-secondary,.btn-secondary,.button.secondary,.button.outline,
+  .icon-button,.menu-trigger,.menu-toggle,.show-password,.at-theme-toggle,.calc-key,
+  .calc-key.utility,.calc-key.operator) {
+  color: #5b2ba8 !important;
+  background: #f0e8ff !important;
+  background-image: none !important;
+  border-color: #d9c9f1 !important;
+}
+:where(.brand-icon,.brand-mark,.ai-brand-mark,.nav-brand-mark,.feature-icon,.step-number,
+  .icon-box,.subject-icon,.tool-icon,.tool-choice.active,.pathway-tab.active) {
+  color: #ffffff !important;
+  background: #7545c8 !important;
+  background-image: linear-gradient(145deg,#8b63d2,#5b2ba8) !important;
+  border-color: #7545c8 !important;
+}
+:where(.eyebrow,.section-kicker,.page-heading .eyebrow,.tutor-eyebrow,.result-label,
+  .section-title,.page-title,.card-title,.stat-value,.gradient-text) { color: #5b2ba8 !important; }
+:where(a,.nav-link,.dropdown-item,.at-nav-menu a,.at-nav-menu button,.at-nav-popover a) {
+  color: #5b2ba8;
+}
+:where(p,.subtitle,.description,.helper-text,.muted,.brand-muted,.caption,.meta,.timestamp,small,
+  .stat-label,.stat-foot,.auth-subtitle,.notice,.section-heading p) { color: #625673; }
+:where(.progress-track,.bar,.calc-history,.status-pill,.secure-label,.local-pill,.badge,.pill,
+  .tutor-prompt,.tutor-prompt-card,.quick-prompt,.empty,.empty-state,.answer-option) {
+  background: #f7f3ff !important;
+  background-color: #f7f3ff !important;
+  background-image: none !important;
+  color: #5b2ba8 !important;
+  border-color: #e5dcf4 !important;
+}
+:where(.progress-fill,.calc-key.operator,.calc-key.equals) {
+  background: #7545c8 !important;
+  background-image: linear-gradient(90deg,#5b2ba8,#8b63d2) !important;
+  color: #ffffff !important;
+}
+:where(.answer-option.answer-correct,.quiz-review-card.review-correct,.feedback-correct) {
+  background: #f7f3ff !important;
+  color: #5b2ba8 !important;
+  border-color: #b99be9 !important;
+}
+:where(.quiz-review-card.review-incorrect,.answer-option.answer-incorrect,.feedback-incorrect) {
+  background: #eee5ff !important;
+  color: #4d258f !important;
+  border-color: #9b78d7 !important;
+}
+:where(.danger,.destructive,.error-text,.form-error,.calc-error,.form-success,.success-text,.warning,.warning-text) {
+  color: #5b2ba8 !important;
+  background-color: #f7f3ff !important;
+  border-color: #d9c9f1 !important;
+}
+:where(dialog,.dropdown-menu,.at-nav-menu,.at-nav-popover) {
+  background: #ffffff !important;
+  color: #26163d !important;
+  border-color: #e5dcf4 !important;
+}
+:where(.gradient-text) {
+  background-image: linear-gradient(100deg,#5b2ba8,#8b63d2) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  color: transparent !important;
+}
+::selection { color: #ffffff; background: #7545c8; }
