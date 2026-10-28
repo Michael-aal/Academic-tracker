@@ -56,6 +56,10 @@
   function pct(sid) { const m=getMaxTotal(sid);return m?Math.round(getTotal(sid)/m*100):0; }
   const targetFor = sid => num(state.targets[sid] ?? 75);
   function average() { const list=state.subjects.filter(s=>getEntered(s.id)>0); return list.length?Math.round(list.reduce((a,s)=>a+pct(s.id),0)/list.length):0; }
+  const FOCUS_KEY = "academic-tracker-focus-session";
+  const focusSession = () => { try { return JSON.parse(localStorage.getItem(FOCUS_KEY) || "null"); } catch { return null; } };
+  const saveFocusSession = session => { if(session) localStorage.setItem(FOCUS_KEY, JSON.stringify(session)); else localStorage.removeItem(FOCUS_KEY); };
+  const formatFocusTime = ms => { const seconds=Math.max(0,Math.ceil(ms/1000)); return String(Math.floor(seconds/60)).padStart(2,"0")+":"+String(seconds%60).padStart(2,"0"); };
   function setView(next) { view=next; document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===view)); render(); window.scrollTo({top:0,behavior:"smooth"}); }
   function heading(title,subtitle,action="") { return '<div class="section-heading"><div><h2>'+title+'</h2><p>'+subtitle+'</p></div>'+action+'</div>'; }
   function stat(label,value,foot) { return '<article class="card"><div class="stat-label">'+label+'</div><div class="stat-value">'+value+'</div><div class="stat-foot">'+foot+'</div></article>'; }
@@ -67,6 +71,7 @@
     const total=state.subjects.length, withScores=state.subjects.filter(s=>getEntered(s.id)>0).length, completeSubjects=state.subjects.filter(s=>isComplete(s.id)).length;
     const pending=state.subjects.reduce((a,s)=>a+itemsFor(s.id).length-getEntered(s.id),0);
     return '<div class="grid stats-grid">'+stat("SUBJECTS",total,"In your current tracker")+stat("CURRENT AVERAGE",withScores?average()+"%":"—",withScores?"Across subjects with scores":"Enter scores to calculate")+stat("ASSESSMENTS ENTERED",state.subjects.reduce((a,s)=>a+getEntered(s.id),0), "of "+state.subjects.reduce((a,s)=>a+itemsFor(s.id).length,0)+" possible entries")+stat("MISSING SCORES",pending,pending?"Missing scores are not treated as zero":"All subject assessments entered")+'</div>'+
+    '<section class="focus-promo card"><div class="focus-promo-icon" aria-hidden="true">◎</div><div class="focus-promo-copy"><span class="focus-kicker">FOCUS SHIELD</span><h2>Make time for one important task.</h2><p>Start a quiet study session, use a simple timer, and return to your work when distractions happen.</p></div><button class="button primary" data-view="focus">Start a focus session <span aria-hidden="true">→</span></button></section>'+
     '<div class="grid content-grid">'+
     '<section>'+heading("Your subjects","Progress for "+esc(state.term)+" · "+esc(state.academicYear),'<button class="button primary" data-action="add-subject">＋ Add subject</button>')+'<article class="card">'+subjectRows()+'</article></section>'+
     '<section>'+heading("Study snapshot","A quick view of what needs attention")+'<article class="card"><h3>Assessment coverage</h3><div class="report-total">'+(total?Math.round((state.subjects.reduce((a,s)=>a+itemsFor(s.id).length,0)-pending)/(state.subjects.reduce((a,s)=>a+itemsFor(s.id).length,0)||1)*100):0)+'<small>%</small></div><p class="notice">Coverage counts scores you have entered. A missing mark stays missing; it is never silently counted as zero.</p><div class="progress-track"><div class="progress-fill" style="width:'+(total?((state.subjects.reduce((a,s)=>a+itemsFor(s.id).length,0)-pending)/(state.subjects.reduce((a,s)=>a+itemsFor(s.id).length,0)||1)*100):0)+'%"></div></div><div class="progress-row"><span>Complete subjects</span><strong>'+completeSubjects+' of '+total+'</strong></div><div class="progress-row"><span>Term</span><strong>'+esc(state.term)+'</strong></div><div class="progress-row"><span>Academic year</span><strong>'+esc(state.academicYear)+'</strong></div><div class="callout" style="margin-top:18px">'+(pending?'Next step: enter missing assessment marks in Score entry. Check your teacher’s returned scripts or class records before filling any mark.':'Nice work — every subject has all assessment scores entered.')+'</div><div class="button-row" style="margin-top:16px"><button class="button primary" data-view="scores">Enter scores →</button><button class="button secondary" data-view="reports">View report</button></div></article></section></div>';
@@ -92,11 +97,56 @@
   function settingsView() {
     return '<div class="grid settings-grid"><article class="card"><h2>Academic period</h2><p class="notice">Choose the current year and term. Your subjects and scores remain saved separately for each period.</p><label class="field">Academic year<input id="academic-year" value="'+esc(state.academicYear)+'" placeholder="2026–2027" maxlength="30"></label><br><label class="field">Current term<select id="current-term">'+["Term 1","Term 2","Term 3"].map(t=>'<option '+(state.term===t?"selected":"")+'>'+t+'</option>').join("")+'</select></label><br><button class="button primary" data-action="save-period">Save period</button></article><article class="card"><h2>Backup & restore</h2><p class="notice">Your records are stored in this browser on this device. Export backups regularly so you can recover your records if browser data is cleared.</p><div class="button-row"><button class="button primary" data-action="export">Download JSON backup</button><button class="button secondary" data-action="import">Restore JSON backup</button></div><p class="notice" style="margin-top:15px">Restore replaces the current tracker data. Export a backup first if you want to keep a copy of the current records.</p></article><article class="card"><h2>Score targets</h2><p class="notice">Targets are stored separately from actual marks. Set a target per subject here.</p>'+state.subjects.map(s=>'<div class="subject-row"><div class="subject-info"><strong>'+esc(s.name)+'</strong><small>Target percentage</small></div><input class="target-input" aria-label="'+esc(s.name)+' target" type="number" min="0" max="100" value="'+targetFor(s.id)+'" data-target="'+s.id+'">%</div>').join("")+'<button class="button primary" data-action="save-targets" style="margin-top:15px">Save targets</button></article><article class="card"><h2>About your data</h2><p class="notice">Academic Tracker is an offline-first personal PWA. It does not upload your marks to a server. Keep your phone protected and store backups somewhere you trust.</p><div class="callout">Last saved: '+esc(new Date(state.updatedAt).toLocaleString())+'</div></article></div>';
   }
+  function focusView() {
+    let session=focusSession();
+    if(session && session.status==="running" && Date.now()>=session.endsAt) {
+      session={...session,status:"completed",remainingMs:0,endsAt:null,completedAt:new Date().toISOString()};
+      saveFocusSession(session);
+    }
+    const running=!!session&&session.status==="running";
+    const paused=!!session&&session.status==="paused";
+    const completed=!!session&&session.status==="completed";
+    const remaining=session?(running?Math.max(0,session.endsAt-Date.now()):Number(session.remainingMs)||0):25*60*1000;
+    const task=esc(session?.task||"");
+    const subjectOptions=state.subjects.map(s=>'<option value="'+esc(s.id)+'" '+(session?.subjectId===s.id?'selected':'')+'>'+esc(s.name)+'</option>').join("");
+    const timer=formatFocusTime(remaining);
+    const status=running?"Focus session active":paused?"Session paused":completed?"Session complete":"Ready when you are";
+    return '<section class="focus-shell">'+
+      '<div class="focus-intro"><span class="focus-kicker"><span class="focus-kicker-dot"></span> FOCUS SHIELD</span><h2>Give one task your attention.</h2><p>Choose a task, set a realistic session, and work without distractions inside your study space.</p></div>'+
+      '<article class="card focus-panel">'+
+        '<div class="focus-panel-top"><div><span class="stat-label">YOUR SESSION</span><h3>'+status+'</h3></div><span class="focus-status '+(running?'is-running':paused?'is-paused':completed?'is-complete':'')+'">'+(running?'ACTIVE':paused?'PAUSED':completed?'COMPLETE':'READY')+'</span></div>'+
+        '<div class="focus-clock" id="focus-clock" aria-live="off">'+timer+'</div>'+
+        '<p class="focus-task-current">'+(task||"Your next focused session starts here.")+'</p>'+
+        '<div class="focus-progress-track" aria-hidden="true"><span id="focus-progress" style="width:'+(session&&session.durationMs?Math.max(0,Math.min(100,((session.durationMs-remaining)/session.durationMs)*100)):0)+'%"></span></div>'+
+        '<div class="focus-controls">'+
+          (running?'<button class="button secondary" type="button" data-focus-action="pause">Pause</button>':'')+
+          (paused?'<button class="button primary" type="button" data-focus-action="resume">Resume focus</button>':'')+
+          (completed?'<button class="button primary" type="button" data-focus-action="new">Start another</button>':'')+
+          (!running&&!paused&&!completed?'<button class="button primary" type="button" data-focus-action="start">Start focus</button>':'')+
+          ((running||paused)?'<button class="button secondary" type="button" data-focus-action="end">End session</button>':'')+
+        '</div>'+
+        '<p class="focus-disclaimer">This timer manages your study session on this website. It cannot detect or silence notifications from other apps.</p>'+
+      '</article>'+
+      '<div class="grid focus-setup-grid">'+
+        '<article class="card focus-setup-card"><div class="focus-card-icon" aria-hidden="true">◎</div><h3>Set up your focus</h3><p class="notice">Choose a subject or enter one clear task. You can change the duration for each session.</p>'+
+          '<label for="focus-subject">Subject (optional)</label><select id="focus-subject" '+(running||paused?'disabled':'')+'><option value="">Choose a subject</option>'+subjectOptions+'</select>'+
+          '<label for="focus-task">What will you work on?</label><input id="focus-task" maxlength="120" value="'+task+'" placeholder="e.g. Understand Newton’s second law" '+(running||paused?'disabled':'')+'>'+
+          '<label for="focus-duration">Session length</label><select id="focus-duration" '+(running||paused?'disabled':'')+'><option value="15" '+(session?.durationMinutes===15?'selected':'')+'>15 minutes</option><option value="25" '+(!session||session.durationMinutes===25?'selected':'')+'>25 minutes</option><option value="45" '+(session?.durationMinutes===45?'selected':'')+'>45 minutes</option><option value="60" '+(session?.durationMinutes===60?'selected':'')+'>60 minutes</option></select>'+
+          '<button class="button secondary focus-apply" type="button" data-focus-action="apply" '+(running||paused?'disabled':'')+'>Apply session setup</button>'+
+        '</article>'+
+        '<article class="card focus-setup-card focus-notifications"><div class="focus-card-icon" aria-hidden="true">⌁</div><h3>Reduce phone interruptions</h3><p class="notice">For notifications from other apps, use your phone’s built-in Do Not Disturb control. Focus Shield cannot switch it on or verify its current state.</p>'+
+          '<details><summary>How to enable Do Not Disturb</summary><ol><li>Swipe down from the top of your phone to open Quick Settings.</li><li>Find <strong>Do not disturb</strong>. You may need to swipe down again or edit the tiles.</li><li>Turn it on for your study session. Your phone may still allow alarms or selected calls.</li><li>When you finish studying, turn it off if you enabled it manually.</li></ol></details>'+
+          '<div class="focus-honesty"><span aria-hidden="true">ⓘ</span><span>Notification settings stay under your control. Ending a website session does not change your phone settings.</span></div>'+
+        '</article>'+
+      '</div>'+
+      '<article class="card focus-reset-card"><div><h3>One distraction doesn’t ruin a session.</h3><p class="notice">If you lose focus, return to your task and continue. Progress is about learning—not a perfect timer streak.</p></div><button class="button secondary" type="button" data-focus-action="reset">Reset session</button></article>'+
+    '</section>';
+  }
   function render() {
-    const titles={dashboard:"Dashboard",scores:"Score entry",subjects:"Subjects",reports:"Reports",settings:"Backup & settings"};
+    const titles={dashboard:"Dashboard",scores:"Score entry",subjects:"Subjects",reports:"Reports",settings:"Backup & settings",focus:"Focus Shield"};
     $("#page-title").textContent=titles[view]||"Dashboard";
     $("#year-label").textContent=state.academicYear+" · "+state.term;
-    $("#app").innerHTML=({dashboard,scores:scoresView,subjects:subjectsView,reports:reportsView,settings:settingsView}[view]||dashboard)();
+    $("#app").innerHTML=({dashboard,scores:scoresView,subjects:subjectsView,reports:reportsView,settings:settingsView,focus:focusView}[view]||dashboard)();
     document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
   }
   function openSubjectDialog() { $("#subject-name").value=""; $("#subject-target").value="75"; $("#subject-dialog").showModal(); }
@@ -178,6 +228,48 @@
     if(action==="save-targets") {for(const inp of document.querySelectorAll("[data-target]")){const v=Number(inp.value);if(!Number.isFinite(v)||v<0||v>100){alert("Targets must be between 0 and 100.");inp.focus();return;}state.targets[inp.dataset.target]=v;}await save();alert("Targets saved.");}
     if(action==="print") window.print();
   });
+  document.addEventListener("click", e => {
+    const button=e.target.closest("[data-focus-action]");
+    if(!button)return;
+    const action=button.dataset.focusAction;
+    let session=focusSession();
+    if(action==="apply" || action==="start") {
+      const taskInput=$("#focus-task"), subjectSelect=$("#focus-subject"), durationSelect=$("#focus-duration");
+      const subject=state.subjects.find(s=>s.id===subjectSelect?.value) || state.subjects.find(s=>s.id===session?.subjectId);
+      const task=(taskInput?.value||"").trim() || subject?.name || "";
+      if(!task){alert("Choose a subject or enter one clear study task first.");taskInput?.focus();return;}
+      const minutes=Number(durationSelect?.value)||Number(session?.durationMinutes)||25;
+      const durationMs=minutes*60*1000;
+      if(action==="apply") {
+        saveFocusSession({status:"ready",task,subjectId:subject?.id||"",durationMinutes:minutes,durationMs,remainingMs:durationMs,endsAt:null,updatedAt:new Date().toISOString()});
+        render();return;
+      }
+      saveFocusSession({status:"running",task,subjectId:subject?.id||"",durationMinutes:minutes,durationMs,remainingMs:durationMs,endsAt:Date.now()+durationMs,startedAt:new Date().toISOString()});
+      render();return;
+    }
+    if(action==="pause" && session?.status==="running") {
+      session={...session,status:"paused",remainingMs:Math.max(0,session.endsAt-Date.now()),endsAt:null,pausedAt:new Date().toISOString()};
+      saveFocusSession(session);render();return;
+    }
+    if(action==="resume" && session?.status==="paused") {
+      session={...session,status:"running",endsAt:Date.now()+Math.max(0,session.remainingMs),resumedAt:new Date().toISOString()};
+      saveFocusSession(session);render();return;
+    }
+    if(action==="end" && session) { saveFocusSession({...session,status:"ready",endsAt:null,remainingMs:session.durationMs||25*60*1000,endedAt:new Date().toISOString()});render();return; }
+    if(action==="new" || action==="reset") { saveFocusSession(null);render();return; }
+  });
+  setInterval(() => {
+    const session=focusSession();
+    if(!session || session.status!=="running")return;
+    const remaining=Math.max(0,session.endsAt-Date.now());
+    const clock=$("#focus-clock"),progress=$("#focus-progress");
+    if(clock)clock.textContent=formatFocusTime(remaining);
+    if(progress&&session.durationMs)progress.style.width=Math.max(0,Math.min(100,((session.durationMs-remaining)/session.durationMs)*100))+"%";
+    if(remaining===0) {
+      saveFocusSession({...session,status:"completed",remainingMs:0,endsAt:null,completedAt:new Date().toISOString()});
+      if(view==="focus")render();
+    }
+  },1000);
   $("#import-file").addEventListener("change",e=>importBackup(e.target.files[0]));
   $("#app").addEventListener("change",e=>{
     const t=e.target;

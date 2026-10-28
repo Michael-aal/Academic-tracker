@@ -11,6 +11,7 @@
     ["Subjects","dashboard.html?view=subjects","subjects"],
     ["Scores","dashboard.html?view=scores","scores"],
     ["Reports","dashboard.html?view=reports","reports"],
+    ["Focus Shield","dashboard.html?view=focus","focus"],
     ["Calculator","calculator.html","calculator"],
     ["AI Learning","ai-learning.html","learn"],
     ["AI Tutor","ai-tutor.html","tutor"],
@@ -37,6 +38,7 @@
 
   const icons = {
     home:'<path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9M9 20v-6h6v6"/>',
+    focus:'<path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
     menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
     user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
     calculator:'<rect x="4" y="2" width="16" height="20" rx="2"/><rect x="8" y="6" width="8" height="4" rx="1"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>',
