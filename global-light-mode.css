@@ -184,3 +184,104 @@ html[data-theme="light"] .auth-card { background: #ffffff; border-color: var(--b
 @media (prefers-reduced-motion: no-preference) {
   html[data-theme="light"] body { transition: background-color .18s ease, color .18s ease; }
 }
+
+/* Route-specific surfaces that use legacy hard-coded dark colors. */
+html[data-theme="light"] body.ai-tutor-page,
+html[data-theme="light"] body.ai-hub-page,
+html[data-theme="light"] body.ai-tool-page,
+html[data-theme="light"] body.quiz-page-body,
+html[data-theme="light"] body.study-planner-page,
+html[data-theme="light"] body.memory-page {
+  background: var(--bg-primary) !important;
+  background-image: none !important;
+  color: var(--text-primary) !important;
+}
+html[data-theme="light"] :where(.ai-topbar,.mm-topbar,.quiz-header,.quiz-page-header) {
+  background: rgba(255,255,255,.96) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+}
+html[data-theme="light"] :where(.ai-tool-card,.ai-hub-extras > div,.ai-tools-menu,.ai-more-menu,.ai-mobile-menu,.task-picker,.learning-panel,.tool-choice,.tool-note,.tool-icon,.result-panel,.tutor-message,.tutor-message-student,.tutor-message-body,.quiz-progress,.question-card,.answer-option,.answer-letter,.question-feedback,.quiz-result-stat,.quiz-review-card,.quiz-hint,.quiz-nav-button,.quiz-dashboard-button,.quiz-question-card,.quiz-overview-row,.quiz-finish-panel,.quiz-loading-card,.quiz-answer-option,.quiz-answer-letter,.quiz-secondary-link) {
+  background: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+  box-shadow: 0 6px 22px rgba(47,28,82,.045);
+}
+html[data-theme="light"] :where(.ai-tool-card,.ai-hub-extras > div,.ai-tools-menu,.ai-more-menu,.ai-mobile-menu,.task-picker,.learning-panel,.tool-choice,.tool-note,.tool-icon,.result-panel,.quiz-progress,.question-card,.answer-option,.quiz-result-stat,.quiz-review-card,.quiz-hint,.quiz-nav-button,.quiz-dashboard-button,.quiz-question-card,.quiz-overview-row,.quiz-finish-panel,.quiz-loading-card,.quiz-answer-option,.quiz-secondary-link) :where(h1,h2,h3,h4,p,small,strong,span,label) {
+  color: inherit !important;
+}
+html[data-theme="light"] :where(.tool-choice.active,.tool-choice:hover,.answer-option.selected,.quiz-answer-option[aria-pressed="true"],.quiz-next-button,.quiz-answer-option[aria-pressed="true"] .quiz-answer-letter) {
+  background: #eee8f8 !important;
+  color: #57349a !important;
+  border-color: #bba4e6 !important;
+}
+html[data-theme="light"] :where(.submit-row button,.quiz-submit,.quiz-finish,.quiz-finish-button,.quiz-primary-link,.primary-tool-button,.tutor-video-link) {
+  background: linear-gradient(135deg,#7545c8,#6038b5) !important;
+  color: #ffffff !important;
+  border-color: #7545c8 !important;
+}
+html[data-theme="light"] :where(.quiz-progress-track,.progress-track,.quiz-progress-track) {
+  background: #e5ddef !important;
+}
+html[data-theme="light"] :where(.quiz-progress-fill,.progress-fill) {
+  background: linear-gradient(90deg,#6038b5,#9873dc) !important;
+}
+html[data-theme="light"] :where(.answer-option.answer-correct,.quiz-review-card.review-correct,.feedback-correct,.quiz-review-card.review-incorrect,.answer-option.answer-incorrect,.feedback-incorrect) {
+  background: #f5f0fc !important;
+  color: var(--text-primary) !important;
+  border-color: #c8b5e9 !important;
+}
+html[data-theme="light"] :where(.calc-display,.calculator-display,.calculator-screen) {
+  background: #f0ebfa !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+}
+html[data-theme="light"] :where(.calculator-card,.calculator-side .card,.calc-key,.calc-key.utility,.calc-key.operator,.percent-result,.calc-icon) {
+  background: #ffffff !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-default) !important;
+}
+html[data-theme="light"] .calc-key.equals {
+  background: #7545c8 !important;
+  color: #ffffff !important;
+  border-color: #7545c8 !important;
+}
+html[data-theme="light"] :where(.calc-result,.percent-result strong,.history-item strong) { color: #6038b5 !important; }
+html[data-theme="light"] :where(.mm-panel,.mm-stat,.mm-empty,.mm-flashcard,.mm-library-card,.mm-count,.mm-principles span,.mm-ratings button,.mm-add input,.mm-add textarea,.mm-library-actions input,.mm-secondary) {
+  background: #ffffff !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+}
+html[data-theme="light"] :where(.mm-panel-heading p,.mm-stat span,.mm-stat small,.mm-empty p,.mm-face-label,.mm-flashcard > p,.mm-rating-title,.mm-review-tip,.mm-form-note,.mm-card-meta,.mm-library-card p,.mm-library-meta) { color: var(--text-muted) !important; }
+html[data-theme="light"] :where(.mm-primary,.mm-full) {
+  background: #7545c8 !important;
+  color: #ffffff !important;
+  border-color: #7545c8 !important;
+}
+html[data-theme="light"] :where(.study-tool-main,.study-tool-intro,.planner-layout,.planner-session-list,.summary-output) { color: var(--text-primary) !important; }
+html[data-theme="light"] :where(.tool-card,.planner-session,.planner-filters button,.planner-session-actions button,.notification-note,.file-drop,.file-button,.secondary-tool-button,.result-card) {
+  background: #ffffff !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+}
+html[data-theme="light"] :where(.tool-card label,.field-label,.summary-output,.summary-output h1,.summary-output h2,.summary-output h3,.planner-session h3,.planner-session p,.planner-card-heading p,.tool-disclaimer,.empty-sessions,.file-drop p,.file-drop small) {
+  color: var(--text-secondary) !important;
+}
+html[data-theme="light"] :where(.tool-card input,.tool-card textarea,.tool-card select,.mm-add input,.mm-add textarea,.mm-library-actions input) {
+  background: #ffffff !important;
+  color: var(--text-primary) !important;
+  border-color: #d8cee8 !important;
+}
+html[data-theme="light"] :where(.profile-card,.profile-panel,.profile-section,.support-thread,.support-message,.message-bubble,.conversation-card,.uni-card,.course-card,.university-card,.video-card,.video-result,.note-editor,.note-content,.planner-calendar,.planner-day,.settings-panel) {
+  background: #ffffff !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+}
+html[data-theme="light"] :where(.support-message,.message-bubble,.support-thread,.conversation-card) :where(p,small,strong,span) { color: inherit; }
+html[data-theme="light"] :where(.mm-topbar nav,.ai-global-nav,.quiz-header-actions) { color: var(--text-secondary) !important; }
+html[data-theme="light"] :where(.mm-topbar nav a,.ai-global-nav > a,.ai-global-nav > button,.ai-more-wrap > button,.quiz-exit-link,.quiz-signout) { color: var(--text-secondary) !important; }
+html[data-theme="light"] :where(.mm-topbar nav button,.quiz-signout) {
+  background: var(--bg-surface-muted) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-default) !important;
+}
