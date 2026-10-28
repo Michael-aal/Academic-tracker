@@ -4,6 +4,7 @@ const { requireAuth } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/admin");
 const { prisma } = require("../prisma");
 const { validateQuiz, publicQuiz, markQuiz } = require("../quiz-schema");
+const { buildTutorVideoReference } = require("../services/tutor-video-reference");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -32,7 +33,7 @@ function buildPrompt({ action, subject, topic, content, level, questionCount, ca
   ].join("\n\n");
 
   const tasks = {
-    tutor: "Act as a patient, conversational teacher appropriate to the student's education track and programme. For higher-institution students, use university-level depth and their registered course context; for secondary students, explain at their school level. Teach the concept the student asks about or the class notes they paste: organize the ideas, define key terms, explain why and how things work, break difficult steps down, and use clear examples or analogies. Keep the conversation natural and remember the prior conversation included in the student material. Answer follow-up questions directly and adapt when the student says they are confused. Do not create quizzes, tests, multiple-choice questions, or homework questions; the separate quiz generator handles those. Do not end with a test question. Instead, offer a useful next explanation or ask whether they want one part explained differently. When a relevant educational video would help, mention that a related video link is available in the interface. If the question is ambiguous, state your assumption. Do not pretend certainty when unsure.",
+    tutor: "Act as a patient, conversational teacher appropriate to the student's education track and programme. For higher-institution students, use university-level depth and their registered course context; for secondary students, explain at their school level. Teach the concept the student asks about or the class notes they paste: organize the ideas, define key terms, explain why and how things work, break difficult steps down, and use clear examples or analogies. Keep the conversation natural and remember the prior conversation included in the student material. Answer follow-up questions directly and adapt when the student says they are confused. Do not create quizzes, tests, multiple-choice questions, or homework questions; the separate quiz generator handles those. Do not end with a test question. Instead, offer a useful next explanation or ask whether they want one part explained differently. When a related educational video would help, explain briefly what kind of visual demonstration could help, but do not invent a video title or claim you watched one. The interface provides a relevant video search link for the current topic. If the question is ambiguous, state your assumption. Do not pretend certainty when unsure.",
     quiz: "Return only one complete valid JSON object with top-level keys title and questions; do not include Markdown or surrounding text. Generate exactly " + questionCount + " unique, complete, academically accurate multiple-choice questions for the specified subject, topic, academic level, and " + difficulty + " difficulty. Each question object must contain these exact keys: id (unique string), question (complete string), options (array of exactly four objects), correctAnswer (one option ID), explanation (accurate string), and hint (non-empty clue that does not reveal the answer). Each option object must contain exactly id and text; option IDs must be A, B, C, D exactly once. correctAnswer must exactly match one of those IDs. Do not use alternate property names such as label/value, omit fields, duplicate questions/options, or stop before closing the JSON. Use supplied notes as the primary source when present and do not invent facts. Verify the question count and answer keys before returning JSON.",
     summarize: "Summarize the supplied study material for revision. Start with a short overview, then organize the main ideas under clear headings with important facts, definitions, steps, and formulas where relevant. Keep the summary focused on the supplied topic and subject, preserve the meaning, and do not add unsupported claims. Do not generate quiz questions, tests, flashcards, or self-test questions. If no notes were supplied, ask the student to paste notes.",
     flashcards: "Return only a JSON object with a cards array. Generate exactly " + cardCount + " accurate study flashcards for the specified subject and topic, using the supplied notes as the primary source when present. Each card must contain a concise question field and an accurate answer field. Make cards useful for active recall: definitions, processes, causes, formulas, distinctions, and key facts. Do not write multiple-choice options, quiz scores, or a test. Do not invent details absent from the notes when notes are provided. Keep each question under 700 characters and each answer under 1800 characters.",
@@ -297,7 +298,11 @@ router.post("/", aiLimiter, async (req, res) => {
       const attempt = await prisma.aiQuizAttempt.create({ data: { userId: req.userId, title: quiz.title, subject, topic, difficulty, questionData: quiz, status: "IN_PROGRESS" }, select: { id: true } });
       return res.status(201).json({ quiz: publicQuiz(quiz), attemptId: attempt.id, action, model });
     }
-    res.json({ answer: answer.trim(), action, model });
+    if (action === "tutor") {
+      const videoReference = buildTutorVideoReference({ subject, topic, latestMessage: content });
+      return res.json({ answer: answer.trim(), action, model, videoReference });
+    }
+    return res.json({ answer: answer.trim(), action, model });
   } catch (error) {
     if (error.name === "AbortError") return res.status(504).json({ error: "The AI request took too long. Please try again." });
     console.error("AI request error:", error.message);
