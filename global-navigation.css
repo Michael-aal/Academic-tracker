@@ -1,3 +1,5 @@
+@import url("global-light-mode.css");
+
 /* Academic Tracker — shared application navigation.
    Loaded after page styles so every app route gets the same responsive shell. */
 :root {
