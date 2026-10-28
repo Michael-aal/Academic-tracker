@@ -9,10 +9,10 @@
   if (!message || !form) return;
 
   const updateFocus = () => {
-    const parts = [subject.value.trim(), topic.value.trim()].filter(Boolean);
+    const parts = [subject?.value?.trim(), topic?.value?.trim()].filter(Boolean);
   };
-  subject.addEventListener("input", updateFocus);
-  topic.addEventListener("input", updateFocus);
+  subject?.addEventListener("input", updateFocus);
+  topic?.addEventListener("input", updateFocus);
 
   document.querySelectorAll("[data-tutor-prompt]").forEach(button => {
     button.addEventListener("click", () => {
