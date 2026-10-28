@@ -144,7 +144,8 @@
     $("content").placeholder = copy.placeholder;
     $("submit-label").textContent = copy.button;
     $("result-title").textContent = copy.result;
-    $("quiz-options").hidden = action !== "quiz";
+    const quizOptions = $("quiz-options");
+    if (quizOptions) quizOptions.hidden = action !== "quiz";
     $("copy-result").hidden = action === "quiz";
     $("content").value = "";
     $("char-count").textContent = "0 / 12,000 characters";
@@ -435,8 +436,8 @@
           topic,
           content: requestContent,
           level: user.educationTrack === "HIGHER" ? "higher institution / university" : "secondary school",
-          questionCount: Number($("question-count").value),
-          difficulty: $("quiz-difficulty").value
+          questionCount: Number($("question-count")?.value || 5),
+          difficulty: $("quiz-difficulty")?.value || "medium"
         })
       });
       if (state.action === "quiz") {
