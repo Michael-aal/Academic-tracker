@@ -408,6 +408,7 @@
   }
 }
 
+@media (max-width: 720px) {
 /* Dark theme: rich charcoal-plum surfaces, readable text, and one consistent purple accent. */
 html[data-theme="dark"] {
   --mobile-nav-bg: #171123;
@@ -518,6 +519,8 @@ html[data-theme="light"] {
 
 html[data-theme="light"] .site-header .site-nav.open {
   box-shadow: 0 18px 42px rgba(47,28,82,.18) !important;
+}
+
 }
 
 @media (prefers-reduced-motion: reduce) {
