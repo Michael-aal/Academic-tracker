@@ -14,6 +14,7 @@ const videoRoutes = require("./routes/videos");
 const universityRoutes = require("./routes/university");
 const subscriptionRoutes = require("./routes/subscriptions");
 const studyPackRoutes = require("./routes/study-packs");
+const institutionLicenseRoutes = require("./routes/institution-licenses");
 
 const app = express();
 // Render terminates TLS and forwards the client IP. Trust only its single
@@ -71,6 +72,7 @@ app.use("/api/videos", videoRoutes);
 app.use("/api/university", universityRoutes);
 app.use("/api/subscriptions", subscriptionRoutes.router);
 app.use("/api/study-packs", studyPackRoutes);
+app.use("/api/institutions", institutionLicenseRoutes);
 
 app.use((_req, res) => res.status(404).json({ error: "Route not found." }));
 
