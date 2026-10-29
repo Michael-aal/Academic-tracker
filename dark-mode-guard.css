@@ -52,7 +52,12 @@ html[data-theme="dark"] :where(
   .support-user-card, .quiz-review-card, .feedback-correct, .feedback-incorrect,
   .quiz-answer-option, .quiz-answer-letter, .quiz-question-card,
   .quiz-overview-row, .quiz-finish-panel, .quiz-loading-card, .quiz-secondary-link,
-  .planner-create-option
+  .planner-create-option, .uni-sidebar, .uni-stat, .uni-add-form, .uni-note,
+  .ev-search-panel, .ev-player-panel, .ev-list-panel, .ev-other-sources,
+  .ev-disclaimer, .ev-player-placeholder, .ev-study-tip, .ev-source-grid a,
+  .ev-video-card img, .result-top button, .message-form, .secure-label,
+  .status-pill, .count-pill, .user-item, .answer-letter, .profile-footnote,
+  .sidebar-note, .empty, .mm-library-meta span, .mm-answer-divider
 ) {
   color: #ffffff !important;
   background-color: #110d1b !important;
@@ -92,7 +97,7 @@ html[data-theme="dark"] :where(.secondary,.button-secondary,.icon-button,.menu-t
   background-image: none !important;
   border-color: #494667 !important;
 }
-html[data-theme="dark"] :where(.brand-icon,.brand-mark,.at-nav-brand-mark) {
+html[data-theme="dark"] :where(.brand-icon,.brand-mark,.at-nav-brand-mark,.ai-brand-mark,.mm-brand-mark,.ev-brand-mark,.profile-avatar,.avatar) {
   color: #ffffff !important;
   background: linear-gradient(145deg,#9b7cff,#6544d8) !important;
 }
@@ -154,4 +159,34 @@ html[data-theme="dark"] :where(
   .ai-lesson-icon,.focus-kicker,.text-action,.planner-status-success
 ) {
   color: #c4b5fd !important;
+}
+
+
+/* Primary actions and badges use white/lavender text on purple, never dark-blue text. */
+html[data-theme="dark"] :where(
+  .submit-row button,.quiz-submit,.mm-primary,.ev-search-row button,
+  .uni-primary,.support-send,.message-form button,.profile-submit,
+  .submit-button,.at-primary,.button-primary,.btn-primary,.primary-action
+) {
+  color: #ffffff !important;
+}
+html[data-theme="dark"] :where(
+  .tool-status.error,.ev-status.error,.planner-session-actions button[data-remove]
+) {
+  color: #c4b5fd !important;
+}
+html[data-theme="dark"] :where(.session-status.done) {
+  color: #c4b5fd !important;
+  background: #20172f !important;
+  background-color: #20172f !important;
+  background-image: none !important;
+  border-color: #494667 !important;
+}
+html[data-theme="dark"] :where(.ev-video-card img) {
+  background: #0b0812 !important;
+  background-color: #0b0812 !important;
+  background-image: none !important;
+}
+html[data-theme="dark"] :where(.mm-answer-divider) {
+  background: #302440 !important;
 }
