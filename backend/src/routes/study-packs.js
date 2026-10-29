@@ -10,7 +10,12 @@ async function initializeCheckout(userId, email, pack) {
   if (!process.env.PAYSTACK_SECRET_KEY) throw Object.assign(new Error("Payments are not configured yet."), { status: 503 });
   if (pack.priceUsdCents < 200) throw Object.assign(new Error("This study pack is below Paystack's documented $2.00 USD minimum."), { status: 400 });
   const reference = "pack_" + crypto.randomUUID().replace(/-/g, "");
-  const purchase = await prisma.studyPackPurchase.create({ data: { userId, packId: pack.id, paymentReference: reference, status: "PENDING", amountMinor: pack.priceUsdCents, currency: "USD" } });
+  const existing = await prisma.studyPackPurchase.findUnique({ where: { userId_packId: { userId, packId: pack.id } } });
+  if (existing?.status === "PAID") throw Object.assign(new Error("You already own this study pack."), { status: 409 });
+  if (existing?.status === "PENDING") throw Object.assign(new Error("A payment for this pack is already pending. Wait for confirmation before trying again."), { status: 409 });
+  const purchase = existing
+    ? await prisma.studyPackPurchase.update({ where: { id: existing.id }, data: { paymentReference: reference, status: "PENDING", amountMinor: pack.priceUsdCents, currency: "USD", paidAt: null } })
+    : await prisma.studyPackPurchase.create({ data: { userId, packId: pack.id, paymentReference: reference, status: "PENDING", amountMinor: pack.priceUsdCents, currency: "USD" } });
   await prisma.paymentTransaction.create({ data: { userId, reference, provider: "paystack", planCode: "pack:" + pack.slug, amountMinor: pack.priceUsdCents, currency: "USD", status: "PENDING", metadata: { purchaseType: "study-pack", packId: pack.id, purchaseId: purchase.id } } });
   try {
     const origin = (process.env.FRONTEND_ORIGIN || "https://academic-tracker-nu.vercel.app").split(",")[0].trim().replace(/\/$/, "");
