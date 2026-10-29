@@ -14,6 +14,23 @@ const PLAN_CONFIG = {
 };
 const TOOL_LIMITS_PRO = { tutor: 100, quiz: 20, summarize: 20, "study-plan": 20, flashcards: 20 };
 const FREE_DAILY_LIMIT = 5;
+function encryptProviderToken(value) {
+  if (!value) return null;
+  const key = crypto.createHash("sha256").update(process.env.SUBSCRIPTION_TOKEN_ENCRYPTION_KEY || process.env.JWT_SECRET || "").digest();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([cipher.update(String(value), "utf8"), cipher.final()]);
+  return ["v1", iv.toString("base64url"), cipher.getAuthTag().toString("base64url"), encrypted.toString("base64url")].join(":");
+}
+function decryptProviderToken(value) {
+  if (!value) return null;
+  const [version, ivText, tagText, encryptedText] = String(value).split(":");
+  if (version !== "v1" || !ivText || !tagText || !encryptedText) return null;
+  const key = crypto.createHash("sha256").update(process.env.SUBSCRIPTION_TOKEN_ENCRYPTION_KEY || process.env.JWT_SECRET || "").digest();
+  const decipher = crypto.createDecipheriv("aes-256-gcm", key, Buffer.from(ivText, "base64url"));
+  decipher.setAuthTag(Buffer.from(tagText, "base64url"));
+  return Buffer.concat([decipher.update(Buffer.from(encryptedText, "base64url")), decipher.final()]).toString("utf8");
+}
 
 function currentSubscription(sub, now = new Date()) {
   if (!sub) return { plan: "FREE", status: "FREE", isPro: false, trialEndsAt: null, currentPeriodEnd: null, cancelAtPeriodEnd: false };
@@ -81,7 +98,8 @@ async function applySuccessfulPayment(reference, data, source = "verify") {
     await tx.userSubscription.create({ data: {
       userId: payment.userId, planCode, status: "ACTIVE", currentPeriodStart: start,
       currentPeriodEnd: end, providerCustomerCode: typeof data.customer?.customer_code === "string" ? data.customer.customer_code : undefined,
-      providerSubscriptionCode: typeof data.subscription?.subscription_code === "string" ? data.subscription.subscription_code : undefined
+      providerSubscriptionCode: typeof data.subscription?.subscription_code === "string" ? data.subscription.subscription_code : undefined,
+      providerSubscriptionToken: typeof data.subscription?.email_token === "string" ? encryptProviderToken(data.subscription.email_token) : undefined
     } });
   });
   return { processed: true };
@@ -98,14 +116,34 @@ router.post("/webhook", async (req, res) => {
   try {
     const payment = await prisma.paymentTransaction.findUnique({ where: { reference } });
     if (!payment) return res.sendStatus(200);
+    let paymentForEvent = payment;
+    if (!paymentForEvent && typeof data.subscription?.subscription_code === "string") {
+      const existingSubscription = await prisma.userSubscription.findFirst({ where: { providerSubscriptionCode: data.subscription.subscription_code }, orderBy: { createdAt: "desc" } });
+      if (existingSubscription && Number.isInteger(data.amount) && typeof data.currency === "string") {
+        paymentForEvent = await prisma.paymentTransaction.create({ data: {
+          userId: existingSubscription.userId, reference, planCode: existingSubscription.planCode,
+          amountMinor: data.amount, currency: data.currency.toUpperCase(), status: "PENDING",
+          metadata: { renewal: true, providerSubscriptionCode: data.subscription.subscription_code }
+        } });
+      }
+    }
+    if (!paymentForEvent) return res.sendStatus(200);
     const eventId = event.id ? String(event.id) : eventName + ":" + reference;
     try {
       await prisma.webhookEvent.create({ data: { id: "wh_" + crypto.randomUUID(), provider: "paystack", eventId } });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return res.sendStatus(200);
-      throw error;
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002")) throw error;
+      const latestPayment = await prisma.paymentTransaction.findUnique({ where: { reference } });
+      if (latestPayment?.status === "SUCCESS") return res.sendStatus(200);
     }
     await applySuccessfulPayment(reference, data, "webhook");
+    if (typeof data.subscription?.subscription_code === "string") {
+      const latest = await prisma.userSubscription.findFirst({ where: { userId: paymentForEvent.userId, planCode: paymentForEvent.planCode }, orderBy: { createdAt: "desc" } });
+      if (latest) await prisma.userSubscription.update({ where: { id: latest.id }, data: {
+        providerSubscriptionCode: data.subscription.subscription_code,
+        providerSubscriptionToken: typeof data.subscription.email_token === "string" ? encryptProviderToken(data.subscription.email_token) : latest.providerSubscriptionToken
+      } });
+    }
     return res.sendStatus(200);
   } catch (error) {
     console.error("Payment webhook processing failed:", error.message);
@@ -194,10 +232,12 @@ router.post("/cancel", async (req, res, next) => {
     const sub = await getCurrentSubscription(req.userId);
     const state = currentSubscription(sub);
     if (!state.isPro || state.status !== "ACTIVE") return res.status(409).json({ error: "There is no active paid subscription to cancel." });
-    if (sub.providerSubscriptionCode && process.env.PAYSTACK_SECRET_KEY) {
-      // Paystack disables recurring billing through its subscription disable endpoint.
-      await paystackRequest("/subscription/disable", { method: "POST", body: JSON.stringify({ code: sub.providerSubscriptionCode, token: process.env.PAYSTACK_DISABLE_TOKEN || "" }) });
+    if (!sub.providerSubscriptionCode || !sub.providerSubscriptionToken) {
+      return res.status(503).json({ error: "The payment provider has not returned the cancellation details for this subscription yet. Please contact support before assuming renewal is disabled." });
     }
+    const providerToken = decryptProviderToken(sub.providerSubscriptionToken);
+    if (!providerToken) return res.status(503).json({ error: "The saved provider cancellation token could not be read securely. Please contact support." });
+    await paystackRequest("/subscription/disable", { method: "POST", body: JSON.stringify({ code: sub.providerSubscriptionCode, token: providerToken }) });
     const updated = await prisma.userSubscription.update({ where: { id: sub.id }, data: { cancelAtPeriodEnd: true } });
     res.json({ subscription: currentSubscription(updated), message: "Renewal is disabled. Pro access remains available until the paid period ends." });
   } catch (error) { next(error); }
