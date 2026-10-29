@@ -17,7 +17,7 @@ const app = express();
 // Render terminates TLS and forwards the client IP. Trust only its single
 // reverse-proxy hop in production so IP-based rate limits do not collapse to
 // one shared proxy address. Local development remains untrusted by default.
-if (process.env.NODE_ENV === "production") app.set("trust proxy", 1);
+if (process.env.NODE_ENV === "production" || process.env.RENDER === "true") app.set("trust proxy", 1);
 app.disable("x-powered-by");
 app.use(helmet());
 app.use(cors({
