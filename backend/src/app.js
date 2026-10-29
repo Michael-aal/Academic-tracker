@@ -22,7 +22,17 @@ const app = express();
 // one shared proxy address. Local development remains untrusted by default.
 if (process.env.NODE_ENV === "production" || process.env.RENDER === "true") app.set("trust proxy", 1);
 app.disable("x-powered-by");
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "same-site" },
+  referrerPolicy: { policy: "no-referrer" }
+}));
+// Prevent private academic records and messages from entering browser or proxy caches.
+app.use("/api", (_req, res, next) => {
+  res.set("Cache-Control", "private, no-store, max-age=0");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  next();
+});
 app.use(cors({
   origin(origin, callback) {
     if (!origin || isAllowedOrigin(origin)) return callback(null, true);
@@ -50,7 +60,7 @@ app.get("/api/health", async (_req, res) => {
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 30,
+  limit: 20,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { error: "Too many authentication attempts. Please try again in a few minutes." }
