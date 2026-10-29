@@ -55,7 +55,7 @@ html[data-theme="dark"] :where(
   .planner-create-option, .uni-sidebar, .uni-stat, .uni-add-form, .uni-note,
   .ev-search-panel, .ev-player-panel, .ev-list-panel, .ev-other-sources,
   .ev-disclaimer, .ev-player-placeholder, .ev-study-tip, .ev-source-grid a,
-  .ev-video-card img, .result-top button, .message-form, .secure-label,
+  .ev-video-card img, .result-top button, .message-form, .secure-label, #uni-message,
   .status-pill, .count-pill, .user-item, .answer-letter, .profile-footnote,
   .sidebar-note, .empty, .mm-library-meta span, .mm-answer-divider
 ) {
@@ -189,4 +189,9 @@ html[data-theme="dark"] :where(.ev-video-card img) {
 }
 html[data-theme="dark"] :where(.mm-answer-divider) {
   background: #302440 !important;
+}
+
+
+html[data-theme="dark"] :where(.online-pill,.admin-tag,.ev-empty,.ev-status,.tool-status) {
+  border-color: #302440 !important;
 }
