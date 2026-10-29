@@ -460,3 +460,166 @@ textarea::placeholder {
   color: #756786 !important;
   opacity: 1 !important;
 }
+
+
+/* Site-wide dark mode: high-contrast lavender text/icons on layered navy surfaces. */
+html[data-theme="dark"] {
+  color-scheme: dark !important;
+  --bg: #0b0b16 !important;
+  --panel: #121326 !important;
+  --panel2: #191a32 !important;
+  --surface-elevated: #20203d !important;
+  --line: #343452 !important;
+  --text: #f5f3ff !important;
+  --muted: #c0bbd6 !important;
+  --muted-strong: #d6d0eb !important;
+  --purple: #c4b5fd !important;
+  --purple-soft: #d8ccff !important;
+  --purple-deep: #c4b5fd !important;
+  --green: #c4b5fd !important;
+  --green2: #9b7cff !important;
+  --orange: #c4b5fd !important;
+  --red: #c4b5fd !important;
+  --blue: #b6c7ff !important;
+  --mint: #d8ccff !important;
+  --ui-bg: #0b0b16 !important;
+  --ui-surface: #121326 !important;
+  --ui-surface-raised: #191a32 !important;
+  --ui-surface-soft: #20203d !important;
+  --ui-border: #343452 !important;
+  --ui-text: #f5f3ff !important;
+  --ui-muted: #c0bbd6 !important;
+  --ui-accent: #c4b5fd !important;
+  --ui-accent-strong: #a78bfa !important;
+}
+html[data-theme="dark"], html[data-theme="dark"] body {
+  color-scheme: dark !important;
+  background: #0b0b16 !important;
+  background-color: #0b0b16 !important;
+  color: #f5f3ff !important;
+}
+html[data-theme="dark"] body {
+  background-image: radial-gradient(ellipse at 80% -20%, #242044 0, transparent 48%) !important;
+}
+html[data-theme="dark"] :where(.app-shell,.main,.main-content,.page-shell,.page-content,.content,.workspace,.workspace-main,.auth-main,.tutor-layout,.tutor-main,.ai-shell,.quiz-page-shell,.quiz-layout,.study-tools-shell,.profile-layout,.support-layout,.uni-layout,.container,.site-main,.dashboard-content,.section-wrap,.site-header,.site-footer,.topbar,.compact-topbar,.ai-topbar,.mm-topbar,.ev-topbar,.at-global-header,.at-nav-popover,.at-nav-menu,.dropdown-menu,.navigation-menu,.account-menu,.ai-mobile-menu) {
+  background-color: #101123 !important;
+  background-image: none !important;
+  color: #f5f3ff !important;
+  border-color: #343452 !important;
+}
+html[data-theme="dark"] :where(.card,.panel,.auth-card,.uni-card,.tool-card,.resource-card,.support-card,.profile-card,.task-picker,.chat-card,.calculator-card,.feature-card,.step-card,.faq-item,.testimonial-card,.stat-card,.cta-panel,.chart-card,.preview-window,.question-card,.quiz-card,.note-card,.planner-card,.summary-card,.flashcard,.chat-container,.tutor-workspace,.modal,.modal-content,.result-panel,.tutor-chat-panel,.message-list,.profile-hero,.workspace-card,.report-card,.subject-card,.score-card,.study-card,.tool-panel,.learning-card,.video-card,.memory-card,.university-card,.mini-stats>div,.auth-side) {
+  background: #15162b !important;
+  background-color: #15162b !important;
+  background-image: none !important;
+  color: #f5f3ff !important;
+  border-color: #343452 !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,.18) !important;
+}
+html[data-theme="dark"] :where(.sidebar,.mobile-nav,.bottom-nav) {
+  background: #101123 !important;
+  background-color: #101123 !important;
+  color: #e9e3ff !important;
+  border-color: #343452 !important;
+}
+html[data-theme="dark"] :where(h1,h2,h3,h4,h5,h6,p,span,small,strong,em,label,legend,li,dt,dd,summary,figcaption,caption,.brand,.nav-link,.dropdown-item,.menu-caption,.page-title,.card-title,.stat-value,.gradient-text) {
+  color: #f0edff !important;
+}
+html[data-theme="dark"] :where(.muted,.brand-muted,.caption,.meta,.timestamp,.stat-label,.stat-foot,.notice,.auth-subtitle,.section-heading p,.side-foot,.privacy-note,.field,.eyebrow,.section-kicker,.feature-number,.menu-status,.menu-caption) {
+  color: #c0bbd6 !important;
+}
+html[data-theme="dark"] :where(a,.form-meta a,.inline-link,.auth-switch a,.terms a,.text-link,.nav-login) {
+  color: #d0c2ff !important;
+}
+html[data-theme="dark"] :where(.eyebrow,.section-kicker,.page-heading .eyebrow,.tutor-eyebrow,.result-label,.accent,.brand-muted) {
+  color: #d0c2ff !important;
+}
+html[data-theme="dark"] :where(.gradient-text) {
+  background: linear-gradient(100deg,#e1d8ff,#a78bfa) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  color: transparent !important;
+}
+html[data-theme="dark"] :where(input,select,textarea,.form-control,[contenteditable=true],.calc-display,.calculator-display,.calculator-screen,.message-form textarea,.field input,.field select) {
+  background: #0d0e20 !important;
+  background-color: #0d0e20 !important;
+  color: #f5f3ff !important;
+  border-color: #494667 !important;
+}
+html[data-theme="dark"] :where(input,textarea)::placeholder { color: #aaa4c4 !important; opacity: 1 !important; }
+html[data-theme="dark"] :where(.button,.btn,.button-primary,.button-small,.primary,.submit-button,.button.primary,.btn-primary,.cta-button,button[type="submit"]) {
+  background: linear-gradient(135deg,#9b7cff,#7654e8) !important;
+  color: #fff !important;
+  border-color: #a78bfa !important;
+}
+html[data-theme="dark"] :where(.secondary,.button-secondary,.btn-secondary,.button.secondary,.button.outline,.icon-button,.menu-trigger,.menu-toggle,.show-password,.at-theme-toggle,.calc-key,.track-card) {
+  color: #e2d9ff !important;
+  background: #20203b !important;
+  border-color: #494667 !important;
+}
+html[data-theme="dark"] :where(.brand-icon,.brand-mark,.ai-brand-mark,.nav-brand-mark,.feature-icon,.step-number,.icon-box,.subject-icon,.tool-icon,.value-icon,.feature-icon svg) {
+  color: #fff !important;
+  background: linear-gradient(145deg,#9b7cff,#6544d8) !important;
+  border-color: #a78bfa !important;
+}
+html[data-theme="dark"] :where(.sidebar a,.sidebar button,.sidebar .brand,.sidebar .muted,.sidebar .nav-link,.sidebar .sidebar-note,.mobile-nav a,.mobile-nav button) {
+  color: #e9e3ff !important;
+}
+html[data-theme="dark"] :where(.nav-link.active,.nav-link:hover,.dropdown-item.active,.dropdown-item:hover,.pathway-tab.active,.answer-option,.tool-choice.active) {
+  background: #30284e !important;
+  color: #f5f3ff !important;
+  border-color: #66549a !important;
+}
+html[data-theme="dark"] :where(.progress-track,.bar,.calc-history,.status-pill,.secure-label,.local-pill,.badge,.pill,.tutor-prompt,.tutor-prompt-card,.quick-prompt,.empty,.empty-state,.answer-option,.pathway-tab) {
+  background: #20203b !important;
+  background-color: #20203b !important;
+  color: #ded6ff !important;
+  border-color: #3c3b5b !important;
+}
+html[data-theme="dark"] :where(.progress-fill,.calc-key.operator,.calc-key.equals) {
+  background: linear-gradient(90deg,#9b7cff,#c4b5fd) !important;
+  color: #171329 !important;
+}
+html[data-theme="dark"] :where(.form-error,.form-success,.error-text,.success-text,.warning,.warning-text) {
+  background: #20203b !important;
+  color: #e4dcff !important;
+  border-color: #494667 !important;
+}
+html[data-theme="dark"] :where(.site-header,.site-footer,.dropdown-menu,.navigation-menu,.account-menu,dialog) {
+  background: #15162b !important;
+  color: #f5f3ff !important;
+  border-color: #343452 !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.35) !important;
+}
+html[data-theme="dark"] :where(.auth-side) {
+  background: linear-gradient(145deg,#242044,#15162b) !important;
+  color: #f5f3ff !important;
+}
+html[data-theme="dark"] :where(.icon-only-back) { color: #fff !important; }
+.at-theme-toggle-global {
+  position: fixed !important;
+  z-index: 10000 !important;
+  top: 14px !important;
+  right: 14px !important;
+  width: 44px !important;
+  height: 44px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid #d9c9f1 !important;
+  border-radius: 14px !important;
+  background: #f0e8ff !important;
+  color: #5b2ba8 !important;
+  box-shadow: 0 5px 20px rgba(30,20,60,.14) !important;
+  cursor: pointer !important;
+}
+html[data-theme="dark"] .at-theme-toggle-global {
+  background: #20203b !important;
+  color: #e2d9ff !important;
+  border-color: #494667 !important;
+}
+@media(max-width:760px) {
+  .at-theme-toggle-global { top: 10px !important; right: 10px !important; }
+  body:has(.auth-card) .at-theme-toggle-global { top: 12px !important; right: 12px !important; }
+}
+
+/* When a shared navigation header exists, keep the toggle inside its action row. */
+.at-nav-actions .at-theme-toggle-global { position: static !important; top: auto !important; right: auto !important; flex: 0 0 42px !important; }
