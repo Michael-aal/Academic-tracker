@@ -508,8 +508,8 @@ html[data-theme="dark"] :where(.site-header,.site-footer,.topbar,.compact-topbar
   border-color: #343452 !important;
 }
 html[data-theme="dark"] :where(.card,.panel,.auth-card,.uni-card,.tool-card,.resource-card,.support-card,.profile-card,.task-picker,.chat-card,.calculator-card,.feature-card,.step-card,.faq-item,.testimonial-card,.stat-card,.cta-panel,.chart-card,.preview-window,.question-card,.quiz-card,.note-card,.planner-card,.summary-card,.flashcard,.chat-container,.tutor-workspace,.modal,.modal-content,.result-panel,.tutor-chat-panel,.message-list,.profile-hero,.workspace-card,.report-card,.subject-card,.score-card,.study-card,.tool-panel,.learning-card,.video-card,.memory-card,.university-card,.mini-stats>div,.auth-side) {
-  background: #15162b !important;
-  background-color: #15162b !important;
+  background: #110d1b !important;
+  background-color: #110d1b !important;
   background-image: none !important;
   color: #f5f3ff !important;
   border-color: #343452 !important;
@@ -585,13 +585,13 @@ html[data-theme="dark"] :where(.form-error,.form-success,.error-text,.success-te
   border-color: #494667 !important;
 }
 html[data-theme="dark"] :where(.site-header,.site-footer,.dropdown-menu,.navigation-menu,.account-menu,dialog) {
-  background: #15162b !important;
+  background: #110d1b !important;
   color: #f5f3ff !important;
   border-color: #343452 !important;
   box-shadow: 0 16px 40px rgba(0,0,0,.35) !important;
 }
 html[data-theme="dark"] :where(.auth-side) {
-  background: linear-gradient(145deg,#242044,#15162b) !important;
+  background: linear-gradient(145deg,#242044,#110d1b) !important;
   color: #f5f3ff !important;
 }
 html[data-theme="dark"] :where(.icon-only-back) { color: #fff !important; }
@@ -637,8 +637,8 @@ html[data-theme="dark"] :where(
   color: #f5f3ff !important;
 }
 html[data-theme="dark"] :where(.uni-hero,.ai-hero) {
-  background: #15162b !important;
-  background-color: #15162b !important;
+  background: #110d1b !important;
+  background-color: #110d1b !important;
   background-image: none !important;
   color: #f5f3ff !important;
   border-color: #343452 !important;
