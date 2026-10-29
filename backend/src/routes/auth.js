@@ -55,7 +55,7 @@ router.post("/login", async (req, res, next) => {
   try {
     const email = cleanString(req.body?.email, 254).toLowerCase();
     const password = req.body?.password;
-    if (!email || typeof password !== "string" || !password) return res.status(400).json({ error: "Enter your email and password." });
+    if (!email || typeof password !== "string" || !password || Buffer.byteLength(password, "utf8") > 72) return res.status(400).json({ error: "Enter your email and a valid password." });
     const user = await prisma.user.findUnique({ where: { email } });
     // Match the password-check work for unknown emails to reduce account enumeration.
     const fallbackHash = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
