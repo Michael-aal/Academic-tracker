@@ -406,3 +406,11 @@ html[data-theme="light"] .ai-tutor-page .tutor-chat-messages .tutor-video-link {
   color: #5b2ba8 !important;
   border-color: #ddd1f0 !important;
 }
+
+
+.ai-tutor-page .tutor-composer-bottom button svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
