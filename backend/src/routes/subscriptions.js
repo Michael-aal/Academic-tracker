@@ -121,17 +121,22 @@ router.post("/webhook", async (req, res) => {
   const reference = typeof data.reference === "string" ? data.reference : "";
   if (eventName !== "charge.success" || !reference) return res.sendStatus(200);
   try {
-    const payment = await prisma.paymentTransaction.findUnique({ where: { reference } });
-    if (!payment) return res.sendStatus(200);
-    let paymentForEvent = payment;
+    let paymentForEvent = await prisma.paymentTransaction.findUnique({ where: { reference } });
     if (!paymentForEvent && typeof data.subscription?.subscription_code === "string") {
       const existingSubscription = await prisma.userSubscription.findFirst({ where: { providerSubscriptionCode: data.subscription.subscription_code }, orderBy: { createdAt: "desc" } });
-      if (existingSubscription && Number.isInteger(data.amount) && typeof data.currency === "string") {
-        paymentForEvent = await prisma.paymentTransaction.create({ data: {
-          userId: existingSubscription.userId, reference, planCode: existingSubscription.planCode,
-          amountMinor: data.amount, currency: data.currency.toUpperCase(), status: "PENDING",
-          metadata: { renewal: true, providerSubscriptionCode: data.subscription.subscription_code }
-        } });
+      const configuredPlan = existingSubscription && PLAN_CONFIG[existingSubscription.planCode];
+      if (existingSubscription && configuredPlan && Number.isInteger(data.amount) &&
+          data.amount === configuredPlan.amountUsdCents && String(data.currency || "").toUpperCase() === "USD") {
+        try {
+          paymentForEvent = await prisma.paymentTransaction.create({ data: {
+            userId: existingSubscription.userId, reference, planCode: existingSubscription.planCode,
+            amountMinor: configuredPlan.amountUsdCents, currency: "USD", status: "PENDING",
+            metadata: { renewal: true, providerSubscriptionCode: data.subscription.subscription_code }
+          } });
+        } catch (error) {
+          if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002")) throw error;
+          paymentForEvent = await prisma.paymentTransaction.findUnique({ where: { reference } });
+        }
       }
     }
     if (!paymentForEvent) return res.sendStatus(200);
