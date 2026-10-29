@@ -1,0 +1,187 @@
+/* Site-wide light theme correction.
+   Loaded after page styles by global-theme.js. Every rule is scoped to light mode,
+   so the deep-purple dark theme remains untouched. */
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f7f5fc;
+  --panel: #ffffff;
+  --panel2: #f1edf8;
+  --line: #e7def2;
+  --text: #281b3d;
+  --muted: #70647f;
+  --purple: #7545c8;
+  --purple-deep: #5b2ba8;
+}
+html[data-theme="light"],
+html[data-theme="light"] body {
+  background: #f7f5fc !important;
+  background-color: #f7f5fc !important;
+  background-image: none !important;
+  color: #281b3d !important;
+}
+html[data-theme="light"] :where(main, section, article, .app-shell, .main, .main-content,
+  .page-shell, .page-content, .content, .workspace, .workspace-main, .dashboard-content,
+  .site-main, .container, .section-wrap, .auth-main, .ai-shell, .quiz-page-shell,
+  .quiz-layout, .study-tools-shell, .profile-layout, .support-layout, .uni-layout) {
+  background-color: transparent !important;
+  background-image: none !important;
+  color: #281b3d !important;
+}
+html[data-theme="light"] :where(.site-header, .site-footer, .topbar, .compact-topbar,
+  .ai-topbar, .mm-topbar, .ev-topbar, .quiz-header, .at-global-header,
+  .at-nav-popover, .at-nav-menu, .dropdown-menu, .navigation-menu, .account-menu,
+  .ai-mobile-menu) {
+  background: rgba(255,255,255,.97) !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #281b3d !important;
+  border-color: #e7def2 !important;
+  box-shadow: 0 8px 26px rgba(70,43,112,.08) !important;
+}
+html[data-theme="light"] :where(.site-nav, .site-nav.open) {
+  background: #ffffff !important;
+  color: #281b3d !important;
+  border-color: #e7def2 !important;
+  box-shadow: 0 16px 36px rgba(70,43,112,.12) !important;
+}
+html[data-theme="light"] :where(.sidebar, .app-shell .sidebar, .mobile-nav, .at-mobile-nav) {
+  background: #7545c8 !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  border-color: #5b2ba8 !important;
+}
+html[data-theme="light"] :where(.sidebar a, .sidebar button, .sidebar .brand,
+  .sidebar .muted, .sidebar .nav-link, .sidebar .sidebar-note,
+  .mobile-nav a, .mobile-nav button, .at-mobile-nav a, .at-mobile-nav button) {
+  color: #ffffff !important;
+}
+html[data-theme="light"] :where(.card, .panel, .auth-card, .uni-card, .tool-card,
+  .resource-card, .support-card, .profile-card, .profile-panel, .profile-section,
+  .task-picker, .chat-card, .calculator-card, .feature-card, .step-card, .faq-item,
+  .testimonial-card, .stat-card, .chart-card, .preview-window, .question-card,
+  .quiz-card, .note-card, .planner-card, .summary-card, .flashcard, .chat-container,
+  .tutor-workspace, .modal, .modal-content, .result-panel, .tutor-chat-panel,
+  .message-list, .profile-hero, .workspace-card, .report-card, .subject-card,
+  .score-card, .study-card, .tool-panel, .learning-card, .video-card, .memory-card,
+  .university-card, .mini-stats > div, .why-card, .pathway-panel, .value-strip,
+  .preview-window, .preview-top, .score-art, .report-art, .offline-art) {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #281b3d !important;
+  border-color: #e7def2 !important;
+  box-shadow: 0 8px 28px rgba(70,43,112,.06) !important;
+}
+html[data-theme="light"] :where(.hero-visual, .how-section, .cta-panel, .cta-section,
+  .feature-section, .faq-section, .why-section, .value-strip, .site-footer,
+  .chart-card, .preview-content, .preview-top, .mini-stats > div) {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #281b3d !important;
+  border-color: #e7def2 !important;
+}
+html[data-theme="light"] :where(.auth-side, .auth-panel-accent) {
+  background: linear-gradient(145deg,#7545c8,#5b2ba8) !important;
+  color: #ffffff !important;
+}
+html[data-theme="light"] :where(.auth-side h1, .auth-side h2, .auth-side h3,
+  .auth-side p, .auth-side a, .auth-side span, .auth-side small) {
+  color: #ffffff !important;
+}
+html[data-theme="light"] :where(h1,h2,h3,h4,h5,h6,.card-title,.stat-value,.page-title,
+  .section-title,.page-heading h1,.preview-greeting h3,.chart-heading) {
+  color: #281b3d !important;
+}
+html[data-theme="light"] :where(p, .subtitle, .description, .helper-text, .muted,
+  .brand-muted, .caption, .meta, .timestamp, small, .stat-label, .stat-foot,
+  .hero-lede, .section-intro > p, .feature-card p, .step p, .faq-item p,
+  .trust-row p, .preview-greeting small, .mini-stats span, .mini-stats small) {
+  color: #70647f !important;
+}
+html[data-theme="light"] :where(strong,b,label,legend,th) { color: #281b3d !important; }
+html[data-theme="light"] :where(a:not(.button):not(.btn)) { color: #5b2ba8; }
+html[data-theme="light"] :where(.brand, .site-nav a:not(.button), .nav-login,
+  .text-link, .at-nav-brand, .at-nav-page-title) { color: #281b3d !important; }
+html[data-theme="light"] :where(.eyebrow,.section-kicker,.section-eyebrow,.feature-number,
+  .step-count,.result-label) { color: #6540a7 !important; }
+html[data-theme="light"] .gradient-text {
+  background: linear-gradient(100deg,#5b2ba8,#8b63d2) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  color: transparent !important;
+}
+html[data-theme="light"] :where(input,select,textarea,.form-control,[contenteditable="true"],
+  .calc-display,.calculator-display,.calculator-screen) {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #281b3d !important;
+  border-color: #d9cbe9 !important;
+}
+html[data-theme="light"] :where(input,textarea)::placeholder { color: #81758f !important; opacity: 1; }
+html[data-theme="light"] :where(.button,.btn,.button-primary,.button-small,.primary,
+  .submit-button,.btn-primary,.cta-button,.hero-actions .button,.quiz-submit,
+  .quiz-finish,.mm-primary,.mm-full) {
+  background: linear-gradient(135deg,#7545c8,#5b2ba8) !important;
+  background-color: #7545c8 !important;
+  color: #ffffff !important;
+  border-color: #7545c8 !important;
+}
+html[data-theme="light"] :where(.secondary,.button-secondary,.btn-secondary,
+  .button.secondary,.button.outline,.icon-button,.menu-trigger,.menu-toggle,
+  .show-password,.at-theme-toggle,.calc-key,.calc-key.utility,.calc-key.operator) {
+  background: #f1ebfa !important;
+  background-color: #f1ebfa !important;
+  color: #5b2ba8 !important;
+  border-color: #dfd2ef !important;
+}
+html[data-theme="light"] :where(.brand-icon,.brand-mark,.ai-brand-mark,.nav-brand-mark,
+  .feature-icon,.step-number,.icon-box,.subject-icon,.tool-icon,.value-icon) {
+  background: linear-gradient(145deg,#8b63d2,#5b2ba8) !important;
+  color: #ffffff !important;
+  border-color: #7545c8 !important;
+}
+html[data-theme="light"] :where(.progress-track,.bar,.calc-history,.status-pill,.secure-label,
+  .local-pill,.badge,.pill,.tutor-prompt,.tutor-prompt-card,.quick-prompt,.empty,
+  .empty-state,.answer-option,.tool-choice.active,.pathway-tab.active) {
+  background: #f4effa !important;
+  background-color: #f4effa !important;
+  color: #5b2ba8 !important;
+  border-color: #e7def2 !important;
+}
+html[data-theme="light"] :where(.progress-fill,.bar i) {
+  background: linear-gradient(90deg,#5b2ba8,#9873dc) !important;
+}
+html[data-theme="light"] :where(.dropdown-item,.at-nav-menu a,.at-nav-menu button) {
+  color: #4b3b60 !important;
+}
+html[data-theme="light"] :where(.dropdown-item:hover,.at-nav-menu a:hover,
+  .at-nav-menu button:hover,.dropdown-item.active,.at-nav-menu a[aria-current="page"]) {
+  background: #f1ebfa !important;
+  color: #5b2ba8 !important;
+}
+html[data-theme="light"] :where(.menu-separator,.menu-separator hr,.divider,hr) {
+  border-color: #e7def2 !important;
+}
+html[data-theme="light"] :where(.app-shell .nav-link.active,.app-shell .nav-link:hover,
+  .mobile-nav .active,.at-mobile-nav .at-nav-active) {
+  background: rgba(255,255,255,.18) !important;
+  color: #ffffff !important;
+}
+html[data-theme="light"] :where(.at-nav-icon-button) {
+  background: #f4effa !important;
+  color: #5b2ba8 !important;
+  border-color: #e7def2 !important;
+}
+html[data-theme="light"] :where(.error,.form-error,[role="alert"]) { color: #a32638 !important; }
+html[data-theme="light"] :where(.success,.form-success,[role="status"]) { color: #216e4a !important; }
+@media (max-width: 760px) {
+  html[data-theme="light"] :where(.site-nav,.site-nav.open) {
+    background: #ffffff !important;
+    border: 1px solid #e7def2 !important;
+    box-shadow: 0 18px 40px rgba(70,43,112,.16) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme="light"] body { transition: none !important; }
+}
