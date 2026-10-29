@@ -3,6 +3,7 @@ const rateLimit = require("express-rate-limit");
 const { requireAuth } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/admin");
 const { prisma } = require("../prisma");
+const { reserveAiUsage, releaseAiUsage } = require("../ai-quota");
 const { validateQuiz, publicQuiz, markQuiz } = require("../quiz-schema");
 
 const router = express.Router();
@@ -12,7 +13,7 @@ const MAX_INPUT_CHARS = 12000;
 const ACTIONS = new Set(["tutor", "quiz", "summarize", "study-plan", "flashcards"]);
 const aiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 10,
+  limit: 30,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   keyGenerator: (req) => req.userId,
@@ -162,12 +163,21 @@ router.post("/", aiLimiter, async (req, res) => {
   // Ten-question quizzes need substantially more generation time than short tutor replies.
   const requestTimeoutMs = action === "quiz" ? 90000 : 45000;
   const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
+  let quotaReservation = null;
+  let quotaCompleted = false;
 
   try {
     const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } });
     if (!user) return res.status(401).json({ error: "Account not found. Please sign in again." });
     const courses = user.educationTrack === "HIGHER" ? await prisma.universityCourse.findMany({ where: { userId: req.userId }, select: { code: true, title: true, creditUnits: true, targetScore: true, results: { orderBy: { updatedAt: "desc" }, take: 6, select: { academicYear: true, semester: true, caScore: true, examScore: true } } }, orderBy: { code: "asc" }, take: 60 }) : [];
     const studentProfile = { ...user, courses };
+    quotaReservation = await reserveAiUsage(req.userId, action);
+    if (!quotaReservation.allowed) {
+      const message = quotaReservation.reason === "DAILY_LIMIT"
+        ? "You have used today's AI allowance. Free accounts get 5 AI requests per UTC day; Pro has higher tool-specific limits."
+        : "You have reached this AI tool's daily limit. Try another study tool or check the Pro plan limits.";
+      return res.status(429).json({ error: message, code: quotaReservation.reason, plan: quotaReservation.isPro ? "PRO" : "FREE", used: quotaReservation.used, limit: quotaReservation.limit, toolUsed: quotaReservation.toolUsed, toolLimit: quotaReservation.toolLimit });
+    }
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       signal: controller.signal,
@@ -297,14 +307,19 @@ router.post("/", aiLimiter, async (req, res) => {
         }
       }
       const attempt = await prisma.aiQuizAttempt.create({ data: { userId: req.userId, title: quiz.title, subject, topic, difficulty, questionData: quiz, status: "IN_PROGRESS" }, select: { id: true } });
+      quotaCompleted = true;
       return res.status(201).json({ quiz: publicQuiz(quiz), attemptId: attempt.id, action, model });
     }
+    quotaCompleted = true;
     res.json({ answer: answer.trim(), action, model });
   } catch (error) {
     if (error.name === "AbortError") return res.status(504).json({ error: "The AI request took too long. Please try again." });
     console.error("AI request error:", error.message);
     res.status(502).json({ error: "Could not reach the AI provider. Check the server connection and try again." });
   } finally {
+    if (quotaReservation?.allowed && !quotaCompleted) {
+      await releaseAiUsage(req.userId, quotaReservation).catch(error => console.error("Could not refund failed AI usage reservation:", error.message));
+    }
     clearTimeout(timeout);
   }
 });
