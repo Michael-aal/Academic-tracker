@@ -266,3 +266,143 @@
 @media (prefers-reduced-motion:reduce) {
   .ai-tutor-page * { scroll-behavior:auto!important; }
 }
+
+
+/* UI rescue: keep the tutor inside the Academic Tracker purple identity. */
+.ai-tutor-page {
+  --tutor-bg: #0b0812;
+  --tutor-panel: #110d1b;
+  --tutor-panel-2: #171123;
+  --tutor-line: #302440;
+  --tutor-text: #f5f3ff;
+  --tutor-muted: #b8aec9;
+  --tutor-mint: #b69cff;
+  --tutor-mint-deep: #30204d;
+  background: radial-gradient(ellipse at 52% -18%, rgba(109,40,217,.18), transparent 47%), var(--tutor-bg);
+  color: var(--tutor-text);
+}
+.ai-tutor-page .ai-brand-mark,
+.ai-tutor-page .tutor-avatar,
+.ai-tutor-page .welcome-orb {
+  background: linear-gradient(145deg,#b69cff,#8057f5 68%,#6038d5);
+  color: #fff;
+  box-shadow: 0 0 0 5px rgba(167,139,250,.08), 0 10px 28px rgba(80,45,150,.16);
+}
+.ai-tutor-page .tutor-composer-panel {
+  border-color: rgba(167,139,250,.24);
+  background: rgba(17,13,27,.98);
+}
+.ai-tutor-page .tutor-composer textarea {
+  min-height: 44px;
+  max-height: 180px;
+  height: 44px;
+  resize: none;
+  overflow-y: hidden;
+  border-color: transparent;
+  background: transparent;
+}
+.ai-tutor-page .tutor-composer textarea:focus-visible {
+  outline: 2px solid #b69cff !important;
+  outline-offset: 2px;
+}
+.ai-tutor-page .tutor-composer-bottom button {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  padding: 0;
+  border-radius: 50%;
+  background: linear-gradient(145deg,#b69cff,#8057f5);
+  color: #160d25;
+  border: 0;
+}
+.ai-tutor-page .tutor-composer-bottom button:hover { background: #cbb8ff; }
+.ai-tutor-page .tutor-composer-bottom button:focus-visible {
+  outline: 2px solid #d8ccff !important;
+  outline-offset: 3px;
+}
+.ai-tutor-page .tutor-composer-bottom button:disabled { opacity: .48; }
+.ai-tutor-page .tutor-chat-messages .tutor-message-student {
+  background: #25183a;
+  border-color: rgba(182,156,255,.25);
+}
+.ai-tutor-page .tutor-chat-messages .tutor-video-link {
+  color: #d8ccff;
+  border-color: rgba(182,156,255,.28);
+  background: rgba(128,87,245,.1);
+}
+.ai-tutor-page .tutor-prompt-grid button:hover {
+  border-color: rgba(182,156,255,.48);
+  background: #171123;
+}
+.ai-tutor-page .ai-global-nav a:hover,
+.ai-tutor-page .ai-global-nav button:hover { color: #cbb8ff; }
+
+/* The light theme remains explicitly light on the tutor page only. */
+html[data-theme="light"] .ai-tutor-page {
+  --tutor-bg: #f7f5fc;
+  --tutor-panel: #ffffff;
+  --tutor-panel-2: #f1edf7;
+  --tutor-line: #e4dced;
+  --tutor-text: #291b42;
+  --tutor-muted: #75698a;
+  --tutor-mint: #7545c8;
+  background: #f7f5fc !important;
+  color: #291b42 !important;
+}
+html[data-theme="light"] .ai-tutor-page .ai-topbar,
+html[data-theme="light"] .ai-tutor-page .at-global-header {
+  background: rgba(247,245,252,.97) !important;
+  border-color: #e4dced !important;
+}
+html[data-theme="light"] .ai-tutor-page .ai-brand,
+html[data-theme="light"] .ai-tutor-page .ai-global-nav a,
+html[data-theme="light"] .ai-tutor-page .ai-global-nav button,
+html[data-theme="light"] .ai-tutor-page .tutor-heading-copy h1,
+html[data-theme="light"] .ai-tutor-page .tutor-welcome h2 {
+  color: #291b42 !important;
+}
+html[data-theme="light"] .ai-tutor-page .tutor-heading-copy>p:last-child,
+html[data-theme="light"] .ai-tutor-page .tutor-welcome>p:not(.tutor-eyebrow),
+html[data-theme="light"] .ai-tutor-page .tutor-composer-bottom p {
+  color: #75698a !important;
+}
+html[data-theme="light"] .ai-tutor-page .tutor-composer-panel {
+  background: #ffffff !important;
+  border-color: #e4dced !important;
+  box-shadow: 0 8px 28px rgba(47,28,82,.08);
+}
+html[data-theme="light"] .ai-tutor-page .tutor-composer textarea {
+  color: #291b42 !important;
+  background: #ffffff !important;
+}
+html[data-theme="light"] .ai-tutor-page .tutor-composer textarea::placeholder { color: #75698a !important; }
+html[data-theme="light"] .ai-tutor-page .tutor-prompt-grid button {
+  background: #ffffff !important;
+  border-color: #e4dced !important;
+  color: #291b42 !important;
+}
+html[data-theme="light"] .ai-tutor-page .tutor-chat-messages .tutor-message-student {
+  background: #eee8f8 !important;
+  color: #33234e !important;
+  border-color: #ddd1f0 !important;
+}
+html[data-theme="light"] .ai-tutor-page .tutor-chat-messages .tutor-message:not(.tutor-message-student) {
+  color: #291b42 !important;
+}
+html[data-theme="light"] .ai-tutor-page .tutor-chat-messages .tutor-message-body,
+html[data-theme="light"] .ai-tutor-page .tutor-chat-messages .tutor-message-body h1,
+html[data-theme="light"] .ai-tutor-page .tutor-chat-messages .tutor-message-body h2,
+html[data-theme="light"] .ai-tutor-page .tutor-chat-messages .tutor-message-body h3 {
+  color: #291b42 !important;
+}
+html[data-theme="light"] .ai-tutor-page .tutor-chat-messages .tutor-message-body pre {
+  background: #f1edf7 !important;
+  border-color: #e4dced !important;
+}
+html[data-theme="light"] .ai-tutor-page .tutor-chat-messages .tutor-message-body code { color: #5b2ba8 !important; }
+html[data-theme="light"] .ai-tutor-page .tutor-chat-messages .tutor-video-link {
+  background: #f1edf7 !important;
+  color: #5b2ba8 !important;
+  border-color: #ddd1f0 !important;
+}
