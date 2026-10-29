@@ -3,7 +3,10 @@ require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 
 // Keep the exact production frontend allowed if Render's environment
 // variable is missing or still contains an old Vercel deployment URL.
-const productionOrigins = ["https://academic-tracker-nu.vercel.app"];
+const productionOrigins = [
+  "https://academic-tracker-nu.vercel.app",
+  "https://academic-tracker-iota.vercel.app"
+];
 const configuredOrigins = (process.env.FRONTEND_ORIGIN || "http://localhost:5173,http://127.0.0.1:5500")
   .split(",")
   .map((origin) => origin.trim())
