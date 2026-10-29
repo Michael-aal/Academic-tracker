@@ -8,3 +8,14 @@
 .icon-only-back:hover{transform:translateX(-2px);filter:brightness(1.1)}
 .icon-only-back:focus-visible{outline:2px solid #C4B5FD;outline-offset:3px}
 @media(max-width:760px){.icon-only-back{margin-bottom:24px}}
+
+
+/* Align the mobile brand and back control on one compact, predictable row. */
+.auth-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;margin:0 0 28px;min-width:0}
+.auth-topbar .mobile-brand{display:inline-flex;align-items:center;gap:10px;margin:0;min-width:0}
+.auth-topbar .back-link.icon-only-back{flex:0 0 42px;margin:0 0 0 auto}
+.auth-topbar .icon-only-back{background:transparent!important;background-image:none!important;color:var(--purple-soft,#b69cff)!important;border:1px solid var(--line,rgba(167,139,250,.28))!important;box-shadow:none!important}
+.auth-topbar .icon-only-back:hover{background:rgba(182,156,255,.08)!important;filter:none}
+.auth-topbar .icon-only-back svg{stroke:currentColor}
+@media(max-width:760px){.auth-topbar{margin-bottom:32px}.auth-topbar .mobile-brand{font-size:15px}.auth-topbar .mobile-brand .brand-icon{flex:0 0 34px}}
+@media(max-width:350px){.auth-topbar{gap:8px}.auth-topbar .mobile-brand{font-size:13px}.auth-topbar .mobile-brand .brand-icon{width:30px;height:30px;flex-basis:30px}}
