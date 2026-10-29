@@ -416,10 +416,11 @@
 
   $("learning-form").addEventListener("submit", async event => {
     event.preventDefault();
+    const button = $("submit-learning");
+    if (button.disabled) return;
     const content = $("content").value.trim();
     const topic = ($("topic")?.value || "").trim();
     if ((!content && !topic) || (state.action === "tutor" && state.conversation.length && !content)) { setNotice(state.action === "tutor" && state.conversation.length ? "Ask a follow-up question or paste the next part of your notes first." : "Enter a question, topic, or notes first.", true); return; }
-    const button = $("submit-learning");
     button.disabled = true;
     $("submit-label").textContent = state.action === "quiz" ? "Generating your quiz…" : "Working on your request…";
     setNotice("Preparing your study response. This may take a few seconds.");
@@ -458,6 +459,7 @@
           renderTutorConversation($("result-content"), topic || content, ($("subject")?.value || "").trim());
           $("result-title").textContent = "Your tutoring conversation";
           $("content").value = "";
+          $("content").dispatchEvent(new Event("input", { bubbles: true }));
           $("content").placeholder = "Ask a follow-up question or paste another part of your notes…";
           $("char-count").textContent = "0 / 12,000 characters";
         } else {
