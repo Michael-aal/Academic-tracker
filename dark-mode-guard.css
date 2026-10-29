@@ -27,11 +27,7 @@ html[data-theme="dark"] body {
 /* Neutralize the common light surfaces used across page-specific stylesheets. */
 html[data-theme="dark"] :where(
   dialog,
-  .app-shell, .main, .main-content, .page-shell, .page-content, .content,
-  .workspace, .workspace-main, .site-main, .dashboard-content, .section-wrap,
-  .auth-main, .auth-card, .auth-side, .tutor-layout, .tutor-main, .ai-shell,
-  .quiz-page-shell, .quiz-layout, .study-tools-shell, .profile-layout,
-  .support-layout, .uni-layout, .container, .site-header, .site-footer,
+  .auth-card, .auth-side, .site-header, .site-footer,
   .topbar, .compact-topbar, .ai-topbar, .mm-topbar, .at-global-header,
   .at-nav-popover, .at-nav-menu, .dropdown-menu, .navigation-menu, .account-menu,
   .card, .panel, .uni-card, .tool-card, .resource-card, .support-card,
