@@ -92,7 +92,7 @@ body {
 }
 :where(.sidebar a,.sidebar button,.sidebar .brand,.sidebar .muted,
   .sidebar .nav-link,.sidebar .sidebar-note) { color: #fff !important; }
-:where(.site-nav,.ai-global-nav) { background: #fff; color: var(--text); }
+html[data-theme="light"] :where(.site-nav,.ai-global-nav) { background: #fff; color: var(--text); }
 :where(.site-nav a:not(.button),.ai-global-nav a:not(.button),.ai-global-nav button) { color: var(--purple-deep); }
 
 /* Cards and panels are white, with a quiet lavender outline and shadow. */
@@ -501,7 +501,7 @@ html[data-theme="dark"], html[data-theme="dark"] body {
 html[data-theme="dark"] body {
   background-image: radial-gradient(ellipse at 80% -20%, #242044 0, transparent 48%) !important;
 }
-html[data-theme="dark"] :where(.app-shell,.main,.main-content,.page-shell,.page-content,.content,.workspace,.workspace-main,.auth-main,.tutor-layout,.tutor-main,.ai-shell,.quiz-page-shell,.quiz-layout,.study-tools-shell,.profile-layout,.support-layout,.uni-layout,.container,.site-main,.dashboard-content,.section-wrap,.site-header,.site-footer,.topbar,.compact-topbar,.ai-topbar,.mm-topbar,.ev-topbar,.at-global-header,.at-nav-popover,.at-nav-menu,.dropdown-menu,.navigation-menu,.account-menu,.ai-mobile-menu) {
+html[data-theme="dark"] :where(.site-header,.site-footer,.topbar,.compact-topbar,.ai-topbar,.mm-topbar,.ev-topbar,.at-global-header,.at-nav-popover,.at-nav-menu,.dropdown-menu,.navigation-menu,.account-menu,.ai-mobile-menu) {
   background-color: #101123 !important;
   background-image: none !important;
   color: #f5f3ff !important;
@@ -623,15 +623,3 @@ html[data-theme="dark"] .at-theme-toggle-global {
 
 /* When a shared navigation header exists, keep the toggle inside its action row. */
 .at-nav-actions .at-theme-toggle-global { position: static !important; top: auto !important; right: auto !important; flex: 0 0 42px !important; }
-
-
-/* Dark-mode hardening: auth back controls must never inherit the light-theme tile. */
-html[data-theme="dark"] body[data-mode="login"] .icon-only-back,
-html[data-theme="dark"] body[data-mode="register"] .icon-only-back {
-  color: #ffffff !important;
-  background: #20203b !important;
-  background-color: #20203b !important;
-  background-image: none !important;
-  border-color: #494667 !important;
-  box-shadow: none !important;
-}
