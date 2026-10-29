@@ -9,6 +9,36 @@
   const $ = s => document.querySelector(s);
   const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const num = v => Number.isFinite(Number(v)) ? Number(v) : 0;
+  const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
+  function validImportedState(data) {
+    if (!isRecord(data) || !Array.isArray(data.subjects) || !isRecord(data.scores)) return false;
+    if (data.targets !== undefined && !isRecord(data.targets)) return false;
+    if (data.assessments !== undefined && !isRecord(data.assessments)) return false;
+    const safeId = /^[A-Za-z0-9_-]{1,100}$/;
+    const subjectIds = new Set();
+    for (const subject of data.subjects) {
+      if (!isRecord(subject) || typeof subject.id !== "string" || !safeId.test(subject.id) ||
+          typeof subject.name !== "string" || !subject.name.trim() || subject.name.length > 100 ||
+          subjectIds.has(subject.id)) return false;
+      subjectIds.add(subject.id);
+      const items = data.assessments?.[subject.id];
+      if (items === undefined) continue;
+      if (!Array.isArray(items) || items.length > 30) return false;
+      const itemIds = new Set();
+      let exams = 0;
+      for (const item of items) {
+        if (!isRecord(item) || typeof item.id !== "string" || !safeId.test(item.id) ||
+            itemIds.has(item.id) || typeof item.name !== "string" || !item.name.trim() ||
+            item.name.length > 50 || !Number.isFinite(Number(item.max)) ||
+            Number(item.max) < 1 || Number(item.max) > 100 ||
+            !["TEST", "ASSIGNMENT", "EXAM"].includes(item.type)) return false;
+        itemIds.add(item.id);
+        if (item.type === "EXAM") exams += 1;
+      }
+      if (exams > 1) return false;
+    }
+    return true;
+  }
   const dbOpen = () => new Promise((resolve,reject) => {
     if (!("indexedDB" in window)) return resolve(null);
     const req = indexedDB.open(DB_NAME,1);
@@ -86,7 +116,7 @@
     return '<p class="notice">Default secondary-school setup: three tests and one final exam. Customize each subject independently. Scores and assessment setups are saved on this device. Assessment maximums should match your teacher’s marking scheme.</p><div class="button-row" style="margin:14px 0"><button class="button secondary" data-action="add-subject">＋ Add subject</button></div><div class="grid">'+cards+'</div><p class="notice">For each subject, add as many tests or assignments as needed. Only one final exam is allowed in a subject setup. “Apply this setup to all subjects” copies the selected subject’s assessment structure to every subject.</p>';
   }
   function subjectsView() {
-    return '<article class="card">'+heading("Your subjects","Add, rename, or remove subjects",'<button class="button primary" data-action="add-subject">＋ Add subject</button>')+(state.subjects.length?state.subjects.map(s=>'<div class="subject-row"><div class="subject-icon">'+esc(s.name.slice(0,1).toUpperCase())+'</div><div class="subject-info"><strong>'+esc(s.name)+'</strong><small>Target: '+targetFor(s.id)+'% · '+getEntered(s.id)+' scores entered</small></div><button class="button secondary" data-action="rename-subject" data-id="'+s.id+'">Rename</button><button class="button danger" data-action="delete-subject" data-id="'+s.id+'">Remove</button></div>').join(""):'<div class="empty"><strong>No subjects yet</strong>Add the subjects you want to track.</div>')+'</article><p class="notice">Removing a subject also removes its scores from this device. Export a backup first if you may need the records later.</p>';
+    return '<article class="card">'+heading("Your subjects","Add, rename, or remove subjects",'<button class="button primary" data-action="add-subject">＋ Add subject</button>')+(state.subjects.length?state.subjects.map(s=>'<div class="subject-row"><div class="subject-icon">'+esc(s.name.slice(0,1).toUpperCase())+'</div><div class="subject-info"><strong>'+esc(s.name)+'</strong><small>Target: '+targetFor(s.id)+'% · '+getEntered(s.id)+' scores entered</small></div><button class="button secondary" data-action="rename-subject" data-id="'+esc(s.id)+'">Rename</button><button class="button danger" data-action="delete-subject" data-id="'+esc(s.id)+'">Remove</button></div>').join(""):'<div class="empty"><strong>No subjects yet</strong>Add the subjects you want to track.</div>')+'</article><p class="notice">Removing a subject also removes its scores from this device. Export a backup first if you may need the records later.</p>';
   }
   function reportsView() {
     if(!state.subjects.length) return '<article class="card"><div class="empty"><strong>No report yet</strong>Add subjects and enter assessment marks to build your report.</div></article>';
@@ -95,7 +125,7 @@
     return '<div class="grid content-grid"><article class="card"><p class="eyebrow">CURRENT TERM REPORT</p><h2>'+esc(state.term)+' · '+esc(state.academicYear)+'</h2><div class="report-total">'+(list.length?overall+'%':'—')+'</div><p class="notice">Average of subjects with at least one entered mark. This remains a progress estimate until all configured assessments are entered.</p><div class="progress-track"><div class="progress-fill" style="width:'+overall+'%"></div></div><div class="progress-row"><span>Subjects with marks</span><strong>'+list.length+'/'+state.subjects.length+'</strong></div><div class="progress-row"><span>Fully entered subjects</span><strong>'+state.subjects.filter(subject=>isComplete(subject.id)).length+'/'+state.subjects.length+'</strong></div></article><article class="card"><h3>What to focus on next</h3>'+(sorted.length?sorted.slice(0,3).map(subject=>'<div class="subject-row"><div class="subject-icon">'+esc(subject.name.slice(0,1).toUpperCase())+'</div><div class="subject-info"><strong>'+esc(subject.name)+'</strong><small>'+pct(subject.id)+'% · target '+targetFor(subject.id)+'%</small></div><span class="badge '+(pct(subject.id)<targetFor(subject.id)?'warn':'')+'">'+(pct(subject.id)<targetFor(subject.id)?'Below target':'On target')+'</span></div>').join(''):'<p class="notice">Enter marks to identify subjects needing attention.</p>')+'<p class="notice">Review returned scripts, topics missed, practice questions and teacher feedback before choosing a study strategy.</p></article></div>'+heading('Subject breakdown','All configured assessments and target comparisons')+'<article class="card"><div class="table-wrap"><table><thead><tr><th>Subject</th><th>Assessment marks</th><th>Total</th><th>Target</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div></article>';
   }
   function settingsView() {
-    return '<div class="grid settings-grid"><article class="card"><h2>Academic period</h2><p class="notice">Choose the current year and term. Your subjects and scores remain saved separately for each period.</p><label class="field">Academic year<input id="academic-year" value="'+esc(state.academicYear)+'" placeholder="2026–2027" maxlength="30"></label><br><label class="field">Current term<select id="current-term">'+["Term 1","Term 2","Term 3"].map(t=>'<option '+(state.term===t?"selected":"")+'>'+t+'</option>').join("")+'</select></label><br><button class="button primary" data-action="save-period">Save period</button></article><article class="card"><h2>Backup & restore</h2><p class="notice">Your records are stored in this browser on this device. Export backups regularly so you can recover your records if browser data is cleared.</p><div class="button-row"><button class="button primary" data-action="export">Download JSON backup</button><button class="button secondary" data-action="import">Restore JSON backup</button></div><p class="notice" style="margin-top:15px">Restore replaces the current tracker data. Export a backup first if you want to keep a copy of the current records.</p></article><article class="card"><h2>Score targets</h2><p class="notice">Targets are stored separately from actual marks. Set a target per subject here.</p>'+state.subjects.map(s=>'<div class="subject-row"><div class="subject-info"><strong>'+esc(s.name)+'</strong><small>Target percentage</small></div><input class="target-input" aria-label="'+esc(s.name)+' target" type="number" min="0" max="100" value="'+targetFor(s.id)+'" data-target="'+s.id+'">%</div>').join("")+'<button class="button primary" data-action="save-targets" style="margin-top:15px">Save targets</button></article><article class="card"><h2>About your data</h2><p class="notice">Academic Tracker is an offline-first personal PWA. It does not upload your marks to a server. Keep your phone protected and store backups somewhere you trust.</p><div class="callout">Last saved: '+esc(new Date(state.updatedAt).toLocaleString())+'</div></article></div>';
+    return '<div class="grid settings-grid"><article class="card"><h2>Academic period</h2><p class="notice">Choose the current year and term. Your subjects and scores remain saved separately for each period.</p><label class="field">Academic year<input id="academic-year" value="'+esc(state.academicYear)+'" placeholder="2026–2027" maxlength="30"></label><br><label class="field">Current term<select id="current-term">'+["Term 1","Term 2","Term 3"].map(t=>'<option '+(state.term===t?"selected":"")+'>'+t+'</option>').join("")+'</select></label><br><button class="button primary" data-action="save-period">Save period</button></article><article class="card"><h2>Backup & restore</h2><p class="notice">Your records are stored in this browser on this device. Export backups regularly so you can recover your records if browser data is cleared.</p><div class="button-row"><button class="button primary" data-action="export">Download JSON backup</button><button class="button secondary" data-action="import">Restore JSON backup</button></div><p class="notice" style="margin-top:15px">Restore replaces the current tracker data. Export a backup first if you want to keep a copy of the current records.</p></article><article class="card"><h2>Score targets</h2><p class="notice">Targets are stored separately from actual marks. Set a target per subject here.</p>'+state.subjects.map(s=>'<div class="subject-row"><div class="subject-info"><strong>'+esc(s.name)+'</strong><small>Target percentage</small></div><input class="target-input" aria-label="'+esc(s.name)+' target" type="number" min="0" max="100" value="'+targetFor(s.id)+'" data-target="'+esc(s.id)+'">%</div>').join("")+'<button class="button primary" data-action="save-targets" style="margin-top:15px">Save targets</button></article><article class="card"><h2>About your data</h2><p class="notice">Academic Tracker is an offline-first personal PWA. It does not upload your marks to a server. Keep your phone protected and store backups somewhere you trust.</p><div class="callout">Last saved: '+esc(new Date(state.updatedAt).toLocaleString())+'</div></article></div>';
   }
   function focusView() {
     let session=focusSession();
@@ -163,7 +193,7 @@
   async function importBackup(file) {
     if(!file) return;
     try { const parsed=JSON.parse(await file.text()), data=parsed.data||parsed;
-      if(!data||!Array.isArray(data.subjects)||typeof data.scores!=="object") throw new Error("This file does not look like an Academic Tracker backup.");
+      if(!validImportedState(data)) throw new Error("This backup contains invalid or unsupported tracker data.");
       if(!confirm("Restore this backup? It will replace the tracker data currently on this device.")) return;
       state={...defaults(),...data}; await save(); alert("Backup restored.");
     } catch(e) { alert("Could not restore backup: "+e.message); }
