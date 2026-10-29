@@ -1,0 +1,116 @@
+/* Dark-mode consistency guard for every Academic Tracker route.
+   White text is allowed; white/light surfaces are not. */
+html[data-theme="dark"] {
+  color-scheme: dark !important;
+  --bg: #0b0b16 !important;
+  --panel: #121326 !important;
+  --panel2: #191a32 !important;
+  --line: #343452 !important;
+  --text: #ffffff !important;
+  --muted: #c0bbd6 !important;
+  --ui-bg: #0b0b16 !important;
+  --ui-surface: #121326 !important;
+  --ui-surface-raised: #191a32 !important;
+  --ui-surface-soft: #20203d !important;
+  --ui-border: #343452 !important;
+  --ui-text: #ffffff !important;
+  --ui-muted: #c0bbd6 !important;
+  --ui-accent: #c4b5fd !important;
+  background: #0b0b16 !important;
+  color: #ffffff !important;
+}
+html[data-theme="dark"] body {
+  background: #0b0b16 !important;
+  background-image: radial-gradient(ellipse at 80% -20%, #201b38 0, transparent 48%) !important;
+  color: #ffffff !important;
+}
+/* Neutralize the common light surfaces used across page-specific stylesheets. */
+html[data-theme="dark"] :where(
+  main, section, article, aside, header, footer, nav, form, fieldset, dialog,
+  .app-shell, .main, .main-content, .page-shell, .page-content, .content,
+  .workspace, .workspace-main, .site-main, .dashboard-content, .section-wrap,
+  .auth-main, .auth-card, .auth-side, .tutor-layout, .tutor-main, .ai-shell,
+  .quiz-page-shell, .quiz-layout, .study-tools-shell, .profile-layout,
+  .support-layout, .uni-layout, .container, .site-header, .site-footer,
+  .topbar, .compact-topbar, .ai-topbar, .mm-topbar, .at-global-header,
+  .at-nav-popover, .at-nav-menu, .dropdown-menu, .navigation-menu, .account-menu,
+  .card, .panel, .uni-card, .tool-card, .resource-card, .support-card,
+  .profile-card, .task-picker, .chat-card, .calculator-card, .feature-card,
+  .step-card, .faq-item, .testimonial-card, .stat-card, .cta-panel, .chart-card,
+  .preview-window, .question-card, .quiz-card, .note-card, .planner-card,
+  .summary-card, .flashcard, .chat-container, .tutor-workspace, .modal,
+  .modal-content, .result-panel, .tutor-chat-panel, .message-list, .profile-hero,
+  .workspace-card, .report-card, .subject-card, .score-card, .study-card,
+  .tool-panel, .learning-card, .video-card, .memory-card, .university-card,
+  .mini-stats > div, .auth-side, .track-card, .answer-option, .tool-choice,
+  .dropdown, .popover, .menu-panel, .feature, .stat, .faq-card, .step,
+  .calculator-screen, .calc-display, .calc-history, .empty-state
+) {
+  color: #ffffff !important;
+  background-color: #121326 !important;
+  border-color: #343452 !important;
+  box-shadow: none;
+}
+html[data-theme="dark"] :where(input, select, textarea, button, [contenteditable="true"]) {
+  color: #ffffff;
+  border-color: #494667;
+}
+html[data-theme="dark"] :where(input, select, textarea, [contenteditable="true"]) {
+  background-color: #0d0e20 !important;
+}
+html[data-theme="dark"] :where(input, textarea, select)::placeholder {
+  color: #c0bbd6 !important;
+  opacity: 1;
+}
+html[data-theme="dark"] :where(h1,h2,h3,h4,h5,h6,p,span,small,strong,em,label,legend,li,dt,dd,summary,figcaption,caption) {
+  color: inherit;
+}
+html[data-theme="dark"] :where(.muted,.caption,.meta,.timestamp,.stat-label,.notice,.auth-subtitle,.privacy-note,.side-foot,.field,.eyebrow,.section-kicker,.menu-caption) {
+  color: #c0bbd6 !important;
+}
+html[data-theme="dark"] :where(a,.form-meta a,.inline-link,.auth-switch a,.terms a,.text-link,.nav-login) {
+  color: #d8ccff;
+}
+html[data-theme="dark"] :where(.button,.btn,.button-primary,.primary,.submit-button,.cta-button,.btn-primary,button[type="submit"]) {
+  background: linear-gradient(135deg,#9b7cff,#7654e8) !important;
+  color: #ffffff !important;
+  border-color: #a78bfa !important;
+}
+html[data-theme="dark"] :where(.secondary,.button-secondary,.icon-button,.menu-trigger,.menu-toggle,.show-password,.at-theme-toggle,.calc-key,.track-card) {
+  color: #ffffff !important;
+  background: #20203b !important;
+  border-color: #494667 !important;
+}
+html[data-theme="dark"] :where(.brand-icon,.brand-mark,.at-nav-brand-mark,.feature-icon,.step-number,.icon-box,.subject-icon,.tool-icon,.value-icon) {
+  color: #ffffff !important;
+  background: linear-gradient(145deg,#9b7cff,#6544d8) !important;
+}
+html[data-theme="dark"] :where(.nav-link.active,.nav-link:hover,.dropdown-item.active,.dropdown-item:hover,.pathway-tab.active,.answer-option,.tool-choice.active) {
+  background-color: #30284e !important;
+  color: #ffffff !important;
+  border-color: #66549a !important;
+}
+/* Login/register back arrow: fixed, predictable hit target; no overlap with brand or heading. */
+body[data-mode="login"] .auth-card,
+body[data-mode="register"] .auth-card { position: relative; }
+body[data-mode="login"] .icon-only-back,
+body[data-mode="register"] .icon-only-back {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin: 0 0 24px;
+  padding: 0;
+  flex: 0 0 42px;
+  line-height: 1;
+  vertical-align: middle;
+}
+body[data-mode="login"] .icon-only-back svg,
+body[data-mode="register"] .icon-only-back svg { display: block; width: 21px; height: 21px; margin: 0; }
+/* Auth screens are compact on phones: omit the theme switch there. Keep it on tablets/desktops. */
+@media (max-width: 760px) {
+  body[data-mode="login"] .at-theme-toggle-global,
+  body[data-mode="register"] .at-theme-toggle-global,
+  body[data-mode="login"] #at-theme-toggle,
+  body[data-mode="register"] #at-theme-toggle { display: none !important; }
+}
