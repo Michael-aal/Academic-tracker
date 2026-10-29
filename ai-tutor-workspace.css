@@ -414,3 +414,95 @@ html[data-theme="light"] .ai-tutor-page .tutor-chat-messages .tutor-video-link {
   height: 18px;
   flex: 0 0 18px;
 }
+
+/* Academic Tracker brand alignment:
+   the tutor is a focused learning workspace, so use the product's lavender accent
+   rather than a separate mint/teal palette. Keep emphasis limited to actions and
+   status; use surface contrast and spacing to establish hierarchy. */
+.ai-tutor-page {
+  --tutor-bg: #0b0812;
+  --tutor-panel: #110d1b;
+  --tutor-panel-2: #171123;
+  --tutor-line: #302440;
+  --tutor-text: #ffffff;
+  --tutor-muted: #c0bbd6;
+  --tutor-mint: #b69cff;
+  --tutor-mint-deep: #30284e;
+  background: radial-gradient(ellipse at 52% -18%, rgba(182,156,255,.12), transparent 47%), var(--tutor-bg);
+  color: var(--tutor-text);
+}
+.ai-tutor-page .ai-topbar {
+  background: rgba(11,8,18,.92);
+  border-bottom-color: rgba(182,156,255,.16);
+}
+.ai-tutor-page .ai-brand-mark {
+  background: #b69cff;
+  color: #1a1028;
+}
+.ai-tutor-page .ai-global-nav a,
+.ai-tutor-page .ai-global-nav button { color: #c0bbd6; }
+.ai-tutor-page .ai-global-nav a:hover,
+.ai-tutor-page .ai-global-nav button:hover,
+.ai-tutor-page .tutor-back:hover { color: #d8ccff; }
+.ai-tutor-page .tutor-avatar,
+.ai-tutor-page .welcome-orb {
+  color: #1a1028;
+  background: radial-gradient(circle at 30% 20%, #f1eaff, #b69cff 60%, #8b6bda);
+  box-shadow: 0 0 0 6px rgba(182,156,255,.07), 0 12px 34px rgba(100,70,160,.12);
+}
+.ai-tutor-page .tutor-status {
+  border-color: rgba(182,156,255,.24);
+  background: rgba(182,156,255,.07);
+  color: #e4dcff;
+}
+.ai-tutor-page .tutor-status i,
+.ai-tutor-page .online-pill i {
+  background: #b69cff;
+  box-shadow: 0 0 9px rgba(182,156,255,.38);
+}
+.ai-tutor-page .tutor-context input {
+  border-color: #302440;
+  background: #110d1b;
+  color: #ffffff;
+}
+.ai-tutor-page .tutor-context input:focus,
+.ai-tutor-page .tutor-composer textarea:focus {
+  border-color: #b69cff;
+  box-shadow: 0 0 0 3px rgba(182,156,255,.12);
+}
+.ai-tutor-page .tutor-context input::placeholder,
+.ai-tutor-page .tutor-composer textarea::placeholder { color: #a29ab8; }
+.ai-tutor-page .tutor-eyebrow,
+.ai-tutor-page .section-kicker { color: #c4b5fd; }
+.ai-tutor-page .tutor-composer-panel,
+.ai-tutor-page .tutor-context input,
+.ai-tutor-page .tutor-chat-messages pre {
+  border-color: #302440;
+}
+html[data-theme="light"] .ai-tutor-page {
+  --tutor-mint: #7545c8;
+  --tutor-mint-deep: #eee6fb;
+  background: #ffffff;
+  color: #291b42;
+}
+html[data-theme="light"] .ai-tutor-page .ai-brand-mark {
+  background: #7545c8;
+  color: #ffffff;
+}
+html[data-theme="light"] .ai-tutor-page .tutor-avatar,
+html[data-theme="light"] .ai-tutor-page .welcome-orb {
+  color: #ffffff;
+  background: radial-gradient(circle at 30% 20%, #cdb7ff, #7545c8 65%, #5b2ba8);
+  box-shadow: 0 0 0 6px rgba(117,69,200,.08), 0 12px 34px rgba(91,43,168,.12);
+}
+html[data-theme="light"] .ai-tutor-page .tutor-status {
+  border-color: #e4d7f7;
+  background: #f7f3ff;
+  color: #5b2ba8;
+}
+html[data-theme="light"] .ai-tutor-page .tutor-status i,
+html[data-theme="light"] .ai-tutor-page .online-pill i {
+  background: #7545c8;
+  box-shadow: none;
+}
+
