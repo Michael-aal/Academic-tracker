@@ -2,6 +2,14 @@
 (() => {
   "use strict";
   const root = document.documentElement;
+  /* Loaded centrally so every route receives the same dark-surface corrections. */
+  if (!document.querySelector('link[data-dark-mode-guard]')) {
+    const guard = document.createElement("link");
+    guard.rel = "stylesheet";
+    guard.href = "dark-mode-guard.css";
+    guard.dataset.darkModeGuard = "true";
+    document.head.appendChild(guard);
+  }
   const storageKey = "academic-tracker-theme";
   const themeColor = document.querySelector('meta[name="theme-color"]');
   const icons = {

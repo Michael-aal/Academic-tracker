@@ -1,4 +1,5 @@
 @import url("global-light-mode.css");
+@import url("dark-mode-guard.css");
 
 /* Academic Tracker — shared application navigation.
    Loaded after page styles so every app route gets the same responsive shell. */
