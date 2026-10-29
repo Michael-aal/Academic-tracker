@@ -20,7 +20,7 @@ const publicUser = user => ({
   createdAt: user.createdAt
 });
 function issueToken(userId) {
-  return jwt.sign({}, process.env.JWT_SECRET, { subject: userId, algorithm: "HS256", issuer: "academic-tracker-api", audience: "academic-tracker-client", expiresIn: "7d" });
+  return jwt.sign({}, process.env.JWT_SECRET, { subject: userId, algorithm: "HS256", issuer: "academic-tracker-api", audience: "academic-tracker-client", expiresIn: "24h" });
 }
 router.post("/register", async (req, res, next) => {
   try {
@@ -34,7 +34,7 @@ router.post("/register", async (req, res, next) => {
     if (process.env.ADMIN_EMAIL && email === process.env.ADMIN_EMAIL.trim().toLowerCase()) return res.status(403).json({ error: "This email is reserved for the configured administrator. Sign in to its existing account." });
     if (name.length < 2) return res.status(400).json({ error: "Name must be at least 2 characters." });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: "Enter a valid email address." });
-    if (typeof password !== "string" || password.length < 10 || password.length > 72) return res.status(400).json({ error: "Password must be between 10 and 72 characters." });
+    if (typeof password !== "string" || password.length < 10 || Buffer.byteLength(password, "utf8") > 72) return res.status(400).json({ error: "Password must be at least 10 characters and no more than 72 UTF-8 bytes." });
     if (!["SECONDARY", "HIGHER"].includes(educationTrack)) return res.status(400).json({ error: "Choose secondary school or higher institution." });
     if (educationTrack === "HIGHER" && (!institutionName || !programme || !studyLevel)) return res.status(400).json({ error: "Enter your institution, programme, and study level." });
     const passwordHash = await bcrypt.hash(password, 12);
@@ -57,7 +57,9 @@ router.post("/login", async (req, res, next) => {
     const password = req.body?.password;
     if (!email || typeof password !== "string" || !password) return res.status(400).json({ error: "Enter your email and password." });
     const user = await prisma.user.findUnique({ where: { email } });
-    const valid = user && await bcrypt.compare(password, user.passwordHash);
+    // Match the password-check work for unknown emails to reduce account enumeration.
+    const fallbackHash = "$2a$12$C6UzMDM.H6dfI/f/IKcEe.9jZ3Xx4f3R5n3VQj1n4V7j2p3g6V4j6K";
+    const valid = await bcrypt.compare(password, user?.passwordHash || fallbackHash) && Boolean(user);
     if (!valid) return res.status(401).json({ error: "Email or password is incorrect." });
     return res.json({ token: issueToken(user.id), user: publicUser(user) });
   } catch (error) { next(error); }
