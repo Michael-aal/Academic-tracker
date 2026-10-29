@@ -10,6 +10,15 @@
     guard.dataset.darkModeGuard = "true";
     document.head.appendChild(guard);
   }
+  /* Apply light-mode corrections after every page-specific stylesheet.
+     The file is fully scoped to data-theme="light", so dark mode is unaffected. */
+  if (!document.querySelector('link[data-light-mode-fix]')) {
+    const lightFix = document.createElement("link");
+    lightFix.rel = "stylesheet";
+    lightFix.href = "light-mode-fix.css";
+    lightFix.dataset.lightModeFix = "true";
+    document.head.appendChild(lightFix);
+  }
   const storageKey = "academic-tracker-theme";
   const themeColor = document.querySelector('meta[name="theme-color"]');
   const icons = {
