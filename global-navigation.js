@@ -115,6 +115,7 @@
   const menu = header.querySelector("#at-nav-menu");
   const profileMenu = header.querySelector("#at-nav-profile-menu");
   const moreToggle = bottom.querySelector("#at-nav-more-toggle");
+  let lastMenuTrigger = null;
   const setOpen = (target, trigger, open) => {
     target.hidden = !open;
     trigger.setAttribute("aria-expanded", String(open));
@@ -123,32 +124,39 @@
     setOpen(menu,menuToggle,false);
     setOpen(profileMenu,profileToggle,false);
     moreToggle.setAttribute("aria-expanded","false");
+    lastMenuTrigger = null;
   };
   menuToggle.addEventListener("click", () => {
     const open = menu.hidden;
     closeAll();
     setOpen(menu,menuToggle,open);
     moreToggle.setAttribute("aria-expanded",String(open));
+    if (open) lastMenuTrigger = menuToggle;
   });
   moreToggle.addEventListener("click", () => {
     const open = menu.hidden;
     closeAll();
     setOpen(menu,menuToggle,open);
     moreToggle.setAttribute("aria-expanded",String(open));
-    if (open) menu.scrollTop = 0;
+    if (open) {
+      lastMenuTrigger = moreToggle;
+      menu.scrollTop = 0;
+    }
   });
   profileToggle.addEventListener("click", () => {
     const open = profileMenu.hidden;
     closeAll();
     setOpen(profileMenu,profileToggle,open);
+    if (open) lastMenuTrigger = profileToggle;
   });
   document.addEventListener("click", event => {
     if (!header.contains(event.target) && !bottom.contains(event.target)) closeAll();
   });
   document.addEventListener("keydown", event => {
-    if (event.key === "Escape") {
+    if (event.key === "Escape" && (!menu.hidden || !profileMenu.hidden)) {
+      const trigger = lastMenuTrigger;
       closeAll();
-      if (menuToggle) menuToggle.focus();
+      if (trigger && trigger.isConnected) trigger.focus();
     }
   });
   menu.querySelectorAll("a").forEach(a => a.addEventListener("click", closeAll));
