@@ -119,13 +119,7 @@ body[data-mode="register"] .icon-only-back {
 }
 body[data-mode="login"] .icon-only-back svg,
 body[data-mode="register"] .icon-only-back svg { display: block; width: 21px; height: 21px; margin: 0; }
-/* Auth screens are compact on phones: omit the theme switch there. Keep it on tablets/desktops. */
-@media (max-width: 760px) {
-  body[data-mode="login"] .at-theme-toggle-global,
-  body[data-mode="register"] .at-theme-toggle-global,
-  body[data-mode="login"] #at-theme-toggle,
-  body[data-mode="register"] #at-theme-toggle { display: none !important; }
-}
+/* Auth theme toggle is placed in .auth-topbar, so it remains reachable on phones. */
 
 
 /* Decorative UI icons stay purple line icons, not colored tiles. */
