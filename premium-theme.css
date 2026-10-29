@@ -620,4 +620,6 @@ html[data-theme="dark"] .at-theme-toggle-global {
   .at-theme-toggle-global { top: 10px !important; right: 10px !important; }
   body:has(.auth-card) .at-theme-toggle-global { top: 12px !important; right: 12px !important; }
 }
-\n/* When a shared navigation header exists, keep the toggle inside its action row. */\n.at-nav-actions .at-theme-toggle-global { position: static !important; top: auto !important; right: auto !important; flex: 0 0 42px !important; }\n
+
+/* When a shared navigation header exists, keep the toggle inside its action row. */
+.at-nav-actions .at-theme-toggle-global { position: static !important; top: auto !important; right: auto !important; flex: 0 0 42px !important; }
