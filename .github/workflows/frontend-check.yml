@@ -58,3 +58,25 @@ jobs:
           }
           console.log(`Checked ${pages.length} HTML pages: theme controller and local references passed.`);
           NODE
+
+      - name: Reject white backgrounds in dark-theme CSS rules
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const cssFiles = fs.readdirSync(".").filter(file => file.endsWith(".css"));
+          const errors = [];
+          const whiteBackground = /background(?:-color)?\\s*:\\s*(?:#fff(?:fff)?\\b|white\\b|rgb\\(\\s*255\\s*,\\s*255\\s*,\\s*255)/i;
+          for (const file of cssFiles) {
+            const css = fs.readFileSync(file, "utf8");
+            for (const match of css.matchAll(/([^{}]+)\\{([^{}]*)\\}/g)) {
+              if (/data-theme\\s*=\\s*["']dark["']/.test(match[1]) && whiteBackground.test(match[2])) {
+                errors.push(`${file}: white background in dark-theme rule: ${match[1].trim().slice(0, 120)}`);
+              }
+            }
+          }
+          if (errors.length) {
+            console.error(errors.join("\\n"));
+            process.exit(1);
+          }
+          console.log(`Checked ${cssFiles.length} CSS files: no white backgrounds declared in dark-theme rules.`);
+          NODE
