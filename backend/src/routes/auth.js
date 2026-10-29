@@ -58,7 +58,7 @@ router.post("/login", async (req, res, next) => {
     if (!email || typeof password !== "string" || !password) return res.status(400).json({ error: "Enter your email and password." });
     const user = await prisma.user.findUnique({ where: { email } });
     // Match the password-check work for unknown emails to reduce account enumeration.
-    const fallbackHash = "$2a$12$C6UzMDM.H6dfI/f/IKcEe.9jZ3Xx4f3R5n3VQj1n4V7j2p3g6V4j6K";
+    const fallbackHash = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
     const valid = await bcrypt.compare(password, user?.passwordHash || fallbackHash) && Boolean(user);
     if (!valid) return res.status(401).json({ error: "Email or password is incorrect." });
     return res.json({ token: issueToken(user.id), user: publicUser(user) });
