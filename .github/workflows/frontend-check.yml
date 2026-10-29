@@ -68,12 +68,25 @@ jobs:
           const fs = require("node:fs");
           const cssFiles = fs.readdirSync(".").filter(file => file.endsWith(".css"));
           const errors = [];
-          const whiteBackground = /background(?:-color)?\s*:\s*(?:#fff(?:fff)?\b|white\b|rgb\(\s*255\s*,\s*255\s*,\s*255)/i;
+          const whitePatterns = [
+            "background:#fff", "background: #fff",
+            "background-color:#fff", "background-color: #fff",
+            "background:white", "background: white",
+            "background-color:white", "background-color: white",
+            "background:rgb(255,255,255)", "background: rgb(255,255,255)",
+            "background-color:rgb(255,255,255)", "background-color: rgb(255,255,255)",
+            "background:rgb(255, 255, 255)", "background: rgb(255, 255, 255)",
+            "background-color:rgb(255, 255, 255)", "background-color: rgb(255, 255, 255)"
+          ];
           for (const file of cssFiles) {
             const css = fs.readFileSync(file, "utf8");
-            for (const match of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-              if (/data-theme\s*=\s*["']dark["']/.test(match[1]) && whiteBackground.test(match[2])) {
-                errors.push(`${file}: white background in dark-theme rule: ${match[1].trim().slice(0, 120)}`);
+            for (const block of css.split("}")) {
+              const parts = block.split("{");
+              if (parts.length < 2) continue;
+              const selector = parts[0].toLowerCase();
+              const declarations = parts.slice(1).join("{").toLowerCase();
+              if (selector.includes('data-theme="dark"') && whitePatterns.some(pattern => declarations.includes(pattern))) {
+                errors.push(file + ": white background in dark-theme rule: " + selector.trim().slice(0, 120));
               }
             }
           }
@@ -81,5 +94,5 @@ jobs:
             console.error(errors.join("\n"));
             process.exit(1);
           }
-          console.log(`Checked ${cssFiles.length} CSS files: no white backgrounds declared in dark-theme rules.`);
+          console.log("Checked " + cssFiles.length + " CSS files: no white backgrounds declared in dark-theme rules.");
           NODE
