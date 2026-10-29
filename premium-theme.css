@@ -623,3 +623,15 @@ html[data-theme="dark"] .at-theme-toggle-global {
 
 /* When a shared navigation header exists, keep the toggle inside its action row. */
 .at-nav-actions .at-theme-toggle-global { position: static !important; top: auto !important; right: auto !important; flex: 0 0 42px !important; }
+
+
+/* Dark-mode hardening: auth back controls must never inherit the light-theme tile. */
+html[data-theme="dark"] body[data-mode="login"] .icon-only-back,
+html[data-theme="dark"] body[data-mode="register"] .icon-only-back {
+  color: #ffffff !important;
+  background: #20203b !important;
+  background-color: #20203b !important;
+  background-image: none !important;
+  border-color: #494667 !important;
+  box-shadow: none !important;
+}
