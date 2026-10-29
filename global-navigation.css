@@ -269,3 +269,59 @@ html[data-theme="light"] .account-menu .signout-item { color: #9b2c45 !important
     transition: none !important;
   }
 }
+
+
+/* Final theme contract for every shared dropdown/popover across app routes.
+   Opaque surfaces prevent page text showing through; item text follows the active theme. */
+html[data-theme="light"] {
+  --at-menu-surface: #ffffff;
+  --at-menu-surface-raised: #ffffff;
+  --at-menu-border: #e3d8f3;
+  --at-menu-text: #35224f;
+  --at-menu-muted: #6c5a83;
+  --at-menu-hover: #f0e8ff;
+  --at-menu-shadow: 0 18px 42px rgba(47,28,82,.18);
+}
+html[data-theme="dark"] {
+  --at-menu-surface: #171123;
+  --at-menu-surface-raised: #20172f;
+  --at-menu-border: #302440;
+  --at-menu-text: #f5f3ff;
+  --at-menu-muted: #c3b8d5;
+  --at-menu-hover: #2a1e3b;
+  --at-menu-shadow: 0 20px 48px rgba(0,0,0,.38);
+}
+html[data-theme="light"] :is(.at-nav-popover, .dropdown-menu, .account-menu, .menu-dropdown, .ai-tools-menu, .ai-more-menu, .ai-mobile-menu) {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  border: 1px solid #e3d8f3 !important;
+  color: #35224f !important;
+  opacity: 1 !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html[data-theme="dark"] :is(.at-nav-popover, .dropdown-menu, .account-menu, .menu-dropdown, .ai-tools-menu, .ai-more-menu, .ai-mobile-menu) {
+  background: #171123 !important;
+  background-color: #171123 !important;
+  background-image: none !important;
+  border: 1px solid #302440 !important;
+  color: #f5f3ff !important;
+  opacity: 1 !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html[data-theme="light"] :is(.at-nav-menu, .dropdown-menu, .account-menu, .menu-dropdown, .ai-tools-menu, .ai-more-menu, .ai-mobile-menu) :is(a, button, .dropdown-item, [role="menuitem"]) {
+  color: #35224f !important;
+}
+html[data-theme="dark"] :is(.at-nav-menu, .dropdown-menu, .account-menu, .menu-dropdown, .ai-tools-menu, .ai-more-menu, .ai-mobile-menu) :is(a, button, .dropdown-item, [role="menuitem"]) {
+  color: #f5f3ff !important;
+}
+html[data-theme="light"] :is(.at-nav-menu, .dropdown-menu, .account-menu, .menu-dropdown, .ai-tools-menu, .ai-more-menu, .ai-mobile-menu) :is(a, button, .dropdown-item, [role="menuitem"]):is(:hover, :focus-visible, [aria-current="page"], .active) {
+  background: #f0e8ff !important;
+  color: #35224f !important;
+}
+html[data-theme="dark"] :is(.at-nav-menu, .dropdown-menu, .account-menu, .menu-dropdown, .ai-tools-menu, .ai-more-menu, .ai-mobile-menu) :is(a, button, .dropdown-item, [role="menuitem"]):is(:hover, :focus-visible, [aria-current="page"], .active) {
+  background: #2a1e3b !important;
+  color: #f5f3ff !important;
+}
