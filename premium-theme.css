@@ -686,3 +686,23 @@ html[data-theme="dark"] :where(#signout,#profile-signout,#uni-signout,#quiz-sign
   background-color: #30284e !important;
   border-color: #66549a !important;
 }
+
+
+/* Consistent trailing-edge alignment for arrows inside shared cards. */
+:is(.card,.panel,.feature-card,.why-card,.step-card,.tool-card,.resource-card,.stat-card,.uni-course-row,.uni-result-card,.calculator-card,.chat-card,.task-picker) :is(a,button):has(>.arrow-icon),
+:is(.card,.panel,.feature-card,.why-card,.step-card,.tool-card,.resource-card,.stat-card,.uni-course-row,.uni-result-card,.calculator-card,.chat-card,.task-picker) :is(a,button):has(>span>.arrow-icon){display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+:is(.card,.panel,.feature-card,.why-card,.step-card,.tool-card,.resource-card,.stat-card,.uni-course-row,.uni-result-card,.calculator-card,.chat-card,.task-picker) :is(a,button) .arrow-icon{flex:0 0 18px;margin-left:auto}
+:is(.card,.panel,.feature-card,.why-card,.step-card,.tool-card,.resource-card,.stat-card,.uni-course-row,.uni-result-card,.calculator-card,.chat-card,.task-picker) :is(a,button):focus-visible{outline:2px solid var(--purple-soft,#b69cff);outline-offset:3px}
+html[data-theme="dark"] :where(.feature-icon,.step-symbol,.icon-box,.subject-icon,.tool-icon,.chip-icon,.check-icon,.value-icon,.play-icon,.mini-avatar,.side-benefits span) {
+  background: transparent !important;
+  background-image: none !important;
+  color: var(--purple-soft,#b69cff) !important;
+  border: 1px solid var(--line,rgba(167,139,250,.22));
+  box-shadow: none !important;
+}
+html[data-theme="dark"] :where(.icon-blue,.icon-green,.icon-purple,.icon-orange) {
+  background: transparent !important;
+  background-image: none !important;
+  color: var(--purple-soft,#b69cff) !important;
+}
+html[data-theme="dark"] :where(.arrow-icon) { background: transparent !important; background-image: none !important; box-shadow: none !important; border: 0 !important; color: currentColor; }
