@@ -75,7 +75,13 @@ function verifySignature(req) {
 async function applySuccessfulPayment(reference, data, source = "verify") {
   const payment = await prisma.paymentTransaction.findUnique({ where: { reference } });
   if (!payment || payment.status === "SUCCESS") return { processed: Boolean(payment), duplicate: true };
-  if (data.status !== "success" || data.reference !== reference || Number(data.amount) !== payment.amountMinor || String(data.currency || "").toUpperCase() !== payment.currency) {
+  if (data.status !== "success") {
+    if (["failed", "abandoned", "reversed"].includes(String(data.status || "").toLowerCase())) {
+      await prisma.paymentTransaction.update({ where: { reference }, data: { status: "FAILED" } });
+    }
+    return { processed: false, pending: !["failed", "abandoned", "reversed"].includes(String(data.status || "").toLowerCase()) };
+  }
+  if (data.reference !== reference || Number(data.amount) !== payment.amountMinor || String(data.currency || "").toUpperCase() !== payment.currency) {
     await prisma.paymentTransaction.update({ where: { reference }, data: { status: "FAILED" } });
     return { processed: false, mismatch: true };
   }
@@ -85,7 +91,8 @@ async function applySuccessfulPayment(reference, data, source = "verify") {
     const changed = await tx.paymentTransaction.updateMany({ where: { reference, status: "PENDING" }, data: { status: "SUCCESS", paidAt, metadata: { ...metadata, verifiedBy: source } } });
     if (!changed.count) return;
     if (metadata.purchaseType === "study-pack" && typeof metadata.packId === "string") {
-      await tx.studyPackPurchase.updateMany({ where: { paymentReference: reference, status: "PENDING" }, data: { status: "PAID", paidAt } });
+      const delivered = await tx.studyPackPurchase.updateMany({ where: { paymentReference: reference, status: "PENDING" }, data: { status: "PAID", paidAt } });
+      if (!delivered.count) throw new Error("Paid study pack purchase could not be matched to its payment reference.");
       return;
     }
     const planCode = payment.planCode;
