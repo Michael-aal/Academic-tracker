@@ -19,7 +19,9 @@
     toggle.setAttribute("aria-label", "Switch to dark mode");
     toggle.setAttribute("title", "Switch to dark mode");
     toggle.innerHTML = icons.moon;
-    (document.body || document.documentElement).appendChild(toggle);
+    const actions = document.querySelector(".at-nav-actions");
+    if (actions) actions.appendChild(toggle);
+    else (document.body || document.documentElement).appendChild(toggle);
   }
 
   function applyTheme(theme, persist = false) {
