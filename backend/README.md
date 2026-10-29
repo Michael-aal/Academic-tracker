@@ -70,7 +70,7 @@ For the simplest first deployment, use Neon's direct PostgreSQL connection strin
 
 ## Frontend/API integration status
 
-Registration, login, profile loading, and profile updates use the API. However, the dashboard main academic state in `app.js` still reads and writes IndexedDB/localStorage; it does not yet use `/api/subjects` and `/api/scores` for cloud-backed academic records. As a result, subject and score records are still browser-local and do not reliably sync across devices. Treat cross-device academic-record sync as **not yet implemented** until the dashboard persistence layer is migrated and existing local records have a tested, non-destructive import/sync path.
+Registration, login, profile loading, and profile updates use the API. However, the dashboard main academic state in `app.js` still reads and writes IndexedDB/localStorage; it does not yet use `/api/subjects` and `/api/scores` for cloud-backed academic records. As a result, subject and score records are still browser-local and do not reliably sync across devices. The current local state also uses one shared key rather than an account-specific namespace, so different accounts on the same browser may see the same academic state. Avoid using shared browsers for private academic records until this is corrected. Treat cross-device academic-record sync as **not yet implemented** until the dashboard persistence layer is migrated and existing local records have a tested, non-destructive import/sync path.
 
 
 ## AI learning (optional)
