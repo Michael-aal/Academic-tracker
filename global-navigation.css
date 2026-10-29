@@ -217,3 +217,55 @@ html[data-theme="light"] .account-menu .signout-item { color: #9b2c45 !important
 @media (max-width: 760px) {
   .at-global-header { z-index: 1300; }
 }
+
+
+/* Final dropdown stacking/viewport pass: one reliable layer on every app route. */
+.at-global-header {
+  z-index: 1300;
+  isolation: isolate;
+  overflow: visible;
+}
+.at-nav-popover {
+  z-index: 1301;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.at-nav-popover a,
+.at-nav-popover button {
+  min-height: 44px;
+}
+.at-nav-popover a:focus-visible,
+.at-nav-popover button:focus-visible {
+  outline: 2px solid var(--at-nav-accent) !important;
+  outline-offset: -2px;
+  background: var(--at-menu-hover) !important;
+}
+.at-nav-icon-button:focus-visible {
+  outline: 2px solid var(--at-nav-accent) !important;
+  outline-offset: 3px;
+}
+@media (max-width: 760px) {
+  .at-global-header {
+    --at-mobile-header-height: 60px;
+  }
+  .at-nav-popover {
+    position: fixed;
+    top: calc(var(--at-mobile-header-height) + 8px);
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-height: calc(100dvh - 92px - env(safe-area-inset-bottom));
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .at-nav-popover,
+  .at-nav-popover * {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
