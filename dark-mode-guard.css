@@ -26,7 +26,7 @@ html[data-theme="dark"] body {
 }
 /* Neutralize the common light surfaces used across page-specific stylesheets. */
 html[data-theme="dark"] :where(
-  main, section, article, aside, header, footer, nav, form, fieldset, dialog,
+  dialog,
   .app-shell, .main, .main-content, .page-shell, .page-content, .content,
   .workspace, .workspace-main, .site-main, .dashboard-content, .section-wrap,
   .auth-main, .auth-card, .auth-side, .tutor-layout, .tutor-main, .ai-shell,
