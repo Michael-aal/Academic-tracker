@@ -43,6 +43,18 @@
     }
   }
 
+  function mountToggleInHeader() {
+    if (!toggle) return;
+    const actions = document.querySelector(".at-nav-actions, .header-actions");
+    if (actions && !actions.contains(toggle)) {
+      toggle.classList.remove("at-theme-toggle-floating");
+      actions.appendChild(toggle);
+    }
+  }
+
+  window.addEventListener("at:global-navigation-ready", mountToggleInHeader);
+  document.addEventListener("DOMContentLoaded", mountToggleInHeader, { once: true });
+
   function applyTheme(theme, persist = false) {
     const next = theme === "dark" ? "dark" : "light";
     root.dataset.theme = next;
