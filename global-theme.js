@@ -28,9 +28,7 @@
     toggle.setAttribute("title", "Switch to dark mode");
     toggle.innerHTML = icons.moon;
     const actions = document.querySelector(".at-nav-actions");
-    const authTopbar = document.querySelector(".auth-topbar");
     if (actions) actions.appendChild(toggle);
-    else if (authTopbar) authTopbar.appendChild(toggle);
     else (document.body || document.documentElement).appendChild(toggle);
   }
 
