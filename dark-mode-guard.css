@@ -2,26 +2,26 @@
    White text is allowed; white/light surfaces are not. */
 html[data-theme="dark"] {
   color-scheme: dark !important;
-  --bg: #0b0b16 !important;
-  --panel: #121326 !important;
-  --panel2: #191a32 !important;
-  --line: #343452 !important;
+  --bg: #0b0812 !important;
+  --panel: #110d1b !important;
+  --panel2: #171123 !important;
+  --line: #302440 !important;
   --text: #ffffff !important;
   --muted: #c0bbd6 !important;
-  --ui-bg: #0b0b16 !important;
-  --ui-surface: #121326 !important;
-  --ui-surface-raised: #191a32 !important;
-  --ui-surface-soft: #20203d !important;
-  --ui-border: #343452 !important;
+  --ui-bg: #0b0812 !important;
+  --ui-surface: #110d1b !important;
+  --ui-surface-raised: #171123 !important;
+  --ui-surface-soft: #20172f !important;
+  --ui-border: #302440 !important;
   --ui-text: #ffffff !important;
   --ui-muted: #c0bbd6 !important;
   --ui-accent: #c4b5fd !important;
-  background: #0b0b16 !important;
+  background: #0b0812 !important;
   color: #ffffff !important;
 }
 html[data-theme="dark"] body {
-  background: #0b0b16 !important;
-  background-image: radial-gradient(ellipse at 80% -20%, #201b38 0, transparent 48%) !important;
+  background: #0b0812 !important;
+  background-image: radial-gradient(ellipse at 80% -20%, #211735 0, transparent 48%) !important;
   color: #ffffff !important;
 }
 /* Neutralize the common light surfaces used across page-specific stylesheets. */
@@ -43,8 +43,8 @@ html[data-theme="dark"] :where(
   .calculator-screen, .calc-display, .calc-history, .empty-state
 ) {
   color: #ffffff !important;
-  background-color: #121326 !important;
-  border-color: #343452 !important;
+  background-color: #110d1b !important;
+  border-color: #302440 !important;
   box-shadow: none;
 }
 html[data-theme="dark"] :where(input, select, textarea, button, [contenteditable="true"]) {
@@ -52,7 +52,7 @@ html[data-theme="dark"] :where(input, select, textarea, button, [contenteditable
   border-color: #494667;
 }
 html[data-theme="dark"] :where(input, select, textarea, [contenteditable="true"]) {
-  background-color: #0d0e20 !important;
+  background-color: #0b0812 !important;
 }
 html[data-theme="dark"] :where(input, textarea, select)::placeholder {
   color: #c0bbd6 !important;
@@ -74,15 +74,15 @@ html[data-theme="dark"] :where(.button,.btn,.button-primary,.primary,.submit-but
 }
 html[data-theme="dark"] :where(.secondary,.button-secondary,.icon-button,.menu-trigger,.menu-toggle,.show-password,.at-theme-toggle,.calc-key,.track-card) {
   color: #ffffff !important;
-  background: #20203b !important;
+  background: #20172f !important;
   border-color: #494667 !important;
 }
-html[data-theme="dark"] :where(.brand-icon,.brand-mark,.at-nav-brand-mark,.feature-icon,.step-number,.icon-box,.subject-icon,.tool-icon,.value-icon) {
+html[data-theme="dark"] :where(.brand-icon,.brand-mark,.at-nav-brand-mark) {
   color: #ffffff !important;
   background: linear-gradient(145deg,#9b7cff,#6544d8) !important;
 }
 html[data-theme="dark"] :where(.nav-link.active,.nav-link:hover,.dropdown-item.active,.dropdown-item:hover,.pathway-tab.active,.answer-option,.tool-choice.active) {
-  background-color: #30284e !important;
+  background-color: #30204d !important;
   color: #ffffff !important;
   border-color: #66549a !important;
 }
@@ -109,4 +109,19 @@ body[data-mode="register"] .icon-only-back svg { display: block; width: 21px; he
   body[data-mode="register"] .at-theme-toggle-global,
   body[data-mode="login"] #at-theme-toggle,
   body[data-mode="register"] #at-theme-toggle { display: none !important; }
+}
+
+
+/* Decorative UI icons stay purple line icons, not colored tiles. */
+html[data-theme="dark"] :where(
+  .feature-icon,.step-number,.icon-box,.subject-icon,.tool-icon,.value-icon,
+  .chip-icon,.check-icon,.play-icon,.mini-avatar,.icon-blue,.icon-green,
+  .icon-purple,.icon-orange,.step-symbol
+) {
+  color: #c4b5fd !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 1px solid rgba(182,156,255,.22) !important;
+  box-shadow: none !important;
 }
