@@ -704,3 +704,53 @@ html[data-theme="dark"] :where(.icon-blue,.icon-green,.icon-purple,.icon-orange)
   color: var(--purple-soft,#b69cff) !important;
 }
 html[data-theme="dark"] :where(.arrow-icon) { background: transparent !important; background-image: none !important; box-shadow: none !important; border: 0 !important; color: currentColor; }
+
+/* Keep the global theme control in the header's layout flow instead of floating
+   over page content. Header actions own alignment; the control remains a stable
+   42px target beside the menu/back action on narrow screens. */
+.header-actions,
+.auth-topbar,
+.ai-topbar,
+.topbar .top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.at-theme-toggle-global {
+  position: static !important;
+  inset: auto !important;
+  flex: 0 0 42px !important;
+  width: 42px !important;
+  height: 42px !important;
+  margin: 0 !important;
+}
+.at-theme-toggle-landing {
+  position: static !important;
+  inset: auto !important;
+}
+.auth-topbar {
+  justify-content: space-between;
+  width: 100%;
+  min-height: 42px;
+  margin-bottom: 24px;
+}
+.auth-topbar .icon-only-back { margin: 0 !important; }
+.ai-topbar .at-theme-toggle-global { order: 2; }
+.ai-topbar .ai-mobile-menu-toggle { order: 3; }
+html[data-theme="dark"] .at-theme-toggle-global {
+  background: #20172f !important;
+  color: #e4dcff !important;
+  border-color: #494667 !important;
+}
+html[data-theme="light"] .at-theme-toggle-global {
+  background: #f0e8ff !important;
+  color: #5b2ba8 !important;
+  border-color: #d9c9f1 !important;
+}
+@media (max-width: 760px) {
+  .header-actions { gap: 8px; }
+  .auth-topbar { margin-bottom: 20px; }
+  .ai-topbar .at-theme-toggle-global,
+  .ai-topbar .ai-mobile-menu-toggle { flex: 0 0 40px !important; width: 40px !important; height: 40px !important; }
+}
+
