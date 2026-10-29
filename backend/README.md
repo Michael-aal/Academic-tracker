@@ -82,3 +82,31 @@ The AI learning routes are authenticated and use OpenRouter from the server; the
 - `AI_SITE_URL` — optional site URL sent as provider metadata.
 
 The `/api/ai` endpoint accepts `tutor`, `quiz`, `summarize`, and `study-plan` actions, limits supplied text to 12,000 characters, and allows 10 requests per account per 15 minutes. The admin-only `GET /api/ai/status` endpoint reports configuration status without exposing credentials. No new database tables or migrations are required. AI is disabled until the server-side key is configured.
+
+
+## Subscriptions, AI limits, study packs and institutions
+
+The monetization foundation adds:
+- A seven-day Pro trial granted by the API during account registration. The trial expires back to Free without deleting academic records.
+- Server-authoritative subscription status, plan listing, payment history, cancellation and daily AI usage endpoints under `/api/subscriptions`.
+- Five successful AI requests per UTC day for Free accounts. Pro limits are currently configurable in `src/ai-quota.js` per tool. Quota reservation uses an atomic PostgreSQL upsert; failed AI provider/generation requests release the reservation.
+- Paystack transaction initialization and server-side verification, signed raw-body webhook validation, idempotent event records, and study-pack purchase verification.
+- One-time study-pack catalogue and account-owned purchase records under `/api/study-packs`.
+- Institution licensing inquiry capture at `POST /api/institutions` and admin-only inquiry review at `GET /api/institutions`.
+
+### Payment configuration before launch
+
+Set these in the backend host only; never expose the secret key in browser code:
+- `PAYSTACK_SECRET_KEY` — start with a test secret key.
+- `PAYSTACK_PLAN_DAILY`, `PAYSTACK_PLAN_WEEKLY`, `PAYSTACK_PLAN_MONTHLY`, `PAYSTACK_PLAN_YEARLY` — plan codes created in the payment provider dashboard using USD and the intended recurring intervals.
+- `SUBSCRIPTION_TOKEN_ENCRYPTION_KEY` — long random key used to encrypt the provider's per-subscription cancellation token at rest.
+
+Do not enable live charges until the merchant account, plans, webhook URL (`/api/subscriptions/webhook`), callback URLs, refund policy, and cancellation behavior have been tested. Payment credentials and merchant onboarding must be handled by an appropriately authorized adult/business owner; do not share private keys in chat or commit them to GitHub.
+
+The prices in the UI are the earlier indicative USD conversions: daily $0.52, weekly $2.97, monthly $14.86, yearly $37.14. Paystack's published USD transaction minimum is $2.00, so the daily plan is intentionally blocked from checkout at $0.52. Revise that price or choose a payment setup that can legally and reliably process that amount before selling the daily plan. Recurring plan codes must match the displayed amounts and currency exactly.
+
+Study packs are currently starter revision frameworks, not official exam-board material. Institutional licensing is inquiry capture only; seat provisioning, staff dashboards, institution billing, referrals, sponsorship placements and paid report exports are not yet activated as transactional products. Do not advertise these as available until their delivery and billing paths are implemented and tested.
+
+### Important data boundary
+
+The subscription system does not migrate the main dashboard's browser-local IndexedDB records to cloud storage. Academic records remain untouched when a trial or Pro entitlement expires. Cross-device syncing is still a separate project and must not be implied by successful account sign-in or payment.
