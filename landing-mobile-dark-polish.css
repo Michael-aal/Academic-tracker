@@ -531,3 +531,40 @@ html[data-theme="light"] .site-header .site-nav.open {
     transition: none !important;
   }
 }
+
+
+/* Landing-page dropdowns use the same opaque, theme-aware contract as app menus. */
+html[data-theme="light"] .site-header .site-nav.open {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  border: 1px solid #e3d8f3 !important;
+  color: #35224f !important;
+  opacity: 1 !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html[data-theme="dark"] .site-header .site-nav.open {
+  background: #171123 !important;
+  background-color: #171123 !important;
+  background-image: none !important;
+  border: 1px solid #302440 !important;
+  color: #f5f3ff !important;
+  opacity: 1 !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html[data-theme="light"] .site-header .site-nav.open > a:not(.button) {
+  color: #35224f !important;
+}
+html[data-theme="dark"] .site-header .site-nav.open > a:not(.button) {
+  color: #f5f3ff !important;
+}
+html[data-theme="light"] .site-header .site-nav.open > a:not(.button):is(:hover, :focus-visible) {
+  background: #f0e8ff !important;
+  color: #35224f !important;
+}
+html[data-theme="dark"] .site-header .site-nav.open > a:not(.button):is(:hover, :focus-visible) {
+  background: #2a1e3b !important;
+  color: #f5f3ff !important;
+}
