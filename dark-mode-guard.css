@@ -40,10 +40,23 @@ html[data-theme="dark"] :where(
   .tool-panel, .learning-card, .video-card, .memory-card, .university-card,
   .mini-stats > div, .auth-side, .track-card, .answer-option, .tool-choice,
   .dropdown, .popover, .menu-panel, .feature, .stat, .faq-card, .step,
-  .calculator-screen, .calc-display, .calc-history, .empty-state
+  .calculator-screen, .calc-display, .calc-history, .empty-state,
+  .mm-panel, .mm-stat, .mm-empty, .mm-flashcard, .mm-library-card, .mm-count,
+  .mm-principles span, .mm-ratings button, .mm-add input, .mm-add textarea,
+  .mm-library-actions input, .mm-secondary, .planner-session, .planner-filters button,
+  .planner-session-actions button, .notification-note, .file-drop, .file-button,
+  .secondary-tool-button, .result-card, .uni-course-row, .uni-result-card,
+  .uni-assessment-row, .uni-credit-pill, .ev-video-card, .ev-saved-card,
+  .ev-player-card, .ev-library-card, .profile-stat, .profile-panel,
+  .profile-settings-card, .conversation-card, .bubble, .user-picker,
+  .support-user-card, .quiz-review-card, .feedback-correct, .feedback-incorrect,
+  .quiz-answer-option, .quiz-answer-letter, .quiz-question-card,
+  .quiz-overview-row, .quiz-finish-panel, .quiz-loading-card, .quiz-secondary-link,
+  .planner-create-option
 ) {
   color: #ffffff !important;
   background-color: #110d1b !important;
+  background-image: none !important;
   border-color: #302440 !important;
   box-shadow: none;
 }
@@ -53,6 +66,7 @@ html[data-theme="dark"] :where(input, select, textarea, button, [contenteditable
 }
 html[data-theme="dark"] :where(input, select, textarea, [contenteditable="true"]) {
   background-color: #0b0812 !important;
+  background-image: none !important;
 }
 html[data-theme="dark"] :where(input, textarea, select)::placeholder {
   color: #c0bbd6 !important;
@@ -75,6 +89,7 @@ html[data-theme="dark"] :where(.button,.btn,.button-primary,.primary,.submit-but
 html[data-theme="dark"] :where(.secondary,.button-secondary,.icon-button,.menu-trigger,.menu-toggle,.show-password,.at-theme-toggle,.calc-key,.track-card) {
   color: #ffffff !important;
   background: #20172f !important;
+  background-image: none !important;
   border-color: #494667 !important;
 }
 html[data-theme="dark"] :where(.brand-icon,.brand-mark,.at-nav-brand-mark) {
@@ -83,6 +98,7 @@ html[data-theme="dark"] :where(.brand-icon,.brand-mark,.at-nav-brand-mark) {
 }
 html[data-theme="dark"] :where(.nav-link.active,.nav-link:hover,.dropdown-item.active,.dropdown-item:hover,.pathway-tab.active,.answer-option,.tool-choice.active) {
   background-color: #30204d !important;
+  background-image: none !important;
   color: #ffffff !important;
   border-color: #66549a !important;
 }
@@ -124,4 +140,24 @@ html[data-theme="dark"] :where(
   background-image: none !important;
   border: 1px solid rgba(182,156,255,.22) !important;
   box-shadow: none !important;
+}
+
+
+/* Error/success states stay readable without red, green, or pale surfaces. */
+html[data-theme="dark"] :where(
+  .form-error,.form-success,.error-message,.success-message,.profile-message,
+  .profile-message.error,.profile-message.success,.profile-error,.notice.error,
+  .video-status.error,.status.error,.alert-error,.alert-success,.calc-error
+) {
+  color: #f5f3ff !important;
+  background: #20172f !important;
+  background-color: #20172f !important;
+  background-image: none !important;
+  border-color: #494667 !important;
+}
+html[data-theme="dark"] :where(
+  .mint,.green,.success-text,.text-green,.voice-status,.voice-button,
+  .ai-lesson-icon,.focus-kicker,.text-action,.planner-status-success
+) {
+  color: #c4b5fd !important;
 }
