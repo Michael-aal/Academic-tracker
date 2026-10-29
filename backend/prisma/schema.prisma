@@ -179,6 +179,7 @@ model UserSubscription {
   cancelAtPeriodEnd         Boolean  @default(false) @map("cancel_at_period_end")
   providerCustomerCode      String?  @map("provider_customer_code") @db.VarChar(120)
   providerSubscriptionCode  String?  @map("provider_subscription_code") @db.VarChar(120)
+  providerSubscriptionToken String?  @map("provider_subscription_token") @db.VarChar(1000)
   createdAt                 DateTime @default(now()) @map("created_at")
   updatedAt                 DateTime @updatedAt @map("updated_at")
   user                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
