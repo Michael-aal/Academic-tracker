@@ -40,9 +40,12 @@ jobs:
           for (const page of pages) {
             const html = fs.readFileSync(page, "utf8");
             const count = (html.match(/data-global-theme/g) || []).length;
+            const guardCount = (html.match(/data-dark-mode-guard/g) || []).length;
+            const bootstrapCount = (html.match(/localStorage\.getItem\("academic-tracker-theme"\)/g) || []).length;
             if (count !== 1 || !/<head>[\s\S]*?<script src="global-theme\.js" data-global-theme defer><\/script>[\s\S]*?<\/head>/.test(html)) {
               errors.push(`${page}: expected exactly one shared theme controller in the document head (found ${count})`);
             }
+            if (guardCount !== 1 || bootstrapCount !== 1) errors.push(`${page}: expected one pre-paint theme bootstrap and one shared dark-mode guard link`);
             const refs = [...html.matchAll(/(?:href|src)=["']([^"']+)["']/g)].map(match => match[1]);
             for (const ref of refs) {
               if (!ref || /^(?:https?:|mailto:|tel:|data:|javascript:|#|\/\/)/i.test(ref)) continue;
@@ -65,17 +68,17 @@ jobs:
           const fs = require("node:fs");
           const cssFiles = fs.readdirSync(".").filter(file => file.endsWith(".css"));
           const errors = [];
-          const whiteBackground = /background(?:-color)?\\s*:\\s*(?:#fff(?:fff)?\\b|white\\b|rgb\\(\\s*255\\s*,\\s*255\\s*,\\s*255)/i;
+          const whiteBackground = /background(?:-color)?\s*:\s*(?:#fff(?:fff)?\b|white\b|rgb\(\s*255\s*,\s*255\s*,\s*255)/i;
           for (const file of cssFiles) {
             const css = fs.readFileSync(file, "utf8");
-            for (const match of css.matchAll(/([^{}]+)\\{([^{}]*)\\}/g)) {
-              if (/data-theme\\s*=\\s*["']dark["']/.test(match[1]) && whiteBackground.test(match[2])) {
+            for (const match of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+              if (/data-theme\s*=\s*["']dark["']/.test(match[1]) && whiteBackground.test(match[2])) {
                 errors.push(`${file}: white background in dark-theme rule: ${match[1].trim().slice(0, 120)}`);
               }
             }
           }
           if (errors.length) {
-            console.error(errors.join("\\n"));
+            console.error(errors.join("\n"));
             process.exit(1);
           }
           console.log(`Checked ${cssFiles.length} CSS files: no white backgrounds declared in dark-theme rules.`);
