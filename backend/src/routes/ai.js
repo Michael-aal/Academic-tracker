@@ -174,7 +174,7 @@ router.post("/", aiLimiter, async (req, res) => {
       headers: {
         Authorization: "Bearer " + process.env.OPENROUTER_API_KEY,
         "Content-Type": "application/json",
-        "HTTP-Referer": process.env.AI_SITE_URL || "https://academic-tracker-nu.vercel.app",
+        "HTTP-Referer": process.env.AI_SITE_URL || "https://academic-tracker-iota.vercel.app",
         "X-Title": "Academic Tracker"
       },
       body: JSON.stringify({
@@ -272,7 +272,7 @@ router.post("/", aiLimiter, async (req, res) => {
             headers: {
               Authorization: "Bearer " + process.env.OPENROUTER_API_KEY,
               "Content-Type": "application/json",
-              "HTTP-Referer": process.env.AI_SITE_URL || "https://academic-tracker-nu.vercel.app",
+              "HTTP-Referer": process.env.AI_SITE_URL || "https://academic-tracker-iota.vercel.app",
               "X-Title": "Academic Tracker"
             },
             body: JSON.stringify({
