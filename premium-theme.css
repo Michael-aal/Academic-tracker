@@ -660,3 +660,29 @@ html[data-theme="dark"] :where(.danger,.destructive,.calc-error,.error-text,.for
   color: #e4dcff !important;
   border-color: #494667 !important;
 }
+
+
+/* Remove the remaining pale active/navigation surfaces in dark mode. */
+html[data-theme="dark"] :where(.app-shell .nav-link.active,.app-shell .nav-link:hover) {
+  box-shadow: inset 3px 0 #b69cff !important;
+  border-color: #66549a !important;
+}
+html[data-theme="dark"] :where(.mobile-nav button.active,.mobile-nav a[aria-current="page"]) {
+  color: #d8ccff !important;
+  background: #30284e !important;
+  background-color: #30284e !important;
+  background-image: none !important;
+  border-color: #66549a !important;
+}
+html[data-theme="dark"] :where(#signout,#profile-signout,#uni-signout,#quiz-signout,.profile-signout) {
+  background: #20203b !important;
+  background-color: #20203b !important;
+  background-image: none !important;
+  color: #d8ccff !important;
+  border-color: #494667 !important;
+}
+html[data-theme="dark"] :where(#signout,#profile-signout,#uni-signout,#quiz-signout,.profile-signout):hover {
+  background: #30284e !important;
+  background-color: #30284e !important;
+  border-color: #66549a !important;
+}
