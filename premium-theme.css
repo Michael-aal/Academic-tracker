@@ -753,4 +753,13 @@ html[data-theme="light"] .at-theme-toggle-global {
   .ai-topbar .at-theme-toggle-global,
   .ai-topbar .ai-mobile-menu-toggle { flex: 0 0 40px !important; width: 40px !important; height: 40px !important; }
 }
+.at-theme-toggle-floating {
+  position: fixed !important;
+  z-index: 10000 !important;
+  top: 14px !important;
+  right: 14px !important;
+}
+@media (max-width: 760px) {
+  .at-theme-toggle-floating { top: 10px !important; right: 10px !important; }
+}
 
