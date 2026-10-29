@@ -196,3 +196,87 @@ html[data-theme="dark"] :where(.mm-answer-divider) {
 html[data-theme="dark"] :where(.online-pill,.admin-tag,.ev-empty,.ev-status,.tool-status) {
   border-color: #302440 !important;
 }
+
+
+/* Final contrast pass: shared text and icon behavior across every route. */
+html[data-theme="dark"] {
+  --contrast-text: #ffffff;
+  --contrast-muted: #c0bbd6;
+  --contrast-icon: #d8ccff;
+  --contrast-border: #494667;
+}
+html[data-theme="light"] {
+  --contrast-text: #291b42;
+  --contrast-muted: #75698a;
+  --contrast-icon: #5b2ba8;
+  --contrast-border: #d7cce8;
+}
+
+/* Make icon fonts and inline line-icons follow the readable color of their control. */
+html[data-theme] :where(
+  .fa,.fas,.far,.fab,.fa-solid,.fa-regular,.fa-brands,
+  [class^="fa-"],[class*=" fa-"],
+  .icon,.icon svg,.icon-button svg,.menu-toggle svg,.menu-trigger svg,
+  .at-theme-toggle svg,.at-nav-icon-button svg,.nav-link svg,
+  button[aria-label] svg,a[aria-label] svg,[role="button"] svg
+) {
+  color: inherit;
+}
+html[data-theme] :where(
+  .icon-button,.menu-toggle,.menu-trigger,.show-password,.at-theme-toggle,
+  .at-nav-icon-button,button[aria-label],[role="button"]
+) {
+  -webkit-tap-highlight-color: transparent;
+}
+html[data-theme="dark"] :where(
+  .nav-link,.at-nav-menu a,.at-nav-menu button,.at-nav-popover a,
+  .site-nav a:not(.button),.ai-global-nav a,.ai-global-nav button,
+  .tool-back,.back-link,.icon-only-back
+) { color: #e9e2ff; }
+html[data-theme="light"] :where(
+  .nav-link,.at-nav-menu a,.at-nav-menu button,.at-nav-popover a,
+  .site-nav a:not(.button),.ai-global-nav a,.ai-global-nav button,
+  .tool-back,.back-link,.icon-only-back
+) { color: #493269; }
+
+/* Muted copy must remain readable; reserve lower emphasis for metadata only. */
+html[data-theme="dark"] :where(
+  .muted,.caption,.meta,.timestamp,.stat-label,.notice,.auth-subtitle,
+  .privacy-note,.side-foot,.field,.eyebrow,.section-kicker,.menu-caption,
+  .helper-text,.description,.subtitle,.hint,.form-hint,.field-hint,
+  .empty-state p,.empty p,.profile-footnote,.sidebar-note
+) { color: #c0bbd6 !important; }
+html[data-theme="light"] :where(
+  .muted,.caption,.meta,.timestamp,.stat-label,.notice,.auth-subtitle,
+  .privacy-note,.side-foot,.field,.eyebrow,.section-kicker,.menu-caption,
+  .helper-text,.description,.subtitle,.hint,.form-hint,.field-hint,
+  .empty-state p,.empty p,.profile-footnote,.sidebar-note
+) { color: #75698a !important; }
+
+/* Explicit contrast for common icon-only and keyboard-interactive controls. */
+html[data-theme="dark"] :where(
+  .icon-button,.menu-toggle,.menu-trigger,.show-password,.at-theme-toggle,
+  .at-nav-icon-button,.calc-key,.secondary-tool-button
+) {
+  color: #f5f3ff !important;
+  border-color: #494667;
+}
+html[data-theme="light"] :where(
+  .icon-button,.menu-toggle,.menu-trigger,.show-password,.at-theme-toggle,
+  .at-nav-icon-button,.calc-key,.secondary-tool-button
+) {
+  color: #493269 !important;
+  border-color: #d7cce8;
+}
+html[data-theme] :where(
+  button:disabled,[aria-disabled="true"],input:disabled,select:disabled,textarea:disabled
+) { cursor: not-allowed; }
+html[data-theme="dark"] :where(button:disabled,[aria-disabled="true"]) { opacity: .72; }
+html[data-theme="light"] :where(button:disabled,[aria-disabled="true"]) { opacity: .7; }
+html[data-theme] :focus-visible {
+  outline-width: 2px;
+  outline-style: solid;
+  outline-offset: 3px;
+}
+html[data-theme="dark"] :focus-visible { outline-color: #c4b5fd; }
+html[data-theme="light"] :focus-visible { outline-color: #7545c8; }
