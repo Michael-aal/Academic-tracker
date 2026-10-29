@@ -8,6 +8,24 @@
   const subject = $("subject");
   if (!message || !form) return;
 
+  // Compact, growing composer: expand with content and scroll only after the cap.
+  const maxComposerHeight = 180;
+  const resizeComposer = () => {
+    message.style.height = "auto";
+    const nextHeight = Math.min(message.scrollHeight, maxComposerHeight);
+    message.style.height = nextHeight + "px";
+    message.style.overflowY = message.scrollHeight > maxComposerHeight ? "auto" : "hidden";
+  };
+  message.addEventListener("input", resizeComposer);
+  message.addEventListener("keydown", event => {
+    if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+    event.preventDefault();
+    if (!message.value.trim()) return;
+    if (typeof form.requestSubmit === "function") form.requestSubmit();
+    else form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  });
+  resizeComposer();
+
   const updateFocus = () => {
     const parts = [subject?.value?.trim(), topic?.value?.trim()].filter(Boolean);
   };

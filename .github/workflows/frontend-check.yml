@@ -1,0 +1,98 @@
+name: Academic Tracker frontend checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "*.html"
+      - "*.css"
+      - "*.js"
+      - ".github/workflows/frontend-check.yml"
+  pull_request:
+    paths:
+      - "*.html"
+      - "*.css"
+      - "*.js"
+      - ".github/workflows/frontend-check.yml"
+  workflow_dispatch:
+
+jobs:
+  frontend-static:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Syntax-check browser JavaScript
+        run: |
+          set -eu
+          find . -maxdepth 1 -type f -name '*.js' -print0 | xargs -0 -r -n1 node --check
+      - name: Check theme-controller coverage and local HTML references
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const path = require("node:path");
+          const pages = fs.readdirSync(".").filter(file => file.endsWith(".html"));
+          const errors = [];
+          for (const page of pages) {
+            const html = fs.readFileSync(page, "utf8");
+            const count = (html.match(/data-global-theme/g) || []).length;
+            const guardCount = (html.match(/data-dark-mode-guard/g) || []).length;
+            const bootstrapCount = (html.match(/localStorage\.getItem\("academic-tracker-theme"\)/g) || []).length;
+            if (count !== 1 || !/<head>[\s\S]*?<script src="global-theme\.js" data-global-theme defer><\/script>[\s\S]*?<\/head>/.test(html)) {
+              errors.push(`${page}: expected exactly one shared theme controller in the document head (found ${count})`);
+            }
+            if (guardCount !== 1 || bootstrapCount !== 1) errors.push(`${page}: expected one pre-paint theme bootstrap and one shared dark-mode guard link`);
+            const refs = [...html.matchAll(/(?:href|src)=["']([^"']+)["']/g)].map(match => match[1]);
+            for (const ref of refs) {
+              if (!ref || /^(?:https?:|mailto:|tel:|data:|javascript:|#|\/\/)/i.test(ref)) continue;
+              const pathname = decodeURIComponent(ref.split(/[?#]/, 1)[0]);
+              if (!pathname) continue;
+              const localPath = path.resolve(".", pathname.startsWith("/") ? pathname.slice(1) : pathname);
+              if (!fs.existsSync(localPath)) errors.push(`${page}: missing local reference ${ref}`);
+            }
+          }
+          if (errors.length) {
+            console.error(errors.join("\n"));
+            process.exit(1);
+          }
+          console.log(`Checked ${pages.length} HTML pages: theme controller and local references passed.`);
+          NODE
+
+      - name: Reject white backgrounds in dark-theme CSS rules
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const cssFiles = fs.readdirSync(".").filter(file => file.endsWith(".css"));
+          const errors = [];
+          const whitePatterns = [
+            "background:#fff", "background: #fff",
+            "background-color:#fff", "background-color: #fff",
+            "background:white", "background: white",
+            "background-color:white", "background-color: white",
+            "background:rgb(255,255,255)", "background: rgb(255,255,255)",
+            "background-color:rgb(255,255,255)", "background-color: rgb(255,255,255)",
+            "background:rgb(255, 255, 255)", "background: rgb(255, 255, 255)",
+            "background-color:rgb(255, 255, 255)", "background-color: rgb(255, 255, 255)"
+          ];
+          for (const file of cssFiles) {
+            const css = fs.readFileSync(file, "utf8");
+            for (const block of css.split("}")) {
+              const parts = block.split("{");
+              if (parts.length < 2) continue;
+              const selector = parts[0].toLowerCase();
+              const declarations = parts.slice(1).join("{").toLowerCase();
+              if (selector.includes('data-theme="dark"') && whitePatterns.some(pattern => declarations.includes(pattern))) {
+                errors.push(file + ": white background in dark-theme rule: " + selector.trim().slice(0, 120));
+              }
+            }
+          }
+          if (errors.length) {
+            console.error(errors.join("\n"));
+            process.exit(1);
+          }
+          console.log("Checked " + cssFiles.length + " CSS files: no white backgrounds declared in dark-theme rules.");
+          NODE

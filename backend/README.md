@@ -63,12 +63,14 @@ Add these environment variables in Render (never commit real values):
 - `JWT_SECRET` — long random secret, at least 32 characters.
 - `FRONTEND_ORIGIN` — comma-separated exact allowed origins, e.g. your production Vercel URL and any preview URL you intentionally allow.
 - `NODE_ENV` — `production`.
+- `ADMIN_EMAIL` — optional email reserved for the administrator account.
+- `ADMIN_BOOTSTRAP_SECRET` — optional high-entropy secret (at least 32 characters) required by the administrator bootstrap endpoint.
 
 For the simplest first deployment, use Neon's direct PostgreSQL connection string as `DATABASE_URL` so both Prisma Client and the migration command can connect. Keep the connection string private. We can add a separate direct migration URL later if you decide to use Neon's pooled URL for runtime traffic.
 
-## Important current limitation
+## Frontend/API integration status
 
-This creates the backend and database schema; it does **not yet connect the existing browser UI to these endpoints**. The current frontend still reads/writes IndexedDB. The next stage is to add registration/login screens and replace local-only persistence for authenticated users with these API calls, while keeping the existing design and backup/import capability.
+Registration, login, profile loading, and profile updates use the API. However, the dashboard main academic state in `app.js` still reads and writes IndexedDB/localStorage; it does not yet use `/api/subjects` and `/api/scores` for cloud-backed academic records. As a result, subject and score records are still browser-local and do not reliably sync across devices. The current local state also uses one shared key rather than an account-specific namespace, so different accounts on the same browser may see the same academic state. Avoid using shared browsers for private academic records until this is corrected. Treat cross-device academic-record sync as **not yet implemented** until the dashboard persistence layer is migrated and existing local records have a tested, non-destructive import/sync path.
 
 
 ## AI learning (optional)

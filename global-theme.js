@@ -27,10 +27,33 @@
     toggle.setAttribute("aria-label", "Switch to dark mode");
     toggle.setAttribute("title", "Switch to dark mode");
     toggle.innerHTML = icons.moon;
-    const actions = document.querySelector(".at-nav-actions");
+    const actions = document.querySelector(".at-nav-actions, .header-actions");
+    const authTopbar = document.querySelector(".auth-topbar");
+    const aiTopbar = document.querySelector(".ai-topbar");
+    const topActions = document.querySelector(".topbar .top-actions, .topbar .header-actions");
     if (actions) actions.appendChild(toggle);
-    else (document.body || document.documentElement).appendChild(toggle);
+    else if (authTopbar) authTopbar.appendChild(toggle);
+    else if (aiTopbar) {
+      const mobileMenuToggle = aiTopbar.querySelector(".ai-mobile-menu-toggle");
+      aiTopbar.insertBefore(toggle, mobileMenuToggle || null);
+    } else if (topActions) topActions.appendChild(toggle);
+    else {
+      toggle.classList.add("at-theme-toggle-floating");
+      (document.body || document.documentElement).appendChild(toggle);
+    }
   }
+
+  function mountToggleInHeader() {
+    if (!toggle) return;
+    const actions = document.querySelector(".at-nav-actions, .header-actions");
+    if (actions && !actions.contains(toggle)) {
+      toggle.classList.remove("at-theme-toggle-floating");
+      actions.appendChild(toggle);
+    }
+  }
+
+  window.addEventListener("at:global-navigation-ready", mountToggleInHeader);
+  document.addEventListener("DOMContentLoaded", mountToggleInHeader, { once: true });
 
   function applyTheme(theme, persist = false) {
     const next = theme === "dark" ? "dark" : "light";

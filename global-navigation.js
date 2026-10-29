@@ -90,6 +90,8 @@
   const titleNode = header.querySelector(".at-nav-page-title");
   titleNode.textContent = currentTitle;
   document.body.insertBefore(header, document.body.firstChild);
+  // Let the shared theme controller place its toggle inside this header's action row.
+  window.dispatchEvent(new CustomEvent("at:global-navigation-ready"));
 
   // Keep legacy handlers in the DOM, but prevent duplicate headers and navigation.
   document.querySelectorAll("header:not(.at-global-header)").forEach(el => {

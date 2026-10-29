@@ -92,7 +92,7 @@ body {
 }
 :where(.sidebar a,.sidebar button,.sidebar .brand,.sidebar .muted,
   .sidebar .nav-link,.sidebar .sidebar-note) { color: #fff !important; }
-:where(.site-nav,.ai-global-nav) { background: #fff; color: var(--text); }
+html[data-theme="light"] :where(.site-nav,.ai-global-nav) { background: #fff; color: var(--text); }
 :where(.site-nav a:not(.button),.ai-global-nav a:not(.button),.ai-global-nav button) { color: var(--purple-deep); }
 
 /* Cards and panels are white, with a quiet lavender outline and shadow. */
@@ -294,9 +294,8 @@ body {
 }
 
 
-/* Enforced purple-and-white theme: no dark-mode surfaces anywhere in the app. */
+/* Light-theme-only overrides. Dark mode is owned by dark-mode-guard.css. */
 :root,
-html[data-theme="dark"],
 html[data-theme="light"] {
   color-scheme: light !important;
   --bg: #ffffff !important;
@@ -319,7 +318,6 @@ html[data-theme="light"] {
   --ui-accent: #7545c8 !important;
 }
 html,
-html[data-theme="dark"],
 html[data-theme="light"],
 body {
   color-scheme: light !important;
@@ -501,15 +499,15 @@ html[data-theme="dark"], html[data-theme="dark"] body {
 html[data-theme="dark"] body {
   background-image: radial-gradient(ellipse at 80% -20%, #242044 0, transparent 48%) !important;
 }
-html[data-theme="dark"] :where(.app-shell,.main,.main-content,.page-shell,.page-content,.content,.workspace,.workspace-main,.auth-main,.tutor-layout,.tutor-main,.ai-shell,.quiz-page-shell,.quiz-layout,.study-tools-shell,.profile-layout,.support-layout,.uni-layout,.container,.site-main,.dashboard-content,.section-wrap,.site-header,.site-footer,.topbar,.compact-topbar,.ai-topbar,.mm-topbar,.ev-topbar,.at-global-header,.at-nav-popover,.at-nav-menu,.dropdown-menu,.navigation-menu,.account-menu,.ai-mobile-menu) {
+html[data-theme="dark"] :where(.site-header,.site-footer,.topbar,.compact-topbar,.ai-topbar,.mm-topbar,.ev-topbar,.at-global-header,.at-nav-popover,.at-nav-menu,.dropdown-menu,.navigation-menu,.account-menu,.ai-mobile-menu) {
   background-color: #101123 !important;
   background-image: none !important;
   color: #f5f3ff !important;
   border-color: #343452 !important;
 }
 html[data-theme="dark"] :where(.card,.panel,.auth-card,.uni-card,.tool-card,.resource-card,.support-card,.profile-card,.task-picker,.chat-card,.calculator-card,.feature-card,.step-card,.faq-item,.testimonial-card,.stat-card,.cta-panel,.chart-card,.preview-window,.question-card,.quiz-card,.note-card,.planner-card,.summary-card,.flashcard,.chat-container,.tutor-workspace,.modal,.modal-content,.result-panel,.tutor-chat-panel,.message-list,.profile-hero,.workspace-card,.report-card,.subject-card,.score-card,.study-card,.tool-panel,.learning-card,.video-card,.memory-card,.university-card,.mini-stats>div,.auth-side) {
-  background: #15162b !important;
-  background-color: #15162b !important;
+  background: #110d1b !important;
+  background-color: #110d1b !important;
   background-image: none !important;
   color: #f5f3ff !important;
   border-color: #343452 !important;
@@ -585,13 +583,13 @@ html[data-theme="dark"] :where(.form-error,.form-success,.error-text,.success-te
   border-color: #494667 !important;
 }
 html[data-theme="dark"] :where(.site-header,.site-footer,.dropdown-menu,.navigation-menu,.account-menu,dialog) {
-  background: #15162b !important;
+  background: #110d1b !important;
   color: #f5f3ff !important;
   border-color: #343452 !important;
   box-shadow: 0 16px 40px rgba(0,0,0,.35) !important;
 }
 html[data-theme="dark"] :where(.auth-side) {
-  background: linear-gradient(145deg,#242044,#15162b) !important;
+  background: linear-gradient(145deg,#242044,#110d1b) !important;
   color: #f5f3ff !important;
 }
 html[data-theme="dark"] :where(.icon-only-back) { color: #fff !important; }
@@ -623,3 +621,145 @@ html[data-theme="dark"] .at-theme-toggle-global {
 
 /* When a shared navigation header exists, keep the toggle inside its action row. */
 .at-nav-actions .at-theme-toggle-global { position: static !important; top: auto !important; right: auto !important; flex: 0 0 42px !important; }
+
+
+/* Dark-mode layout surfaces: wrappers are transparent; only actual surfaces are panels. */
+html[data-theme="dark"] :where(
+  .app-shell,.main,.main-content,.page-shell,.page-content,.content,.workspace,
+  .workspace-main,.auth-main,.tutor-layout,.tutor-main,.ai-shell,.quiz-page-shell,
+  .quiz-layout,.study-tools-shell,.profile-layout,.support-layout,.uni-layout,
+  .container,.site-main,.dashboard-content,.section-wrap
+) {
+  background-color: transparent !important;
+  background-image: none !important;
+  color: #f5f3ff !important;
+}
+html[data-theme="dark"] :where(.uni-hero,.ai-hero) {
+  background: #110d1b !important;
+  background-color: #110d1b !important;
+  background-image: none !important;
+  color: #f5f3ff !important;
+  border-color: #343452 !important;
+}
+html[data-theme="dark"] :where(
+  .quiz-review-card,.quiz-review-card.review-correct,.quiz-review-card.review-incorrect,
+  .feedback-correct,.feedback-incorrect
+) {
+  background: #20203b !important;
+  background-color: #20203b !important;
+  background-image: none !important;
+  color: #e4dcff !important;
+  border-color: #494667 !important;
+}
+html[data-theme="dark"] :where(.danger,.destructive,.calc-error,.error-text,.form-error,.form-success,.success-text,.warning,.warning-text) {
+  background: #20203b !important;
+  background-color: #20203b !important;
+  background-image: none !important;
+  color: #e4dcff !important;
+  border-color: #494667 !important;
+}
+
+
+/* Remove the remaining pale active/navigation surfaces in dark mode. */
+html[data-theme="dark"] :where(.app-shell .nav-link.active,.app-shell .nav-link:hover) {
+  box-shadow: inset 3px 0 #b69cff !important;
+  border-color: #66549a !important;
+}
+html[data-theme="dark"] :where(.mobile-nav button.active,.mobile-nav a[aria-current="page"]) {
+  color: #d8ccff !important;
+  background: #30284e !important;
+  background-color: #30284e !important;
+  background-image: none !important;
+  border-color: #66549a !important;
+}
+html[data-theme="dark"] :where(#signout,#profile-signout,#uni-signout,#quiz-signout,.profile-signout) {
+  background: #20203b !important;
+  background-color: #20203b !important;
+  background-image: none !important;
+  color: #d8ccff !important;
+  border-color: #494667 !important;
+}
+html[data-theme="dark"] :where(#signout,#profile-signout,#uni-signout,#quiz-signout,.profile-signout):hover {
+  background: #30284e !important;
+  background-color: #30284e !important;
+  border-color: #66549a !important;
+}
+
+
+/* Consistent trailing-edge alignment for arrows inside shared cards. */
+:is(.card,.panel,.feature-card,.why-card,.step-card,.tool-card,.resource-card,.stat-card,.uni-course-row,.uni-result-card,.calculator-card,.chat-card,.task-picker) :is(a,button):has(>.arrow-icon),
+:is(.card,.panel,.feature-card,.why-card,.step-card,.tool-card,.resource-card,.stat-card,.uni-course-row,.uni-result-card,.calculator-card,.chat-card,.task-picker) :is(a,button):has(>span>.arrow-icon){display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+:is(.card,.panel,.feature-card,.why-card,.step-card,.tool-card,.resource-card,.stat-card,.uni-course-row,.uni-result-card,.calculator-card,.chat-card,.task-picker) :is(a,button) .arrow-icon{flex:0 0 18px;margin-left:auto}
+:is(.card,.panel,.feature-card,.why-card,.step-card,.tool-card,.resource-card,.stat-card,.uni-course-row,.uni-result-card,.calculator-card,.chat-card,.task-picker) :is(a,button):focus-visible{outline:2px solid var(--purple-soft,#b69cff);outline-offset:3px}
+html[data-theme="dark"] :where(.feature-icon,.step-symbol,.icon-box,.subject-icon,.tool-icon,.chip-icon,.check-icon,.value-icon,.play-icon,.mini-avatar,.side-benefits span) {
+  background: transparent !important;
+  background-image: none !important;
+  color: var(--purple-soft,#b69cff) !important;
+  border: 1px solid var(--line,rgba(167,139,250,.22));
+  box-shadow: none !important;
+}
+html[data-theme="dark"] :where(.icon-blue,.icon-green,.icon-purple,.icon-orange) {
+  background: transparent !important;
+  background-image: none !important;
+  color: var(--purple-soft,#b69cff) !important;
+}
+html[data-theme="dark"] :where(.arrow-icon) { background: transparent !important; background-image: none !important; box-shadow: none !important; border: 0 !important; color: currentColor; }
+
+/* Keep the global theme control in the header's layout flow instead of floating
+   over page content. Header actions own alignment; the control remains a stable
+   42px target beside the menu/back action on narrow screens. */
+.header-actions,
+.auth-topbar,
+.ai-topbar,
+.topbar .top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.at-theme-toggle-global {
+  position: static !important;
+  inset: auto !important;
+  flex: 0 0 42px !important;
+  width: 42px !important;
+  height: 42px !important;
+  margin: 0 !important;
+}
+.at-theme-toggle-landing {
+  position: static !important;
+  inset: auto !important;
+}
+.auth-topbar {
+  justify-content: space-between;
+  width: 100%;
+  min-height: 42px;
+  margin-bottom: 24px;
+}
+.auth-topbar .icon-only-back { margin: 0 !important; }
+.ai-topbar .at-theme-toggle-global { order: 2; }
+.ai-topbar .ai-mobile-menu-toggle { order: 3; }
+html[data-theme="dark"] .at-theme-toggle-global {
+  background: #20172f !important;
+  color: #e4dcff !important;
+  border-color: #494667 !important;
+}
+html[data-theme="light"] .at-theme-toggle-global {
+  background: #f0e8ff !important;
+  color: #5b2ba8 !important;
+  border-color: #d9c9f1 !important;
+}
+@media (max-width: 760px) {
+  .header-actions { gap: 8px; }
+  .auth-topbar { margin-bottom: 20px; }
+  .ai-topbar .at-theme-toggle-global,
+  .ai-topbar .ai-mobile-menu-toggle { flex: 0 0 40px !important; width: 40px !important; height: 40px !important; }
+}
+.at-theme-toggle-floating {
+  position: fixed !important;
+  z-index: 10000 !important;
+  top: 14px !important;
+  right: 14px !important;
+}
+@media (max-width: 760px) {
+  .at-theme-toggle-floating { top: 10px !important; right: 10px !important; }
+}
+
