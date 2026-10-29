@@ -37,7 +37,10 @@
       const mobileMenuToggle = aiTopbar.querySelector(".ai-mobile-menu-toggle");
       aiTopbar.insertBefore(toggle, mobileMenuToggle || null);
     } else if (topActions) topActions.appendChild(toggle);
-    else (document.body || document.documentElement).appendChild(toggle);
+    else {
+      toggle.classList.add("at-theme-toggle-floating");
+      (document.body || document.documentElement).appendChild(toggle);
+    }
   }
 
   function applyTheme(theme, persist = false) {
