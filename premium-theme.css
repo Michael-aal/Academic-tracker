@@ -623,3 +623,40 @@ html[data-theme="dark"] .at-theme-toggle-global {
 
 /* When a shared navigation header exists, keep the toggle inside its action row. */
 .at-nav-actions .at-theme-toggle-global { position: static !important; top: auto !important; right: auto !important; flex: 0 0 42px !important; }
+
+
+/* Dark-mode layout surfaces: wrappers are transparent; only actual surfaces are panels. */
+html[data-theme="dark"] :where(
+  .app-shell,.main,.main-content,.page-shell,.page-content,.content,.workspace,
+  .workspace-main,.auth-main,.tutor-layout,.tutor-main,.ai-shell,.quiz-page-shell,
+  .quiz-layout,.study-tools-shell,.profile-layout,.support-layout,.uni-layout,
+  .container,.site-main,.dashboard-content,.section-wrap
+) {
+  background-color: transparent !important;
+  background-image: none !important;
+  color: #f5f3ff !important;
+}
+html[data-theme="dark"] :where(.uni-hero,.ai-hero) {
+  background: #15162b !important;
+  background-color: #15162b !important;
+  background-image: none !important;
+  color: #f5f3ff !important;
+  border-color: #343452 !important;
+}
+html[data-theme="dark"] :where(
+  .quiz-review-card,.quiz-review-card.review-correct,.quiz-review-card.review-incorrect,
+  .feedback-correct,.feedback-incorrect
+) {
+  background: #20203b !important;
+  background-color: #20203b !important;
+  background-image: none !important;
+  color: #e4dcff !important;
+  border-color: #494667 !important;
+}
+html[data-theme="dark"] :where(.danger,.destructive,.calc-error,.error-text,.form-error,.form-success,.success-text,.warning,.warning-text) {
+  background: #20203b !important;
+  background-color: #20203b !important;
+  background-image: none !important;
+  color: #e4dcff !important;
+  border-color: #494667 !important;
+}
