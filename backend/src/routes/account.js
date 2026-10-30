@@ -1,9 +1,11 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const { prisma } = require("../prisma");
 const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
 router.use(requireAuth);
+router.use(rateLimit({ windowMs: 60 * 1000, limit: 3, standardHeaders: "draft-7", legacyHeaders: false, keyGenerator: req => req.userId }));
 
 router.get("/export", async (req, res, next) => {
   try {
@@ -31,7 +33,7 @@ router.get("/export", async (req, res, next) => {
       prisma.aiQuizAttempt.findMany({
         where: { userId: req.userId },
         orderBy: { createdAt: "desc" },
-        take: 500,
+        take: 2000,
         select: {
           id: true, title: true, subject: true, topic: true, difficulty: true,
           questionData: true, submittedAnswers: true, resultData: true,
@@ -41,7 +43,7 @@ router.get("/export", async (req, res, next) => {
       prisma.userDataRecord.findMany({
         where: { userId: req.userId },
         orderBy: { updatedAt: "desc" },
-        take: 2000,
+        take: 3000,
         select: { kind: true, recordId: true, data: true, createdAt: true, updatedAt: true }
       }),
       prisma.supportConversation.findUnique({
