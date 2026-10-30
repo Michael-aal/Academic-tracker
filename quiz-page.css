@@ -31,7 +31,7 @@
 .quiz-answer-option[aria-pressed=true] .quiz-option-check{display:inline-grid;place-items:center;width:23px;height:23px;border-radius:50%;background:rgba(139,92,246,.2)}
 .quiz-page-heading h1,.quiz-question-card h2,.quiz-finish-panel strong,.quiz-results h2,.quiz-results h3{color:var(--quiz-copy)}
 .quiz-page-body{color-scheme:dark}
-html[data-theme="light"] .quiz-page-body{background:#f7f3ff!important;background-image:radial-gradient(ellipse at 78% 0%,rgba(139,92,246,.10),transparent 36rem)!important;color:#35224f!important}
+html[data-theme="light"] .quiz-page-body{color-scheme:light;background:#f7f3ff!important;background-image:radial-gradient(ellipse at 78% 0%,rgba(139,92,246,.10),transparent 36rem)!important;color:#35224f!important}
 html[data-theme="light"] .quiz-page-header,html[data-theme="light"] .quiz-page-footer{border-color:#e3d8f3}
 html[data-theme="light"] .quiz-exit-link,html[data-theme="light"] .quiz-signout,html[data-theme="light"] .quiz-page-footer{color:#6c5a83}
 html[data-theme="light"] .quiz-signout,html[data-theme="light"] .quiz-overview-row,html[data-theme="light"] .quiz-question-card,html[data-theme="light"] .quiz-finish-panel,html[data-theme="light"] .quiz-loading-card,html[data-theme="light"] .quiz-result-stat,html[data-theme="light"] .quiz-review-card{background:#ffffff!important;border-color:#e3d8f3!important;box-shadow:0 12px 32px rgba(68,40,100,.06)}
