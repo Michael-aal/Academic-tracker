@@ -1,18 +1,58 @@
 {
   "name": "Academic Tracker",
   "short_name": "Academics",
-  "description": "Personal academic accountability and score tracking.",
-  "start_url": "./index.html",
+  "description": "Your personal academic workspace for subjects, results, study tools and progress.",
+  "start_url": "./index.html?source=pwa",
   "scope": "./",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#ffffff",
-  "theme_color": "#7545c8",
+  "theme_color": "#6d28d9",
+  "categories": [
+    "education",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "assets/icon.svg",
-      "sizes": "any",
+      "sizes": "any 192x192 512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Open dashboard",
+      "short_name": "Dashboard",
+      "url": "./dashboard.html",
+      "icons": [
+        {
+          "src": "assets/icon.svg",
+          "sizes": "any"
+        }
+      ]
+    },
+    {
+      "name": "AI learning",
+      "short_name": "AI learning",
+      "url": "./ai-learning.html",
+      "icons": [
+        {
+          "src": "assets/icon.svg",
+          "sizes": "any"
+        }
+      ]
+    },
+    {
+      "name": "AI quiz",
+      "short_name": "AI quiz",
+      "url": "./ai-quiz-setup.html",
+      "icons": [
+        {
+          "src": "assets/icon.svg",
+          "sizes": "any"
+        }
+      ]
     }
   ]
 }
