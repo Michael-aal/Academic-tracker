@@ -20,6 +20,7 @@ Express + Prisma + PostgreSQL API for personal Academic Tracker accounts. This s
 - `PUT /api/user-data/:kind/:recordId` — validates and upserts one user-owned saved record.
 - `DELETE /api/user-data/:kind/:recordId` — deletes only the signed-in user's record.
 - `POST /api/auth/logout` — revokes active bearer tokens for the account by incrementing its session version.
+- `GET /api/account/export` — downloads the signed-in user's profile, subjects/scores, university results, quiz attempts, saved records, and support conversation.
 
 Authenticated endpoints require `Authorization: Bearer <token>`. The frontend must not send or select a user ID to determine ownership; the server derives it from the verified token.
 
