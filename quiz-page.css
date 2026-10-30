@@ -19,3 +19,34 @@
 .icon-only-quiz-back{display:inline-grid!important;place-items:center;width:42px;height:42px;padding:0!important;border:1px solid rgba(167,139,250,.22)!important;border-radius:12px;background:linear-gradient(145deg,#8B5CF6,#6D28D9)!important;color:#fff!important;font-size:0!important;text-decoration:none}
 .icon-only-quiz-back svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .icon-only-quiz-back:hover{filter:brightness(1.1)}
+
+
+/* Timed quiz controls and explicit theme contrast. */
+.quiz-timer-chip{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid rgba(167,139,250,.38);border-radius:999px;background:rgba(139,92,246,.12);color:#e9ddff;font-size:12px;font-weight:800;letter-spacing:0;white-space:nowrap}
+.quiz-timer-chip svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.quiz-timer-chip.is-urgent{border-color:rgba(248,113,113,.65);background:rgba(248,113,113,.14);color:#fecaca;animation:quiz-timer-pulse .8s ease-in-out infinite alternate}
+@keyframes quiz-timer-pulse{to{transform:scale(1.035)}}
+.quiz-question-meta{flex-wrap:wrap}
+.quiz-answer-option:disabled{cursor:default;opacity:.9}
+.quiz-answer-option[aria-pressed=true] .quiz-option-check{display:inline-grid;place-items:center;width:23px;height:23px;border-radius:50%;background:rgba(139,92,246,.2)}
+.quiz-page-heading h1,.quiz-question-card h2,.quiz-finish-panel strong,.quiz-results h2,.quiz-results h3{color:var(--quiz-copy)}
+.quiz-page-body{color-scheme:dark}
+html[data-theme="light"] .quiz-page-body{background:#f7f3ff!important;background-image:radial-gradient(ellipse at 78% 0%,rgba(139,92,246,.10),transparent 36rem)!important;color:#35224f!important}
+html[data-theme="light"] .quiz-page-header,html[data-theme="light"] .quiz-page-footer{border-color:#e3d8f3}
+html[data-theme="light"] .quiz-exit-link,html[data-theme="light"] .quiz-signout,html[data-theme="light"] .quiz-page-footer{color:#6c5a83}
+html[data-theme="light"] .quiz-signout,html[data-theme="light"] .quiz-overview-row,html[data-theme="light"] .quiz-question-card,html[data-theme="light"] .quiz-finish-panel,html[data-theme="light"] .quiz-loading-card,html[data-theme="light"] .quiz-result-stat,html[data-theme="light"] .quiz-review-card{background:#ffffff!important;border-color:#e3d8f3!important;box-shadow:0 12px 32px rgba(68,40,100,.06)}
+html[data-theme="light"] .quiz-page-heading h1,html[data-theme="light"] .quiz-question-card h2,html[data-theme="light"] .quiz-overview-row strong,html[data-theme="light"] .quiz-finish-panel strong,html[data-theme="light"] .quiz-results h2,html[data-theme="light"] .quiz-results h3,html[data-theme="light"] .quiz-loading-card h1,html[data-theme="light"] .quiz-review-card h3{color:#35224f!important}
+html[data-theme="light"] .quiz-page-heading>p:last-child,html[data-theme="light"] .quiz-select-prompt,html[data-theme="light"] .quiz-answered-count,html[data-theme="light"] .quiz-finish-panel p,html[data-theme="light"] .quiz-loading-card p,html[data-theme="light"] .quiz-review-card p{color:#6c5a83!important}
+html[data-theme="light"] .quiz-progress-track{background:#e8e0f2}
+html[data-theme="light"] .quiz-answer-option{background:#fbfaff!important;color:#35224f!important;border-color:#e3d8f3!important}
+html[data-theme="light"] .quiz-answer-option:hover:not(:disabled),html[data-theme="light"] .quiz-answer-option[aria-pressed=true]{background:#f1eaff!important;border-color:#9b76dc!important}
+html[data-theme="light"] .quiz-answer-letter{background:#f1eaff;border-color:#d8c9eb;color:#5b2ba8}
+html[data-theme="light"] .quiz-answer-text{color:#35224f}
+html[data-theme="light"] .quiz-nav-button,html[data-theme="light"] .quiz-secondary-link{background:#ffffff;color:#5b2ba8;border-color:#e3d8f3}
+html[data-theme="light"] .quiz-next-button{background:#f1eaff;color:#5b2ba8;border-color:#d8c9eb}
+html[data-theme="light"] .quiz-timer-chip{background:#f1eaff;color:#5b2ba8;border-color:#d8c9eb}
+html[data-theme="light"] .quiz-timer-chip.is-urgent{background:#fff0f0;color:#b42332;border-color:#f2b8bd}
+html[data-theme="light"] .quiz-hint-wrap p{background:#f7f3ff;color:#5b4b70;border-color:#e3d8f3}
+html[data-theme="light"] .quiz-notice{color:#6c5a83}
+html[data-theme="light"] .quiz-notice.is-error{color:#b42332}
+@media(prefers-reduced-motion:reduce){.quiz-timer-chip.is-urgent{animation:none}}
