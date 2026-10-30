@@ -149,7 +149,7 @@
     } catch (e) { console.warn("Could not load recent quiz results", e); quizHistory = []; }
     try {
       const focusData = await apiRequest("/api/user-data/focus-sessions");
-      focusHistory = (focusData.records || []).filter(record => record.recordId !== "active" && record.data?.status === "completed").map(record => ({ ...record.data, savedAt: record.updatedAt })).slice(0, 20);
+      focusHistory = (focusData.records || []).filter(record => record.recordId !== "active" && record.data?.status === "completed").map(record => ({ ...record.data, savedAt: record.updatedAt })).slice(0, 500);
       const remoteFocus = focusData.records?.find(record => record.recordId === "active")?.data;
       if (remoteFocus) localStorage.setItem(FOCUS_KEY, JSON.stringify(remoteFocus));
       else if (focusSession()) await apiRequest("/api/user-data/focus-sessions/active", { method: "PUT", body: JSON.stringify({ data: focusSession() }) });
