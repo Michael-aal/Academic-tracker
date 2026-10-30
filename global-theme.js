@@ -2,18 +2,19 @@
 (() => {
   "use strict";
   const root = document.documentElement;
-  /* Load the shared light palette on every route, not only pages that link it manually. */
-  if (!document.querySelector('link[data-global-light-mode]')) {
-    const lightStyles = document.createElement("link");
+  /* Reuse the early-loaded theme styles and move them after route CSS for predictable cascade order. */
+  let lightStyles = document.querySelector('link[data-global-light-mode]');
+  if (!lightStyles) {
+    lightStyles = document.createElement("link");
     lightStyles.rel = "stylesheet";
     lightStyles.href = "global-light-mode.css";
     lightStyles.dataset.globalLightMode = "true";
   }
-  /* Keep shared theme overrides after route styles while reusing the early-loaded link. */
   document.head.appendChild(lightStyles);
-  /* Loaded centrally so every route receives the same dark-surface corrections. */
-  if (!document.querySelector('link[data-dark-mode-guard]')) {
-    const guard = document.createElement("link");
+
+  let guard = document.querySelector('link[data-dark-mode-guard]');
+  if (!guard) {
+    guard = document.createElement("link");
     guard.rel = "stylesheet";
     guard.href = "dark-mode-guard.css";
     guard.dataset.darkModeGuard = "true";
