@@ -156,14 +156,20 @@ function validateData(kind, data, recordId) {
 router.get("/:kind", async (req, res, next) => {
   if (!validKind(req.params.kind)) return res.status(404).json({ error: "Saved data category not found." });
   try {
-    const records = await prisma.userDataRecord.findMany({
-      where: { userId: req.userId, kind: req.params.kind },
-      orderBy: { updatedAt: "desc" },
-      take: MAX_RECORDS[req.params.kind] || 100,
-      select: { recordId: true, data: true, createdAt: true, updatedAt: true }
-    });
+    const [records, deleted] = await Promise.all([
+      prisma.userDataRecord.findMany({
+        where: { userId: req.userId, kind: req.params.kind, deletedAt: null },
+        orderBy: { updatedAt: "desc" },
+        take: MAX_RECORDS[req.params.kind] || 100,
+        select: { recordId: true, data: true, createdAt: true, updatedAt: true }
+      }),
+      prisma.userDataRecord.findMany({
+        where: { userId: req.userId, kind: req.params.kind, deletedAt: { not: null } },
+        select: { recordId: true }
+      })
+    ]);
     res.set("Cache-Control", "private, no-store");
-    res.json({ records });
+    res.json({ records, deletedIds: deleted.map(item => item.recordId) });
   } catch (error) { next(error); }
 });
 
@@ -185,16 +191,16 @@ router.put("/:kind/bulk", async (req, res, next) => {
       // parallel batches could all observe free capacity and exceed the limit.
       await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${req.userId} FOR UPDATE`;
       const existing = await tx.userDataRecord.findMany({
-        where: { userId: req.userId, kind, recordId: { in: [...ids] } },
+        where: { userId: req.userId, kind, recordId: { in: [...ids] }, deletedAt: null },
         select: { recordId: true }
       });
       const existingIds = new Set(existing.map(item => item.recordId));
-      const currentCount = await tx.userDataRecord.count({ where: { userId: req.userId, kind } });
+      const currentCount = await tx.userDataRecord.count({ where: { userId: req.userId, kind, deletedAt: null } });
       if (currentCount + records.filter(item => !existingIds.has(item.recordId)).length > (MAX_RECORDS[kind] || 100)) return false;
       await Promise.all(records.map(item => tx.userDataRecord.upsert({
         where: { userId_kind_recordId: { userId: req.userId, kind, recordId: item.recordId } },
         create: { userId: req.userId, kind, recordId: item.recordId, data: item.data },
-        update: { data: item.data }
+        update: { data: item.data, deletedAt: null }
       })));
       return true;
     });
@@ -212,7 +218,7 @@ router.delete("/:kind/bulk", async (req, res, next) => {
     return res.status(400).json({ error: "A delete batch must contain between 1 and 100 valid record IDs." });
   }
   try {
-    const result = await prisma.userDataRecord.deleteMany({ where: { userId: req.userId, kind, recordId: { in: [...new Set(recordIds)] } } });
+    const result = await prisma.userDataRecord.updateMany({ where: { userId: req.userId, kind, recordId: { in: [...new Set(recordIds)] }, deletedAt: null }, data: { deletedAt: new Date() } });
     res.json({ ok: true, deleted: result.count });
   } catch (error) { next(error); }
 });
@@ -229,15 +235,15 @@ router.put("/:kind/:recordId", async (req, res, next) => {
       // requests cannot race each other around category quotas.
       await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${req.userId} FOR UPDATE`;
       const where = { userId_kind_recordId: { userId: req.userId, kind, recordId } };
-      const existing = await tx.userDataRecord.findUnique({ where, select: { id: true } });
-      if (!existing) {
-        const count = await tx.userDataRecord.count({ where: { userId: req.userId, kind } });
+      const existing = await tx.userDataRecord.findUnique({ where, select: { id: true, deletedAt: true } });
+      if (!existing || existing.deletedAt) {
+        const count = await tx.userDataRecord.count({ where: { userId: req.userId, kind, deletedAt: null } });
         if (count >= (MAX_RECORDS[kind] || 100)) return null;
       }
       return tx.userDataRecord.upsert({
         where: { userId_kind_recordId: { userId: req.userId, kind, recordId } },
         create: { userId: req.userId, kind, recordId, data: req.body.data },
-        update: { data: req.body.data },
+        update: { data: req.body.data, deletedAt: null },
         select: { recordId: true, data: true, createdAt: true, updatedAt: true }
       });
     });
@@ -252,7 +258,7 @@ router.delete("/:kind/:recordId", async (req, res, next) => {
   if (!validKind(kind)) return res.status(404).json({ error: "Saved data category not found." });
   if (!validRecordId(recordId)) return res.status(400).json({ error: "Saved record ID is invalid." });
   try {
-    const result = await prisma.userDataRecord.deleteMany({ where: { userId: req.userId, kind, recordId } });
+    const result = await prisma.userDataRecord.updateMany({ where: { userId: req.userId, kind, recordId, deletedAt: null }, data: { deletedAt: new Date() } });
     if (!result.count) return res.status(404).json({ error: "Saved record not found." });
     res.json({ ok: true });
   } catch (error) { next(error); }
