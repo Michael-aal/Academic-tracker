@@ -37,8 +37,12 @@
     offlineButton.hidden = true;
     submit.insertAdjacentElement('afterend', offlineButton);
   }
+  const setOfflineOptionVisible = visible => {
+    offlineButton.hidden = !visible;
+    offlineButton.style.display = visible ? '' : 'none';
+  };
   const refreshOfflineOption = () => {
-    offlineButton.hidden = !(mode === 'login' && !navigator.onLine && Boolean(cachedSession()));
+    setOfflineOptionVisible(mode === 'login' && !navigator.onLine && Boolean(cachedSession()));
   };
   offlineButton.addEventListener('click', () => {
     const session = cachedSession();
@@ -95,7 +99,7 @@
     } catch (error) {
       const message = error instanceof TypeError ? 'Could not reach the API. Check your connection and confirm the Render API allows this website in its CORS settings.' : error.message;
       showMessage(errorBox, message);
-      if (mode === 'login' && cachedSession()) { offlineButton.hidden = false; offlineButton.textContent = 'Continue with saved session (offline)'; }
+      if (mode === 'login' && cachedSession()) { setOfflineOptionVisible(true); offlineButton.textContent = navigator.onLine ? 'Continue with saved session' : 'Continue with saved session (offline)'; }
     } finally { submit.disabled = false; submit.textContent = mode === 'register' ? 'Create my account →' : 'Log in to my tracker →'; }
   });
 })();
