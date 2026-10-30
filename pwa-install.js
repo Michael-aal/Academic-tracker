@@ -6,7 +6,7 @@
 
   const DISMISS_KEY = "at-pwa-install-dismissed-until";
   const DISMISS_DAYS = 7;
-  let deferredPrompt = null;
+  let deferredPrompt = window.__AT_DEFERRED_INSTALL_PROMPT || null;
   let banner = null;
   let instructions = null;
 
@@ -114,6 +114,7 @@
   window.addEventListener("beforeinstallprompt", event => {
     event.preventDefault();
     deferredPrompt = event;
+    window.__AT_DEFERRED_INSTALL_PROMPT = event;
     if (banner) {
       const button = banner.querySelector(".at-install-primary");
       if (button) button.textContent = "Install app";
