@@ -18,7 +18,20 @@ function renderResults(){const root=$('results-list');if(!data.courses.length){r
 function degreeClass(cgpa){if(cgpa===null||cgpa===undefined)return 'Degree classification appears after results';if(cgpa>=4.5)return 'First Class range';if(cgpa>=3.5)return 'Second Class Upper range';if(cgpa>=2.4)return 'Second Class Lower range';if(cgpa>=1.5)return 'Third Class range';if(cgpa>=1)return 'Pass range';return 'Below pass range';}
 function render(){renderCourses();renderResults();$('cgpa-value').textContent=data.cgpa===null?'—':Number(data.cgpa).toFixed(2)+' / 5.00';$('cgpa-class').textContent=degreeClass(data.cgpa);$('gpa-value').textContent=data.semesterGpa===null?'—':Number(data.semesterGpa).toFixed(2)+' / 5.00';$('gpa-period').textContent=data.semester+' · '+data.academicYear;$('completed-value').textContent=data.completedCourses??0;$('units-value').textContent=data.completedUnits??0;}
 async function load(){if(!token){location.replace('login.html');return;}try{const me=await request('/api/auth/me');const user=me.user;if(user.educationTrack!=='HIGHER'){location.replace('dashboard.html');return;}$('uni-greeting').textContent='Welcome, '+user.name.split(' ')[0];$('uni-institution').textContent=[user.institutionName,user.programme,user.studyLevel].filter(Boolean).join(' · ');if(user.currentAcademicYear)$('academic-year').value=user.currentAcademicYear;if(user.currentSemester)$('semester').value=user.currentSemester;await loadPeriod();}catch(e){message(e.message);}}
-async function loadPeriod(){try{const result=await request('/api/university'+periodQuery());Object.keys(assessmentDrafts).forEach(key=>delete assessmentDrafts[key]);data=result;render();}catch(e){message(e.message);}}
+function localDay(value){const date=new Date(value);if(!Number.isFinite(date.getTime()))return '';return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');}
+async function renderLearningInsights(){
+ try{
+  const [quizData,focusData]=await Promise.all([request('/api/ai/attempts'),request('/api/user-data/focus-sessions')]);
+  const quizzes=Array.isArray(quizData.attempts)?quizData.attempts:[];
+  const focus=(focusData.records||[]).filter(x=>x.recordId!=='active'&&x.data?.status==='completed').map(x=>({...x.data,savedAt:x.updatedAt}));
+  const days=new Set([...quizzes.map(x=>localDay(x.completedAt||x.createdAt)),...focus.map(x=>localDay(x.completedAt||x.savedAt))].filter(Boolean));
+  const cursor=new Date();cursor.setHours(0,0,0,0);if(!days.has(localDay(cursor)))cursor.setDate(cursor.getDate()-1);
+  let streak=0;while(days.has(localDay(cursor))){streak++;cursor.setDate(cursor.getDate()-1);}
+  $('uni-study-streak').textContent=streak+' '+(streak===1?'day':'days');
+  $('uni-quiz-history').innerHTML=quizzes.length?quizzes.slice(0,4).map(item=>{const result=item.result||{};const pct=Number.isFinite(Number(result.percentage))?Number(result.percentage)+'%':'—';return '<div class="uni-quiz-row"><span class="uni-insight-icon">✓</span><span><strong>'+esc(item.title||'Practice quiz')+'</strong><small>'+esc(item.completedAt?new Date(item.completedAt).toLocaleDateString():'Completed quiz')+' · '+(result.correctAnswers??result.score??'—')+'/'+(result.totalQuestions??'—')+' correct</small></span><b>'+pct+'</b></div>';}).join(''):'<p class="uni-muted">Complete an AI quiz to see your score here.</p>';
+ }catch(error){console.warn('Could not load university learning insights',error);}
+}
+async function loadPeriod(){try{const result=await request('/api/university'+periodQuery());Object.keys(assessmentDrafts).forEach(key=>delete assessmentDrafts[key]);data=result;render();await renderLearningInsights();}catch(e){message(e.message);}}
 $('add-course-toggle').addEventListener('click',()=>{$('course-form').hidden=!$('course-form').hidden;});
 $('cancel-course').addEventListener('click',()=>{$('course-form').reset();$('course-form').hidden=true;});
 $('course-form').addEventListener('submit',async e=>{e.preventDefault();try{await request('/api/university/courses',{method:'POST',body:JSON.stringify({code:$('course-code').value,title:$('course-title').value,creditUnits:Number($('course-units').value),targetScore:Number($('course-target').value)})});$('course-form').reset();$('course-form').hidden=true;await loadPeriod();message('Course saved.');}catch(err){message(err.message);}});

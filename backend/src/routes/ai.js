@@ -81,6 +81,24 @@ router.get("/status", requireAdmin, (_req, res) => {
 });
 
 
+router.get("/attempts", async (req, res, next) => {
+  try {
+    const attempts = await prisma.aiQuizAttempt.findMany({
+      where: { userId: req.userId, status: "COMPLETED" },
+      orderBy: [{ completedAt: "desc" }, { createdAt: "desc" }],
+      take: 500,
+      select: { id: true, title: true, resultData: true, createdAt: true, completedAt: true }
+    });
+    return res.json({ attempts: attempts.map(attempt => ({
+      id: attempt.id,
+      title: attempt.title,
+      result: attempt.resultData,
+      createdAt: attempt.createdAt,
+      completedAt: attempt.completedAt
+    })) });
+  } catch (error) { return next(error); }
+});
+
 router.get("/attempts/:attemptId", async (req, res, next) => {
   try {
     const attempt = await prisma.aiQuizAttempt.findFirst({ where: { id: req.params.attemptId, userId: req.userId } });

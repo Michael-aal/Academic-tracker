@@ -7,6 +7,7 @@
   let state = defaults();
   let view = "dashboard";
   let focusHistory = [];
+  let quizHistory = [];
   const $ = s => document.querySelector(s);
   const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const num = v => Number.isFinite(Number(v)) ? Number(v) : 0;
@@ -143,8 +144,12 @@
       }
     }
     try {
+      const quizData = await apiRequest("/api/ai/attempts");
+      quizHistory = Array.isArray(quizData.attempts) ? quizData.attempts : [];
+    } catch (e) { console.warn("Could not load recent quiz results", e); quizHistory = []; }
+    try {
       const focusData = await apiRequest("/api/user-data/focus-sessions");
-      focusHistory = (focusData.records || []).filter(record => record.recordId !== "active" && record.data?.status === "completed").map(record => ({ ...record.data, savedAt: record.updatedAt })).slice(0, 20);
+      focusHistory = (focusData.records || []).filter(record => record.recordId !== "active" && record.data?.status === "completed").map(record => ({ ...record.data, savedAt: record.updatedAt })).slice(0, 500);
       const remoteFocus = focusData.records?.find(record => record.recordId === "active")?.data;
       if (remoteFocus) localStorage.setItem(FOCUS_KEY, JSON.stringify(remoteFocus));
       else if (focusSession()) await apiRequest("/api/user-data/focus-sessions/active", { method: "PUT", body: JSON.stringify({ data: focusSession() }) });
@@ -217,14 +222,33 @@
     if(!state.subjects.length) return '<div class="empty"><strong>Your tracker starts with one subject.</strong>Add the subjects you study, then record targets and scores.<br><br><button class="button primary" data-action="add-subject">＋ Add a subject</button></div>';
     return state.subjects.map(s=>{const n=getEntered(s.id),p=pct(s.id);return '<div class="subject-row"><div class="subject-icon">'+esc(s.name.trim().slice(0,1).toUpperCase())+'</div><div class="subject-info"><strong>'+esc(s.name)+'</strong><small>'+n+'/'+itemsFor(s.id).length+' assessments entered · Target '+targetFor(s.id)+'%</small><div class="progress-track" style="margin-top:9px"><div class="progress-fill" style="width:'+p+'%"></div></div></div><div class="subject-score">'+(n?p+'%':'—')+'<small>'+(n?getTotal(s.id)+'/'+getMaxTotal(s.id):"No scores")+'</small></div></div>';}).join("");
   }
+  function localDay(value) {
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return "";
+    return [date.getFullYear(),String(date.getMonth()+1).padStart(2,"0"),String(date.getDate()).padStart(2,"0")].join("-");
+  }
+  function currentStudyStreak() {
+    const days = new Set([...focusHistory.map(x=>localDay(x.completedAt||x.savedAt)),...quizHistory.map(x=>localDay(x.completedAt||x.createdAt))].filter(Boolean));
+    const cursor = new Date(); cursor.setHours(0,0,0,0);
+    if (!days.has(localDay(cursor))) cursor.setDate(cursor.getDate()-1);
+    let count=0; while(days.has(localDay(cursor))){count++;cursor.setDate(cursor.getDate()-1);}
+    return count;
+  }
   function dashboard() {
     const total=state.subjects.length, withScores=state.subjects.filter(s=>getEntered(s.id)>0).length, completeSubjects=state.subjects.filter(s=>isComplete(s.id)).length;
     const pending=state.subjects.reduce((a,s)=>a+itemsFor(s.id).length-getEntered(s.id),0);
-    return '<div class="grid stats-grid">'+stat("SUBJECTS",total,"In your current tracker")+stat("CURRENT AVERAGE",withScores?average()+"%":"—",withScores?"Across subjects with scores":"Enter scores to calculate")+stat("ASSESSMENTS ENTERED",state.subjects.reduce((a,s)=>a+getEntered(s.id),0), "of "+state.subjects.reduce((a,s)=>a+itemsFor(s.id).length,0)+" possible entries")+stat("MISSING SCORES",pending,pending?"Missing scores are not treated as zero":"All subject assessments entered")+'</div>'+
-    '<section class="focus-promo card"><div class="focus-promo-icon" aria-hidden="true">◎</div><div class="focus-promo-copy"><span class="focus-kicker">FOCUS SHIELD</span><h2>Make time for one important task.</h2><p>Start a quiet study session, use a simple timer, and return to your work when distractions happen.</p></div><button class="button primary" data-view="focus">Start a focus session <span aria-hidden="true">→</span></button></section>'+
-    '<div class="grid content-grid">'+
-    '<section>'+heading("Your subjects","Progress for "+esc(state.term)+" · "+esc(state.academicYear),'<button class="button primary" data-action="add-subject">＋ Add subject</button>')+'<article class="card">'+subjectRows()+'</article></section>'+
-    '<section>'+heading("Study snapshot","A quick view of what needs attention")+'<article class="card"><h3>Assessment coverage</h3><div class="report-total">'+(total?Math.round((state.subjects.reduce((a,s)=>a+itemsFor(s.id).length,0)-pending)/(state.subjects.reduce((a,s)=>a+itemsFor(s.id).length,0)||1)*100):0)+'<small>%</small></div><p class="notice">Coverage counts scores you have entered. A missing mark stays missing; it is never silently counted as zero.</p><div class="progress-track"><div class="progress-fill" style="width:'+(total?((state.subjects.reduce((a,s)=>a+itemsFor(s.id).length,0)-pending)/(state.subjects.reduce((a,s)=>a+itemsFor(s.id).length,0)||1)*100):0)+'%"></div></div><div class="progress-row"><span>Complete subjects</span><strong>'+completeSubjects+' of '+total+'</strong></div><div class="progress-row"><span>Term</span><strong>'+esc(state.term)+'</strong></div><div class="progress-row"><span>Academic year</span><strong>'+esc(state.academicYear)+'</strong></div><div class="callout" style="margin-top:18px">'+(pending?'Next step: enter missing assessment marks in Score entry. Check your teacher’s returned scripts or class records before filling any mark.':'Nice work — every subject has all assessment scores entered.')+'</div><div class="button-row" style="margin-top:16px"><button class="button primary" data-view="scores">Enter scores →</button><button class="button secondary" data-view="reports">View report</button></div></article></section></div>';
+    const coverage=total?Math.round((state.subjects.reduce((a,s)=>a+getEntered(s.id),0)/(state.subjects.reduce((a,s)=>a+itemsFor(s.id).length,0)||1))*100):0;
+    const latest=quizHistory.slice(0,4);
+    const quizRows=latest.length?latest.map(item=>{
+      const result=item.result||{}, score=Number.isFinite(Number(result.percentage))?Number(result.percentage):null;
+      return '<div class="dashboard-result-row"><span class="dashboard-result-icon">✓</span><span class="dashboard-result-copy"><strong>'+esc(item.title||"Practice quiz")+'</strong><small>'+esc(item.completedAt?new Date(item.completedAt).toLocaleDateString():"Completed quiz")+' · '+(result.correctAnswers??result.score??"—")+'/'+(result.totalQuestions??"—")+' correct</small></span><strong class="dashboard-result-score">'+(score===null?"—":score+"%")+'</strong></div>';
+    }).join(""):'<div class="empty"><strong>No quiz results yet</strong>Completed AI quizzes will appear here with their scores.</div>';
+    const streak=currentStudyStreak();
+    return '<div class="grid stats-grid">'+stat("SUBJECTS",total,"In your current tracker")+stat("CURRENT AVERAGE",withScores?average()+"%":"—",withScores?"Across subjects with scores":"Enter scores to calculate")+stat("ASSESSMENTS ENTERED",state.subjects.reduce((a,s)=>a+getEntered(s.id),0),"of "+state.subjects.reduce((a,s)=>a+itemsFor(s.id).length,0)+" possible entries")+stat("MISSING SCORES",pending,pending?"Missing scores are not treated as zero":"All subject assessments entered")+'</div>'+
+    '<section class="dashboard-momentum-grid"><article class="dashboard-streak-card"><span class="dashboard-insight-icon">✦</span><div><span class="dashboard-insight-label">STUDY STREAK</span><strong>'+streak+' '+(streak===1?'day':'days')+'</strong><p>Days with a completed focus session or quiz. Build a steady learning habit.</p></div></article><article class="dashboard-quiz-card"><div class="dashboard-section-head"><div><span class="dashboard-insight-label">RECENT PERFORMANCE</span><h2>Latest quiz scores</h2></div><a href="ai-quiz-setup.html">Take a quiz →</a></div>'+quizRows+'</article></section>'+
+    '<section class="focus-promo card"><div class="focus-promo-icon" aria-hidden="true">◎</div><div class="focus-promo-copy"><span class="focus-kicker">FOCUS SHIELD</span><h2>Make time for one important task.</h2><p>Choose one clear task, set a comfortable timer, and return to your work when distractions happen.</p></div><button class="button primary" data-view="focus">Start a focus session <span aria-hidden="true">→</span></button></section>'+
+    '<div class="grid content-grid"><section>'+heading("Your subjects","Progress for "+esc(state.term)+" · "+esc(state.academicYear),'<button class="button primary" data-action="add-subject">＋ Add subject</button>')+'<article class="card">'+subjectRows()+'</article></section>'+
+    '<section>'+heading("Study snapshot","A quick view of what needs attention")+'<article class="card"><h3>Assessment coverage</h3><div class="report-total">'+coverage+'<small>%</small></div><p class="notice">Coverage counts scores you have entered. A missing mark stays missing; it is never silently counted as zero.</p><div class="progress-track"><div class="progress-fill" style="width:'+coverage+'%"></div></div><div class="progress-row"><span>Complete subjects</span><strong>'+completeSubjects+' of '+total+'</strong></div><div class="progress-row"><span>Term</span><strong>'+esc(state.term)+'</strong></div><div class="progress-row"><span>Academic year</span><strong>'+esc(state.academicYear)+'</strong></div><div class="callout" style="margin-top:18px">'+(pending?'Next step: enter missing assessment marks in Score entry.':'Nice work — every subject has all assessment scores entered.')+'</div><div class="button-row" style="margin-top:16px"><button class="button primary" data-view="scores">Enter scores →</button><button class="button secondary" data-view="reports">View report</button></div></article></section></div>';
   }
   function scoresView() {
     if(!state.subjects.length) return '<article class="card">'+subjectRows()+'</article>';

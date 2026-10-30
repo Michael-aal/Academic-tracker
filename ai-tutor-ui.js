@@ -37,5 +37,27 @@
     const content = $("result-content");
     if (content) new MutationObserver(syncConversationView).observe(content, { childList: true });
   }
+  // ChatGPT-style composer: one-line start, grows with content, Enter sends.
+  const resizeComposer = () => {
+    message.style.height = "auto";
+    const styles = getComputedStyle(message);
+    const max = Number.parseFloat(styles.maxHeight) || 180;
+    message.style.height = Math.min(message.scrollHeight, max) + "px";
+    message.style.overflowY = message.scrollHeight > max ? "auto" : "hidden";
+  };
+  message.rows = 1;
+  message.addEventListener("input", resizeComposer);
+  message.addEventListener("keydown", event => {
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      if (message.value.trim() && !form.querySelector("button[type='submit']")?.disabled) {
+        if (form.requestSubmit) form.requestSubmit();
+        else form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      }
+    }
+  });
+  form.addEventListener("submit", () => requestAnimationFrame(resizeComposer));
+  resizeComposer();
+
   updateFocus();
 })();

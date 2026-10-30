@@ -149,6 +149,7 @@
     if (quizOptions) quizOptions.hidden = action !== "quiz";
     $("copy-result").hidden = action === "quiz";
     $("content").value = "";
+    $("content").dispatchEvent(new Event("input", { bubbles: true }));
     $("char-count").textContent = "0 / 12,000 characters";
     $("result-panel").hidden = true;
     setNotice("");
@@ -172,6 +173,7 @@
       }
       host.append(card);
     });
+    if (host.parentElement) host.parentElement.scrollTop = host.parentElement.scrollHeight;
   }
 
   function renderQuiz(quiz, attemptId, submittedAnswers = [], result = null, feedbackByQuestion = {}) {
@@ -425,6 +427,22 @@
     $("submit-label").textContent = state.action === "quiz" ? "Generating your quiz…" : "Working on your request…";
     setNotice("Preparing your study response. This may take a few seconds.");
     $("result-panel").hidden = true;
+    let tutorPending = null;
+    if (state.action === "tutor") {
+      state.conversation.push({ role: "student", content: content || topic });
+      $("result-panel").hidden = false;
+      renderTutorConversation($("result-content"), topic || content, ($("subject")?.value || "").trim());
+      tutorPending = el("article", "tutor-message tutor-message-pending", "");
+      tutorPending.setAttribute("aria-live", "polite");
+      tutorPending.append(el("p", "tutor-message-label", "AI TUTOR"));
+      const typing = el("div", "tutor-typing", "");
+      typing.setAttribute("aria-label", "AI Tutor is thinking");
+      typing.innerHTML = "<span></span><span></span><span></span><span class='typing-caption'>Thinking through your question…</span>";
+      tutorPending.append(typing);
+      $("result-content").append(tutorPending);
+      $("result-panel").scrollIntoView({ behavior: "smooth", block: "end" });
+      $("result-panel").scrollTop = $("result-panel").scrollHeight;
+    }
     try {
       if (state.action === "quiz") localStorage.removeItem(ATTEMPT_KEY);
       const history = state.action === "tutor" ? state.conversation.slice(-8).map(message => (message.role === "student" ? "Student" : "Tutor") + ":\n" + message.content).join("\n\n") : "";
@@ -454,7 +472,6 @@
       } else {
         state.answer = data.answer || "No response was returned.";
         if (state.action === "tutor") {
-          state.conversation.push({ role: "student", content: content || topic });
           state.conversation.push({ role: "tutor", content: state.answer });
           state.conversationId = state.conversationId || (crypto.randomUUID ? crypto.randomUUID() : "tutor-" + Date.now());
           api("/api/user-data/tutor-conversations/" + encodeURIComponent(state.conversationId), {
@@ -474,6 +491,7 @@
       setNotice("Response ready. Review it alongside your school materials.");
       $("result-panel").scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
+      if (tutorPending?.isConnected) tutorPending.remove();
       setNotice(error.message || "The request could not be completed.", true);
     } finally {
       button.disabled = false;
