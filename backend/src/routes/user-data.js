@@ -18,7 +18,8 @@ const ALLOWED_KINDS = new Set([
   "focus-sessions",
   "preferences"
 ]);
-const MAX_RECORDS = { "secondary-tracker": 1, "video-library": 300, "video-history": 300, "study-sessions": 500, "memory-cards": 500, "memory-stats": 1, "tutor-conversations": 200, "note-summaries": 200, "focus-sessions": 500, "preferences": 1 };\nconst limiter = rateLimit({
+const MAX_RECORDS = { "secondary-tracker": 1, "video-library": 300, "video-history": 300, "study-sessions": 500, "memory-cards": 500, "memory-stats": 1, "tutor-conversations": 200, "note-summaries": 200, "focus-sessions": 500, "preferences": 1 };
+const limiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 120,
   standardHeaders: "draft-7",
