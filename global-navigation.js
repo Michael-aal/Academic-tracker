@@ -208,7 +208,7 @@
 
   // Revoke the server-side session before existing page handlers clear local credentials.
   document.addEventListener("click", event => {
-    const button = event.target.closest("#at-nav-signout, #signout, #mobile-signout, #quiz-signout, #profile-signout, #uni-signout, #signout-button, #logout-button, [data-action='signout']");
+    const button = event.target.closest("#signout, #mobile-signout, #quiz-signout, #profile-signout, #uni-signout, #signout-button, #logout-button, [data-action='signout']");
     if (!button) return;
     const token = localStorage.getItem("academic-tracker-token");
     if (!token) return;
