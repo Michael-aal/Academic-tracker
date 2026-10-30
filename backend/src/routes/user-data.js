@@ -15,10 +15,11 @@ const ALLOWED_KINDS = new Set([
   "memory-stats",
   "tutor-conversations",
   "note-summaries",
+  "study-notes",
   "focus-sessions",
   "preferences"
 ]);
-const MAX_RECORDS = { "secondary-tracker": 1, "video-library": 300, "video-history": 300, "study-sessions": 500, "memory-cards": 500, "memory-stats": 1, "tutor-conversations": 200, "note-summaries": 200, "focus-sessions": 500, "preferences": 1 };
+const MAX_RECORDS = { "secondary-tracker": 1, "video-library": 300, "video-history": 300, "study-sessions": 500, "memory-cards": 500, "memory-stats": 1, "tutor-conversations": 200, "note-summaries": 200, "study-notes": 200, "focus-sessions": 500, "preferences": 1 };
 const limiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 120,
@@ -128,6 +129,15 @@ function validateData(kind, data, recordId) {
     if (!validString(data.subject, 100) || !data.subject.trim() ||
         !validString(data.topic, 160) || !data.topic.trim() ||
         !validString(data.summary, 12000) || !data.summary.trim()) return "The saved summary is invalid.";
+  }
+
+  if (kind === "study-notes") {
+    if (!validString(data.title, 120) || !data.title.trim() ||
+        !validString(data.content, 12000) || !data.content.trim() ||
+        !validString(data.subject, 100, true) ||
+        !validString(data.topic, 160, true) ||
+        !validString(data.context, 500, true) ||
+        (data.updatedAt !== undefined && (typeof data.updatedAt !== "string" || Number.isNaN(Date.parse(data.updatedAt))))) return "The study note is invalid.";
   }
 
   if (kind === "focus-sessions") {
