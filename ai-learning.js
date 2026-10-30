@@ -459,7 +459,7 @@
           state.conversationId = state.conversationId || (crypto.randomUUID ? crypto.randomUUID() : "tutor-" + Date.now());
           api("/api/user-data/tutor-conversations/" + encodeURIComponent(state.conversationId), {
             method: "PUT",
-            body: JSON.stringify({ data: { subject: ($("subject")?.value || "").trim(), topic: topic || content, messages: state.conversation.slice(-40), updatedAt: new Date().toISOString() } })
+            body: JSON.stringify({ data: { subject: ($("subject")?.value || "").trim(), topic: String(topic || content).slice(0, 160), messages: state.conversation.slice(-10).map(message => ({ ...message, content: String(message.content || "").slice(0, 1800) })), updatedAt: new Date().toISOString() } })
           }).catch(error => { console.warn("Could not save tutor conversation", error); setNotice("Your tutor reply is ready, but this conversation could not sync to your account.", true); });
           renderTutorConversation($("result-content"), topic || content, ($("subject")?.value || "").trim());
           $("result-title").textContent = "Your tutoring conversation";
