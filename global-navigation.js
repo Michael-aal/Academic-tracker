@@ -27,6 +27,10 @@
   ];
   const account = (() => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}"); } catch { return {}; } })();
   const isHigherTrack = account.educationTrack === "HIGHER";
+  if (!isHigherTrack) {
+    const reportsIndex = routes.findIndex(route => route[0] === "Reports");
+    routes.splice(reportsIndex >= 0 ? reportsIndex + 1 : routes.length, 0, ["Backup & Settings", "dashboard.html?view=settings", "settings"]);
+  }
   if (isHigherTrack) {
     const dashboardIndex = routes.findIndex(route => route[1] === "dashboard.html");
     if (dashboardIndex >= 0) routes.splice(dashboardIndex, 1, ["University Dashboard", "university-dashboard.html", "university"]);
@@ -229,7 +233,9 @@
   let navHidden = false;
   const applyNavigationVisibility = () => {
     const enabled = compactNavigation.matches;
-    navHidden = enabled && localStorage.getItem(navVisibilityKey) === "true";
+    let storedHidden = false;
+    try { storedHidden = localStorage.getItem(navVisibilityKey) === "true"; } catch (_) {}
+    navHidden = enabled && storedHidden;
     document.body.classList.toggle("at-nav-collapsed", navHidden);
     navRestore.hidden = !navHidden;
     if (!enabled) {
