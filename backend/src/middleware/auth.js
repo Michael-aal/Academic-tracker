@@ -3,7 +3,8 @@ const { prisma } = require("../prisma");
 
 async function requireAuth(req, res, next) {
   const header = req.get("authorization") || "";
-  const match = header.match(/^Bearer\\s+(.+)$/i);
+  // Match actual HTTP whitespace between the Bearer scheme and token.
+  const match = header.match(/^Bearer\s+(.+)$/i);
   if (!match) return res.status(401).json({ error: "Please log in to continue." });
 
   let payload;
@@ -28,9 +29,9 @@ async function requireAuth(req, res, next) {
     req.userId = payload.sub;
     res.set("Cache-Control", "private, no-store");
     res.set("Pragma", "no-cache");
-    next();
+    return next();
   } catch (error) {
-    next(error);
+    return next(error);
   }
 }
 
