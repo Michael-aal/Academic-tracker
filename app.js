@@ -277,6 +277,7 @@
         '</div>'+
         '<p class="focus-disclaimer">This timer manages your study session on this website. It cannot detect or silence notifications from other apps.</p>'+
       '</article>'+
+      '<article class="card focus-notification-card"><div><span class="focus-kicker">SESSION ALERTS</span><h3>Get notified wherever you are</h3><p class="notice" id="focus-push-status">Enable notifications to receive an in-app alert and device notification when this session ends.</p></div><button class="button primary" type="button" id="focus-enable-push">Enable notifications</button></article>'+
       '<div class="grid focus-setup-grid">'+
         '<article class="card focus-setup-card"><div class="focus-card-icon" aria-hidden="true">◎</div><h3>Set up your focus</h3><p class="notice">Choose a subject or enter one clear task. You can change the duration for each session.</p>'+
           '<label for="focus-subject">Subject (optional)</label><select id="focus-subject" '+(running||paused?'disabled':'')+'><option value="">Choose a subject</option>'+subjectOptions+'</select>'+
