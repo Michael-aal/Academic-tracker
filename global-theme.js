@@ -53,7 +53,9 @@
     installScript.dataset.pwaInstall = "true";
     document.head.appendChild(installScript);
   }
-  const token = localStorage.getItem("academic-tracker-token") || "";
+  const safeStorageGet = key => { try { return localStorage.getItem(key) || ""; } catch (_) { return ""; } };
+  const token = safeStorageGet("academic-tracker-token");
+  let themeRevision = 0;
   const themeColor = document.querySelector('meta[name="theme-color"]');
   const icons = {
     moon: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z"/></svg>',
@@ -88,6 +90,7 @@
       toggle.setAttribute("aria-pressed", String(dark));
     }
     if (persist) {
+      themeRevision++;
       try { localStorage.setItem(storageKey, next); } catch (_) {}
       if (token) fetch(apiBase + "/api/user-data/preferences/main", { method: "PUT", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ data: { theme: next, updatedAt: new Date().toISOString() } }) }).catch(error => console.warn("Could not sync theme preference", error));
     }
@@ -109,6 +112,7 @@
     fetch(apiBase + "/api/user-data/preferences", { headers: { Authorization: "Bearer " + token } })
       .then(response => response.ok ? response.json() : Promise.reject(new Error("Could not load account preferences.")))
       .then(result => {
+        if (themeRevision !== 0) return;
         const saved = result.records?.find(record => record.recordId === "main")?.data;
         if (saved?.theme === "light" || saved?.theme === "dark") {
           applyTheme(saved.theme);
