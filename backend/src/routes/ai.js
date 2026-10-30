@@ -9,6 +9,17 @@ const { consumeAiQuota } = require("../ai-quota");
 const router = express.Router();
 router.use(requireAuth);
 
+// The persistent database quota is per account. Add an independent IP ceiling
+// as well, so creating multiple accounts cannot trivially bypass AI cost controls.
+const aiIpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many AI requests from this network. Please wait before trying again." }
+});
+router.use(aiIpLimiter);
+
 const MAX_INPUT_CHARS = 12000;
 const ACTIONS = new Set(["tutor", "quiz", "summarize", "study-plan", "flashcards"]);
 // Quiz attempts do not call the AI provider, but answer/submit endpoints still
