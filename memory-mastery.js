@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const token = localStorage.getItem("academic-tracker-token");
-  const API_BASE = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\\/$/, "");
+  const API_BASE = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
   if (!token) { window.location.replace("login.html"); return; }
   const $ = id => document.getElementById(id);
   let user = {};
