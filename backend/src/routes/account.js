@@ -31,7 +31,7 @@ router.get("/export", async (req, res, next) => {
       }
     });
     if (!user) return res.status(404).json({ error: "Account not found." });
-    const [subjects, courses, quizAttempts, savedRecords, supportConversation] = await Promise.all([
+    const [subjects, courses, quizAttempts, savedRecords, deletedSubjects, supportConversation] = await Promise.all([
       prisma.subject.findMany({
         where: { userId: req.userId },
         orderBy: { createdAt: "asc" },
@@ -53,6 +53,11 @@ router.get("/export", async (req, res, next) => {
       fetchAllPages(prisma.userDataRecord, {
         where: { userId: req.userId },
         select: { kind: true, recordId: true, data: true, deletedAt: true, createdAt: true, updatedAt: true }
+      }),
+      prisma.subjectDeletion.findMany({
+        where: { userId: req.userId },
+        orderBy: { deletedAt: "asc" },
+        select: { subjectId: true, deletedAt: true }
       }),
       prisma.supportConversation.findUnique({
         where: { userId: req.userId },
@@ -76,6 +81,7 @@ router.get("/export", async (req, res, next) => {
       universityCourses: courses,
       aiQuizAttempts: quizAttempts,
       savedRecords,
+      deletedSubjects,
       supportConversation
     });
   } catch (error) { next(error); }

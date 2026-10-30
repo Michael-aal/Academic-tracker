@@ -67,7 +67,17 @@
       synced.push({ ...(local || {}), id: remote.id, serverId: remote.id, name: remote.name, createdAt: remote.createdAt || local?.createdAt || new Date().toISOString() });
       state.targets[remote.id] = remote.targetPercentage;
     }
+    const deletedSubjectIds = new Set(Array.isArray(data.deletedSubjectIds) ? data.deletedSubjectIds : []);
     for (const local of previous) {
+      const oldServerId = local.serverId || local.id;
+      if (deletedSubjectIds.has(oldServerId)) {
+        delete state.targets[local.id];
+        delete state.assessments[local.id];
+        delete state.targets[oldServerId];
+        delete state.assessments[oldServerId];
+        for (const key of Object.keys(state.scores)) if (key.endsWith("|" + local.id) || key.endsWith("|" + oldServerId)) delete state.scores[key];
+        continue;
+      }
       if (synced.some(subject => subject.serverId === local.serverId || subject.name.trim().toLocaleLowerCase("en") === local.name.trim().toLocaleLowerCase("en"))) continue;
       const created = await apiRequest("/api/subjects", { method: "POST", body: JSON.stringify({ name: local.name, targetPercentage: targetFor(local.id) }) });
       remapSubjectId(local.id, created.subject.id);

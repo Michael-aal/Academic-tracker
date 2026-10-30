@@ -19,12 +19,16 @@ router.get("/", async (req, res, next) => {
     const requested = periodFromQuery(req);
     const academicYear = requested.academicYear || user.currentAcademicYear;
     const term = requested.term || user.currentTerm;
-    const subjects = await prisma.subject.findMany({
-      where: { userId: req.userId },
-      orderBy: { createdAt: "asc" },
-      include: { assessmentScores: { where: { academicYear, term }, take: 1 } }
-    });
-    res.json({ subjects: subjects.map(({ assessmentScores, ...subject }) => ({ ...subject, score: assessmentScores[0] || null })), academicYear, term });
+    const [subjects, deletedSubjects] = await Promise.all([
+      prisma.subject.findMany({
+        where: { userId: req.userId },
+        orderBy: { createdAt: "asc" },
+        include: { assessmentScores: { where: { academicYear, term }, take: 1 } }
+      }),
+      prisma.subjectDeletion.findMany({ where: { userId: req.userId }, select: { subjectId: true } })
+    ]);
+    res.set("Cache-Control", "private, no-store");
+    res.json({ subjects: subjects.map(({ assessmentScores, ...subject }) => ({ ...subject, score: assessmentScores[0] || null })), deletedSubjectIds: deletedSubjects.map(item => item.subjectId), academicYear, term });
   } catch (error) {
     next(error);
   }
@@ -79,8 +83,18 @@ router.patch("/:id", async (req, res, next) => {
 
 router.delete("/:id", async (req, res, next) => {
   try {
-    const result = await prisma.subject.deleteMany({ where: { id: req.params.id, userId: req.userId } });
-    if (!result.count) return res.status(404).json({ error: "Subject not found." });
+    const result = await prisma.$transaction(async tx => {
+      const subject = await tx.subject.findFirst({ where: { id: req.params.id, userId: req.userId }, select: { id: true } });
+      if (!subject) return false;
+      await tx.subjectDeletion.upsert({
+        where: { userId_subjectId: { userId: req.userId, subjectId: subject.id } },
+        create: { userId: req.userId, subjectId: subject.id },
+        update: { deletedAt: new Date() }
+      });
+      await tx.subject.delete({ where: { id: subject.id } });
+      return true;
+    });
+    if (!result) return res.status(404).json({ error: "Subject not found." });
     res.json({ ok: true });
   } catch (error) {
     next(error);

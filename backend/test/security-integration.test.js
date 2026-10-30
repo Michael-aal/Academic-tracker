@@ -105,3 +105,36 @@ test("PostgreSQL row locking preserves simultaneous answers to different quiz qu
     if (userId) await prisma.user.deleteMany({ where: { id: userId } });
   }
 });
+
+
+test("PostgreSQL retains deleted subject IDs for cross-device synchronization", { skip: !enabled }, async () => {
+  const suffix = randomUUID();
+  let userId;
+  try {
+    const user = await prisma.user.create({
+      data: { name: "Subject Tombstone Test", email: "subject-delete-" + suffix + "@example.test", passwordHash: "test-only-hash" },
+      select: { id: true }
+    });
+    userId = user.id;
+    const subject = await prisma.subject.create({
+      data: { userId, name: "Deleted Physics", normalizedName: "deleted physics" },
+      select: { id: true }
+    });
+    await prisma.$transaction(async tx => {
+      await tx.subjectDeletion.upsert({
+        where: { userId_subjectId: { userId, subjectId: subject.id } },
+        create: { userId, subjectId: subject.id },
+        update: { deletedAt: new Date() }
+      });
+      await tx.subject.delete({ where: { id: subject.id } });
+    });
+    const [remaining, markers] = await Promise.all([
+      prisma.subject.findMany({ where: { userId } }),
+      prisma.subjectDeletion.findMany({ where: { userId }, select: { subjectId: true } })
+    ]);
+    assert.equal(remaining.length, 0);
+    assert.deepEqual(markers.map(item => item.subjectId), [subject.id]);
+  } finally {
+    if (userId) await prisma.user.deleteMany({ where: { id: userId } });
+  }
+});

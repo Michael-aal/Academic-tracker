@@ -31,6 +31,7 @@ model User {
   supportMessages       SupportMessage[]      @relation("SupportMessageSender")
   aiQuizAttempts        AiQuizAttempt[]
   dataRecords           UserDataRecord[]
+  subjectDeletions       SubjectDeletion[]
   aiUsageEvents         AiUsageEvent[]
 
   @@map("users")
@@ -193,4 +194,17 @@ model AiUsageEvent {
   @@index([userId, createdAt])
   @@index([createdAt])
   @@map("ai_usage_events")
+}
+
+
+model SubjectDeletion {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  subjectId String   @map("subject_id")
+  deletedAt DateTime @default(now()) @map("deleted_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, subjectId])
+  @@index([userId, deletedAt])
+  @@map("subject_deletions")
 }
