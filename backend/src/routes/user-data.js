@@ -18,7 +18,7 @@ const ALLOWED_KINDS = new Set([
   "focus-sessions",
   "preferences"
 ]);
-const limiter = rateLimit({
+const MAX_RECORDS = { "secondary-tracker": 1, "video-library": 300, "video-history": 300, "study-sessions": 500, "memory-cards": 500, "memory-stats": 1, "tutor-conversations": 200, "note-summaries": 200, "focus-sessions": 500, "preferences": 1 };\nconst limiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 120,
   standardHeaders: "draft-7",
@@ -147,7 +147,7 @@ router.get("/:kind", async (req, res, next) => {
     const records = await prisma.userDataRecord.findMany({
       where: { userId: req.userId, kind: req.params.kind },
       orderBy: { updatedAt: "desc" },
-      take: 500,
+      take: MAX_RECORDS[req.params.kind] || 100,
       select: { recordId: true, data: true, createdAt: true, updatedAt: true }
     });
     res.set("Cache-Control", "private, no-store");
@@ -162,6 +162,12 @@ router.put("/:kind/:recordId", async (req, res, next) => {
   const validationError = validateData(kind, req.body?.data, recordId);
   if (validationError) return res.status(400).json({ error: validationError });
   try {
+    const where = { userId: req.userId, kind, recordId };
+    const existing = await prisma.userDataRecord.findUnique({ where, select: { id: true } });
+    if (!existing) {
+      const count = await prisma.userDataRecord.count({ where: { userId: req.userId, kind } });
+      if (count >= (MAX_RECORDS[kind] || 100)) return res.status(409).json({ error: "This account has reached the saved-record limit for this category. Remove an older item before adding another." });
+    }
     const record = await prisma.userDataRecord.upsert({
       where: { userId_kind_recordId: { userId: req.userId, kind, recordId } },
       create: { userId: req.userId, kind, recordId, data: req.body.data },
