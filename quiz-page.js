@@ -2,7 +2,8 @@
   "use strict";
   const API_BASE = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
   const TOKEN_KEY = "academic-tracker-token";
-  const ATTEMPT_KEY = "academic-tracker-active-quiz";
+  const ACCOUNT_KEY = (() => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}").id || "account"; } catch { return "account"; } })();
+  const ATTEMPT_KEY = "academic-tracker-active-quiz:" + ACCOUNT_KEY;
   const $ = id => document.getElementById(id);
   const params = new URLSearchParams(window.location.search);
   let attemptId = params.get("attempt");
