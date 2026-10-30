@@ -57,9 +57,18 @@
   function renderUsage(usage) {
     const pro = usage.plan === "PRO";
     $("usage-label").textContent = pro ? "Pro access" : "Free allowance";
-    $("usage-description").textContent = pro ? "Higher per-tool daily limits" : "Requests used today";
-    $("usage-count").textContent = pro ? (usage.used + " total today") : (usage.used + " / " + usage.limit);
-    $("usage-progress").style.width = pro ? "100%" : Math.min(100, (usage.used / Math.max(1, usage.limit)) * 100) + "%";
+    $("usage-description").textContent = pro ? "Independent allowance for each AI tool" : "Shared allowance across all AI tools · rolling 3 days";
+    $("usage-count").textContent = pro ? "Per-tool usage" : (usage.used + " / 5 used");
+    $("usage-progress").style.width = pro ? "100%" : Math.min(100, (usage.used / 5) * 100) + "%";
+    let detail = $("tool-usage");
+    if (!detail) return;
+    const labels = { tutor: "AI Tutor", quiz: "AI Quiz", summarize: "Note Summary", "study-plan": "Study Planner", flashcards: "Flashcards" };
+    const limits = usage.proToolLimits || {};
+    detail.innerHTML = Object.entries(labels).map(([key, label]) => {
+      const used = Number((usage.toolCounts || {})[key] || 0);
+      const limit = pro ? Number(limits[key] || 0) : 5;
+      return '<div class="money-tool-usage"><span>' + escapeText(label) + '</span><strong>' + used + ' / ' + limit + '</strong></div>';
+    }).join("");
   }
   function renderHistory(payments) {
     const root = $("billing-history");
