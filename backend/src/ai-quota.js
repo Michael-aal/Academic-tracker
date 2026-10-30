@@ -31,7 +31,7 @@ async function reserveAiUsage(userId, action) {
   const now = new Date();
   const entitlement = await getEntitlement(userId, now);
   const usageDate = utcDayStart(now);
-  const proToolLimit = PRO_TOOL_LIMITS[action] || 0;
+  const proToolLimit = window.limit;
   const window = usageWindow(entitlement.planCode, now);
   const lockKey = entitlement.isPro ? action : "free-all";
   const result = await prisma.$transaction(async tx => {
