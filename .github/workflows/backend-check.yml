@@ -77,4 +77,4 @@ jobs:
       - name: Run unit tests
         run: npm test
       - name: Check calculator and AI learning JavaScript syntax
-        run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../app.js && node --check ../ai-learning.js && node --check ../quiz-page.js && node --check ../ai-navigation.js && node --check ../educational-videos.js && node --check ../study-planner.js && node --check ../memory-mastery.js && node --check ../notes-summary.js && node --check ../global-theme.js && node --check ../global-navigation.js
+        run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../app.js && node --check ../ai-learning.js && node --check ../quiz-page.js && node --check ../ai-navigation.js && node --check ../educational-videos.js && node --check ../study-planner.js && node --check ../memory-mastery.js && node --check ../notes-summary.js && node --check ../global-theme.js && node --check ../global-navigation.js && node --check ../account-data.js
