@@ -126,8 +126,10 @@
       await syncSubjectsFromServer();
       const focusData = await apiRequest("/api/user-data/focus-sessions");
       const remoteFocus = focusData.records?.find(record => record.recordId === "active")?.data;
-      if (remoteFocus && !focusSession()) {
+      if (remoteFocus) {
         localStorage.setItem(FOCUS_KEY, JSON.stringify(remoteFocus));
+      } else if (focusSession()) {
+        await apiRequest("/api/user-data/focus-sessions/active", { method: "PUT", body: JSON.stringify({ data: focusSession() }) });
       }
     }
     catch (e) {
