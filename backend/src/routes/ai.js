@@ -87,11 +87,11 @@ router.get("/attempts", async (req, res, next) => {
       where: { userId: req.userId, status: "COMPLETED" },
       orderBy: [{ completedAt: "desc" }, { createdAt: "desc" }],
       take: 500,
-      select: { id: true, questionData: true, resultData: true, createdAt: true, completedAt: true }
+      select: { id: true, title: true, resultData: true, createdAt: true, completedAt: true }
     });
     return res.json({ attempts: attempts.map(attempt => ({
       id: attempt.id,
-      title: typeof attempt.questionData?.title === "string" ? attempt.questionData.title : "Practice quiz",
+      title: attempt.title,
       result: attempt.resultData,
       createdAt: attempt.createdAt,
       completedAt: attempt.completedAt
