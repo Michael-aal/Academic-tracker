@@ -14,7 +14,7 @@ const PLAN_CONFIG = {
 };
 const TOOL_NAMES = ["tutor", "quiz", "summarize", "study-plan", "flashcards"];
 const FREE_LIMIT = 5;
-const PLAN_DAYS = { daily: 1, weekly: 7, monthly: 30, yearly: 365 };
+const PLAN_DAYS = { "trial-7-day": 7, daily: 1, weekly: 7, monthly: 30, yearly: 365 };
 function encryptProviderToken(value) {
   if (!value) return null;
   const key = crypto.createHash("sha256").update(process.env.SUBSCRIPTION_TOKEN_ENCRYPTION_KEY || process.env.JWT_SECRET || "").digest();
