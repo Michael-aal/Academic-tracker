@@ -31,6 +31,7 @@ model User {
   supportMessages       SupportMessage[]      @relation("SupportMessageSender")
   aiQuizAttempts        AiQuizAttempt[]
   dataRecords           UserDataRecord[]
+  aiUsageWindows        AiUsageWindow[]
 
   @@map("users")
 }
@@ -89,6 +90,7 @@ model UniversityCourse {
   user        User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   results     UniversityCourseResult[]
 
+  @@unique([id, userId])
   @@unique([userId, code])
   @@index([userId, createdAt])
   @@map("university_courses")
@@ -108,7 +110,7 @@ model UniversityCourseResult {
   createdAt    DateTime         @default(now()) @map("created_at")
   updatedAt    DateTime         @updatedAt @map("updated_at")
   user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course       UniversityCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course       UniversityCourse @relation(fields: [courseId, userId], references: [id, userId], onDelete: Cascade)
 
   @@unique([courseId, academicYear, semester])
   @@index([userId, academicYear, semester])
@@ -177,4 +179,18 @@ model UserDataRecord {
   @@unique([userId, kind, recordId])
   @@index([userId, kind, updatedAt])
   @@map("user_data_records")
+}
+
+
+model AiUsageWindow {
+  id           String   @id
+  userId       String   @map("user_id")
+  windowStart  DateTime @map("window_start")
+  requestCount Int      @default(0) @map("request_count")
+  createdAt    DateTime @default(now()) @map("created_at")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, windowStart])
+  @@index([windowStart])
+  @@map("ai_usage_windows")
 }
