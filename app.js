@@ -30,14 +30,29 @@
     if (!response.ok) throw new Error(data.error || "Could not sync your subjects. Please try again.");
     return data;
   }
+  function remapSubjectId(oldId, newId) {
+    if (!oldId || !newId || oldId === newId) return;
+    if (state.targets[oldId] !== undefined && state.targets[newId] === undefined) state.targets[newId] = state.targets[oldId];
+    delete state.targets[oldId];
+    if (state.assessments[oldId] && !state.assessments[newId]) state.assessments[newId] = state.assessments[oldId];
+    delete state.assessments[oldId];
+    for (const key of Object.keys(state.scores)) {
+      if (!key.endsWith("|" + oldId)) continue;
+      const nextKey = key.slice(0, -oldId.length) + newId;
+      state.scores[nextKey] = { ...(state.scores[key] || {}), ...(state.scores[nextKey] || {}) };
+      delete state.scores[key];
+    }
+    const focus = focusSession();
+    if (focus?.subjectId === oldId) saveFocusSession({ ...focus, subjectId: newId });
+  }
   async function syncSubjectsFromServer() {
     if (!apiToken()) return;
     const data = await apiRequest("/api/subjects?academicYear=" + encodeURIComponent(state.academicYear) + "&term=" + encodeURIComponent(state.term));
     const trackerData = await apiRequest("/api/user-data/secondary-tracker");
     const savedTracker = trackerData.records?.find(record => record.recordId === "main")?.data;
     if (savedTracker) {
-      state.scores = savedTracker.scores || {};
-      state.assessments = savedTracker.assessments || {};
+      state.scores = { ...state.scores, ...(savedTracker.scores || {}) };
+      state.assessments = { ...state.assessments, ...(savedTracker.assessments || {}) };
       state.targets = { ...state.targets, ...(savedTracker.targets || {}) };
       state.academicYear = savedTracker.academicYear || state.academicYear;
       state.term = savedTracker.term || state.term;
@@ -47,14 +62,15 @@
     const synced = [];
     for (const remote of remoteSubjects) {
       const local = previous.find(subject => subject.serverId === remote.id || subject.name.trim().toLocaleLowerCase("en") === remote.name.trim().toLocaleLowerCase("en"));
-      synced.push({ ...(local || {}), id: local?.id || remote.id, serverId: remote.id, name: remote.name, createdAt: remote.createdAt || local?.createdAt || new Date().toISOString() });
-      if (local) state.targets[local.id] = remote.targetPercentage;
-      else state.targets[remote.id] = remote.targetPercentage;
+      if (local) remapSubjectId(local.id, remote.id);
+      synced.push({ ...(local || {}), id: remote.id, serverId: remote.id, name: remote.name, createdAt: remote.createdAt || local?.createdAt || new Date().toISOString() });
+      state.targets[remote.id] = remote.targetPercentage;
     }
     for (const local of previous) {
-      if (synced.some(subject => subject.id === local.id)) continue;
+      if (synced.some(subject => subject.serverId === local.serverId || subject.name.trim().toLocaleLowerCase("en") === local.name.trim().toLocaleLowerCase("en"))) continue;
       const created = await apiRequest("/api/subjects", { method: "POST", body: JSON.stringify({ name: local.name, targetPercentage: targetFor(local.id) }) });
-      synced.push({ ...local, serverId: created.subject.id });
+      remapSubjectId(local.id, created.subject.id);
+      synced.push({ ...local, id: created.subject.id, serverId: created.subject.id });
     }
     state.subjects = synced;
     state.accountUserId = accountUserId();
