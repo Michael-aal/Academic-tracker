@@ -675,3 +675,62 @@ html:not([data-theme="dark"]) .dashboard-result-score {color:#5b2ba8;font:800 15
  html:not([data-theme="dark"]) .focus-promo-copy p {font-size:12px}
  html:not([data-theme="dark"]) .focus-promo>.button {grid-column:1/-1;width:100%;min-width:0}
 }
+
+
+/* University dashboard joins the same violet-and-white component language. */
+html:not([data-theme="dark"]) .uni-sidebar {background:linear-gradient(180deg,#7545c8,#5b2ba8)!important;border-color:#5b2ba8!important}
+html:not([data-theme="dark"]) .uni-sidebar :where(a,button,.brand,.muted,.uni-sidebar-note) {color:#fff!important}
+html:not([data-theme="dark"]) .uni-nav a:hover,
+html:not([data-theme="dark"]) .uni-nav .uni-nav-active {background:rgba(255,255,255,.17)!important;color:#fff!important}
+html:not([data-theme="dark"]) .uni-hero {background:linear-gradient(115deg,#f0e8ff,#fbf9ff 75%)!important;border:1px solid #e2d5f4!important}
+html:not([data-theme="dark"]) .uni-hero h2,
+html:not([data-theme="dark"]) .uni-result-head strong,
+html:not([data-theme="dark"]) .uni-note strong {color:#28183e!important}
+html:not([data-theme="dark"]) .uni-hero p,
+html:not([data-theme="dark"]) .uni-section-heading p,
+html:not([data-theme="dark"]) .uni-note p,
+html:not([data-theme="dark"]) .uni-target-hint {color:#6d617b!important}
+html:not([data-theme="dark"]) .uni-stats .uni-stat,
+html:not([data-theme="dark"]) .uni-course-row,
+html:not([data-theme="dark"]) .uni-result-card,
+html:not([data-theme="dark"]) .uni-assessment-row,
+html:not([data-theme="dark"]) .uni-add-form,
+html:not([data-theme="dark"]) .uni-note {background:#fff!important;border-color:#e7def5!important;box-shadow:0 8px 26px rgba(91,43,168,.055)!important}
+html:not([data-theme="dark"]) .uni-stat span,
+html:not([data-theme="dark"]) .uni-stat small,
+html:not([data-theme="dark"]) .uni-course-name small,
+html:not([data-theme="dark"]) .uni-result-head small,
+html:not([data-theme="dark"]) .uni-result-form label {color:#6d617b!important}
+html:not([data-theme="dark"]) .uni-stat strong,
+html:not([data-theme="dark"]) .uni-result-grade,
+html:not([data-theme="dark"]) .uni-credit-pill {color:#7545c8!important}
+html:not([data-theme="dark"]) .uni-period input,
+html:not([data-theme="dark"]) .uni-period select,
+html:not([data-theme="dark"]) .uni-add-form input,
+html:not([data-theme="dark"]) .uni-result-form input,
+html:not([data-theme="dark"]) .uni-course-actions input {background:#fff!important;color:#28183e!important;border-color:#ddd0ef!important}
+html:not([data-theme="dark"]) .uni-credit-pill {background:#f2eaff!important;border-color:#e4d7f5!important}
+html:not([data-theme="dark"]) .uni-empty {background:#faf7ff!important;border-color:#d9c9f1!important;color:#6d617b!important}
+html:not([data-theme="dark"]) .uni-learning-insights {display:grid;grid-template-columns:minmax(210px,.7fr) minmax(0,1.3fr);gap:14px;margin-top:18px}
+html:not([data-theme="dark"]) .uni-streak-card,
+html:not([data-theme="dark"]) .uni-quiz-card {background:#fff;border:1px solid #e7def5;border-radius:20px;padding:19px;box-shadow:0 9px 28px rgba(91,43,168,.055)}
+html:not([data-theme="dark"]) .uni-streak-card {display:flex;gap:13px;background:linear-gradient(145deg,#f2eaff,#fff)}
+html:not([data-theme="dark"]) .uni-insight-icon {display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:13px;background:#eee5ff;color:#7545c8;font-weight:800}
+html:not([data-theme="dark"]) .uni-streak-card small,
+html:not([data-theme="dark"]) .uni-quiz-card small {display:block;color:#7545c8;font-size:10px;font-weight:800;letter-spacing:.12em}
+html:not([data-theme="dark"]) .uni-streak-card strong {display:block;margin:7px 0 5px;color:#28183e;font:800 26px Manrope,sans-serif}
+html:not([data-theme="dark"]) .uni-streak-card p {margin:0;color:#6d617b;font-size:12px;line-height:1.55}
+html:not([data-theme="dark"]) .uni-insight-heading {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+html:not([data-theme="dark"]) .uni-insight-heading h2 {margin:5px 0 0;color:#28183e;font-size:18px}
+html:not([data-theme="dark"]) .uni-insight-heading a {color:#6637bd;font-size:12px;font-weight:700;text-decoration:none}
+html:not([data-theme="dark"]) .uni-quiz-row {display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid #f0eaf8}
+html:not([data-theme="dark"]) .uni-quiz-row span:nth-child(2) {flex:1;min-width:0}
+html:not([data-theme="dark"]) .uni-quiz-row strong {display:block;color:#28183e;font-size:12px}
+html:not([data-theme="dark"]) .uni-quiz-row small {margin-top:4px;color:#6d617b;font-size:10px;letter-spacing:0}
+html:not([data-theme="dark"]) .uni-quiz-row b {color:#5b2ba8;font:800 15px Manrope,sans-serif}
+@media(max-width:700px) {html:not([data-theme="dark"]) .uni-learning-insights{grid-template-columns:1fr;gap:11px}}
+/* Reserve space for fixed mobile navigation, including Android safe-area insets. */
+@media(max-width:760px) {
+ html:not([data-theme="dark"]) body:has(.mobile-nav) {padding-bottom:calc(104px + env(safe-area-inset-bottom))!important}
+ html:not([data-theme="dark"]) .main {padding-bottom:24px!important}
+}
