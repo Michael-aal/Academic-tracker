@@ -40,9 +40,15 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
     localStorage.setItem(STORAGE_KEY + ":stats", JSON.stringify(reviewStats));
     try {
-      await Promise.all(cards.map(card => dataRequest("/api/user-data/memory-cards/" + encodeURIComponent(card.id), { method: "PUT", body: JSON.stringify({ data: card }) })));
+      for (let index = 0; index < cards.length; index += 20) {
+        const batch = cards.slice(index, index + 20);
+        await dataRequest("/api/user-data/memory-cards/bulk", { method: "PUT", body: JSON.stringify({ records: batch.map(card => ({ recordId: card.id, data: card })) }) });
+      }
       const ids = new Set(cards.map(card => card.id));
-      await Promise.all([...serverCardIds].filter(id => !ids.has(id)).map(id => dataRequest("/api/user-data/memory-cards/" + encodeURIComponent(id), { method: "DELETE" })));
+      const removed = [...serverCardIds].filter(id => !ids.has(id));
+      for (let index = 0; index < removed.length; index += 100) {
+        await dataRequest("/api/user-data/memory-cards/bulk", { method: "DELETE", body: JSON.stringify({ recordIds: removed.slice(index, index + 100) }) });
+      }
       await dataRequest("/api/user-data/memory-stats/summary", { method: "PUT", body: JSON.stringify({ data: reviewStats }) });
       serverCardIds = ids;
       $("form-notice").textContent = "Your memory cards and review progress are synced to your account.";
@@ -64,7 +70,10 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
     localStorage.setItem(STORAGE_KEY + ":stats", JSON.stringify(reviewStats));
     const localOnly = cards.filter(card => !serverCardIds.has(card.id));
-    if (localOnly.length) await Promise.all(localOnly.map(card => dataRequest("/api/user-data/memory-cards/" + encodeURIComponent(card.id), { method: "PUT", body: JSON.stringify({ data: card }) })));
+    for (let index = 0; index < localOnly.length; index += 20) {
+      const batch = localOnly.slice(index, index + 20);
+      await dataRequest("/api/user-data/memory-cards/bulk", { method: "PUT", body: JSON.stringify({ records: batch.map(card => ({ recordId: card.id, data: card })) }) });
+    }
     localOnly.forEach(card => serverCardIds.add(card.id));
   }
   function now() { return Date.now(); }
