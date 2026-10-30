@@ -53,15 +53,16 @@ self.addEventListener("fetch", event => {
 self.addEventListener("notificationclick", event => {
   event.notification.close();
   event.waitUntil((async () => {
+    const targetUrl = new URL(event.notification.data?.url || "./study-plan.html", self.location.origin).href;
     const clientsList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
     for (const client of clientsList) {
       if ("focus" in client) {
         await client.focus();
-        if ("navigate" in client) await client.navigate(new URL("./study-plan.html", self.location.origin).href);
+        if ("navigate" in client) await client.navigate(targetUrl);
         return;
       }
     }
-    if (self.clients.openWindow) await self.clients.openWindow(new URL("./study-plan.html", self.location.origin).href);
+    if (self.clients.openWindow) await self.clients.openWindow(targetUrl);
   })());
 });
 
