@@ -12,8 +12,13 @@ const adminRoutes = require("./routes/admin");
 const aiRoutes = require("./routes/ai");
 const videoRoutes = require("./routes/videos");
 const universityRoutes = require("./routes/university");
+const userDataRoutes = require("./routes/user-data");
+const accountRoutes = require("./routes/account");
 
 const app = express();
+// The API is hosted behind Render's single reverse-proxy hop. Trust only that
+// hop so IP-based rate limits use the originating client address.
+app.set("trust proxy", process.env.NODE_ENV === "production" ? 1 : false);
 app.disable("x-powered-by");
 app.use(helmet());
 app.use(cors({
@@ -24,7 +29,28 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Bootstrap-Secret"]
 }));
-app.use(express.json({ limit: "30kb" }));
+// API responses can contain private academic and account information. Never let
+// browsers or intermediary caches reuse them across sessions.
+app.use("/api", (_req, res, next) => {
+  res.set("Cache-Control", "private, no-store");
+  res.set("Pragma", "no-cache");
+  next();
+});
+
+// A coarse IP-level ceiling protects every API route, including endpoints that
+// have their own stricter per-account limits. This in-memory limiter is a
+// single-instance safeguard; use a shared store if the API is horizontally scaled.
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 300,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many API requests. Please wait a few minutes and try again." }
+});
+app.use("/api", apiLimiter);
+// Parse JSON only after the coarse request limiter has run, so oversized or
+// malformed request floods do not bypass the first protection layer.
+app.use(express.json({ limit: "100kb" }));
 
 app.get("/", (_req, res) => res.json({
   name: "Academic Tracker API",
@@ -63,6 +89,8 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/university", universityRoutes);
+app.use("/api/user-data", userDataRoutes);
+app.use("/api/account", accountRoutes);
 
 app.use((_req, res) => res.status(404).json({ error: "Route not found." }));
 
@@ -73,7 +101,11 @@ app.use((error, _req, res, _next) => {
   if (error.type === "entity.parse.failed") {
     return res.status(400).json({ error: "Request body must be valid JSON." });
   }
-  console.error("API error:", error);
+  if (error.type === "entity.too.large") {
+    return res.status(413).json({ error: "Request body is too large." });
+  }
+  // Do not log request bodies, SQL details, provider payloads, or raw error messages.
+  console.error("API error:", { name: error?.name || "Error", code: error?.code || error?.type || "INTERNAL_ERROR" });
   res.status(500).json({ error: "An unexpected server error occurred." });
 });
 

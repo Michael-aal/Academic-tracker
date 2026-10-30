@@ -13,6 +13,7 @@ model User {
   email                 String                @unique @db.VarChar(254)
   passwordHash          String                @map("password_hash")
   role                  String                @default("USER") @db.VarChar(20)
+  sessionVersion        Int                   @default(0) @map("session_version")
   educationTrack        String                @default("SECONDARY") @map("education_track") @db.VarChar(20)
   institutionName       String?               @map("institution_name") @db.VarChar(160)
   programme             String?               @db.VarChar(160)
@@ -29,6 +30,8 @@ model User {
   supportConversation   SupportConversation?
   supportMessages       SupportMessage[]      @relation("SupportMessageSender")
   aiQuizAttempts        AiQuizAttempt[]
+  dataRecords           UserDataRecord[]
+  aiUsageEvents         AiUsageEvent[]
 
   @@map("users")
 }
@@ -87,6 +90,7 @@ model UniversityCourse {
   user        User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   results     UniversityCourseResult[]
 
+  @@unique([id, userId])
   @@unique([userId, code])
   @@index([userId, createdAt])
   @@map("university_courses")
@@ -106,7 +110,7 @@ model UniversityCourseResult {
   createdAt    DateTime         @default(now()) @map("created_at")
   updatedAt    DateTime         @updatedAt @map("updated_at")
   user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course       UniversityCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course       UniversityCourse @relation(fields: [courseId, userId], references: [id, userId], onDelete: Cascade)
 
   @@unique([courseId, academicYear, semester])
   @@index([userId, academicYear, semester])
@@ -160,4 +164,31 @@ model AiQuizAttempt {
   @@index([userId, createdAt])
   @@index([status])
   @@map("ai_quiz_attempts")
+}
+
+model UserDataRecord {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  kind      String   @db.VarChar(40)
+  recordId  String   @map("record_id") @db.VarChar(120)
+  data      Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind, recordId])
+  @@index([userId, kind, updatedAt])
+  @@map("user_data_records")
+}
+
+
+model AiUsageEvent {
+  id        String   @id
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("ai_usage_events")
 }

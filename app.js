@@ -3,9 +3,10 @@
   const DB_NAME = "academic-tracker-db";
   const STORE = "state";
   const KEY = "main";
-  const defaults = () => ({version:2, academicYear:"2026–2027", term:"Term 1", subjects:[], scores:{}, targets:{}, assessments:{}, updatedAt:new Date().toISOString()});
+  const defaults = () => ({version:2, accountUserId:null, academicYear:"2026–2027", term:"Term 1", subjects:[], scores:{}, targets:{}, assessments:{}, updatedAt:new Date().toISOString()});
   let state = defaults();
   let view = "dashboard";
+  let focusHistory = [];
   const $ = s => document.querySelector(s);
   const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const num = v => Number.isFinite(Number(v)) ? Number(v) : 0;
@@ -16,6 +17,94 @@
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
+  const API_BASE = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
+  const apiToken = () => localStorage.getItem("academic-tracker-token") || "";
+  const accountUserId = () => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "null")?.id || null; } catch { return null; } };
+  async function apiRequest(path, options = {}) {
+    const token = apiToken();
+    if (!token) throw new Error("Your session is missing. Please log in again.");
+    const response = await fetch(API_BASE + path, {
+      ...options,
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token, ...(options.headers || {}) }
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Could not sync your subjects. Please try again.");
+    return data;
+  }
+  function remapSubjectId(oldId, newId) {
+    if (!oldId || !newId || oldId === newId) return;
+    if (state.targets[oldId] !== undefined && state.targets[newId] === undefined) state.targets[newId] = state.targets[oldId];
+    delete state.targets[oldId];
+    if (state.assessments[oldId] && !state.assessments[newId]) state.assessments[newId] = state.assessments[oldId];
+    delete state.assessments[oldId];
+    for (const key of Object.keys(state.scores)) {
+      if (!key.endsWith("|" + oldId)) continue;
+      const nextKey = key.slice(0, -oldId.length) + newId;
+      state.scores[nextKey] = { ...(state.scores[key] || {}), ...(state.scores[nextKey] || {}) };
+      delete state.scores[key];
+    }
+    const focus = focusSession();
+    if (focus?.subjectId === oldId) saveFocusSession({ ...focus, subjectId: newId });
+  }
+  async function syncSubjectsFromServer() {
+    if (!apiToken()) return;
+    const data = await apiRequest("/api/subjects?academicYear=" + encodeURIComponent(state.academicYear) + "&term=" + encodeURIComponent(state.term));
+    const trackerData = await apiRequest("/api/user-data/secondary-tracker");
+    const savedTracker = trackerData.records?.find(record => record.recordId === "main")?.data;
+    if (savedTracker) {
+      state.scores = { ...state.scores, ...(savedTracker.scores || {}) };
+      state.assessments = { ...state.assessments, ...(savedTracker.assessments || {}) };
+      state.targets = { ...state.targets, ...(savedTracker.targets || {}) };
+      state.academicYear = savedTracker.academicYear || state.academicYear;
+      state.term = savedTracker.term || state.term;
+    }
+    const remoteSubjects = Array.isArray(data.subjects) ? data.subjects : [];
+    const previous = [...state.subjects];
+    const synced = [];
+    for (const remote of remoteSubjects) {
+      const local = previous.find(subject => subject.serverId === remote.id || subject.name.trim().toLocaleLowerCase("en") === remote.name.trim().toLocaleLowerCase("en"));
+      if (local) remapSubjectId(local.id, remote.id);
+      synced.push({ ...(local || {}), id: remote.id, serverId: remote.id, name: remote.name, createdAt: remote.createdAt || local?.createdAt || new Date().toISOString() });
+      state.targets[remote.id] = remote.targetPercentage;
+    }
+    for (const local of previous) {
+      if (synced.some(subject => subject.serverId === local.serverId || subject.name.trim().toLocaleLowerCase("en") === local.name.trim().toLocaleLowerCase("en"))) continue;
+      const created = await apiRequest("/api/subjects", { method: "POST", body: JSON.stringify({ name: local.name, targetPercentage: targetFor(local.id) }) });
+      remapSubjectId(local.id, created.subject.id);
+      synced.push({ ...local, id: created.subject.id, serverId: created.subject.id });
+    }
+    state.subjects = synced;
+    state.accountUserId = accountUserId();
+    if (!savedTracker) {
+      await apiRequest("/api/user-data/secondary-tracker/main", {
+        method: "PUT",
+        body: JSON.stringify({ data: { scores: state.scores, assessments: state.assessments, targets: state.targets, academicYear: state.academicYear, term: state.term } })
+      });
+    }
+    await save(false);
+  }
+  async function archiveLegacyState(userId) {
+    const backupKey = "legacy-backup-" + userId;
+    const legacyFocus = (() => { try { return JSON.parse(localStorage.getItem("academic-tracker-focus-session") || "null"); } catch { return null; } })();
+    const backupData = { ...state, legacyFocusSession: legacyFocus };
+    try {
+      const db = await dbOpen();
+      if (db) {
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE, "readwrite");
+          tx.objectStore(STORE).put(backupData, backupKey);
+          tx.oncomplete = resolve;
+          tx.onerror = () => reject(tx.error);
+        });
+        db.close();
+      } else {
+        localStorage.setItem("academic-tracker-legacy-backup:" + userId, JSON.stringify(backupData));
+      }
+    } catch (error) {
+      console.error("Could not archive legacy local records", error);
+      throw new Error("Your previous browser records could not be safely archived. Please export a backup before continuing.");
+    }
+  }
   async function load() {
     try {
       const db = await dbOpen();
@@ -24,6 +113,44 @@
         db.close(); if (value) state = {...defaults(),...value};
       } else { const raw=localStorage.getItem(KEY); if(raw) state={...defaults(),...JSON.parse(raw)}; }
     } catch(e) { console.warn("Could not load saved records",e); }
+    const signedInUserId = accountUserId();
+    const legacyFocus = (() => { try { return JSON.parse(localStorage.getItem("academic-tracker-focus-session") || "null"); } catch { return null; } })();
+    const hasUnownedLegacyData = !state.accountUserId && signedInUserId && (state.subjects.length > 0 || Object.keys(state.scores).length > 0 || Boolean(legacyFocus));
+    if (hasUnownedLegacyData) {
+      const importLegacy = window.confirm("We found academic records saved in this browser. Import them into the account you just signed into? Only choose OK if these records belong to you. Choose Cancel to keep them separate from this account.");
+      if (!importLegacy) {
+        await archiveLegacyState(signedInUserId);
+        state = defaults();
+        localStorage.removeItem("academic-tracker-focus-session");
+        alert("Your previous browser records were kept in a separate local backup and were not added to this account.");
+      } else if (legacyFocus) {
+        localStorage.setItem(FOCUS_KEY, JSON.stringify(legacyFocus));
+        localStorage.removeItem("academic-tracker-focus-session");
+      }
+    }
+    if (state.accountUserId && signedInUserId && state.accountUserId !== signedInUserId) state = defaults();
+    if (signedInUserId) state.accountUserId = signedInUserId;
+    try {
+      await syncSubjectsFromServer();
+    } catch (e) {
+      console.error("Could not sync academic tracker data with the account database", e);
+      if (apiToken()) {
+        const notice = document.createElement("p");
+        notice.className = "notice";
+        notice.setAttribute("role", "status");
+        notice.textContent = "Your academic records could not be synced with your account. Changes may remain only on this device until the connection is restored. " + e.message;
+        $("#app")?.prepend(notice);
+      }
+    }
+    try {
+      const focusData = await apiRequest("/api/user-data/focus-sessions");
+      focusHistory = (focusData.records || []).filter(record => record.recordId !== "active" && record.data?.status === "completed").map(record => ({ ...record.data, savedAt: record.updatedAt })).slice(0, 20);
+      const remoteFocus = focusData.records?.find(record => record.recordId === "active")?.data;
+      if (remoteFocus) localStorage.setItem(FOCUS_KEY, JSON.stringify(remoteFocus));
+      else if (focusSession()) await apiRequest("/api/user-data/focus-sessions/active", { method: "PUT", body: JSON.stringify({ data: focusSession() }) });
+    } catch (e) {
+      console.warn("Could not sync focus history with the account database", e);
+    }
     render();
   }
   async function save(renderAfter = true) {
@@ -32,7 +159,18 @@
       const db = await dbOpen();
       if (db) { await new Promise((resolve,reject) => { const tx=db.transaction(STORE,"readwrite"); tx.objectStore(STORE).put(state,KEY); tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error); }); db.close(); }
       else localStorage.setItem(KEY,JSON.stringify(state));
-    } catch(e) { alert("Could not save your changes. Please check available device storage and export a backup."); console.error(e); }
+    } catch(e) { alert("Could not save your changes on this device. Please check available storage and export a backup."); console.error(e); }
+    if (apiToken()) {
+      try {
+        await apiRequest("/api/user-data/secondary-tracker/main", {
+          method: "PUT",
+          body: JSON.stringify({ data: { scores: state.scores, assessments: state.assessments, targets: state.targets, academicYear: state.academicYear, term: state.term } })
+        });
+      } catch (error) {
+        console.error("Account data sync failed", error);
+        if (renderAfter) alert("Your changes are saved on this device, but could not sync to your account. Please check your connection before switching devices.");
+      }
+    }
     if (renderAfter) render();
   }
   const id = () => (crypto.randomUUID ? crypto.randomUUID() : "s"+Date.now()+Math.random().toString(16).slice(2));
@@ -56,9 +194,21 @@
   function pct(sid) { const m=getMaxTotal(sid);return m?Math.round(getTotal(sid)/m*100):0; }
   const targetFor = sid => num(state.targets[sid] ?? 75);
   function average() { const list=state.subjects.filter(s=>getEntered(s.id)>0); return list.length?Math.round(list.reduce((a,s)=>a+pct(s.id),0)/list.length):0; }
-  const FOCUS_KEY = "academic-tracker-focus-session";
+  const FOCUS_KEY = "academic-tracker-focus-session:" + (accountUserId() || "legacy");
   const focusSession = () => { try { return JSON.parse(localStorage.getItem(FOCUS_KEY) || "null"); } catch { return null; } };
-  const saveFocusSession = session => { if(session) localStorage.setItem(FOCUS_KEY, JSON.stringify(session)); else localStorage.removeItem(FOCUS_KEY); };
+  const saveFocusSession = session => {
+    if(session) localStorage.setItem(FOCUS_KEY, JSON.stringify(session)); else localStorage.removeItem(FOCUS_KEY);
+    if (!session && apiToken()) apiRequest("/api/user-data/focus-sessions/active", { method: "DELETE" }).catch(error => console.warn("Could not clear saved focus session", error));
+    if (session && apiToken()) {
+      apiRequest("/api/user-data/focus-sessions/active", { method: "PUT", body: JSON.stringify({ data: session }) })
+        .catch(error => console.warn("Could not sync focus session", error));
+      if (session.status === "completed") {
+        const recordId = "session-" + String(session.startedAt || session.completedAt || Date.now()).replace(/[^a-zA-Z0-9_-]/g, "-");
+        apiRequest("/api/user-data/focus-sessions/" + encodeURIComponent(recordId), { method: "PUT", body: JSON.stringify({ data: session }) })
+          .catch(error => console.warn("Could not save focus session history", error));
+      }
+    }
+  };
   const formatFocusTime = ms => { const seconds=Math.max(0,Math.ceil(ms/1000)); return String(Math.floor(seconds/60)).padStart(2,"0")+":"+String(seconds%60).padStart(2,"0"); };
   function setView(next) { view=next; document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===view)); render(); window.scrollTo({top:0,behavior:"smooth"}); }
   function heading(title,subtitle,action="") { return '<div class="section-heading"><div><h2>'+title+'</h2><p>'+subtitle+'</p></div>'+action+'</div>'; }
@@ -83,10 +233,10 @@
       const fields=items.map(item=>'<div class="assessment-field"><label>Assessment name<input maxlength="50" value="'+esc(item.name)+'" data-assessment-name="'+esc(subject.id)+'" data-assessment-id="'+esc(item.id)+'"></label><label>Maximum mark<input type="number" min="1" max="100" step="0.5" value="'+num(item.max)+'" data-assessment-max="'+esc(subject.id)+'" data-assessment-id="'+esc(item.id)+'"></label><label>Your score<input aria-label="'+esc(subject.name)+' '+esc(item.name)+' score" type="number" min="0" max="'+num(item.max)+'" step="0.5" value="'+(getActual(subject.id,item)??'')+'" placeholder="Not entered" data-score="'+esc(subject.id)+'" data-component="'+esc(item.id)+'"></label><button class="button danger" type="button" data-action="remove-assessment" data-id="'+esc(subject.id)+'" data-assessment-id="'+esc(item.id)+'" '+(item.type==="EXAM"?'disabled aria-label="The final exam cannot be removed; edit its name if needed':'')+'>Remove</button></div>').join("");
       return '<section class="card assessment-subject"><div class="section-heading"><div><h3>'+esc(subject.name)+'</h3><p>Target '+targetFor(subject.id)+'% · '+getTotal(subject.id)+' / '+getMaxTotal(subject.id)+' marks · '+(getEntered(subject.id)===items.length?'All marks entered':getEntered(subject.id)+' of '+items.length+' marks entered')+'</p></div><span class="badge">'+pct(subject.id)+'%</span></div>'+fields+'<div class="button-row"><button class="button secondary" data-action="add-assessment" data-kind="TEST" data-id="'+esc(subject.id)+'">＋ Add test</button><button class="button secondary" data-action="add-assessment" data-kind="ASSIGNMENT" data-id="'+esc(subject.id)+'">＋ Add assignment</button>'+(items.some(i=>i.type==="EXAM")?'':'<button class="button secondary" data-action="add-assessment" data-kind="EXAM" data-id="'+esc(subject.id)+'">＋ Add exam</button>')+'<button class="button primary" data-action="apply-assessment-all" data-id="'+esc(subject.id)+'">Apply this setup to all subjects</button></div></section>';
     }).join("");
-    return '<p class="notice">Default secondary-school setup: three tests and one final exam. Customize each subject independently. Scores and assessment setups are saved on this device. Assessment maximums should match your teacher’s marking scheme.</p><div class="button-row" style="margin:14px 0"><button class="button secondary" data-action="add-subject">＋ Add subject</button></div><div class="grid">'+cards+'</div><p class="notice">For each subject, add as many tests or assignments as needed. Only one final exam is allowed in a subject setup. “Apply this setup to all subjects” copies the selected subject’s assessment structure to every subject.</p>';
+    return '<p class="notice">Default secondary-school setup: three tests and one final exam. Customize each subject independently. Scores and assessment setups are synced to your account database. Assessment maximums should match your teacher’s marking scheme.</p><div class="button-row" style="margin:14px 0"><button class="button secondary" data-action="add-subject">＋ Add subject</button></div><div class="grid">'+cards+'</div><p class="notice">For each subject, add as many tests or assignments as needed. Only one final exam is allowed in a subject setup. “Apply this setup to all subjects” copies the selected subject’s assessment structure to every subject.</p>';
   }
   function subjectsView() {
-    return '<article class="card">'+heading("Your subjects","Add, rename, or remove subjects",'<button class="button primary" data-action="add-subject">＋ Add subject</button>')+(state.subjects.length?state.subjects.map(s=>'<div class="subject-row"><div class="subject-icon">'+esc(s.name.slice(0,1).toUpperCase())+'</div><div class="subject-info"><strong>'+esc(s.name)+'</strong><small>Target: '+targetFor(s.id)+'% · '+getEntered(s.id)+' scores entered</small></div><button class="button secondary" data-action="rename-subject" data-id="'+s.id+'">Rename</button><button class="button danger" data-action="delete-subject" data-id="'+s.id+'">Remove</button></div>').join(""):'<div class="empty"><strong>No subjects yet</strong>Add the subjects you want to track.</div>')+'</article><p class="notice">Removing a subject also removes its scores from this device. Export a backup first if you may need the records later.</p>';
+    return '<article class="card">'+heading("Your subjects","Add, rename, or remove subjects",'<button class="button primary" data-action="add-subject">＋ Add subject</button>')+(state.subjects.length?state.subjects.map(s=>'<div class="subject-row"><div class="subject-icon">'+esc(s.name.slice(0,1).toUpperCase())+'</div><div class="subject-info"><strong>'+esc(s.name)+'</strong><small>Target: '+targetFor(s.id)+'% · '+getEntered(s.id)+' scores entered</small></div><button class="button secondary" data-action="rename-subject" data-id="'+s.id+'">Rename</button><button class="button danger" data-action="delete-subject" data-id="'+s.id+'">Remove</button></div>').join(""):'<div class="empty"><strong>No subjects yet</strong>Add the subjects you want to track.</div>')+'</article><p class="notice">Removing a subject also removes its saved scores. Subjects, targets, scores, and assessment setups are synced to your account.</p>';
   }
   function reportsView() {
     if(!state.subjects.length) return '<article class="card"><div class="empty"><strong>No report yet</strong>Add subjects and enter assessment marks to build your report.</div></article>';
@@ -95,7 +245,7 @@
     return '<div class="grid content-grid"><article class="card"><p class="eyebrow">CURRENT TERM REPORT</p><h2>'+esc(state.term)+' · '+esc(state.academicYear)+'</h2><div class="report-total">'+(list.length?overall+'%':'—')+'</div><p class="notice">Average of subjects with at least one entered mark. This remains a progress estimate until all configured assessments are entered.</p><div class="progress-track"><div class="progress-fill" style="width:'+overall+'%"></div></div><div class="progress-row"><span>Subjects with marks</span><strong>'+list.length+'/'+state.subjects.length+'</strong></div><div class="progress-row"><span>Fully entered subjects</span><strong>'+state.subjects.filter(subject=>isComplete(subject.id)).length+'/'+state.subjects.length+'</strong></div></article><article class="card"><h3>What to focus on next</h3>'+(sorted.length?sorted.slice(0,3).map(subject=>'<div class="subject-row"><div class="subject-icon">'+esc(subject.name.slice(0,1).toUpperCase())+'</div><div class="subject-info"><strong>'+esc(subject.name)+'</strong><small>'+pct(subject.id)+'% · target '+targetFor(subject.id)+'%</small></div><span class="badge '+(pct(subject.id)<targetFor(subject.id)?'warn':'')+'">'+(pct(subject.id)<targetFor(subject.id)?'Below target':'On target')+'</span></div>').join(''):'<p class="notice">Enter marks to identify subjects needing attention.</p>')+'<p class="notice">Review returned scripts, topics missed, practice questions and teacher feedback before choosing a study strategy.</p></article></div>'+heading('Subject breakdown','All configured assessments and target comparisons')+'<article class="card"><div class="table-wrap"><table><thead><tr><th>Subject</th><th>Assessment marks</th><th>Total</th><th>Target</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div></article>';
   }
   function settingsView() {
-    return '<div class="grid settings-grid"><article class="card"><h2>Academic period</h2><p class="notice">Choose the current year and term. Your subjects and scores remain saved separately for each period.</p><label class="field">Academic year<input id="academic-year" value="'+esc(state.academicYear)+'" placeholder="2026–2027" maxlength="30"></label><br><label class="field">Current term<select id="current-term">'+["Term 1","Term 2","Term 3"].map(t=>'<option '+(state.term===t?"selected":"")+'>'+t+'</option>').join("")+'</select></label><br><button class="button primary" data-action="save-period">Save period</button></article><article class="card"><h2>Backup & restore</h2><p class="notice">Your records are stored in this browser on this device. Export backups regularly so you can recover your records if browser data is cleared.</p><div class="button-row"><button class="button primary" data-action="export">Download JSON backup</button><button class="button secondary" data-action="import">Restore JSON backup</button></div><p class="notice" style="margin-top:15px">Restore replaces the current tracker data. Export a backup first if you want to keep a copy of the current records.</p></article><article class="card"><h2>Score targets</h2><p class="notice">Targets are stored separately from actual marks. Set a target per subject here.</p>'+state.subjects.map(s=>'<div class="subject-row"><div class="subject-info"><strong>'+esc(s.name)+'</strong><small>Target percentage</small></div><input class="target-input" aria-label="'+esc(s.name)+' target" type="number" min="0" max="100" value="'+targetFor(s.id)+'" data-target="'+s.id+'">%</div>').join("")+'<button class="button primary" data-action="save-targets" style="margin-top:15px">Save targets</button></article><article class="card"><h2>About your data</h2><p class="notice">Academic Tracker is an offline-first personal PWA. It does not upload your marks to a server. Keep your phone protected and store backups somewhere you trust.</p><div class="callout">Last saved: '+esc(new Date(state.updatedAt).toLocaleString())+'</div></article></div>';
+    return '<div class="grid settings-grid"><article class="card"><h2>Academic period</h2><p class="notice">Choose the current year and term. Your subjects and scores remain saved separately for each period.</p><label class="field">Academic year<input id="academic-year" value="'+esc(state.academicYear)+'" placeholder="2026–2027" maxlength="30"></label><br><label class="field">Current term<select id="current-term">'+["Term 1","Term 2","Term 3"].map(t=>'<option '+(state.term===t?"selected":"")+'>'+t+'</option>').join("")+'</select></label><br><button class="button primary" data-action="save-period">Save period</button></article><article class="card"><h2>Backup & restore</h2><p class="notice">Your subjects, targets, scores, and custom assessment setups are synced to your account. Export backups regularly so you have an independent copy of your academic records.</p><div class="button-row"><button class="button primary" data-action="export">Download JSON backup</button><button class="button secondary" data-action="import">Restore JSON backup</button></div><p class="notice" style="margin-top:15px">Restore replaces the current tracker data. Export a backup first if you want to keep a copy of the current records.</p></article><article class="card"><h2>Score targets</h2><p class="notice">Targets are stored separately from actual marks. Set a target per subject here.</p>'+state.subjects.map(s=>'<div class="subject-row"><div class="subject-info"><strong>'+esc(s.name)+'</strong><small>Target percentage</small></div><input class="target-input" aria-label="'+esc(s.name)+' target" type="number" min="0" max="100" value="'+targetFor(s.id)+'" data-target="'+s.id+'">%</div>').join("")+'<button class="button primary" data-action="save-targets" style="margin-top:15px">Save targets</button></article><article class="card"><h2>About your data</h2><p class="notice">Your subjects, targets, scores, and custom assessment setups are saved to your account database. Export backups regularly so you can recover your records if needed.</p><div class="callout">Last saved: '+esc(new Date(state.updatedAt).toLocaleString())+'</div></article></div>';
   }
   function focusView() {
     let session=focusSession();
@@ -140,6 +290,9 @@
         '</article>'+
       '</div>'+
       '<article class="card focus-reset-card"><div><h3>One distraction doesn’t ruin a session.</h3><p class="notice">If you lose focus, return to your task and continue. Progress is about learning—not a perfect timer streak.</p></div><button class="button secondary" type="button" data-focus-action="reset">Reset session</button></article>'+
+      '<article class="card focus-history-card"><div class="section-heading"><div><h3>Recent focus sessions</h3><p>Your completed sessions are saved to your account.</p></div><span class="badge">'+focusHistory.length+' saved</span></div>'+
+        (focusHistory.length?focusHistory.map(item=>'<div class="subject-row"><div class="subject-icon">◎</div><div class="subject-info"><strong>'+esc(item.task||"Study session")+'</strong><small>'+esc(new Date(item.completedAt||item.savedAt).toLocaleString())+' · '+num(item.durationMinutes)+' minutes</small></div><span class="badge">Complete</span></div>').join(""):'<div class="empty"><strong>No completed sessions yet</strong>Finish a focus session and it will appear here.</div>')+
+      '</article>'+
     '</section>';
   }
   function render() {
@@ -154,18 +307,55 @@
     const name=$("#subject-name").value.trim(), target=num($("#subject-target").value);
     if(!name) return;
     if(state.subjects.some(s=>s.name.toLowerCase()===name.toLowerCase())) { alert("That subject already exists."); return; }
-    const sid=id(); state.subjects.push({id:sid,name,createdAt:new Date().toISOString()}); state.targets[sid]=Math.max(0,Math.min(100,target)); state.assessments[sid]=defaultAssessments(); await save(); $("#subject-dialog").close();
+    const sid=id();
+    let serverId = null;
+    if (apiToken()) {
+      try { const result = await apiRequest("/api/subjects", { method: "POST", body: JSON.stringify({ name, targetPercentage: Math.max(0,Math.min(100,target)) }) }); serverId = result.subject.id; }
+      catch (error) { alert(error.message); return; }
+    } else { alert("Please log in again before adding a subject so it can be saved to your account."); return; }
+    const subjectId = serverId || sid;
+    state.subjects.push({id:subjectId,serverId:serverId || null,name,createdAt:new Date().toISOString()});
+    state.targets[subjectId]=Math.max(0,Math.min(100,target)); state.assessments[subjectId]=defaultAssessments(); await save(); $("#subject-dialog").close();
+  }
+  async function readLegacyBackup() {
+    const userId = accountUserId();
+    if (!userId) return null;
+    const key = "legacy-backup-" + userId;
+    try {
+      const db = await dbOpen();
+      if (db) {
+        const value = await new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE, "readonly");
+          const request = tx.objectStore(STORE).get(key);
+          request.onsuccess = () => resolve(request.result || null);
+          request.onerror = () => reject(request.error);
+        });
+        db.close();
+        return value;
+      }
+      return JSON.parse(localStorage.getItem("academic-tracker-legacy-backup:" + userId) || "null");
+    } catch (error) { console.warn("Could not read the archived legacy backup", error); return null; }
   }
   async function exportBackup() {
-    const blob=new Blob([JSON.stringify({app:"Academic Tracker",schemaVersion:1,exportedAt:new Date().toISOString(),data:state},null,2)],{type:"application/json"});
-    const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="academic-tracker-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();URL.revokeObjectURL(url);
+    try {
+      const account = await apiRequest("/api/account/export");
+      const legacyDeviceBackup = await readLegacyBackup();
+      const backup = { app: "Academic Tracker", schemaVersion: 2, exportedAt: new Date().toISOString(), data: state, account, legacyDeviceBackup };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob), a = document.createElement("a");
+      a.href = url; a.download = "academic-tracker-account-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+      a.click(); URL.revokeObjectURL(url);
+    } catch (error) {
+      alert("Could not export your full account backup. Please check your connection and try again. " + error.message);
+    }
   }
   async function importBackup(file) {
     if(!file) return;
     try { const parsed=JSON.parse(await file.text()), data=parsed.data||parsed;
       if(!data||!Array.isArray(data.subjects)||typeof data.scores!=="object") throw new Error("This file does not look like an Academic Tracker backup.");
-      if(!confirm("Restore this backup? It will replace the tracker data currently on this device.")) return;
-      state={...defaults(),...data}; await save(); alert("Backup restored.");
+      if(!confirm("Restore this backup into the account you are currently signed into? Existing account subjects with matching names will be matched; other saved subjects and marks will be merged.")) return;
+      if (data.accountUserId && accountUserId() && data.accountUserId !== accountUserId() && !confirm("This backup was created under a different account. Import its tracker records into your current account?")) return;
+      state={...defaults(),...data,accountUserId:accountUserId()}; await syncSubjectsFromServer(); await save(); alert("Backup restored and synced to your account.");
     } catch(e) { alert("Could not restore backup: "+e.message); }
     finally { $("#import-file").value=""; }
   }
@@ -195,7 +385,7 @@
         if(item && subjectScore(inp.dataset.assessmentMax)[item.id]!=null && Number(subjectScore(inp.dataset.assessmentMax)[item.id])>m){alert(item.name+" score cannot exceed its maximum.");inp.focus();return;}
         if(item)item.max=m;
       }
-      await save(); alert("Assessment setup and scores saved on this device.");
+      await save(); alert("Assessment setup and scores saved to your account.");
     }
     if(action==="add-assessment") {
       const list=itemsFor(sid),kind=b.dataset.kind;
@@ -220,12 +410,12 @@
       await save();alert("Assessment setup applied to all subjects.");
     }
     if(action==="complete-check") { const missing=state.subjects.filter(s=>!isComplete(s.id)); if(missing.length){alert("Still missing scores for: "+missing.map(s=>s.name+" ("+(itemsFor(s.id).length-getEntered(s.id))+" missing)").join(", "));}else if(!state.subjects.length){alert("Add subjects first.");}else if(confirm("All assessment marks are entered for every subject. Open the current report?"))setView("reports"); }
-    if(action==="rename-subject") {const s=state.subjects.find(x=>x.id===sid);if(!s)return;const name=prompt("Rename subject",s.name);if(name&&name.trim()){s.name=name.trim();await save();}}
-    if(action==="delete-subject") {const s=state.subjects.find(x=>x.id===sid);if(!s||!confirm("Remove "+s.name+" and its saved scores? Export a backup first if needed."))return;state.subjects=state.subjects.filter(x=>x.id!==sid);delete state.targets[sid];delete state.assessments[sid];Object.keys(state.scores).forEach(k=>{if(k.endsWith("|"+sid))delete state.scores[k];});await save();}
+    if(action==="rename-subject") {const s=state.subjects.find(x=>x.id===sid);if(!s)return;const name=prompt("Rename subject",s.name);if(name&&name.trim()){try{if(!s.serverId)throw new Error("This subject is not linked to your account yet.");await apiRequest("/api/subjects/"+encodeURIComponent(s.serverId),{method:"PATCH",body:JSON.stringify({name:name.trim()})});s.name=name.trim();await save();}catch(error){alert(error.message);}}}
+    if(action==="delete-subject") {const s=state.subjects.find(x=>x.id===sid);if(!s||!confirm("Remove "+s.name+" and its saved scores? Export a backup first if needed."))return;try{if(!s.serverId)throw new Error("This subject is not linked to your account yet.");await apiRequest("/api/subjects/"+encodeURIComponent(s.serverId),{method:"DELETE"});state.subjects=state.subjects.filter(x=>x.id!==sid);delete state.targets[sid];delete state.assessments[sid];Object.keys(state.scores).forEach(k=>{if(k.endsWith("|"+sid))delete state.scores[k];});await save();}catch(error){alert(error.message);}}
     if(action==="save-period") {const year=$("#academic-year").value.trim();if(!year){alert("Enter an academic year.");return;}state.academicYear=year;state.term=$("#current-term").value;await save();alert("Academic period saved.");}
     if(action==="export") exportBackup();
     if(action==="import") $("#import-file").click();
-    if(action==="save-targets") {for(const inp of document.querySelectorAll("[data-target]")){const v=Number(inp.value);if(!Number.isFinite(v)||v<0||v>100){alert("Targets must be between 0 and 100.");inp.focus();return;}state.targets[inp.dataset.target]=v;}await save();alert("Targets saved.");}
+    if(action==="save-targets") {const updates=[];for(const inp of document.querySelectorAll("[data-target]")){const v=Number(inp.value);if(!Number.isFinite(v)||v<0||v>100){alert("Targets must be between 0 and 100.");inp.focus();return;}const subject=state.subjects.find(item=>item.id===inp.dataset.target);if(!subject?.serverId){alert("A subject is not linked to your account yet. Please refresh and try again.");return;}updates.push(apiRequest("/api/subjects/"+encodeURIComponent(subject.serverId),{method:"PATCH",body:JSON.stringify({targetPercentage:v})}));state.targets[inp.dataset.target]=v;}try{await Promise.all(updates);await save();alert("Targets saved to your account.");}catch(error){alert("Could not save all targets to your account: "+error.message);}}
     if(action==="print") window.print();
   });
   document.addEventListener("click", e => {

@@ -1,6 +1,7 @@
 (() => {
   "use strict";
   const token = localStorage.getItem("academic-tracker-token");
+  const API_BASE = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
   if (!token) { window.location.replace("login.html"); return; }
   const $ = id => document.getElementById(id);
   let user = {};
@@ -27,9 +28,53 @@
       return { reviewed: Number(parsed.reviewed) || 0, correct: Number(parsed.correct) || 0 };
     } catch { return { reviewed: 0, correct: 0 }; }
   }
-  function persist() {
+  let serverCardIds = new Set();
+  async function dataRequest(path, options = {}) {
+    const response = await fetch(API_BASE + path, { ...options, headers: { "Content-Type": "application/json", Authorization: "Bearer " + token, ...(options.headers || {}) } });
+    const data = await response.json().catch(() => ({}));
+    if (response.status === 401) { localStorage.removeItem("academic-tracker-token"); localStorage.removeItem("academic-tracker-user"); location.replace("login.html"); throw new Error("Your session expired. Please sign in again."); }
+    if (!response.ok) throw new Error(data.error || "Could not sync Memory Mastery.");
+    return data;
+  }
+  async function persist() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
     localStorage.setItem(STORAGE_KEY + ":stats", JSON.stringify(reviewStats));
+    try {
+      for (let index = 0; index < cards.length; index += 20) {
+        const batch = cards.slice(index, index + 20);
+        await dataRequest("/api/user-data/memory-cards/bulk", { method: "PUT", body: JSON.stringify({ records: batch.map(card => ({ recordId: card.id, data: card })) }) });
+      }
+      const ids = new Set(cards.map(card => card.id));
+      const removed = [...serverCardIds].filter(id => !ids.has(id));
+      for (let index = 0; index < removed.length; index += 100) {
+        await dataRequest("/api/user-data/memory-cards/bulk", { method: "DELETE", body: JSON.stringify({ recordIds: removed.slice(index, index + 100) }) });
+      }
+      await dataRequest("/api/user-data/memory-stats/summary", { method: "PUT", body: JSON.stringify({ data: reviewStats }) });
+      serverCardIds = ids;
+      $("form-notice").textContent = "Your memory cards and review progress are synced to your account.";
+    } catch (error) {
+      console.error("Memory Mastery account sync failed", error);
+      $("form-notice").textContent = "Saved locally, but account sync failed. Check your connection before switching devices.";
+    }
+  }
+  async function syncFromAccount() {
+    const [cardData, statsData] = await Promise.all([dataRequest("/api/user-data/memory-cards"), dataRequest("/api/user-data/memory-stats")]);
+    const remoteCards = Array.isArray(cardData.records) ? cardData.records : [];
+    serverCardIds = new Set(remoteCards.map(record => record.recordId));
+    const byId = new Map(remoteCards.map(record => [record.recordId, record.data]));
+    for (const card of cards) if (!byId.has(card.id)) byId.set(card.id, card);
+    cards = [...byId.values()];
+    const remoteStats = statsData.records?.find(record => record.recordId === "summary")?.data;
+    if (remoteStats) reviewStats = { reviewed: Number(remoteStats.reviewed) || 0, correct: Number(remoteStats.correct) || 0 };
+    else await dataRequest("/api/user-data/memory-stats/summary", { method: "PUT", body: JSON.stringify({ data: reviewStats }) });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+    localStorage.setItem(STORAGE_KEY + ":stats", JSON.stringify(reviewStats));
+    const localOnly = cards.filter(card => !serverCardIds.has(card.id));
+    for (let index = 0; index < localOnly.length; index += 20) {
+      const batch = localOnly.slice(index, index + 20);
+      await dataRequest("/api/user-data/memory-cards/bulk", { method: "PUT", body: JSON.stringify({ records: batch.map(card => ({ recordId: card.id, data: card })) }) });
+    }
+    localOnly.forEach(card => serverCardIds.add(card.id));
   }
   function now() { return Date.now(); }
   function dueAt(card) { return Number(card.dueAt) || 0; }
@@ -91,7 +136,6 @@
     $("review-answer").textContent = current.answer;
     $("queue-count").textContent = (queue.length + 1) + " left";
   }
-  const API_BASE = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
   $("generate-cards-form").addEventListener("submit", async event => {
     event.preventDefault();
     const subject = $("ai-card-subject").value.trim();
@@ -162,10 +206,10 @@
       editingId = null;
       $("save-card-button").textContent = "＋ Save memory card";
       persist(); buildQueue(); renderLibrary();
-      $("form-notice").textContent = "Memory card updated on this device.";
+      $("form-notice").textContent = "Memory card updated. Syncing your changes to your account…";
     } else {
       addCard(values);
-      $("form-notice").textContent = "Memory card saved on this device. Try recalling it before revealing the answer.";
+      $("form-notice").textContent = "Memory card added. Syncing it to your account… Try recalling it before revealing the answer.";
     }
     $("card-form").reset();
     $("review-stage").scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -245,5 +289,9 @@
     finally { $("import-file").value = ""; }
   });
   $("signout").addEventListener("click", () => { localStorage.removeItem("academic-tracker-token"); localStorage.removeItem("academic-tracker-user"); window.location.replace("login.html"); });
-  buildQueue(); renderLibrary();
+  syncFromAccount().then(() => { buildQueue(); renderLibrary(); }).catch(error => {
+    console.error("Could not load Memory Mastery from account", error);
+    buildQueue(); renderLibrary();
+    $("form-notice").textContent = "Your saved cards could not sync with your account. " + error.message;
+  });
 })();

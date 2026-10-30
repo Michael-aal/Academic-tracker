@@ -4,20 +4,35 @@ const { requireAuth } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/admin");
 const { prisma } = require("../prisma");
 const { validateQuiz, publicQuiz, markQuiz } = require("../quiz-schema");
+const { consumeAiQuota } = require("../ai-quota");
 
 const router = express.Router();
 router.use(requireAuth);
 
+// The persistent database quota is per account. Add an independent IP ceiling
+// as well, so creating multiple accounts cannot trivially bypass AI cost controls.
+const aiIpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many AI requests from this network. Please wait before trying again." }
+});
+router.use(aiIpLimiter);
+
 const MAX_INPUT_CHARS = 12000;
 const ACTIONS = new Set(["tutor", "quiz", "summarize", "study-plan", "flashcards"]);
-const aiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 10,
+// Quiz attempts do not call the AI provider, but answer/submit endpoints still
+// perform database reads and writes. Keep those operations bounded per account.
+const quizAttemptLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 45,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   keyGenerator: (req) => req.userId,
-  message: { error: "You've reached the AI learning limit for now. Please try again in 15 minutes." }
+  message: { error: "Too many quiz actions. Please slow down and try again shortly." }
 });
+router.use("/attempts", quizAttemptLimiter);
 
 function buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) {
   const context = [
@@ -135,7 +150,17 @@ router.post("/attempts/:attemptId/submit", async (req, res, next) => {
   } catch (error) { return next(error); }
 });
 
-router.post("/", aiLimiter, async (req, res) => {
+async function enforceAiQuota(req, res, next) {
+  try {
+    const allowed = await consumeAiQuota(prisma, req.userId);
+    if (!allowed) return res.status(429).json({ error: "You've reached the AI learning limit for now. Please try again in 15 minutes." });
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+}
+
+router.post("/", enforceAiQuota, async (req, res) => {
   const action = typeof req.body?.action === "string" ? req.body.action : "";
   const subject = typeof req.body?.subject === "string" ? req.body.subject.trim().slice(0, 100) : "";
   const topic = typeof req.body?.topic === "string" ? req.body.topic.trim().slice(0, 160) : "";

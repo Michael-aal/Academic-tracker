@@ -1,4 +1,5 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Prisma } = require("@prisma/client");
@@ -6,6 +7,24 @@ const { prisma } = require("../prisma");
 const { requireAuth } = require("../middleware/auth");
 const { cleanString, TERMS } = require("../validation");
 const router = express.Router();
+
+// Count failed logins rather than successful ones so legitimate users are not
+// penalized for signing in. The broader /api/auth limiter remains as a second layer.
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 8,
+  skipSuccessfulRequests: true,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many unsuccessful sign-in attempts. Please wait 15 minutes before trying again." }
+});
+const registrationLimiter = rateLimit({
+  windowMs: 60 *  60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many account registrations from this network. Please try again later." }
+});
 
 const publicUser = user => ({
   id: user.id, name: user.name, email: user.email, role: user.role,
@@ -19,10 +38,10 @@ const publicUser = user => ({
   currentSemester: user.currentSemester || "Semester 1",
   createdAt: user.createdAt
 });
-function issueToken(userId) {
-  return jwt.sign({}, process.env.JWT_SECRET, { subject: userId, algorithm: "HS256", issuer: "academic-tracker-api", audience: "academic-tracker-client", expiresIn: "7d" });
+function issueToken(userId, sessionVersion = 0) {
+  return jwt.sign({ sv: sessionVersion }, process.env.JWT_SECRET, { subject: userId, algorithm: "HS256", issuer: "academic-tracker-api", audience: "academic-tracker-client", expiresIn: "7d" });
 }
-router.post("/register", async (req, res, next) => {
+router.post("/register", registrationLimiter, async (req, res, next) => {
   try {
     const name = cleanString(req.body?.name, 80);
     const email = cleanString(req.body?.email, 254).toLowerCase();
@@ -34,18 +53,18 @@ router.post("/register", async (req, res, next) => {
     if (process.env.ADMIN_EMAIL && email === process.env.ADMIN_EMAIL.trim().toLowerCase()) return res.status(403).json({ error: "This email is reserved for the configured administrator. Sign in to its existing account." });
     if (name.length < 2) return res.status(400).json({ error: "Name must be at least 2 characters." });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: "Enter a valid email address." });
-    if (typeof password !== "string" || password.length < 10 || password.length > 72) return res.status(400).json({ error: "Password must be between 10 and 72 characters." });
+    if (typeof password !== "string" || password.length < 10 || Buffer.byteLength(password, "utf8") > 72) return res.status(400).json({ error: "Password must be at least 10 characters and no more than 72 UTF-8 bytes." });
     if (!["SECONDARY", "HIGHER"].includes(educationTrack)) return res.status(400).json({ error: "Choose secondary school or higher institution." });
     if (educationTrack === "HIGHER" && (!institutionName || !programme || !studyLevel)) return res.status(400).json({ error: "Enter your institution, programme, and study level." });
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({ data: { name, email, passwordHash, role: "USER", educationTrack, institutionName: educationTrack === "HIGHER" ? institutionName : null, programme: educationTrack === "HIGHER" ? programme : null, studyLevel: educationTrack === "HIGHER" ? studyLevel : null } });
-    return res.status(201).json({ token: issueToken(user.id), user: publicUser(user) });
+    return res.status(201).json({ token: issueToken(user.id, user.sessionVersion), user: publicUser(user) });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return res.status(409).json({ error: "An account with that email already exists." });
     next(error);
   }
 });
-router.post("/login", async (req, res, next) => {
+router.post("/login", loginLimiter, async (req, res, next) => {
   try {
     const email = cleanString(req.body?.email, 254).toLowerCase();
     const password = req.body?.password;
@@ -53,7 +72,14 @@ router.post("/login", async (req, res, next) => {
     const user = await prisma.user.findUnique({ where: { email } });
     const valid = user && await bcrypt.compare(password, user.passwordHash);
     if (!valid) return res.status(401).json({ error: "Email or password is incorrect." });
-    return res.json({ token: issueToken(user.id), user: publicUser(user) });
+    return res.json({ token: issueToken(user.id, user.sessionVersion), user: publicUser(user) });
+  } catch (error) { next(error); }
+});
+router.post("/logout", requireAuth, async (req, res, next) => {
+  try {
+    await prisma.user.update({ where: { id: req.userId }, data: { sessionVersion: { increment: 1 } } });
+    res.set("Cache-Control", "no-store");
+    res.json({ ok: true, message: "All active sessions have been signed out." });
   } catch (error) { next(error); }
 });
 router.get("/me", requireAuth, async (req, res, next) => {
