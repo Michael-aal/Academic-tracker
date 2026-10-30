@@ -13,6 +13,7 @@ model User {
   email                 String                @unique @db.VarChar(254)
   passwordHash          String                @map("password_hash")
   role                  String                @default("USER") @db.VarChar(20)
+  sessionVersion        Int                   @default(0) @map("session_version")
   educationTrack        String                @default("SECONDARY") @map("education_track") @db.VarChar(20)
   institutionName       String?               @map("institution_name") @db.VarChar(160)
   programme             String?               @db.VarChar(160)
@@ -29,6 +30,7 @@ model User {
   supportConversation   SupportConversation?
   supportMessages       SupportMessage[]      @relation("SupportMessageSender")
   aiQuizAttempts        AiQuizAttempt[]
+  dataRecords           UserDataRecord[]
 
   @@map("users")
 }
@@ -160,4 +162,19 @@ model AiQuizAttempt {
   @@index([userId, createdAt])
   @@index([status])
   @@map("ai_quiz_attempts")
+}
+
+model UserDataRecord {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  kind      String   @db.VarChar(40)
+  recordId  String   @map("record_id") @db.VarChar(120)
+  data      Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind, recordId])
+  @@index([userId, kind, updatedAt])
+  @@map("user_data_records")
 }
