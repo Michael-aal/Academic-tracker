@@ -18,7 +18,7 @@ const accountRoutes = require("./routes/account");
 const app = express();
 // The API is hosted behind Render's single reverse-proxy hop. Trust only that
 // hop so IP-based rate limits use the originating client address.
-app.set("trust proxy", 1);
+app.set("trust proxy", process.env.NODE_ENV === "production" ? 1 : false);
 app.disable("x-powered-by");
 app.use(helmet());
 app.use(cors({
