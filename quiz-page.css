@@ -50,3 +50,11 @@ html[data-theme="light"] .quiz-hint-wrap p{background:#f7f3ff;color:#5b4b70;bord
 html[data-theme="light"] .quiz-notice{color:#6c5a83}
 html[data-theme="light"] .quiz-notice.is-error{color:#b42332}
 @media(prefers-reduced-motion:reduce){.quiz-timer-chip.is-urgent{animation:none}}
+
+html[data-theme="light"] .quiz-eyebrow,html[data-theme="light"] .quiz-question-meta{color:#7545c8!important}
+html[data-theme="light"] .question-status{color:#6c5a83!important}
+html[data-theme="light"] .question-status.is-answered{color:#5b2ba8!important}
+html[data-theme="light"] .quiz-hint-button{color:#5b2ba8!important}
+html[data-theme="light"] .quiz-overview-label,html[data-theme="light"] .quiz-page-footer{color:#6c5a83!important}
+html[data-theme="light"] .quiz-page-header .ai-brand{color:#35224f!important}
+html[data-theme="light"] .quiz-nav-button:disabled,html[data-theme="light"] .quiz-next-button:disabled{opacity:.58}
