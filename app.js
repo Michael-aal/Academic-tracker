@@ -16,6 +16,39 @@
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
+  const API_BASE = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\\/$/, "");
+  const apiToken = () => localStorage.getItem("academic-tracker-token") || "";
+  async function apiRequest(path, options = {}) {
+    const token = apiToken();
+    if (!token) throw new Error("Your session is missing. Please log in again.");
+    const response = await fetch(API_BASE + path, {
+      ...options,
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token, ...(options.headers || {}) }
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Could not sync your subjects. Please try again.");
+    return data;
+  }
+  async function syncSubjectsFromServer() {
+    if (!apiToken()) return;
+    const data = await apiRequest("/api/subjects?academicYear=" + encodeURIComponent(state.academicYear) + "&term=" + encodeURIComponent(state.term));
+    const remoteSubjects = Array.isArray(data.subjects) ? data.subjects : [];
+    const previous = [...state.subjects];
+    const synced = [];
+    for (const remote of remoteSubjects) {
+      const local = previous.find(subject => subject.serverId === remote.id || subject.name.trim().toLocaleLowerCase("en") === remote.name.trim().toLocaleLowerCase("en"));
+      synced.push({ ...(local || {}), id: local?.id || remote.id, serverId: remote.id, name: remote.name, createdAt: remote.createdAt || local?.createdAt || new Date().toISOString() });
+      if (local) state.targets[local.id] = remote.targetPercentage;
+      else state.targets[remote.id] = remote.targetPercentage;
+    }
+    for (const local of previous) {
+      if (synced.some(subject => subject.id === local.id)) continue;
+      const created = await apiRequest("/api/subjects", { method: "POST", body: JSON.stringify({ name: local.name, targetPercentage: targetFor(local.id) }) });
+      synced.push({ ...local, serverId: created.subject.id });
+    }
+    state.subjects = synced;
+    await save(false);
+  }
   async function load() {
     try {
       const db = await dbOpen();
@@ -24,6 +57,17 @@
         db.close(); if (value) state = {...defaults(),...value};
       } else { const raw=localStorage.getItem(KEY); if(raw) state={...defaults(),...JSON.parse(raw)}; }
     } catch(e) { console.warn("Could not load saved records",e); }
+    try { await syncSubjectsFromServer(); }
+    catch (e) {
+      console.error("Could not sync subjects with the account database", e);
+      if (apiToken()) {
+        const notice = document.createElement("p");
+        notice.className = "notice";
+        notice.setAttribute("role", "status");
+        notice.textContent = "Your subjects could not be synced with your account. Changes may remain only on this device until the connection is restored. " + e.message;
+        $("#app")?.prepend(notice);
+      }
+    }
     render();
   }
   async function save(renderAfter = true) {
@@ -86,7 +130,7 @@
     return '<p class="notice">Default secondary-school setup: three tests and one final exam. Customize each subject independently. Scores and assessment setups are saved on this device. Assessment maximums should match your teacher’s marking scheme.</p><div class="button-row" style="margin:14px 0"><button class="button secondary" data-action="add-subject">＋ Add subject</button></div><div class="grid">'+cards+'</div><p class="notice">For each subject, add as many tests or assignments as needed. Only one final exam is allowed in a subject setup. “Apply this setup to all subjects” copies the selected subject’s assessment structure to every subject.</p>';
   }
   function subjectsView() {
-    return '<article class="card">'+heading("Your subjects","Add, rename, or remove subjects",'<button class="button primary" data-action="add-subject">＋ Add subject</button>')+(state.subjects.length?state.subjects.map(s=>'<div class="subject-row"><div class="subject-icon">'+esc(s.name.slice(0,1).toUpperCase())+'</div><div class="subject-info"><strong>'+esc(s.name)+'</strong><small>Target: '+targetFor(s.id)+'% · '+getEntered(s.id)+' scores entered</small></div><button class="button secondary" data-action="rename-subject" data-id="'+s.id+'">Rename</button><button class="button danger" data-action="delete-subject" data-id="'+s.id+'">Remove</button></div>').join(""):'<div class="empty"><strong>No subjects yet</strong>Add the subjects you want to track.</div>')+'</article><p class="notice">Removing a subject also removes its scores from this device. Export a backup first if you may need the records later.</p>';
+    return '<article class="card">'+heading("Your subjects","Add, rename, or remove subjects",'<button class="button primary" data-action="add-subject">＋ Add subject</button>')+(state.subjects.length?state.subjects.map(s=>'<div class="subject-row"><div class="subject-icon">'+esc(s.name.slice(0,1).toUpperCase())+'</div><div class="subject-info"><strong>'+esc(s.name)+'</strong><small>Target: '+targetFor(s.id)+'% · '+getEntered(s.id)+' scores entered</small></div><button class="button secondary" data-action="rename-subject" data-id="'+s.id+'">Rename</button><button class="button danger" data-action="delete-subject" data-id="'+s.id+'">Remove</button></div>').join(""):'<div class="empty"><strong>No subjects yet</strong>Add the subjects you want to track.</div>')+'</article><p class="notice">Removing a subject also removes its locally stored scores. Subject details are synced to your account; score syncing is a separate feature.</p>';
   }
   function reportsView() {
     if(!state.subjects.length) return '<article class="card"><div class="empty"><strong>No report yet</strong>Add subjects and enter assessment marks to build your report.</div></article>';
@@ -95,7 +139,7 @@
     return '<div class="grid content-grid"><article class="card"><p class="eyebrow">CURRENT TERM REPORT</p><h2>'+esc(state.term)+' · '+esc(state.academicYear)+'</h2><div class="report-total">'+(list.length?overall+'%':'—')+'</div><p class="notice">Average of subjects with at least one entered mark. This remains a progress estimate until all configured assessments are entered.</p><div class="progress-track"><div class="progress-fill" style="width:'+overall+'%"></div></div><div class="progress-row"><span>Subjects with marks</span><strong>'+list.length+'/'+state.subjects.length+'</strong></div><div class="progress-row"><span>Fully entered subjects</span><strong>'+state.subjects.filter(subject=>isComplete(subject.id)).length+'/'+state.subjects.length+'</strong></div></article><article class="card"><h3>What to focus on next</h3>'+(sorted.length?sorted.slice(0,3).map(subject=>'<div class="subject-row"><div class="subject-icon">'+esc(subject.name.slice(0,1).toUpperCase())+'</div><div class="subject-info"><strong>'+esc(subject.name)+'</strong><small>'+pct(subject.id)+'% · target '+targetFor(subject.id)+'%</small></div><span class="badge '+(pct(subject.id)<targetFor(subject.id)?'warn':'')+'">'+(pct(subject.id)<targetFor(subject.id)?'Below target':'On target')+'</span></div>').join(''):'<p class="notice">Enter marks to identify subjects needing attention.</p>')+'<p class="notice">Review returned scripts, topics missed, practice questions and teacher feedback before choosing a study strategy.</p></article></div>'+heading('Subject breakdown','All configured assessments and target comparisons')+'<article class="card"><div class="table-wrap"><table><thead><tr><th>Subject</th><th>Assessment marks</th><th>Total</th><th>Target</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div></article>';
   }
   function settingsView() {
-    return '<div class="grid settings-grid"><article class="card"><h2>Academic period</h2><p class="notice">Choose the current year and term. Your subjects and scores remain saved separately for each period.</p><label class="field">Academic year<input id="academic-year" value="'+esc(state.academicYear)+'" placeholder="2026–2027" maxlength="30"></label><br><label class="field">Current term<select id="current-term">'+["Term 1","Term 2","Term 3"].map(t=>'<option '+(state.term===t?"selected":"")+'>'+t+'</option>').join("")+'</select></label><br><button class="button primary" data-action="save-period">Save period</button></article><article class="card"><h2>Backup & restore</h2><p class="notice">Your records are stored in this browser on this device. Export backups regularly so you can recover your records if browser data is cleared.</p><div class="button-row"><button class="button primary" data-action="export">Download JSON backup</button><button class="button secondary" data-action="import">Restore JSON backup</button></div><p class="notice" style="margin-top:15px">Restore replaces the current tracker data. Export a backup first if you want to keep a copy of the current records.</p></article><article class="card"><h2>Score targets</h2><p class="notice">Targets are stored separately from actual marks. Set a target per subject here.</p>'+state.subjects.map(s=>'<div class="subject-row"><div class="subject-info"><strong>'+esc(s.name)+'</strong><small>Target percentage</small></div><input class="target-input" aria-label="'+esc(s.name)+' target" type="number" min="0" max="100" value="'+targetFor(s.id)+'" data-target="'+s.id+'">%</div>').join("")+'<button class="button primary" data-action="save-targets" style="margin-top:15px">Save targets</button></article><article class="card"><h2>About your data</h2><p class="notice">Academic Tracker is an offline-first personal PWA. It does not upload your marks to a server. Keep your phone protected and store backups somewhere you trust.</p><div class="callout">Last saved: '+esc(new Date(state.updatedAt).toLocaleString())+'</div></article></div>';
+    return '<div class="grid settings-grid"><article class="card"><h2>Academic period</h2><p class="notice">Choose the current year and term. Your subjects and scores remain saved separately for each period.</p><label class="field">Academic year<input id="academic-year" value="'+esc(state.academicYear)+'" placeholder="2026–2027" maxlength="30"></label><br><label class="field">Current term<select id="current-term">'+["Term 1","Term 2","Term 3"].map(t=>'<option '+(state.term===t?"selected":"")+'>'+t+'</option>').join("")+'</select></label><br><button class="button primary" data-action="save-period">Save period</button></article><article class="card"><h2>Backup & restore</h2><p class="notice">Your subjects are saved to your account database. Score entries and assessment setups are still stored on this device for now. Export backups regularly to protect those local records.</p><div class="button-row"><button class="button primary" data-action="export">Download JSON backup</button><button class="button secondary" data-action="import">Restore JSON backup</button></div><p class="notice" style="margin-top:15px">Restore replaces the current tracker data. Export a backup first if you want to keep a copy of the current records.</p></article><article class="card"><h2>Score targets</h2><p class="notice">Targets are stored separately from actual marks. Set a target per subject here.</p>'+state.subjects.map(s=>'<div class="subject-row"><div class="subject-info"><strong>'+esc(s.name)+'</strong><small>Target percentage</small></div><input class="target-input" aria-label="'+esc(s.name)+' target" type="number" min="0" max="100" value="'+targetFor(s.id)+'" data-target="'+s.id+'">%</div>').join("")+'<button class="button primary" data-action="save-targets" style="margin-top:15px">Save targets</button></article><article class="card"><h2>About your data</h2><p class="notice">Your subjects and subject targets are saved to your account database. Score entries and custom assessment setups currently remain on this device. Keep a backup of those records until score syncing is added.</p><div class="callout">Last saved: '+esc(new Date(state.updatedAt).toLocaleString())+'</div></article></div>';
   }
   function focusView() {
     let session=focusSession();
@@ -154,7 +198,14 @@
     const name=$("#subject-name").value.trim(), target=num($("#subject-target").value);
     if(!name) return;
     if(state.subjects.some(s=>s.name.toLowerCase()===name.toLowerCase())) { alert("That subject already exists."); return; }
-    const sid=id(); state.subjects.push({id:sid,name,createdAt:new Date().toISOString()}); state.targets[sid]=Math.max(0,Math.min(100,target)); state.assessments[sid]=defaultAssessments(); await save(); $("#subject-dialog").close();
+    const sid=id();
+    let serverId = null;
+    if (apiToken()) {
+      try { const result = await apiRequest("/api/subjects", { method: "POST", body: JSON.stringify({ name, targetPercentage: Math.max(0,Math.min(100,target)) }) }); serverId = result.subject.id; }
+      catch (error) { alert(error.message); return; }
+    } else { alert("Please log in again before adding a subject so it can be saved to your account."); return; }
+    state.subjects.push({id:sid,serverId,name,createdAt:new Date().toISOString()});
+    state.targets[sid]=Math.max(0,Math.min(100,target)); state.assessments[sid]=defaultAssessments(); await save(); $("#subject-dialog").close();
   }
   async function exportBackup() {
     const blob=new Blob([JSON.stringify({app:"Academic Tracker",schemaVersion:1,exportedAt:new Date().toISOString(),data:state},null,2)],{type:"application/json"});
@@ -220,12 +271,12 @@
       await save();alert("Assessment setup applied to all subjects.");
     }
     if(action==="complete-check") { const missing=state.subjects.filter(s=>!isComplete(s.id)); if(missing.length){alert("Still missing scores for: "+missing.map(s=>s.name+" ("+(itemsFor(s.id).length-getEntered(s.id))+" missing)").join(", "));}else if(!state.subjects.length){alert("Add subjects first.");}else if(confirm("All assessment marks are entered for every subject. Open the current report?"))setView("reports"); }
-    if(action==="rename-subject") {const s=state.subjects.find(x=>x.id===sid);if(!s)return;const name=prompt("Rename subject",s.name);if(name&&name.trim()){s.name=name.trim();await save();}}
-    if(action==="delete-subject") {const s=state.subjects.find(x=>x.id===sid);if(!s||!confirm("Remove "+s.name+" and its saved scores? Export a backup first if needed."))return;state.subjects=state.subjects.filter(x=>x.id!==sid);delete state.targets[sid];delete state.assessments[sid];Object.keys(state.scores).forEach(k=>{if(k.endsWith("|"+sid))delete state.scores[k];});await save();}
+    if(action==="rename-subject") {const s=state.subjects.find(x=>x.id===sid);if(!s)return;const name=prompt("Rename subject",s.name);if(name&&name.trim()){try{if(!s.serverId)throw new Error("This subject is not linked to your account yet.");await apiRequest("/api/subjects/"+encodeURIComponent(s.serverId),{method:"PATCH",body:JSON.stringify({name:name.trim()})});s.name=name.trim();await save();}catch(error){alert(error.message);}}}
+    if(action==="delete-subject") {const s=state.subjects.find(x=>x.id===sid);if(!s||!confirm("Remove "+s.name+" and its saved scores? Export a backup first if needed."))return;try{if(!s.serverId)throw new Error("This subject is not linked to your account yet.");await apiRequest("/api/subjects/"+encodeURIComponent(s.serverId),{method:"DELETE"});state.subjects=state.subjects.filter(x=>x.id!==sid);delete state.targets[sid];delete state.assessments[sid];Object.keys(state.scores).forEach(k=>{if(k.endsWith("|"+sid))delete state.scores[k];});await save();}catch(error){alert(error.message);}}
     if(action==="save-period") {const year=$("#academic-year").value.trim();if(!year){alert("Enter an academic year.");return;}state.academicYear=year;state.term=$("#current-term").value;await save();alert("Academic period saved.");}
     if(action==="export") exportBackup();
     if(action==="import") $("#import-file").click();
-    if(action==="save-targets") {for(const inp of document.querySelectorAll("[data-target]")){const v=Number(inp.value);if(!Number.isFinite(v)||v<0||v>100){alert("Targets must be between 0 and 100.");inp.focus();return;}state.targets[inp.dataset.target]=v;}await save();alert("Targets saved.");}
+    if(action==="save-targets") {const updates=[];for(const inp of document.querySelectorAll("[data-target]")){const v=Number(inp.value);if(!Number.isFinite(v)||v<0||v>100){alert("Targets must be between 0 and 100.");inp.focus();return;}const subject=state.subjects.find(item=>item.id===inp.dataset.target);if(!subject?.serverId){alert("A subject is not linked to your account yet. Please refresh and try again.");return;}updates.push(apiRequest("/api/subjects/"+encodeURIComponent(subject.serverId),{method:"PATCH",body:JSON.stringify({targetPercentage:v})}));state.targets[inp.dataset.target]=v;}try{await Promise.all(updates);await save();alert("Targets saved to your account.");}catch(error){alert("Could not save all targets to your account: "+error.message);}}
     if(action==="print") window.print();
   });
   document.addEventListener("click", e => {
