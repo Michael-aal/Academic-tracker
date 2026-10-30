@@ -1,0 +1,101 @@
+/* Install prompt — respects Academic Tracker's purple light/dark theme contract. */
+.at-install-banner,
+.at-install-banner * { box-sizing: border-box; }
+.at-install-banner {
+  position: fixed;
+  z-index: 1500;
+  right: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: 44px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 13px;
+  width: min(510px, calc(100vw - 28px));
+  padding: 15px;
+  border: 1px solid #e3d8f3;
+  border-radius: 18px;
+  color: #35224f;
+  background: #ffffff;
+  box-shadow: 0 18px 55px rgba(47,28,82,.22);
+  font-family: inherit;
+}
+.at-install-mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  color: #ffffff;
+  background: linear-gradient(145deg,#a78bfa,#6d28d9);
+  font-size: 21px;
+  font-weight: 850;
+}
+.at-install-copy { min-width: 0; }
+.at-install-copy > strong { display: block; color: #35224f; font-size: 14px; font-weight: 800; }
+.at-install-copy > p { margin: 4px 0 0; color: #6c5a83; font-size: 12px; line-height: 1.45; }
+.at-install-actions { display: flex; align-items: center; flex-direction: column; gap: 5px; }
+.at-install-primary, .at-install-dismiss, .at-install-help-close {
+  min-height: 36px;
+  border: 0;
+  border-radius: 10px;
+  font: 750 12px/1.2 inherit;
+  cursor: pointer;
+}
+.at-install-primary, .at-install-help-close { padding: 0 13px; color: #ffffff; background: #6d28d9; }
+.at-install-primary:hover, .at-install-help-close:hover { background: #5b21b6; }
+.at-install-dismiss { padding: 0 10px; color: #6c5a83; background: transparent; }
+.at-install-dismiss:hover { background: #f0e8ff; }
+.at-install-instructions {
+  margin-top: 12px;
+  padding: 11px 12px;
+  border: 1px solid #e3d8f3;
+  border-radius: 12px;
+  color: #35224f;
+  background: #f7f3ff;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.at-install-instructions strong { display: block; margin-bottom: 5px; }
+.at-install-instructions ol { margin: 0 0 9px; padding-left: 19px; }
+.at-install-instructions li + li { margin-top: 3px; }
+.at-install-help-close { min-height: 32px; }
+html[data-theme="dark"] .at-install-banner {
+  border-color: #302440;
+  color: #f5f3ff;
+  background: #171123;
+  box-shadow: 0 18px 55px rgba(0,0,0,.48);
+}
+html[data-theme="dark"] .at-install-copy > strong { color: #ffffff; }
+html[data-theme="dark"] .at-install-copy > p,
+html[data-theme="dark"] .at-install-dismiss { color: #c3b8d5; }
+html[data-theme="dark"] .at-install-dismiss:hover { background: #2a1e3b; }
+html[data-theme="dark"] .at-install-instructions {
+  border-color: #302440;
+  color: #f5f3ff;
+  background: #20172f;
+}
+@media (max-width: 600px) {
+  .at-install-banner {
+    right: 10px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    grid-template-columns: 40px minmax(0,1fr);
+    gap: 10px;
+    width: calc(100vw - 20px);
+    padding: 12px;
+    border-radius: 16px;
+  }
+  .at-install-mark { width: 40px; height: 40px; }
+  .at-install-actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .at-install-primary { min-width: 112px; }
+  body.at-has-global-navigation .at-install-banner {
+    bottom: calc(91px + env(safe-area-inset-bottom));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .at-install-banner, .at-install-banner * { animation: none !important; transition: none !important; }
+}
