@@ -17,7 +17,7 @@ Express + Prisma + PostgreSQL API for personal Academic Tracker accounts. This s
 - `GET /api/scores` — lists the signed-in user's scores for a period.
 - `PUT /api/scores/:subjectId` — creates or updates the score record for an owned subject and period.
 - `GET /api/user-data/:kind` — lists only the signed-in user's saved records for an approved category.
-- `PUT /api/user-data/:kind/:recordId` — validates and upserts one user-owned saved record.
+- `PUT /api/user-data/:kind/:recordId` — validates and upserts one user-owned saved record.\n- `PUT /api/user-data/:kind/bulk` and `DELETE /api/user-data/:kind/bulk` — bounded, transactional batch sync for collections.
 - `DELETE /api/user-data/:kind/:recordId` — deletes only the signed-in user's record.
 - `POST /api/auth/logout` — revokes active bearer tokens for the account by incrementing its session version.
 - `GET /api/account/export` — downloads the signed-in user's profile, subjects/scores, university results, quiz attempts, saved records, and support conversation.
