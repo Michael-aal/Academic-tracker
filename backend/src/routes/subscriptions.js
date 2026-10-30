@@ -12,8 +12,9 @@ const PLAN_CONFIG = {
   monthly: { name: "Monthly Pro", interval: "monthly", amountUsdCents: 1486, days: 30,  env: "PAYSTACK_PLAN_MONTHLY" },
   yearly:  { name: "Yearly Pro",  interval: "annually",amountUsdCents: 3714, days: 365, env: "PAYSTACK_PLAN_YEARLY" }
 };
-const TOOL_LIMITS_PRO = { tutor: 100, quiz: 20, summarize: 20, "study-plan": 20, flashcards: 20 };
-const FREE_DAILY_LIMIT = 5;
+const TOOL_LIMITS_PRO = { tutor: 20, quiz: 20, summarize: 20, "study-plan": 20, flashcards: 20 };
+const FREE_LIMIT = 5;
+const PLAN_DAYS = { daily: 1, weekly: 7, monthly: 30, yearly: 365 };
 function encryptProviderToken(value) {
   if (!value) return null;
   const key = crypto.createHash("sha256").update(process.env.SUBSCRIPTION_TOKEN_ENCRYPTION_KEY || process.env.JWT_SECRET || "").digest();
@@ -167,7 +168,7 @@ router.use(requireAuth);
 
 router.get("/plans", (_req, res) => {
   const configured = Boolean(process.env.PAYSTACK_SECRET_KEY);
-  res.json({ currency: "USD", freeDailyAiRequests: FREE_DAILY_LIMIT, plans: Object.entries(PLAN_CONFIG).map(([code, plan]) => ({
+  res.json({ currency: "USD", freeAiRequestsPerRolling3Days: FREE_LIMIT, plans: Object.entries(PLAN_CONFIG).map(([code, plan]) => ({
     code, name: plan.name, interval: plan.interval, priceUsd: (plan.amountUsdCents / 100).toFixed(2),
     trialDays: 7, recurring: true, checkoutConfigured: configured && Boolean(process.env[plan.env]),
     checkoutAvailable: plan.amountUsdCents >= 200 && configured && Boolean(process.env[plan.env]),
@@ -188,11 +189,20 @@ router.get("/me", async (req, res, next) => {
 router.get("/usage", async (req, res, next) => {
   try {
     const now = new Date();
-    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    const row = await prisma.aiUsageDaily.findUnique({ where: { userId_usageDate: { userId: req.userId, usageDate: start } } });
-    const sub = currentSubscription(await getCurrentSubscription(req.userId), now);
-    const toolCounts = row?.toolCounts && typeof row.toolCounts === "object" ? row.toolCounts : {};
-    res.json({ date: start.toISOString().slice(0, 10), plan: sub.plan, used: row?.total || 0, limit: sub.isPro ? null : FREE_DAILY_LIMIT, remaining: sub.isPro ? null : Math.max(0, FREE_DAILY_LIMIT - (row?.total || 0)), toolCounts, proToolLimits: sub.isPro ? TOOL_LIMITS_PRO : null, resetAt: new Date(start.getTime() + DAY).toISOString() });
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const rawSub = await getCurrentSubscription(req.userId);
+    const sub = currentSubscription(rawSub, now);
+    const days = sub.isPro ? (PLAN_DAYS[String(rawSub?.planCode || "monthly").toLowerCase()] || 30) : 3;
+    const start = new Date(today.getTime() - (days - 1) * DAY);
+    const rows = await prisma.aiUsageDaily.findMany({ where: { userId: req.userId, usageDate: { gte: start, lte: today } }, select: { total: true, toolCounts: true } });
+    const toolCounts = {};
+    let used = 0;
+    for (const row of rows) {
+      used += Number(row.total || 0);
+      for (const [tool, count] of Object.entries(row.toolCounts || {})) toolCounts[tool] = (toolCounts[tool] || 0) + Number(count || 0);
+    }
+    const limit = sub.isPro ? null : FREE_LIMIT;
+    res.json({ date: today.toISOString().slice(0, 10), plan: sub.plan, status: sub.status, planCode: rawSub?.planCode || "free", used, limit, remaining: sub.isPro ? null : Math.max(0, FREE_LIMIT - used), windowDays: days, toolCounts, proToolLimits: sub.isPro ? TOOL_LIMITS_PRO : null, resetAt: new Date(today.getTime() + DAY).toISOString() });
   } catch (error) { next(error); }
 });
 
@@ -262,4 +272,4 @@ router.get("/purchases", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
-module.exports = { router, currentSubscription, getCurrentSubscription, FREE_DAILY_LIMIT, TOOL_LIMITS_PRO };
+module.exports = { router, currentSubscription, getCurrentSubscription, FREE_LIMIT, TOOL_LIMITS_PRO };
