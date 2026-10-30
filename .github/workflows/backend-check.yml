@@ -71,7 +71,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Validate Prisma schema
-        run: npx prisma validate
+        run: node --check src/routes/user-data.js && node --check src/routes/account.js && node --check src/middleware/auth.js && node --check src/routes/auth.js && npx prisma validate
       - name: Generate Prisma client
         run: npx prisma generate
       - name: Run unit tests
