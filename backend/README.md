@@ -10,7 +10,7 @@ Express + Prisma + PostgreSQL API for personal Academic Tracker accounts. This s
 - `POST /api/auth/login` — returns a short-format bearer JWT (7-day expiry).
 - `GET /api/auth/me` — returns the signed-in user's profile.
 - `PATCH /api/auth/me` — updates name/current academic period.
-- `GET /api/subjects` — lists only the signed-in user's subjects and the score for the selected/current period.
+- `GET /api/subjects` — lists only the signed-in user's subjects and the score for the selected/current period, plus subject deletion markers for safe multi-device sync.
 - `POST /api/subjects` — creates a subject for the signed-in user.
 - `PATCH /api/subjects/:id` — renames or updates the target of an owned subject.
 - `DELETE /api/subjects/:id` — deletes an owned subject and its scores.
@@ -74,7 +74,7 @@ For the simplest first deployment, use Neon's direct PostgreSQL connection strin
 
 ## Account data categories
 
-The authenticated `user_data_records` table stores validated, per-user JSON records for secondary tracker state, saved video-library items, video watch history, study sessions, Memory Mastery cards and review totals, AI tutor conversations, generated note summaries, focus sessions, and theme preferences. Each record is uniquely scoped by `(user_id, kind, record_id)`, indexed by user/category, limited to approved categories and a 24 KB record payload, and deleted automatically when its owning account is deleted. Existing relational tables remain the source of truth for subjects, secondary assessment scores, university courses/results, support messages, and AI quiz attempts.
+The authenticated `user_data_records` table stores validated, per-user JSON records for secondary tracker state, saved video-library items, video watch history, study sessions, Memory Mastery cards and review totals, AI tutor conversations, generated note summaries, focus sessions, and theme preferences. Each record is uniquely scoped by `(user_id, kind, record_id)`, indexed by user/category, limited to approved categories and a 24 KB record payload, and deleted automatically when its owning account is deleted. Relational tables remain the source of truth for subject metadata, university courses/results, support messages, and AI quiz attempts. The current secondary tracker stores its configurable assessment definitions and marks in the account-scoped `secondary-tracker` record; the older fixed-column `AssessmentScore` table and `/api/scores` route are retained for compatibility and are not written by the current dashboard.
 
 Every user-data route requires a verified bearer token and derives ownership from `req.userId`; the client cannot select another user's ID. Responses are marked `private, no-store`. The API applies per-account request limits and category-specific validation. Quota-changing single and batch writes lock the owning account row in a transaction, preventing concurrent requests from racing past per-category record limits.
 
