@@ -84,18 +84,20 @@
   }
   async function archiveLegacyState(userId) {
     const backupKey = "legacy-backup-" + userId;
+    const legacyFocus = (() => { try { return JSON.parse(localStorage.getItem("academic-tracker-focus-session") || "null"); } catch { return null; } })();
+    const backupData = { ...state, legacyFocusSession: legacyFocus };
     try {
       const db = await dbOpen();
       if (db) {
         await new Promise((resolve, reject) => {
           const tx = db.transaction(STORE, "readwrite");
-          tx.objectStore(STORE).put(state, backupKey);
+          tx.objectStore(STORE).put(backupData, backupKey);
           tx.oncomplete = resolve;
           tx.onerror = () => reject(tx.error);
         });
         db.close();
       } else {
-        localStorage.setItem("academic-tracker-legacy-backup:" + userId, JSON.stringify(state));
+        localStorage.setItem("academic-tracker-legacy-backup:" + userId, JSON.stringify(backupData));
       }
     } catch (error) {
       console.error("Could not archive legacy local records", error);
@@ -111,13 +113,18 @@
       } else { const raw=localStorage.getItem(KEY); if(raw) state={...defaults(),...JSON.parse(raw)}; }
     } catch(e) { console.warn("Could not load saved records",e); }
     const signedInUserId = accountUserId();
-    const hasUnownedLegacyData = !state.accountUserId && signedInUserId && (state.subjects.length > 0 || Object.keys(state.scores).length > 0);
+    const legacyFocus = (() => { try { return JSON.parse(localStorage.getItem("academic-tracker-focus-session") || "null"); } catch { return null; } })();
+    const hasUnownedLegacyData = !state.accountUserId && signedInUserId && (state.subjects.length > 0 || Object.keys(state.scores).length > 0 || Boolean(legacyFocus));
     if (hasUnownedLegacyData) {
       const importLegacy = window.confirm("We found academic records saved in this browser. Import them into the account you just signed into? Only choose OK if these records belong to you. Choose Cancel to keep them separate from this account.");
       if (!importLegacy) {
         await archiveLegacyState(signedInUserId);
         state = defaults();
+        localStorage.removeItem("academic-tracker-focus-session");
         alert("Your previous browser records were kept in a separate local backup and were not added to this account.");
+      } else if (legacyFocus) {
+        localStorage.setItem(FOCUS_KEY, JSON.stringify(legacyFocus));
+        localStorage.removeItem("academic-tracker-focus-session");
       }
     }
     if (state.accountUserId && signedInUserId && state.accountUserId !== signedInUserId) state = defaults();
@@ -185,7 +192,7 @@
   function pct(sid) { const m=getMaxTotal(sid);return m?Math.round(getTotal(sid)/m*100):0; }
   const targetFor = sid => num(state.targets[sid] ?? 75);
   function average() { const list=state.subjects.filter(s=>getEntered(s.id)>0); return list.length?Math.round(list.reduce((a,s)=>a+pct(s.id),0)/list.length):0; }
-  const FOCUS_KEY = "academic-tracker-focus-session";
+  const FOCUS_KEY = "academic-tracker-focus-session:" + (accountUserId() || "legacy");
   const focusSession = () => { try { return JSON.parse(localStorage.getItem(FOCUS_KEY) || "null"); } catch { return null; } };
   const saveFocusSession = session => {
     if(session) localStorage.setItem(FOCUS_KEY, JSON.stringify(session)); else localStorage.removeItem(FOCUS_KEY);
