@@ -41,3 +41,8 @@ html[data-theme="light"] .monetization-page{--money-bg:#f8f5ff;--money-surface:#
 @media(max-width:900px){.money-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.money-pack-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:540px){.monetization-shell{width:calc(100% - 22px);padding-top:18px}.money-grid,.money-pack-grid{grid-template-columns:1fr}.money-card{padding:18px}.money-hero{border-radius:22px;padding:22px}.money-section-head{align-items:start}}
 @media(prefers-reduced-motion:reduce){.money-button{transition:none}.money-button:hover:not(:disabled){transform:none}}
+
+
+.money-tool-usage-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+.money-tool-usage{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--money-border);border-radius:12px;background:var(--money-card,transparent);color:var(--money-text)}
+.money-tool-usage strong{font-variant-numeric:tabular-nums;color:var(--money-accent)}
