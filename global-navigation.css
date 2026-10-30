@@ -326,3 +326,32 @@ html[data-theme="dark"] :is(.at-nav-menu, .dropdown-menu, .account-menu, .menu-d
   background: #2a1e3b !important;
   color: #f5f3ff !important;
 }
+
+
+/* Focus mode: collapse both shared navigation bars without leaving layout gaps. */
+body.at-nav-chrome-hidden .at-global-header,
+body.at-nav-chrome-hidden .at-mobile-nav {display:none!important}
+body.at-nav-chrome-hidden.at-has-global-navigation {padding-top:0!important;padding-bottom:0!important}
+body.at-nav-chrome-hidden .at-nav-restore {
+  position:fixed;z-index:1400;right:14px;top:14px;display:inline-flex;align-items:center;gap:8px;
+  min-height:42px;padding:0 14px;border:1px solid var(--at-menu-border);border-radius:999px;
+  background:var(--at-menu-surface);color:var(--at-menu-text);font:650 12px/1.2 "DM Sans",system-ui,sans-serif;
+  box-shadow:0 8px 24px rgba(0,0,0,.2);cursor:pointer
+}
+.at-nav-restore[hidden],.at-nav-gesture-guide[hidden]{display:none!important}
+.at-nav-gesture-guide {
+  position:fixed;z-index:1390;right:14px;top:calc(60px + 12px);width:min(330px,calc(100vw - 28px));
+  display:flex;align-items:flex-start;gap:12px;padding:14px 14px 13px 16px;
+  border:1px solid var(--at-menu-border);border-radius:16px;background:var(--at-menu-surface);
+  color:var(--at-menu-text);box-shadow:0 18px 42px rgba(0,0,0,.22)
+}
+.at-nav-gesture-guide span{display:grid;gap:5px;min-width:0}
+.at-nav-gesture-guide strong{font-size:13px}
+.at-nav-gesture-guide small{font-size:11px;line-height:1.55;color:var(--at-menu-muted)}
+.at-nav-gesture-guide button{flex:0 0 28px;width:28px;height:28px;border:0;border-radius:9px;background:var(--at-menu-surface-raised);color:var(--at-menu-text);font-size:19px;cursor:pointer}
+html[data-theme="light"] .at-nav-restore{background:#fff;color:#35224f;border-color:#e3d8f3}
+html[data-theme="dark"] .at-nav-restore{background:#171123;color:#f5f3ff;border-color:#302440}
+@media(max-width:760px){
+ body.at-nav-chrome-hidden .at-nav-restore{top:auto;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));}
+ .at-nav-gesture-guide{top:12px;right:12px}
+}
