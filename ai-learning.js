@@ -6,7 +6,7 @@
 
   const $ = id => document.getElementById(id);
   const ATTEMPT_KEY = "academic-tracker-active-quiz";
-  const state = { action: "tutor", answer: "", conversation: [], quiz: null, attemptId: null, index: 0, selected: {}, answered: {}, submitted: false, result: null };
+  const state = { action: "tutor", answer: "", conversation: [], conversationId: null, quiz: null, attemptId: null, index: 0, selected: {}, answered: {}, submitted: false, result: null };
   const taskCopy = {
     tutor: { title: "Talk to your AI tutor", description: "Ask questions, paste your class notes, and keep asking until it makes sense.", label: "What should we learn together?", placeholder: "Ask a question, paste your notes, or ask me to explain something more simply…", button: "Ask tutor", result: "Your tutoring conversation" },
     quiz: { title: "Build a revision quiz", description: "Create practice questions from a topic or your own notes.", label: "Paste your notes or describe the topic", placeholder: "Paste your notes here, or describe the topic you want to practise…", button: "Generate my quiz", result: "Your practice quiz" },
@@ -455,6 +455,11 @@
         if (state.action === "tutor") {
           state.conversation.push({ role: "student", content: content || topic });
           state.conversation.push({ role: "tutor", content: state.answer });
+          state.conversationId = state.conversationId || (crypto.randomUUID ? crypto.randomUUID() : "tutor-" + Date.now());
+          api("/api/user-data/tutor-conversations/" + encodeURIComponent(state.conversationId), {
+            method: "PUT",
+            body: JSON.stringify({ data: { subject: ($("subject")?.value || "").trim(), topic: topic || content, messages: state.conversation.slice(-40), updatedAt: new Date().toISOString() } })
+          }).catch(error => { console.warn("Could not save tutor conversation", error); setNotice("Your tutor reply is ready, but this conversation could not sync to your account.", true); });
           renderTutorConversation($("result-content"), topic || content, ($("subject")?.value || "").trim());
           $("result-title").textContent = "Your tutoring conversation";
           $("content").value = "";
@@ -483,5 +488,17 @@
 
   const initialTool = document.body.dataset.aiTool || "tutor";
   setAction(taskCopy[initialTool] ? initialTool : "tutor");
+  if (initialTool === "tutor") {
+    api("/api/user-data/tutor-conversations").then(data => {
+      const latest = data.records?.[0];
+      if (!latest?.data?.messages?.length) return;
+      state.conversationId = latest.recordId;
+      state.conversation = latest.data.messages;
+      state.answer = [...state.conversation].reverse().find(message => message.role === "tutor")?.content || "";
+      renderTutorConversation($("result-content"), latest.data.topic || "", latest.data.subject || "");
+      $("result-title").textContent = "Your saved tutoring conversation";
+      $("result-panel").hidden = false;
+    }).catch(error => console.warn("Could not restore tutor history", error));
+  }
   if (initialTool === "quiz") resumeActiveQuiz();
 })();
