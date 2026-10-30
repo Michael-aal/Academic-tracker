@@ -53,7 +53,7 @@ router.post("/register", registrationLimiter, async (req, res, next) => {
     if (process.env.ADMIN_EMAIL && email === process.env.ADMIN_EMAIL.trim().toLowerCase()) return res.status(403).json({ error: "This email is reserved for the configured administrator. Sign in to its existing account." });
     if (name.length < 2) return res.status(400).json({ error: "Name must be at least 2 characters." });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: "Enter a valid email address." });
-    if (typeof password !== "string" || password.length < 10 || password.length > 72) return res.status(400).json({ error: "Password must be between 10 and 72 characters." });
+    if (typeof password !== "string" || password.length < 10 || Buffer.byteLength(password, "utf8") > 72) return res.status(400).json({ error: "Password must be at least 10 characters and no more than 72 UTF-8 bytes." });
     if (!["SECONDARY", "HIGHER"].includes(educationTrack)) return res.status(400).json({ error: "Choose secondary school or higher institution." });
     if (educationTrack === "HIGHER" && (!institutionName || !programme || !studyLevel)) return res.status(400).json({ error: "Enter your institution, programme, and study level." });
     const passwordHash = await bcrypt.hash(password, 12);
