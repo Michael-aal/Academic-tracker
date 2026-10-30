@@ -47,12 +47,11 @@
     }
     toast.textContent = "Study session completed — " + subject + ". Take a moment to review what you learned.";
     toast.hidden = false;
-    if ("Notification" in window && Notification.permission === "granted" && document.visibilityState === "visible") {
-      navigator.serviceWorker?.ready.then(registration => registration.showNotification("Study session completed", {
-        body: subject + " focus session is up.",
-        tag: "focus-session-complete",
-        icon: "assets/icon.svg"
-      })).catch(() => {});
+    if (!document.getElementById("at-focus-notification-style")) {
+      const style = document.createElement("style");
+      style.id = "at-focus-notification-style";
+      style.textContent = ".at-focus-complete-toast{position:fixed;z-index:10000;left:16px;right:16px;bottom:calc(88px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto;padding:16px 18px;border:1px solid rgba(167,139,250,.45);border-radius:16px;background:var(--card-bg,var(--surface,#171123));color:var(--text,#fff);box-shadow:0 18px 48px rgba(0,0,0,.32);font-size:14px;font-weight:650;line-height:1.55}.at-focus-complete-toast[hidden]{display:none}@media(min-width:760px){.at-focus-complete-toast{left:auto;right:24px;bottom:24px;margin:0}}";
+      document.head.appendChild(style);
     }
   }
   document.addEventListener("click", event => {
@@ -62,5 +61,12 @@
       enable().catch(error => status(error.message)).finally(() => { button.disabled = false; });
     }
   });
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("message", event => {
+      if (event.data?.type === "focus-notification") {
+        showInApp({ task: event.data.body || event.data.title || "Your study session" });
+      }
+    });
+  }
   window.ATFocusNotifications = { showInApp };
 })();
