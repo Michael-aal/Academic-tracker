@@ -61,6 +61,21 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/academic_tracker?schema=public
       JWT_SECRET: test-only-secret-that-is-longer-than-thirty-two-characters
+      RUN_DB_INTEGRATION: "1"
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: academic_tracker
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d academic_tracker"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -74,7 +89,9 @@ jobs:
         run: node --check src/routes/user-data.js && node --check src/routes/account.js && node --check src/middleware/auth.js && node --check src/routes/auth.js && node --check src/routes/ai.js && node --check src/ai-quota.js && node --check src/app.js && node --check src/routes/university.js && npx prisma validate
       - name: Generate Prisma client
         run: npx prisma generate
-      - name: Run unit tests
+      - name: Apply migrations to a clean PostgreSQL database
+        run: npx prisma migrate deploy
+      - name: Run unit and database integration tests
         run: npm test
       - name: Check calculator and AI learning JavaScript syntax
         run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../app.js && node --check ../ai-learning.js && node --check ../quiz-page.js && node --check ../ai-navigation.js && node --check ../educational-videos.js && node --check ../study-planner.js && node --check ../memory-mastery.js && node --check ../notes-summary.js && node --check ../global-theme.js && node --check ../global-navigation.js && node --check ../account-data.js
