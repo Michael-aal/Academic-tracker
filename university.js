@@ -23,7 +23,7 @@ async function renderLearningInsights(){
  try{
   const [quizData,focusData]=await Promise.all([request('/api/ai/attempts'),request('/api/user-data/focus-sessions')]);
   const quizzes=Array.isArray(quizData.attempts)?quizData.attempts:[];
-  const focus=(focusData.records||[]).filter(x=>x.recordId!=='active'&&x.data?.status==='completed').map(x=>x.data);
+  const focus=(focusData.records||[]).filter(x=>x.recordId!=='active'&&x.data?.status==='completed').map(x=>({...x.data,savedAt:x.updatedAt}));
   const days=new Set([...quizzes.map(x=>localDay(x.completedAt||x.createdAt)),...focus.map(x=>localDay(x.completedAt||x.savedAt))].filter(Boolean));
   const cursor=new Date();cursor.setHours(0,0,0,0);if(!days.has(localDay(cursor)))cursor.setDate(cursor.getDate()-1);
   let streak=0;while(days.has(localDay(cursor))){streak++;cursor.setDate(cursor.getDate()-1);}
