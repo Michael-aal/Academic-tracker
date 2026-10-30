@@ -228,7 +228,7 @@ router.put("/:kind/:recordId", async (req, res, next) => {
       // Share the same per-account lock as bulk writes so single and batch
       // requests cannot race each other around category quotas.
       await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${req.userId} FOR UPDATE`;
-      const where = { userId: req.userId, kind, recordId };
+      const where = { userId_kind_recordId: { userId: req.userId, kind, recordId } };
       const existing = await tx.userDataRecord.findUnique({ where, select: { id: true } });
       if (!existing) {
         const count = await tx.userDataRecord.count({ where: { userId: req.userId, kind } });
