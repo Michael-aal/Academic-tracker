@@ -19,8 +19,8 @@ const publicUser = user => ({
   currentSemester: user.currentSemester || "Semester 1",
   createdAt: user.createdAt
 });
-function issueToken(userId) {
-  return jwt.sign({}, process.env.JWT_SECRET, { subject: userId, algorithm: "HS256", issuer: "academic-tracker-api", audience: "academic-tracker-client", expiresIn: "7d" });
+function issueToken(userId, sessionVersion = 0) {
+  return jwt.sign({ sv: sessionVersion }, process.env.JWT_SECRET, { subject: userId, algorithm: "HS256", issuer: "academic-tracker-api", audience: "academic-tracker-client", expiresIn: "7d" });
 }
 router.post("/register", async (req, res, next) => {
   try {
@@ -39,7 +39,7 @@ router.post("/register", async (req, res, next) => {
     if (educationTrack === "HIGHER" && (!institutionName || !programme || !studyLevel)) return res.status(400).json({ error: "Enter your institution, programme, and study level." });
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({ data: { name, email, passwordHash, role: "USER", educationTrack, institutionName: educationTrack === "HIGHER" ? institutionName : null, programme: educationTrack === "HIGHER" ? programme : null, studyLevel: educationTrack === "HIGHER" ? studyLevel : null } });
-    return res.status(201).json({ token: issueToken(user.id), user: publicUser(user) });
+    return res.status(201).json({ token: issueToken(user.id, user.sessionVersion), user: publicUser(user) });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return res.status(409).json({ error: "An account with that email already exists." });
     next(error);
@@ -54,6 +54,13 @@ router.post("/login", async (req, res, next) => {
     const valid = user && await bcrypt.compare(password, user.passwordHash);
     if (!valid) return res.status(401).json({ error: "Email or password is incorrect." });
     return res.json({ token: issueToken(user.id), user: publicUser(user) });
+  } catch (error) { next(error); }
+});
+router.post("/logout", requireAuth, async (req, res, next) => {
+  try {
+    await prisma.user.update({ where: { id: req.userId }, data: { sessionVersion: { increment: 1 } } });
+    res.set("Cache-Control", "no-store");
+    res.json({ ok: true, message: "All active sessions have been signed out." });
   } catch (error) { next(error); }
 });
 router.get("/me", requireAuth, async (req, res, next) => {
