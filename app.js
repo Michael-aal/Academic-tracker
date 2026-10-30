@@ -3,7 +3,7 @@
   const DB_NAME = "academic-tracker-db";
   const STORE = "state";
   const KEY = "main";
-  const defaults = () => ({version:2, academicYear:"2026–2027", term:"Term 1", subjects:[], scores:{}, targets:{}, assessments:{}, updatedAt:new Date().toISOString()});
+  const defaults = () => ({version:2, accountUserId:null, academicYear:"2026–2027", term:"Term 1", subjects:[], scores:{}, targets:{}, assessments:{}, updatedAt:new Date().toISOString()});
   let state = defaults();
   let view = "dashboard";
   const $ = s => document.querySelector(s);
@@ -16,8 +16,9 @@
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
-  const API_BASE = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\\/$/, "");
+  const API_BASE = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
   const apiToken = () => localStorage.getItem("academic-tracker-token") || "";
+  const accountUserId = () => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "null")?.id || null; } catch { return null; } };
   async function apiRequest(path, options = {}) {
     const token = apiToken();
     if (!token) throw new Error("Your session is missing. Please log in again.");
@@ -47,6 +48,7 @@
       synced.push({ ...local, serverId: created.subject.id });
     }
     state.subjects = synced;
+    state.accountUserId = accountUserId();
     await save(false);
   }
   async function load() {
@@ -57,6 +59,8 @@
         db.close(); if (value) state = {...defaults(),...value};
       } else { const raw=localStorage.getItem(KEY); if(raw) state={...defaults(),...JSON.parse(raw)}; }
     } catch(e) { console.warn("Could not load saved records",e); }
+    const signedInUserId = accountUserId();
+    if (state.accountUserId && signedInUserId && state.accountUserId !== signedInUserId) state = defaults();
     try { await syncSubjectsFromServer(); }
     catch (e) {
       console.error("Could not sync subjects with the account database", e);
