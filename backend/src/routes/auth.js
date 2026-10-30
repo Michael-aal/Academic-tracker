@@ -53,7 +53,7 @@ router.post("/login", async (req, res, next) => {
     const user = await prisma.user.findUnique({ where: { email } });
     const valid = user && await bcrypt.compare(password, user.passwordHash);
     if (!valid) return res.status(401).json({ error: "Email or password is incorrect." });
-    return res.json({ token: issueToken(user.id), user: publicUser(user) });
+    return res.json({ token: issueToken(user.id, user.sessionVersion), user: publicUser(user) });
   } catch (error) { next(error); }
 });
 router.post("/logout", requireAuth, async (req, res, next) => {
