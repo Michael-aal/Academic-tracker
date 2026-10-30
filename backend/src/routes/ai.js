@@ -169,11 +169,13 @@ router.post("/", enforceAiQuota, async (req, res) => {
   const questionCount = req.body?.questionCount === undefined ? 5 : req.body.questionCount;
   const cardCount = req.body?.cardCount === undefined ? 10 : req.body.cardCount;
   const difficulty = typeof req.body?.difficulty === "string" ? req.body.difficulty.toLowerCase() : "medium";
+  const timePerQuestionSeconds = req.body?.timePerQuestionSeconds === undefined ? 0 : req.body.timePerQuestionSeconds;
 
   if (!ACTIONS.has(action)) return res.status(400).json({ error: "Choose a supported AI learning task." });
   if (action === "quiz" && (!Number.isInteger(questionCount) || questionCount < 1 || questionCount > 10)) return res.status(400).json({ error: "Choose between 1 and 10 quiz questions." });
   if (action === "flashcards" && (!Number.isInteger(cardCount) || cardCount < 1 || cardCount > 20)) return res.status(400).json({ error: "Choose between 1 and 20 memory cards." });
   if (action === "quiz" && !["easy", "medium", "hard"].includes(difficulty)) return res.status(400).json({ error: "Choose easy, medium, or hard difficulty." });
+  if (action === "quiz" && (!Number.isInteger(timePerQuestionSeconds) || ![0, 10, 15, 20, 30, 60].includes(timePerQuestionSeconds))) return res.status(400).json({ error: "Choose a supported time limit per question." });
   if (content.length > MAX_INPUT_CHARS) {
     return res.status(413).json({ error: "Your request is too long. Keep your question or notes under 12,000 characters." });
   }
@@ -321,6 +323,7 @@ router.post("/", enforceAiQuota, async (req, res) => {
           clearTimeout(retryTimeout);
         }
       }
+      quiz.timePerQuestionSeconds = timePerQuestionSeconds;
       const attempt = await prisma.aiQuizAttempt.create({ data: { userId: req.userId, title: quiz.title, subject, topic, difficulty, questionData: quiz, status: "IN_PROGRESS" }, select: { id: true } });
       return res.status(201).json({ quiz: publicQuiz(quiz), attemptId: attempt.id, action, model });
     }
