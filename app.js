@@ -82,6 +82,26 @@
     }
     await save(false);
   }
+  async function archiveLegacyState(userId) {
+    const backupKey = "legacy-backup-" + userId;
+    try {
+      const db = await dbOpen();
+      if (db) {
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE, "readwrite");
+          tx.objectStore(STORE).put(state, backupKey);
+          tx.oncomplete = resolve;
+          tx.onerror = () => reject(tx.error);
+        });
+        db.close();
+      } else {
+        localStorage.setItem("academic-tracker-legacy-backup:" + userId, JSON.stringify(state));
+      }
+    } catch (error) {
+      console.error("Could not archive legacy local records", error);
+      throw new Error("Your previous browser records could not be safely archived. Please export a backup before continuing.");
+    }
+  }
   async function load() {
     try {
       const db = await dbOpen();
@@ -91,6 +111,15 @@
       } else { const raw=localStorage.getItem(KEY); if(raw) state={...defaults(),...JSON.parse(raw)}; }
     } catch(e) { console.warn("Could not load saved records",e); }
     const signedInUserId = accountUserId();
+    const hasUnownedLegacyData = !state.accountUserId && signedInUserId && (state.subjects.length > 0 || Object.keys(state.scores).length > 0);
+    if (hasUnownedLegacyData) {
+      const importLegacy = window.confirm("We found academic records saved in this browser. Import them into the account you just signed into? Only choose OK if these records belong to you. Choose Cancel to keep them separate from this account.");
+      if (!importLegacy) {
+        await archiveLegacyState(signedInUserId);
+        state = defaults();
+        alert("Your previous browser records were kept in a separate local backup and were not added to this account.");
+      }
+    }
     if (state.accountUserId && signedInUserId && state.accountUserId !== signedInUserId) state = defaults();
     if (signedInUserId) { state.accountUserId = signedInUserId; await save(false); }
     try {
