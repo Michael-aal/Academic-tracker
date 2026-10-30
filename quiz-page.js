@@ -14,7 +14,82 @@
   let feedback = {};
   let result = null;
   let busy = false;
+  let timerInterval = null;
+  let timerDeadlines = {};
+  let expiredQuestions = {};
   const selectionKey = () => "academic-tracker-quiz-selections-" + attemptId;
+  const timerStateKey = () => "academic-tracker-quiz-timer-" + attemptId;
+  function saveTimerState() { try { localStorage.setItem(timerStateKey(), JSON.stringify({ deadlines: timerDeadlines, expired: expiredQuestions })); } catch {} }
+  function stopQuestionTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
+  function playAnswerSound() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const context = new AudioCtx();
+      const now = context.currentTime;
+      [660, 880].forEach((frequency, i) => {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(frequency, now + i * 0.085);
+        gain.gain.setValueAtTime(0.0001, now + i * 0.085);
+        gain.gain.exponentialRampToValueAtTime(0.12, now + i * 0.085 + 0.018);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.085 + 0.14);
+        oscillator.connect(gain); gain.connect(context.destination);
+        oscillator.start(now + i * 0.085); oscillator.stop(now + i * 0.085 + 0.15);
+      });
+      window.setTimeout(() => context.close().catch(() => {}), 450);
+    } catch {}
+  }
+  function updateTimerDisplay(seconds, state = "running") {
+    const chip = $("quiz-timer");
+    if (!chip) return;
+    chip.hidden = !quiz?.timePerQuestionSeconds;
+    chip.dataset.state = state;
+    $("quiz-timer-text").textContent = state === "expired" ? "Time’s up" : state === "answered" ? "Answered" : seconds + "s";
+    chip.classList.toggle("is-urgent", state === "running" && seconds <= 5);
+  }
+  async function expireCurrentQuestion(question) {
+    stopQuestionTimer();
+    if (expiredQuestions[question.id] || submittedAnswers[question.id]) return;
+    const chosen = selected[question.id];
+    if (chosen) {
+      busy = true;
+      try {
+        await api("/api/ai/attempts/" + encodeURIComponent(attemptId) + "/answer", { method: "POST", body: JSON.stringify({ questionId: question.id, optionId: chosen }) });
+        submittedAnswers[question.id] = chosen;
+        delete selected[question.id];
+        try { localStorage.setItem(selectionKey(), JSON.stringify(selected)); } catch {}
+      } catch (error) {
+        notice(error.message || "Your answer could not be saved when time expired.", true);
+        busy = false;
+        return;
+      }
+      busy = false;
+    }
+    expiredQuestions[question.id] = true;
+    saveTimerState();
+    updateTimerDisplay(0, "expired");
+    notice(chosen ? "Time is up. Your selected answer has been saved." : "Time is up. This question was left unanswered.");
+    renderQuestion();
+    if (index < quiz.questions.length - 1) window.setTimeout(() => { if (expiredQuestions[question.id] && !result) { index++; renderQuestion(); } }, 1100);
+  }
+  function startQuestionTimer() {
+    stopQuestionTimer();
+    const seconds = Number(quiz?.timePerQuestionSeconds || 0);
+    const question = quiz?.questions[index];
+    if (!seconds || !question) { if ($("quiz-timer")) $("quiz-timer").hidden = true; return; }
+    if (submittedAnswers[question.id]) { updateTimerDisplay(0, "answered"); return; }
+    if (expiredQuestions[question.id]) { updateTimerDisplay(0, "expired"); $("quiz-answer-options").querySelectorAll("button").forEach(button => button.disabled = true); return; }
+    if (!timerDeadlines[question.id]) { timerDeadlines[question.id] = Date.now() + seconds * 1000; saveTimerState(); }
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((timerDeadlines[question.id] - Date.now()) / 1000));
+      updateTimerDisplay(remaining, "running");
+      if (remaining <= 0) expireCurrentQuestion(question);
+    };
+    tick();
+    if (!expiredQuestions[question.id] && !submittedAnswers[question.id]) timerInterval = window.setInterval(tick, 200);
+  }
 
   if (!localStorage.getItem(TOKEN_KEY)) { window.location.replace("login.html"); return; }
   if (!attemptId) attemptId = localStorage.getItem(ATTEMPT_KEY);
@@ -68,6 +143,7 @@
   }
   function renderQuestion() {
     if (!quiz || result) return;
+    stopQuestionTimer();
     const question = quiz.questions[index];
     const answered = Object.prototype.hasOwnProperty.call(submittedAnswers, question.id);
     const choice = answered ? submittedAnswers[question.id] : selected[question.id];
@@ -100,6 +176,7 @@
       button.addEventListener("click", () => {
         if (answered || busy) return;
         selected[question.id] = option.id;
+        playAnswerSound();
         try { localStorage.setItem(selectionKey(), JSON.stringify(selected)); } catch {}
         renderQuestion();
       });
@@ -113,12 +190,15 @@
     $("quiz-hint-text").textContent = question.hint || "";
     $("quiz-hint-button").textContent = "Show hint";
     $("quiz-results").hidden = true;
+    startQuestionTimer();
   }
   function renderResults(data) {
+    stopQuestionTimer();
     result = data;
     $("quiz-results").replaceChildren();
     $("quiz-results").hidden = false;
-    try { localStorage.removeItem(selectionKey()); } catch {}
+    stopQuestionTimer();
+    try { localStorage.removeItem(selectionKey()); localStorage.removeItem(timerStateKey()); } catch {}
     const title = el("h2", "", "Your results");
     const intro = el("p", "", "You scored " + data.score + " out of " + data.totalQuestions + " (" + data.percentage + "%). Review the explanations below.");
     const stats = el("div", "quiz-result-summary");
@@ -170,6 +250,13 @@
       quiz = data.quiz;
       if (!quiz || !Array.isArray(quiz.questions) || !quiz.questions.length) throw new Error("The saved quiz has no valid questions.");
       (data.submittedAnswers || []).forEach(a => { submittedAnswers[a.questionId] = a.optionId; });
+      try {
+        const timerState = JSON.parse(localStorage.getItem(timerStateKey()) || "{}");
+        if (timerState && typeof timerState === "object") {
+          timerDeadlines = timerState.deadlines && typeof timerState.deadlines === "object" ? timerState.deadlines : {};
+          expiredQuestions = timerState.expired && typeof timerState.expired === "object" ? timerState.expired : {};
+        }
+      } catch {}
       try {
         const savedSelections = JSON.parse(localStorage.getItem(selectionKey()) || "{}");
         if (savedSelections && typeof savedSelections === "object" && !Array.isArray(savedSelections)) {
