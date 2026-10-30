@@ -122,3 +122,15 @@ input:focus,textarea:focus,select:focus{border-color:#8B5CF6!important;box-shado
 .notice.error{color:#F87171!important}
 .ai-topbar nav{gap:18px;min-width:0}
 @media(max-width:680px){.ai-topbar{padding:0 15px;gap:12px}.ai-topbar nav{max-width:60%;overflow-x:auto;white-space:nowrap;gap:14px;scrollbar-width:thin;padding:8px 0}.ai-topbar nav a,.ai-topbar nav button{flex:0 0 auto}.ai-hero{padding-top:35px}.workspace{grid-template-columns:minmax(0,1fr)!important}.task-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.task-picker>.section-kicker,.task-note{grid-column:1/-1}.tool-choice{margin:0;padding:10px 8px}.tool-choice small{line-height:1.35}}
+
+
+/* Quiz generator timing preference */
+.quiz-options label{display:flex;align-items:center;gap:6px;color:var(--text,#f5f3ff);font-size:12px;font-weight:700}
+.quiz-options select{min-height:40px;padding:9px 12px;border:1px solid var(--line,#302440);border-radius:10px;background:var(--surface,#171123);color:var(--text,#f5f3ff);font:inherit}
+.quiz-options select:focus-visible{outline:2px solid #a78bfa;outline-offset:2px}
+.quiz-time-label{margin-left:4px}
+.quiz-time-help{flex-basis:100%;margin:0;color:var(--muted,#b8aec9);font-size:11px;line-height:1.5}
+html[data-theme="light"] .quiz-options label{color:#35224f}
+html[data-theme="light"] .quiz-options select{background:#fff;color:#35224f;border-color:#d8c9eb}
+html[data-theme="light"] .quiz-time-help{color:#6c5a83}
+@media(max-width:560px){.quiz-options{display:grid;grid-template-columns:1fr 1fr;gap:9px}.quiz-options label{align-self:end}.quiz-options select{width:100%;min-width:0}.quiz-time-help{grid-column:1/-1}}
