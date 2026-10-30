@@ -1,4 +1,5 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Prisma } = require("@prisma/client");
@@ -6,6 +7,24 @@ const { prisma } = require("../prisma");
 const { requireAuth } = require("../middleware/auth");
 const { cleanString, TERMS } = require("../validation");
 const router = express.Router();
+
+// Count failed logins rather than successful ones so legitimate users are not
+// penalized for signing in. The broader /api/auth limiter remains as a second layer.
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 8,
+  skipSuccessfulRequests: true,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many unsuccessful sign-in attempts. Please wait 15 minutes before trying again." }
+});
+const registrationLimiter = rateLimit({
+  windowMs: 60 *  60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many account registrations from this network. Please try again later." }
+});
 
 const publicUser = user => ({
   id: user.id, name: user.name, email: user.email, role: user.role,
@@ -22,7 +41,7 @@ const publicUser = user => ({
 function issueToken(userId, sessionVersion = 0) {
   return jwt.sign({ sv: sessionVersion }, process.env.JWT_SECRET, { subject: userId, algorithm: "HS256", issuer: "academic-tracker-api", audience: "academic-tracker-client", expiresIn: "7d" });
 }
-router.post("/register", async (req, res, next) => {
+router.post("/register", registrationLimiter, async (req, res, next) => {
   try {
     const name = cleanString(req.body?.name, 80);
     const email = cleanString(req.body?.email, 254).toLowerCase();
@@ -45,7 +64,7 @@ router.post("/register", async (req, res, next) => {
     next(error);
   }
 });
-router.post("/login", async (req, res, next) => {
+router.post("/login", loginLimiter, async (req, res, next) => {
   try {
     const email = cleanString(req.body?.email, 254).toLowerCase();
     const password = req.body?.password;
