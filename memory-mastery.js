@@ -136,7 +136,6 @@
     $("review-answer").textContent = current.answer;
     $("queue-count").textContent = (queue.length + 1) + " left";
   }
-  const API_BASE = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
   $("generate-cards-form").addEventListener("submit", async event => {
     event.preventDefault();
     const subject = $("ai-card-subject").value.trim();
