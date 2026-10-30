@@ -2,37 +2,47 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { consumeAiQuota, WINDOW_MS, DEFAULT_LIMIT } = require("../src/ai-quota");
 
-function fakePrisma(returns) {
-  const calls = [];
+function fakePrisma() {
+  const state = { events: [], locks: 0, cleanupCalls: 0 };
+  const tx = {
+    $queryRaw: async () => { state.locks += 1; return [{ id: "student-1" }]; },
+    aiUsageEvent: {
+      count: async ({ where }) => {
+        assert.equal(where.userId, "student-1");
+        return state.events.filter(event => event.createdAt > where.createdAt.gt).length;
+      },
+      create: async ({ data }) => { state.events.push(data); return data; }
+    }
+  };
   return {
-    calls,
-    $queryRaw(strings, ...values) {
-      calls.push({ sql: strings.join("?"), values });
-      return Promise.resolve(returns);
-    },
-    aiUsageWindow: { deleteMany: async () => ({ count: 0 }) }
+    state,
+    $transaction: async callback => callback(tx),
+    aiUsageEvent: { deleteMany: async () => { state.cleanupCalls += 1; return { count: 0 }; } }
   };
 }
 
-test("AI quota uses an atomic PostgreSQL upsert and a fixed 15-minute window", async () => {
+test("AI quota permits up to ten requests in a rolling 15-minute window", async () => {
+  const db = fakePrisma();
   const now = new Date("2026-10-30T12:07:00.000Z");
-  const db = fakePrisma([{ request_count: 1 }]);
-  assert.equal(await consumeAiQuota(db, "student-1", now), true);
-  assert.equal(db.calls.length, 1);
-  assert.match(db.calls[0].sql, /ON CONFLICT/);
-  assert.match(db.calls[0].sql, /request_count.*< \?/s);
-  assert.equal(db.calls[0].values[1], "student-1");
-  assert.equal(db.calls[0].values[2].toISOString(), new Date(Math.floor(now.getTime() / WINDOW_MS) * WINDOW_MS).toISOString());
-  assert.equal(DEFAULT_LIMIT, 10);
+  for (let i = 0; i < DEFAULT_LIMIT; i += 1) {
+    assert.equal(await consumeAiQuota(db, "student-1", new Date(now.getTime() + i * 1000)), true);
+  }
+  assert.equal(await consumeAiQuota(db, "student-1", new Date(now.getTime() + 10000)), false);
+  assert.equal(db.state.events.length, DEFAULT_LIMIT);
+  assert.equal(db.state.locks, DEFAULT_LIMIT + 1);
 });
 
-test("AI quota rejects a request when PostgreSQL admits no row", async () => {
-  const db = fakePrisma([]);
-  assert.equal(await consumeAiQuota(db, "student-1", new Date("2026-10-30T12:07:00.000Z")), false);
+test("AI quota releases capacity when an earlier request leaves the rolling window", async () => {
+  const db = fakePrisma();
+  const now = new Date("2026-10-30T12:07:00.000Z");
+  for (let i = 0; i < DEFAULT_LIMIT; i += 1) {
+    assert.equal(await consumeAiQuota(db, "student-1", new Date(now.getTime() + i * 1000)), true);
+  }
+  assert.equal(await consumeAiQuota(db, "student-1", new Date(now.getTime() + WINDOW_MS + 1000)), true);
 });
 
 test("AI quota propagates database failures instead of bypassing the limit", async () => {
-  const db = fakePrisma([]);
-  db.$queryRaw = async () => { throw new Error("database unavailable"); };
+  const db = fakePrisma();
+  db.$transaction = async () => { throw new Error("database unavailable"); };
   await assert.rejects(() => consumeAiQuota(db, "student-1"), /database unavailable/);
 });
