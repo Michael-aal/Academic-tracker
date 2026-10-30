@@ -26,8 +26,6 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Bootstrap-Secret"]
 }));
-app.use(express.json({ limit: "100kb" }));
-
 // API responses can contain private academic and account information. Never let
 // browsers or intermediary caches reuse them across sessions.
 app.use("/api", (_req, res, next) => {
@@ -47,6 +45,9 @@ const apiLimiter = rateLimit({
   message: { error: "Too many API requests. Please wait a few minutes and try again." }
 });
 app.use("/api", apiLimiter);
+// Parse JSON only after the coarse request limiter has run, so oversized or
+// malformed request floods do not bypass the first protection layer.
+app.use(express.json({ limit: "100kb" }));
 
 app.get("/", (_req, res) => res.json({
   name: "Academic Tracker API",
