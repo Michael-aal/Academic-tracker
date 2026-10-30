@@ -7,7 +7,8 @@ const productionOrigins = [
   "https://academic-tracker-nu.vercel.app",
   "https://academic-tracker-iota.vercel.app"
 ];
-const configuredOrigins = (process.env.FRONTEND_ORIGIN || "http://localhost:5173,http://127.0.0.1:5500")
+const developmentOrigins = process.env.NODE_ENV === "production" ? "" : "http://localhost:5173,http://127.0.0.1:5500";
+const configuredOrigins = (process.env.FRONTEND_ORIGIN || developmentOrigins)
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
