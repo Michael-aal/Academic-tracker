@@ -140,6 +140,7 @@
     }
     if (state.accountUserId && signedInUserId && state.accountUserId !== signedInUserId) state = defaults();
     if (signedInUserId) state.accountUserId = signedInUserId;
+    if (state.syncPending && navigator.onLine) await syncPendingTrackerData();
     try {
       await syncSubjectsFromServer();
     } catch (e) {
@@ -163,26 +164,76 @@
     }
     render();
   }
+  async function persistLocalState() {
+    const db = await dbOpen();
+    if (db) {
+      await new Promise((resolve,reject) => {
+        const tx=db.transaction(STORE,"readwrite");
+        tx.objectStore(STORE).put(state,KEY);
+        tx.oncomplete=resolve;
+        tx.onerror=()=>reject(tx.error);
+      });
+      db.close();
+    } else localStorage.setItem(KEY,JSON.stringify(state));
+  }
+  let syncInProgress = false;
+  let syncStatusNotice = null;
+  function showSyncStatus(message, failed = false) {
+    if (!syncStatusNotice) {
+      syncStatusNotice = document.createElement("p");
+      syncStatusNotice.className = "notice";
+      syncStatusNotice.setAttribute("role","status");
+      $("#app")?.prepend(syncStatusNotice);
+    }
+    syncStatusNotice.textContent = message;
+    syncStatusNotice.dataset.failed = failed ? "true" : "false";
+  }
+  async function syncPendingTrackerData() {
+    if (syncInProgress || !navigator.onLine || !apiToken() || !state.syncPending) return false;
+    syncInProgress = true;
+    try {
+      await apiRequest("/api/user-data/secondary-tracker/main", {
+        method:"PUT",
+        body:JSON.stringify({data:{scores:state.scores,assessments:state.assessments,targets:state.targets,academicYear:state.academicYear,term:state.term}})
+      });
+      state.syncPending = false;
+      state.lastSyncedAt = new Date().toISOString();
+      await persistLocalState();
+      if (syncStatusNotice) { syncStatusNotice.remove(); syncStatusNotice = null; }
+      return true;
+    } catch (error) {
+      showSyncStatus("Your latest changes are safely saved on this device. Account sync will retry when the connection is available. " + error.message,true);
+      return false;
+    } finally { syncInProgress = false; }
+  }
   async function save(renderAfter = true) {
     state.updatedAt = new Date().toISOString();
+    if (apiToken()) state.syncPending = true;
     try {
-      const db = await dbOpen();
-      if (db) { await new Promise((resolve,reject) => { const tx=db.transaction(STORE,"readwrite"); tx.objectStore(STORE).put(state,KEY); tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error); }); db.close(); }
-      else localStorage.setItem(KEY,JSON.stringify(state));
-    } catch(e) { alert("Could not save your changes on this device. Please check available storage and export a backup."); console.error(e); }
+      await persistLocalState();
+    } catch(e) {
+      alert("Could not save your changes on this device. Please check available storage and export a backup.");
+      console.error(e);
+      return;
+    }
     if (apiToken()) {
-      try {
-        await apiRequest("/api/user-data/secondary-tracker/main", {
-          method: "PUT",
-          body: JSON.stringify({ data: { scores: state.scores, assessments: state.assessments, targets: state.targets, academicYear: state.academicYear, term: state.term } })
-        });
-      } catch (error) {
-        console.error("Account data sync failed", error);
-        if (renderAfter) alert("Your changes are saved on this device, but could not sync to your account. Please check your connection before switching devices.");
+      if (navigator.onLine) {
+        const synced = await syncPendingTrackerData();
+        if (!synced && renderAfter) showSyncStatus("Saved on this device. Waiting to sync with your account when the connection is restored.",true);
+      } else {
+        showSyncStatus("Saved on this device. It will sync with your account automatically when you reconnect.");
       }
     }
     if (renderAfter) render();
   }
+  window.addEventListener("online", async () => {
+    if (!apiToken()) return;
+    const synced = await syncPendingTrackerData();
+    if (synced) {
+      try { await syncSubjectsFromServer(); }
+      catch (error) { showSyncStatus("Your saved changes synced, but the latest account data could not be refreshed yet. " + error.message,true); }
+    }
+  });
   const id = () => (crypto.randomUUID ? crypto.randomUUID() : "s"+Date.now()+Math.random().toString(16).slice(2));
   const defaultAssessments = (sid) => { const old= sid ? subjectScore(sid) : {}; return [
     {id:"CA1",name:"Test 1",type:"TEST",max:num(old.CA1Max??10)},
