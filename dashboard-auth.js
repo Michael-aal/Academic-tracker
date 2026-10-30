@@ -22,9 +22,20 @@
       applyRole(data.user);
     }
   }).catch(() => {});
-  document.getElementById('logout-button')?.addEventListener('click', () => {
-    localStorage.removeItem('academic-tracker-token');
-    localStorage.removeItem('academic-tracker-user');
-    window.location.replace('index.html');
+  document.getElementById('logout-button')?.addEventListener('click', async () => {
+    // Revoke the server-side session before discarding the local bearer token.
+    // Always clear local state, even when the API is temporarily unavailable.
+    try {
+      await fetch((window.AT_API_BASE || 'https://academic-tracker-0b2q.onrender.com').replace(/\\/$/, '') + '/api/auth/logout', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token }
+      });
+    } catch (error) {
+      console.warn('Server logout could not be confirmed; clearing this device session.', error);
+    } finally {
+      localStorage.removeItem('academic-tracker-token');
+      localStorage.removeItem('academic-tracker-user');
+      window.location.replace('index.html');
+    }
   });
 })();
