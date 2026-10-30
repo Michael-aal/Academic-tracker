@@ -59,3 +59,8 @@ html[data-theme="light"] button.at-notes-launcher:focus-visible {
 .at-notes-launcher svg {
   stroke: #ffffff !important;
 }
+
+/* Draggable Quick Notes launcher */
+.at-notes-launcher{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;will-change:left,top}
+.at-notes-launcher.is-dragging{cursor:grabbing;transition:none!important;z-index:1600;box-shadow:0 16px 38px rgba(75,35,145,.42)}
+.at-notes-launcher:focus-visible{outline:3px solid #c4b5fd;outline-offset:4px}
