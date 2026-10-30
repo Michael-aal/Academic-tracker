@@ -19,6 +19,11 @@
   }
   const storageKey = "academic-tracker-theme";
   const apiBase = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
+  // Capture the browser install event early, before the install UI script loads.
+  window.addEventListener("beforeinstallprompt", event => {
+    event.preventDefault();
+    window.__AT_DEFERRED_INSTALL_PROMPT = event;
+  });
 
   // Make the install manifest and install experience available on every page.
   if (!document.querySelector('link[rel="manifest"]')) {
