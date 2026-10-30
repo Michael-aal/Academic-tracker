@@ -16,9 +16,10 @@ const ALLOWED_KINDS = new Set([
   "tutor-conversations",
   "note-summaries",
   "focus-sessions",
-  "preferences"
+  "preferences",
+  "push-subscriptions"
 ]);
-const MAX_RECORDS = { "secondary-tracker": 1, "video-library": 300, "video-history": 300, "study-sessions": 500, "memory-cards": 500, "memory-stats": 1, "tutor-conversations": 200, "note-summaries": 200, "focus-sessions": 500, "preferences": 1 };
+const MAX_RECORDS = { "secondary-tracker": 1, "video-library": 300, "video-history": 300, "study-sessions": 500, "memory-cards": 500, "memory-stats": 1, "tutor-conversations": 200, "note-summaries": 200, "focus-sessions": 500, "preferences": 1, "push-subscriptions": 10 };
 const limiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 120,
@@ -135,6 +136,11 @@ function validateData(kind, data, recordId) {
         !["ready", "running", "paused", "completed"].includes(data.status) ||
         (data.durationMinutes !== undefined && ![15, 25, 45, 60].includes(data.durationMinutes)) ||
         (data.durationMs !== undefined && (!Number.isFinite(Number(data.durationMs)) || Number(data.durationMs) <= 0))) return "The focus session is invalid.";
+  }
+
+  if (kind === "push-subscriptions") {
+    if (!/^push-[a-f0-9]{64}$/.test(recordId) || !validString(data.endpoint, 2000) || !data.endpoint.startsWith("https://") ||
+        !isObject(data.keys) || !validString(data.keys.p256dh, 200) || !validString(data.keys.auth, 200)) return "The push subscription is invalid.";
   }
 
   if (kind === "preferences") {

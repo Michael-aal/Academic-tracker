@@ -14,6 +14,7 @@ const videoRoutes = require("./routes/videos");
 const universityRoutes = require("./routes/university");
 const userDataRoutes = require("./routes/user-data");
 const accountRoutes = require("./routes/account");
+const pushRoutes = require("./routes/push");
 
 const app = express();
 // The API is hosted behind Render's single reverse-proxy hop. Trust only that
@@ -91,6 +92,7 @@ app.use("/api/videos", videoRoutes);
 app.use("/api/university", universityRoutes);
 app.use("/api/user-data", userDataRoutes);
 app.use("/api/account", accountRoutes);
+app.use("/api/push", pushRoutes);
 
 app.use((_req, res) => res.status(404).json({ error: "Route not found." }));
 
