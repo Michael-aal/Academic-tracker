@@ -275,6 +275,7 @@
   }
   async function finishQuiz() {
     if (busy || result) return;
+    stopQuestionTimer();
     const unanswered = quiz.questions.filter(q => !submittedAnswers[q.id] && !selected[q.id]).length;
     if (unanswered && !window.confirm("You have " + unanswered + " unanswered question(s). Submit anyway? They will receive no marks.")) return;
     busy = true;
