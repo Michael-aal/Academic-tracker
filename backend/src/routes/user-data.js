@@ -156,6 +156,52 @@ router.get("/:kind", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+router.put("/:kind/bulk", async (req, res, next) => {
+  const { kind } = req.params;
+  if (!validKind(kind)) return res.status(404).json({ error: "Saved data category not found." });
+  const records = req.body?.records;
+  if (!Array.isArray(records) || records.length < 1 || records.length > 100) return res.status(400).json({ error: "A batch must contain between 1 and 100 records." });
+  const ids = new Set();
+  for (const item of records) {
+    if (!validRecordId(item?.recordId) || ids.has(item.recordId)) return res.status(400).json({ error: "A batch contains an invalid or duplicate record ID." });
+    ids.add(item.recordId);
+    const validationError = validateData(kind, item.data, item.recordId);
+    if (validationError) return res.status(400).json({ error: validationError });
+  }
+  try {
+    const existing = await prisma.userDataRecord.findMany({
+      where: { userId: req.userId, kind, recordId: { in: [...ids] } },
+      select: { recordId: true }
+    });
+    const existingIds = new Set(existing.map(item => item.recordId));
+    const currentCount = await prisma.userDataRecord.count({ where: { userId: req.userId, kind } });
+    if (currentCount + records.filter(item => !existingIds.has(item.recordId)).length > (MAX_RECORDS[kind] || 100)) {
+      return res.status(409).json({ error: "This account has reached the saved-record limit for this category." });
+    }
+    const operations = records.map(item => prisma.userDataRecord.upsert({
+      where: { userId_kind_recordId: { userId: req.userId, kind, recordId: item.recordId } },
+      create: { userId: req.userId, kind, recordId: item.recordId, data: item.data },
+      update: { data: item.data }
+    }));
+    await prisma.$transaction(operations);
+    res.set("Cache-Control", "private, no-store");
+    res.json({ ok: true, saved: records.length });
+  } catch (error) { next(error); }
+});
+
+router.delete("/:kind/bulk", async (req, res, next) => {
+  const { kind } = req.params;
+  if (!validKind(kind)) return res.status(404).json({ error: "Saved data category not found." });
+  const recordIds = req.body?.recordIds;
+  if (!Array.isArray(recordIds) || recordIds.length < 1 || recordIds.length > 100 || !recordIds.every(validRecordId)) {
+    return res.status(400).json({ error: "A delete batch must contain between 1 and 100 valid record IDs." });
+  }
+  try {
+    const result = await prisma.userDataRecord.deleteMany({ where: { userId: req.userId, kind, recordId: { in: [...new Set(recordIds)] } } });
+    res.json({ ok: true, deleted: result.count });
+  } catch (error) { next(error); }
+});
+
 router.put("/:kind/:recordId", async (req, res, next) => {
   const { kind, recordId } = req.params;
   if (!validKind(kind)) return res.status(404).json({ error: "Saved data category not found." });
