@@ -72,7 +72,7 @@ router.get("/monitoring", async (_req, res, next) => {
       prisma.studyPackPurchase.count({ where: { status: "PENDING" } })
     ]);
     const [recentPayments, recentUsers, recentLeads, usageByTool] = await Promise.all([
-      prisma.paymentTransaction.findMany({ take: 8, orderBy: { createdAt: "desc" }, select: { id: true, planCode: true, amountMinor: true, currency: true, status: true, createdAt: true, user: { select: { email: true } } } }),
+      prisma.paymentTransaction.findMany({ take: 8, orderBy: { createdAt: "desc" }, select: { id: true, reference: true, planCode: true, amountMinor: true, currency: true, status: true, createdAt: true, paidAt: true, user: { select: { name: true, email: true } } } }),
       prisma.user.findMany({ take: 6, orderBy: { createdAt: "desc" }, select: { id: true, name: true, educationTrack: true, createdAt: true } }),
       prisma.institutionLicense.findMany({ take: 5, orderBy: { createdAt: "desc" }, select: { id: true, institutionName: true, seatCount: true, status: true, createdAt: true } }),
       prisma.aiUsageDaily.findMany({ where: { usageDate: utcDay }, select: { toolCounts: true } })
