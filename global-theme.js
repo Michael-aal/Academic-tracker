@@ -10,6 +10,13 @@
     guard.dataset.darkModeGuard = "true";
     document.head.appendChild(guard);
   }
+  if (!document.querySelector('link[data-vibrant-refresh]')) {
+    const refresh = document.createElement("link");
+    refresh.rel = "stylesheet";
+    refresh.href = "vibrant-refresh.css";
+    refresh.dataset.vibrantRefresh = "true";
+    document.head.appendChild(refresh);
+  }
   const storageKey = "academic-tracker-theme";
   const apiBase = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\\/$/, "");
   const token = localStorage.getItem("academic-tracker-token") || "";
