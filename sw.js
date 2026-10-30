@@ -64,3 +64,19 @@ self.addEventListener("notificationclick", event => {
     if (self.clients.openWindow) await self.clients.openWindow(new URL("./study-plan.html", self.location.origin).href);
   })());
 });
+
+
+self.addEventListener("push", event => {
+  let payload = {};
+  try { payload = event.data ? event.data.json() : {}; } catch { payload = { body: event.data?.text() || "Your study session is complete." }; }
+  const title = typeof payload.title === "string" ? payload.title.slice(0, 80) : "Academic Tracker";
+  const options = {
+    body: typeof payload.body === "string" ? payload.body.slice(0, 220) : "Your focus session is complete.",
+    tag: typeof payload.tag === "string" ? payload.tag.slice(0, 120) : "focus-session-complete",
+    icon: "./assets/icon.svg",
+    badge: "./assets/icon.svg",
+    data: { url: "./dashboard.html?view=focus" },
+    renotify: false
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
