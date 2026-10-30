@@ -114,3 +114,23 @@ body[data-mode="register"] .icon-only-back svg { display: block; width: 21px; he
   body[data-mode="login"] #at-theme-toggle,
   body[data-mode="register"] #at-theme-toggle { display: none !important; }
 }
+
+
+/* Quick Notes is a glass drawer, matching the translucent global navigation.
+   These theme-scoped important rules override the generic aside surface guard. */
+html[data-theme="dark"] .at-notes-drawer {
+  color: #ffffff !important;
+  background: rgba(23,17,35,.84) !important;
+  background-color: rgba(23,17,35,.84) !important;
+  border-color: rgba(167,139,250,.32) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(155%) !important;
+  backdrop-filter: blur(24px) saturate(155%) !important;
+}
+html[data-theme="light"] .at-notes-drawer {
+  color: #261638 !important;
+  background: rgba(255,255,255,.84) !important;
+  background-color: rgba(255,255,255,.84) !important;
+  border-color: rgba(117,69,200,.2) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(155%) !important;
+  backdrop-filter: blur(24px) saturate(155%) !important;
+}
