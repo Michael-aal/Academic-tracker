@@ -326,3 +326,110 @@ html[data-theme="dark"] :is(.at-nav-menu, .dropdown-menu, .account-menu, .menu-d
   background: #2a1e3b !important;
   color: #f5f3ff !important;
 }
+
+
+/* Theme parity + guaranteed SVG visibility for the shared navigation. */
+html[data-theme="light"] {
+  --at-nav-bg: rgba(255,255,255,.98);
+  --at-nav-surface: #ffffff;
+  --at-nav-elevated: #f7f3ff;
+  --at-nav-border: #e3d8f3;
+  --at-nav-text: #35224f;
+  --at-nav-muted: #6c5a83;
+  --at-nav-accent: #7545c8;
+  --at-nav-accent-strong: #5b2ba8;
+}
+html[data-theme="dark"] {
+  --at-nav-bg: rgba(17,13,27,.98);
+  --at-nav-surface: #171123;
+  --at-nav-elevated: #20172f;
+  --at-nav-border: #302440;
+  --at-nav-text: #ffffff;
+  --at-nav-muted: #c3b8d5;
+  --at-nav-accent: #c4b5fd;
+  --at-nav-accent-strong: #8b5cf6;
+}
+html[data-theme="light"] .at-global-header {
+  color: #35224f !important;
+  background: rgba(255,255,255,.98) !important;
+  border-color: #e3d8f3 !important;
+}
+html[data-theme="dark"] .at-global-header {
+  color: #ffffff !important;
+  background: rgba(17,13,27,.98) !important;
+  border-color: #302440 !important;
+}
+.at-global-header .at-nav-icon-button,
+.at-mobile-nav a,
+.at-mobile-nav button {
+  color: var(--at-nav-text) !important;
+}
+.at-global-header .at-nav-icon-button {
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: var(--at-nav-elevated) !important;
+  border-color: var(--at-nav-border) !important;
+}
+.at-global-header .at-nav-icon-button svg,
+.at-mobile-nav svg,
+.at-nav-popover svg {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 21px !important;
+  height: 21px !important;
+  overflow: visible !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+.at-global-header .at-nav-icon-button svg *,
+.at-mobile-nav svg * ,
+.at-nav-popover svg * {
+  vector-effect: non-scaling-stroke;
+}
+.at-mobile-nav {
+  color: var(--at-nav-text) !important;
+  background: var(--at-nav-bg) !important;
+  border-color: var(--at-nav-border) !important;
+}
+.at-mobile-nav a,
+.at-mobile-nav button {
+  color: var(--at-nav-muted) !important;
+  background: transparent !important;
+}
+.at-mobile-nav a.at-nav-active,
+.at-mobile-nav button.at-nav-active,
+.at-mobile-nav a[aria-current="page"],
+.at-mobile-nav button[aria-current="page"] {
+  color: #ffffff !important;
+  background: linear-gradient(145deg,#6d28d9,#8b5cf6) !important;
+}
+/* The More glyph is three filled dots, not three almost-invisible hollow circles. */
+.at-mobile-nav [data-at-bottom="more"] svg {
+  fill: currentColor !important;
+  stroke: none !important;
+}
+.at-mobile-nav [data-at-bottom="more"] svg circle {
+  fill: currentColor !important;
+  stroke: none !important;
+}
+html[data-theme="light"] .at-mobile-nav [data-at-bottom="more"] {
+  color: #5b2ba8 !important;
+}
+html[data-theme="dark"] .at-mobile-nav [data-at-bottom="more"] {
+  color: #ffffff !important;
+}
+html[data-theme="light"] .at-nav-popover {
+  background: #ffffff !important;
+  color: #35224f !important;
+  border-color: #e3d8f3 !important;
+}
+html[data-theme="dark"] .at-nav-popover {
+  background: #171123 !important;
+  color: #ffffff !important;
+  border-color: #302440 !important;
+}

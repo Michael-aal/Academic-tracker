@@ -56,3 +56,84 @@
  .focus-promo>.button{width:100%}
 }
 @media(prefers-reduced-motion:reduce){.focus-progress-track span{transition:none}}
+
+
+/* Focus timer: explicit light/dark surfaces and readable countdown in both themes. */
+html[data-theme="light"] .focus-panel {
+  color: #35224f !important;
+  background: radial-gradient(ellipse at 50% 0%,rgba(167,139,250,.16),transparent 68%),linear-gradient(145deg,#ffffff,#f7f3ff) !important;
+  border-color: #e3d8f3 !important;
+}
+html[data-theme="light"] .focus-clock {
+  color: #35224f !important;
+  text-shadow: none !important;
+}
+html[data-theme="light"] .focus-panel-top h3,
+html[data-theme="light"] .focus-setup-card h3,
+html[data-theme="light"] .focus-reset-card h3,
+html[data-theme="light"] .focus-promo-copy h2 {
+  color: #35224f !important;
+}
+html[data-theme="light"] .focus-task-current,
+html[data-theme="light"] .focus-notifications summary {
+  color: #5b2ba8 !important;
+}
+html[data-theme="light"] .focus-intro p,
+html[data-theme="light"] .focus-disclaimer,
+html[data-theme="light"] .focus-setup-card label,
+html[data-theme="light"] .focus-notifications ol,
+html[data-theme="light"] .focus-promo-copy p {
+  color: #6c5a83 !important;
+}
+html[data-theme="light"] .focus-setup-card input,
+html[data-theme="light"] .focus-setup-card select {
+  color: #35224f !important;
+  background: #ffffff !important;
+  border-color: #d8c9eb !important;
+}
+html[data-theme="light"] .focus-notifications details {
+  background: #ffffff !important;
+  border-color: #e3d8f3 !important;
+}
+html[data-theme="light"] .focus-honesty {
+  color: #5b2ba8 !important;
+  background: #f4efff !important;
+}
+html[data-theme="light"] .focus-status {
+  color: #6c5a83 !important;
+  background: #eee8f8 !important;
+}
+html[data-theme="light"] .focus-status.is-running {
+  color: #216e4a !important;
+  background: #eaf7ef !important;
+}
+html[data-theme="light"] .focus-status.is-paused {
+  color: #80520a !important;
+  background: #fff5df !important;
+}
+html[data-theme="light"] .focus-status.is-complete {
+  color: #5b2ba8 !important;
+  background: #eee5ff !important;
+}
+html[data-theme="light"] .focus-progress-track {
+  background: #e8e0f2 !important;
+}
+html[data-theme="light"] .focus-promo {
+  color: #35224f !important;
+  background: linear-gradient(105deg,#f1eaff,#ffffff 72%) !important;
+  border-color: #e3d8f3 !important;
+}
+html[data-theme="light"] .focus-promo-icon,
+html[data-theme="light"] .focus-card-icon {
+  color: #5b2ba8 !important;
+  background: #f1eaff !important;
+  border-color: #e3d8f3 !important;
+}
+html[data-theme="dark"] .focus-clock {
+  color: #ffffff !important;
+  text-shadow: 0 2px 24px rgba(167,139,250,.18);
+}
+html[data-theme="dark"] .focus-panel {
+  color: #ffffff !important;
+  background: radial-gradient(ellipse at 50% 0%,rgba(126,86,242,.2),transparent 65%),linear-gradient(145deg,#141126,#0d0b18) !important;
+}
