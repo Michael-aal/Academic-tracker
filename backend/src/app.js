@@ -104,7 +104,8 @@ app.use((error, _req, res, _next) => {
   if (error.type === "entity.too.large") {
     return res.status(413).json({ error: "Request body is too large." });
   }
-  console.error("API error:", error);
+  // Do not log request bodies, SQL details, provider payloads, or raw error messages.
+  console.error("API error:", { name: error?.name || "Error", code: error?.code || error?.type || "INTERNAL_ERROR" });
   res.status(500).json({ error: "An unexpected server error occurred." });
 });
 
