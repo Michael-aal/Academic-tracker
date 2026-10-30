@@ -28,6 +28,26 @@ app.use(cors({
 }));
 app.use(express.json({ limit: "100kb" }));
 
+// API responses can contain private academic and account information. Never let
+// browsers or intermediary caches reuse them across sessions.
+app.use("/api", (_req, res, next) => {
+  res.set("Cache-Control", "private, no-store");
+  res.set("Pragma", "no-cache");
+  next();
+});
+
+// A coarse IP-level ceiling protects every API route, including endpoints that
+// have their own stricter per-account limits. This in-memory limiter is a
+// single-instance safeguard; use a shared store if the API is horizontally scaled.
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 300,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many API requests. Please wait a few minutes and try again." }
+});
+app.use("/api", apiLimiter);
+
 app.get("/", (_req, res) => res.json({
   name: "Academic Tracker API",
   ok: true,
@@ -76,6 +96,9 @@ app.use((error, _req, res, _next) => {
   }
   if (error.type === "entity.parse.failed") {
     return res.status(400).json({ error: "Request body must be valid JSON." });
+  }
+  if (error.type === "entity.too.large") {
+    return res.status(413).json({ error: "Request body is too large." });
   }
   console.error("API error:", error);
   res.status(500).json({ error: "An unexpected server error occurred." });
