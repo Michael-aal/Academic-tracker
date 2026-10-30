@@ -457,7 +457,9 @@
     if(clock)clock.textContent=formatFocusTime(remaining);
     if(progress&&session.durationMs)progress.style.width=Math.max(0,Math.min(100,((session.durationMs-remaining)/session.durationMs)*100))+"%";
     if(remaining===0) {
-      saveFocusSession({...session,status:"completed",remainingMs:0,endsAt:null,completedAt:new Date().toISOString()});
+      const completedSession={...session,status:"completed",remainingMs:0,endsAt:null,completedAt:new Date().toISOString()};
+      saveFocusSession(completedSession);
+      window.ATFocusNotifications?.showInApp(completedSession);
       if(view==="focus")render();
     }
   },1000);
