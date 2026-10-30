@@ -31,7 +31,7 @@ model User {
   supportMessages       SupportMessage[]      @relation("SupportMessageSender")
   aiQuizAttempts        AiQuizAttempt[]
   dataRecords           UserDataRecord[]
-  aiUsageWindows        AiUsageWindow[]
+  aiUsageEvents         AiUsageEvent[]
 
   @@map("users")
 }
@@ -182,15 +182,13 @@ model UserDataRecord {
 }
 
 
-model AiUsageWindow {
-  id           String   @id
-  userId       String   @map("user_id")
-  windowStart  DateTime @map("window_start")
-  requestCount Int      @default(0) @map("request_count")
-  createdAt    DateTime @default(now()) @map("created_at")
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model AiUsageEvent {
+  id        String   @id
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, windowStart])
-  @@index([windowStart])
-  @@map("ai_usage_windows")
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("ai_usage_events")
 }
