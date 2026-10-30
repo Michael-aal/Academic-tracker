@@ -196,3 +196,24 @@ html[data-theme="light"] .summary-history-item { background: #F7F2FF; border-col
 html[data-theme="light"] .summary-history-item strong { color: #261638; }
 html[data-theme="light"] .summary-history-item small,html[data-theme="light"] .summary-history-item p { color: #675779; }
 @media(max-width:560px) { .summary-history-item { flex-direction: column; } .summary-history-item button { width: 100%; } }
+
+/* Bring older feature-specific panels onto the same palette. */
+html[data-theme="dark"] :where(.planner-session,.planner-form,.planner-import-panel,.study-planner-card,.uni-hero,.uni-add-form,.uni-note,.uni-empty,.ev-saved-card,.mm-flashcard,.mm-empty,.mm-library-card,.focus-panel,.focus-setup-card,.focus-reset-card,.focus-history-card,.summary-history-item,.tutor-message,.chat-message,.message-bubble,.quiz-question-card,.quiz-result-card) {
+  background: #171123 !important;
+  color: #F5F3FF !important;
+  border-color: rgba(167,139,250,.24) !important;
+}
+html[data-theme="dark"] :where(.planner-session p,.planner-session small,.mm-library-card p,.mm-library-meta,.uni-hero p,.uni-note p,.uni-empty,.ev-saved-card span,.focus-panel p,.focus-setup-card p) {
+  color: #C4B5D3 !important;
+}
+html[data-theme="dark"] :where(.planner-session button,.mm-library-card button,.ev-saved-card button) {
+  color: #F5F3FF;
+}
+html[data-theme="light"] :where(.planner-session,.planner-form,.planner-import-panel,.study-planner-card,.uni-hero,.uni-add-form,.uni-note,.uni-empty,.ev-saved-card,.mm-flashcard,.mm-empty,.mm-library-card,.focus-panel,.focus-setup-card,.focus-reset-card,.focus-history-card,.summary-history-item,.tutor-message,.chat-message,.message-bubble,.quiz-question-card,.quiz-result-card) {
+  background: #FFFFFF !important;
+  color: #261638 !important;
+  border-color: #E5D9F8 !important;
+}
+html[data-theme="light"] :where(.planner-session p,.planner-session small,.mm-library-card p,.mm-library-meta,.uni-hero p,.uni-note p,.uni-empty,.ev-saved-card span,.focus-panel p,.focus-setup-card p) {
+  color: #675779 !important;
+}
