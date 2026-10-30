@@ -33,6 +33,15 @@
   async function syncSubjectsFromServer() {
     if (!apiToken()) return;
     const data = await apiRequest("/api/subjects?academicYear=" + encodeURIComponent(state.academicYear) + "&term=" + encodeURIComponent(state.term));
+    const trackerData = await apiRequest("/api/user-data/secondary-tracker");
+    const savedTracker = trackerData.records?.find(record => record.recordId === "main")?.data;
+    if (savedTracker) {
+      state.scores = savedTracker.scores || {};
+      state.assessments = savedTracker.assessments || {};
+      state.targets = { ...state.targets, ...(savedTracker.targets || {}) };
+      state.academicYear = savedTracker.academicYear || state.academicYear;
+      state.term = savedTracker.term || state.term;
+    }
     const remoteSubjects = Array.isArray(data.subjects) ? data.subjects : [];
     const previous = [...state.subjects];
     const synced = [];
@@ -49,6 +58,12 @@
     }
     state.subjects = synced;
     state.accountUserId = accountUserId();
+    if (!savedTracker) {
+      await apiRequest("/api/user-data/secondary-tracker/main", {
+        method: "PUT",
+        body: JSON.stringify({ data: { scores: state.scores, assessments: state.assessments, targets: state.targets, academicYear: state.academicYear, term: state.term } })
+      });
+    }
     await save(false);
   }
   async function load() {
@@ -81,7 +96,18 @@
       const db = await dbOpen();
       if (db) { await new Promise((resolve,reject) => { const tx=db.transaction(STORE,"readwrite"); tx.objectStore(STORE).put(state,KEY); tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error); }); db.close(); }
       else localStorage.setItem(KEY,JSON.stringify(state));
-    } catch(e) { alert("Could not save your changes. Please check available device storage and export a backup."); console.error(e); }
+    } catch(e) { alert("Could not save your changes on this device. Please check available storage and export a backup."); console.error(e); }
+    if (apiToken()) {
+      try {
+        await apiRequest("/api/user-data/secondary-tracker/main", {
+          method: "PUT",
+          body: JSON.stringify({ data: { scores: state.scores, assessments: state.assessments, targets: state.targets, academicYear: state.academicYear, term: state.term } })
+        });
+      } catch (error) {
+        console.error("Account data sync failed", error);
+        if (renderAfter) alert("Your changes are saved on this device, but could not sync to your account. Please check your connection before switching devices.");
+      }
+    }
     if (renderAfter) render();
   }
   const id = () => (crypto.randomUUID ? crypto.randomUUID() : "s"+Date.now()+Math.random().toString(16).slice(2));
