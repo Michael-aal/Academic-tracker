@@ -34,14 +34,14 @@ function decryptProviderToken(value) {
 }
 
 function currentSubscription(sub, now = new Date()) {
-  if (!sub) return { plan: "FREE", status: "FREE", isPro: false, trialEndsAt: null, currentPeriodEnd: null, cancelAtPeriodEnd: false };
+  if (!sub) return { plan: "FREE", planCode: "free", planName: "Free", status: "FREE", isPro: false, trialEndsAt: null, currentPeriodEnd: null, cancelAtPeriodEnd: false };
   if (sub.status === "TRIALING" && sub.trialEndsAt && sub.trialEndsAt > now) {
-    return { plan: "PRO", status: "TRIALING", isPro: true, trialEndsAt: sub.trialEndsAt, currentPeriodEnd: sub.trialEndsAt, cancelAtPeriodEnd: false };
+    return { plan: "PRO", planCode: sub.planCode, planName: sub.planCode === "trial-7-day" ? "7-day Pro trial" : (PLAN_CONFIG[sub.planCode]?.name || "Pro"), status: "TRIALING", isPro: true, trialEndsAt: sub.trialEndsAt, currentPeriodEnd: sub.trialEndsAt, cancelAtPeriodEnd: false };
   }
   if (sub.status === "ACTIVE" && sub.currentPeriodEnd && sub.currentPeriodEnd > now) {
-    return { plan: "PRO", status: "ACTIVE", isPro: true, trialEndsAt: null, currentPeriodEnd: sub.currentPeriodEnd, cancelAtPeriodEnd: sub.cancelAtPeriodEnd };
+    return { plan: "PRO", planCode: sub.planCode, planName: PLAN_CONFIG[sub.planCode]?.name || "Pro", status: "ACTIVE", isPro: true, trialEndsAt: null, currentPeriodEnd: sub.currentPeriodEnd, cancelAtPeriodEnd: sub.cancelAtPeriodEnd };
   }
-  return { plan: "FREE", status: sub.status === "CANCELLED" ? "CANCELLED" : "EXPIRED", isPro: false, trialEndsAt: sub.trialEndsAt || null, currentPeriodEnd: sub.currentPeriodEnd || null, cancelAtPeriodEnd: sub.cancelAtPeriodEnd };
+  return { plan: "FREE", planCode: "free", planName: "Free", previousPlanCode: sub.planCode, status: sub.status === "CANCELLED" ? "CANCELLED" : "EXPIRED", isPro: false, trialEndsAt: sub.trialEndsAt || null, currentPeriodEnd: sub.currentPeriodEnd || null, cancelAtPeriodEnd: sub.cancelAtPeriodEnd };
 }
 async function getCurrentSubscription(userId) {
   return prisma.userSubscription.findFirst({ where: { userId }, orderBy: { createdAt: "desc" } });
