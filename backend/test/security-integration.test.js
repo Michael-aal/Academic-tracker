@@ -27,15 +27,22 @@ test("PostgreSQL enforces university ownership and concurrent AI quotas", { skip
     await prisma.universityCourseResult.create({
       data: { userId: owner.id, courseId: course.id, academicYear: "2026-2027", semester: "Semester 1" }
     });
-    await assert.rejects(() => prisma.universityCourseResult.create({
-      data: { userId: other.id, courseId: course.id, academicYear: "2027-2028", semester: "Semester 1" }
-    }));
+    await assert.rejects(
+      () => prisma.universityCourseResult.create({
+        data: { userId: other.id, courseId: course.id, academicYear: "2027-2028", semester: "Semester 1" }
+      }),
+      error => error.code === "P2003"
+    );
 
     const quotaResults = await Promise.all(Array.from({ length: 15 }, () => consumeAiQuota(prisma, owner.id)));
     assert.equal(quotaResults.filter(Boolean).length, 10, "exactly ten concurrent requests should pass");
   } finally {
-    if (createdUserIds.length) {
-      await prisma.user.deleteMany({ where: { id: { in: createdUserIds } } });
+    try {
+      if (createdUserIds.length) {
+        await prisma.user.deleteMany({ where: { id: { in: createdUserIds } } });
+      }
+    } finally {
+      await prisma.$disconnect();
     }
   }
 });
