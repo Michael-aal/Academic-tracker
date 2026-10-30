@@ -213,6 +213,63 @@
     document.head.appendChild(themeScript);
   }
 
+  // Mobile/tablet-only triple-tap navigation visibility control.
+  // Gestures are accepted on non-interactive navbar space so normal links and buttons remain reliable.
+  const navVisibilityKey = "academic-tracker-nav-hidden";
+  const navRestore = document.createElement("button");
+  navRestore.type = "button";
+  navRestore.id = "at-nav-restore";
+  navRestore.className = "at-nav-restore";
+  navRestore.setAttribute("aria-label", "Triple-tap to restore navigation");
+  navRestore.setAttribute("title", "Triple-tap to restore navigation");
+  navRestore.innerHTML = '<span aria-hidden="true">' + icon("menu") + '</span><span class="at-nav-restore-label">Tap 3× to show menu</span>';
+  document.body.appendChild(navRestore);
+
+  const compactNavigation = window.matchMedia("(max-width: 1024px)");
+  let navHidden = false;
+  const applyNavigationVisibility = () => {
+    const enabled = compactNavigation.matches;
+    navHidden = enabled && localStorage.getItem(navVisibilityKey) === "true";
+    document.body.classList.toggle("at-nav-collapsed", navHidden);
+    navRestore.hidden = !navHidden;
+    if (!enabled) {
+      document.body.classList.remove("at-nav-collapsed");
+      navRestore.hidden = true;
+    }
+  };
+  const setNavigationHidden = hidden => {
+    if (!compactNavigation.matches) return;
+    navHidden = Boolean(hidden);
+    try { localStorage.setItem(navVisibilityKey, String(navHidden)); } catch (_) {}
+    document.body.classList.toggle("at-nav-collapsed", navHidden);
+    navRestore.hidden = !navHidden;
+    navRestore.setAttribute("aria-label", navHidden ? "Triple-tap to restore navigation" : "Navigation is visible");
+  };
+  applyNavigationVisibility();
+  if (compactNavigation.addEventListener) compactNavigation.addEventListener("change", applyNavigationVisibility);
+  else compactNavigation.addListener(applyNavigationVisibility);
+
+  const bindTripleTap = (surface, onTripleTap, isAllowedTarget) => {
+    let taps = 0;
+    let resetHandle = null;
+    surface.addEventListener("click", event => {
+      if (!compactNavigation.matches || !isAllowedTarget(event)) return;
+      taps += 1;
+      if (resetHandle) clearTimeout(resetHandle);
+      if (taps >= 3) {
+        taps = 0;
+        clearTimeout(resetHandle);
+        onTripleTap();
+        return;
+      }
+      resetHandle = setTimeout(() => { taps = 0; }, 850);
+    });
+  };
+  const isNavbarBlankSpace = event => !event.target.closest("a, button, input, select, textarea, [role='button']");
+  bindTripleTap(header, () => setNavigationHidden(true), isNavbarBlankSpace);
+  bindTripleTap(bottom, () => setNavigationHidden(true), event => event.target === bottom);
+  bindTripleTap(navRestore, () => setNavigationHidden(false), () => true);
+
   // Revoke the server-side session before existing page handlers clear local credentials.
   document.addEventListener("click", event => {
     const button = event.target.closest("#signout, #mobile-signout, #quiz-signout, #profile-signout, #uni-signout, #signout-button, #logout-button, [data-action='signout']");
