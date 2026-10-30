@@ -4,6 +4,7 @@ const { prisma } = require("./prisma");
 const FREE_LIMIT = 5;
 const PRO_TOOL_LIMITS = Object.freeze({ tutor: 20, quiz: 20, summarize: 20, "study-plan": 20, flashcards: 20 });
 const PLAN_WINDOWS = Object.freeze({
+  "trial-7-day": { days: 7, limit: 100 },
   daily: { days: 1, limit: 20 },
   weekly: { days: 7, limit: 100 },
   monthly: { days: 30, limit: 600 },
