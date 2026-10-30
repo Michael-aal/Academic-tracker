@@ -26,6 +26,8 @@ async function requireAuth(req, res, next) {
       return res.status(401).json({ error: "This session has been signed out. Please log in again." });
     }
     req.userId = payload.sub;
+    res.set("Cache-Control", "private, no-store");
+    res.set("Pragma", "no-cache");
     next();
   } catch (error) {
     next(error);
