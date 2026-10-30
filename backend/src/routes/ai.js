@@ -19,6 +19,18 @@ const aiLimiter = rateLimit({
   message: { error: "You've reached the AI learning limit for now. Please try again in 15 minutes." }
 });
 
+// Quiz attempts do not call the AI provider, but answer/submit endpoints still
+// perform database reads and writes. Keep those operations bounded per account.
+const quizAttemptLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 45,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  keyGenerator: (req) => req.userId,
+  message: { error: "Too many quiz actions. Please slow down and try again shortly." }
+});
+router.use("/attempts", quizAttemptLimiter);
+
 function buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) {
   const context = [
     "Subject: " + (subject || "Not specified"),
