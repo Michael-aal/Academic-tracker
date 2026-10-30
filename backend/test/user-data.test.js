@@ -12,7 +12,7 @@ const validCard = {
 };
 
 test("accepts the supported account data categories", () => {
-  for (const kind of ["secondary-tracker", "video-library", "video-history", "study-sessions", "memory-cards", "memory-stats", "tutor-conversations", "note-summaries", "focus-sessions", "preferences"]) {
+  for (const kind of ["secondary-tracker", "video-library", "video-history", "study-sessions", "memory-cards", "memory-stats", "tutor-conversations", "note-summaries", "study-notes", "focus-sessions", "preferences"]) {
     assert.equal(userDataRouter.allowedKinds.has(kind), true);
   }
 });
@@ -60,3 +60,9 @@ test("requires timestamps for video watch history", () => {
   assert.match(userDataRouter.validateData("video-history", { ...video, watchedAt: 0 }, "abcdefghijk"), /watch timestamp is invalid/);
 });
 
+
+test("validates account-synced study notes", () => {
+  const note = { title: "Newton laws", content: "An object remains at rest unless acted on by a net force.", subject: "Physics", topic: "Motion" };
+  assert.equal(userDataRouter.validateData("study-notes", note, "note-1"), null);
+  assert.match(userDataRouter.validateData("study-notes", { ...note, title: " " }, "note-1"), /study note is invalid/);
+});

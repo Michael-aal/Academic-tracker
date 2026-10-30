@@ -5,6 +5,18 @@ const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
 router.use(requireAuth);
+
+// Cursor-based reads make account exports complete without arbitrary row caps.
+async function fetchAllPages(delegate, args, pageSize = 500) {
+  const rows = [];
+  let cursor;
+  while (true) {
+    const page = await delegate.findMany({ ...args, orderBy: { id: "asc" }, take: pageSize, ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}) });
+    rows.push(...page);
+    if (page.length < pageSize) return rows;
+    cursor = page[page.length - 1].id;
+  }
+}
 router.use(rateLimit({ windowMs: 60 * 1000, limit: 3, standardHeaders: "draft-7", legacyHeaders: false, keyGenerator: req => req.userId }));
 
 router.get("/export", async (req, res, next) => {
@@ -30,21 +42,17 @@ router.get("/export", async (req, res, next) => {
         orderBy: { code: "asc" },
         include: { results: { where: { userId: req.userId }, orderBy: { updatedAt: "desc" } } }
       }),
-      prisma.aiQuizAttempt.findMany({
+      fetchAllPages(prisma.aiQuizAttempt, {
         where: { userId: req.userId },
-        orderBy: { createdAt: "desc" },
-        take: 2000,
         select: {
           id: true, title: true, subject: true, topic: true, difficulty: true,
           questionData: true, submittedAnswers: true, resultData: true,
           status: true, createdAt: true, completedAt: true
         }
       }),
-      prisma.userDataRecord.findMany({
+      fetchAllPages(prisma.userDataRecord, {
         where: { userId: req.userId },
-        orderBy: { updatedAt: "desc" },
-        take: 3000,
-        select: { kind: true, recordId: true, data: true, createdAt: true, updatedAt: true }
+        select: { kind: true, recordId: true, data: true, deletedAt: true, createdAt: true, updatedAt: true }
       }),
       prisma.supportConversation.findUnique({
         where: { userId: req.userId },
@@ -61,7 +69,7 @@ router.get("/export", async (req, res, next) => {
     res.set("Content-Disposition", 'attachment; filename="academic-tracker-account-export.json"');
     res.json({
       app: "Academic Tracker",
-      exportVersion: 1,
+      exportVersion: 2,
       exportedAt: new Date().toISOString(),
       user,
       subjects,
