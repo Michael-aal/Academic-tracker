@@ -149,6 +149,7 @@
     if (quizOptions) quizOptions.hidden = action !== "quiz";
     $("copy-result").hidden = action === "quiz";
     $("content").value = "";
+    $("content").dispatchEvent(new Event("input", { bubbles: true }));
     $("char-count").textContent = "0 / 12,000 characters";
     $("result-panel").hidden = true;
     setNotice("");
@@ -172,6 +173,7 @@
       }
       host.append(card);
     });
+    if (host.parentElement) host.parentElement.scrollTop = host.parentElement.scrollHeight;
   }
 
   function renderQuiz(quiz, attemptId, submittedAnswers = [], result = null, feedbackByQuestion = {}) {
