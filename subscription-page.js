@@ -57,7 +57,7 @@
   function renderUsage(usage) {
     const pro = usage.plan === "PRO";
     $("usage-label").textContent = pro ? "Pro access" : "Free allowance";
-    $("usage-description").textContent = pro ? "Independent allowance for each AI tool" : "Shared allowance across all AI tools · rolling 3 days";
+    $("usage-description").textContent = pro ? "Independent allowance for each AI tool" : "Shared allowance across all AI tools · 3-day window";
     $("usage-count").textContent = pro ? "Per-tool usage" : (usage.used + " / 5 used");
     $("usage-progress").style.width = pro ? "100%" : Math.min(100, (usage.used / 5) * 100) + "%";
     let detail = $("tool-usage");
