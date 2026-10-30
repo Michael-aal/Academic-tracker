@@ -21,6 +21,12 @@ async function deliverDueFocusSessions() {
       const completedAt = new Date().toISOString();
       const completed = { ...session, status: "completed", remainingMs: 0, endsAt: null, completedAt, notificationSentAt: completedAt };
       await prisma.userDataRecord.update({ where: { id: record.id }, data: { data: completed } });
+      const historyId = "session-" + String(session.startedAt || completedAt).replace(/[^a-zA-Z0-9_-]/g, "-");
+      await prisma.userDataRecord.upsert({
+        where: { userId_kind_recordId: { userId: record.userId, kind: "focus-sessions", recordId: historyId } },
+        create: { userId: record.userId, kind: "focus-sessions", recordId: historyId, data: completed },
+        update: { data: completed }
+      });
       const subscriptions = await prisma.userDataRecord.findMany({
         where: { userId: record.userId, kind: "push-subscriptions" },
         take: 10
