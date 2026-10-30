@@ -29,7 +29,7 @@ test("validates memory cards and their review schedule", () => {
 });
 
 test("validates YouTube video IDs and metadata", () => {
-  const video = { title: "Algebra basics", channelTitle: "Learning channel", description: "", thumbnail: "https://i.ytimg.com/vi/abcdefghijk/mqdefault.jpg" };
+  const video = { id: "abcdefghijk", title: "Algebra basics", channelTitle: "Learning channel", description: "", thumbnail: "https://i.ytimg.com/vi/abcdefghijk/mqdefault.jpg" };
   assert.equal(userDataRouter.validateData("video-library", video, "abcdefghijk"), null);
   assert.match(userDataRouter.validateData("video-library", video, "not-a-youtube-id"), /video record is invalid/);
 });
