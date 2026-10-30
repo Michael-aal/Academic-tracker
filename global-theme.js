@@ -8,16 +8,17 @@
     lightStyles.rel = "stylesheet";
     lightStyles.href = "global-light-mode.css";
     lightStyles.dataset.globalLightMode = "true";
-    document.head.appendChild(lightStyles);
   }
+  /* Keep shared theme overrides after route styles while reusing the early-loaded link. */
+  document.head.appendChild(lightStyles);
   /* Loaded centrally so every route receives the same dark-surface corrections. */
   if (!document.querySelector('link[data-dark-mode-guard]')) {
     const guard = document.createElement("link");
     guard.rel = "stylesheet";
     guard.href = "dark-mode-guard.css";
     guard.dataset.darkModeGuard = "true";
-    document.head.appendChild(guard);
   }
+  document.head.appendChild(guard);
   if (!document.querySelector('link[data-vibrant-refresh]')) {
     const refresh = document.createElement("link");
     refresh.rel = "stylesheet";
