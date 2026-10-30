@@ -77,7 +77,14 @@
     const signedInUserId = accountUserId();
     if (state.accountUserId && signedInUserId && state.accountUserId !== signedInUserId) state = defaults();
     if (signedInUserId) { state.accountUserId = signedInUserId; await save(false); }
-    try { await syncSubjectsFromServer(); }
+    try {
+      await syncSubjectsFromServer();
+      const focusData = await apiRequest("/api/user-data/focus-sessions");
+      const remoteFocus = focusData.records?.find(record => record.recordId === "active")?.data;
+      if (remoteFocus && !focusSession()) {
+        localStorage.setItem(FOCUS_KEY, JSON.stringify(remoteFocus));
+      }
+    }
     catch (e) {
       console.error("Could not sync subjects with the account database", e);
       if (apiToken()) {
@@ -133,7 +140,18 @@
   function average() { const list=state.subjects.filter(s=>getEntered(s.id)>0); return list.length?Math.round(list.reduce((a,s)=>a+pct(s.id),0)/list.length):0; }
   const FOCUS_KEY = "academic-tracker-focus-session";
   const focusSession = () => { try { return JSON.parse(localStorage.getItem(FOCUS_KEY) || "null"); } catch { return null; } };
-  const saveFocusSession = session => { if(session) localStorage.setItem(FOCUS_KEY, JSON.stringify(session)); else localStorage.removeItem(FOCUS_KEY); };
+  const saveFocusSession = session => {
+    if(session) localStorage.setItem(FOCUS_KEY, JSON.stringify(session)); else localStorage.removeItem(FOCUS_KEY);
+    if (session && apiToken()) {
+      apiRequest("/api/user-data/focus-sessions/active", { method: "PUT", body: JSON.stringify({ data: session }) })
+        .catch(error => console.warn("Could not sync focus session", error));
+      if (session.status === "completed") {
+        const recordId = "session-" + String(session.startedAt || session.completedAt || Date.now()).replace(/[^a-zA-Z0-9_-]/g, "-");
+        apiRequest("/api/user-data/focus-sessions/" + encodeURIComponent(recordId), { method: "PUT", body: JSON.stringify({ data: session }) })
+          .catch(error => console.warn("Could not save focus session history", error));
+      }
+    }
+  };
   const formatFocusTime = ms => { const seconds=Math.max(0,Math.ceil(ms/1000)); return String(Math.floor(seconds/60)).padStart(2,"0")+":"+String(seconds%60).padStart(2,"0"); };
   function setView(next) { view=next; document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===view)); render(); window.scrollTo({top:0,behavior:"smooth"}); }
   function heading(title,subtitle,action="") { return '<div class="section-heading"><div><h2>'+title+'</h2><p>'+subtitle+'</p></div>'+action+'</div>'; }
