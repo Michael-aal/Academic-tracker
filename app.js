@@ -311,8 +311,16 @@
     state.targets[sid]=Math.max(0,Math.min(100,target)); state.assessments[sid]=defaultAssessments(); await save(); $("#subject-dialog").close();
   }
   async function exportBackup() {
-    const blob=new Blob([JSON.stringify({app:"Academic Tracker",schemaVersion:1,exportedAt:new Date().toISOString(),data:state},null,2)],{type:"application/json"});
-    const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="academic-tracker-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();URL.revokeObjectURL(url);
+    try {
+      const account = await apiRequest("/api/account/export");
+      const backup = { app: "Academic Tracker", schemaVersion: 2, exportedAt: new Date().toISOString(), data: state, account };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob), a = document.createElement("a");
+      a.href = url; a.download = "academic-tracker-account-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+      a.click(); URL.revokeObjectURL(url);
+    } catch (error) {
+      alert("Could not export your full account backup. Please check your connection and try again. " + error.message);
+    }
   }
   async function importBackup(file) {
     if(!file) return;
