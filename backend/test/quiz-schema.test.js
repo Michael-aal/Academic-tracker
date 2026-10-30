@@ -61,3 +61,11 @@ test("server-side marking handles correct, incorrect, unanswered, and duplicate 
   assert.equal(blank.incorrectAnswers, 0);
   assert.throws(() => markQuiz(quiz, [{ questionId: "q1", optionId: "A" }, { questionId: "q1", optionId: "B" }]), /duplicate/);
 });
+
+
+test("preserves the selected per-question timer in the learner-facing quiz payload", () => {
+  const quiz = validateQuiz(sampleQuiz(), 1);
+  quiz.timePerQuestionSeconds = 15;
+  assert.equal(publicQuiz(quiz).timePerQuestionSeconds, 15);
+  assert.equal(publicQuiz(validateQuiz(sampleQuiz(), 1)).timePerQuestionSeconds, 0);
+});

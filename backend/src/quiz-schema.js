@@ -48,6 +48,7 @@ function validateQuiz(input, expectedCount) {
 function publicQuiz(quiz) {
   return {
     title: quiz.title,
+    timePerQuestionSeconds: Number.isInteger(quiz.timePerQuestionSeconds) ? quiz.timePerQuestionSeconds : 0,
     questions: quiz.questions.map(({ correctAnswer, ...question }) => question)
   };
 }
