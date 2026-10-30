@@ -2,6 +2,8 @@ const { randomUUID } = require("node:crypto");
 
 const WINDOW_MS = 15 * 60 * 1000;
 const DEFAULT_LIMIT = 10;
+const RETENTION_MS = 48 * 60 * 60 * 1000;
+let lastCleanupAt = 0;
 
 /**
  * Atomically consumes one AI request from a fixed 15-minute account window.
@@ -18,7 +20,15 @@ async function consumeAiQuota(prisma, userId, now = new Date(), limit = DEFAULT_
     WHERE "ai_usage_windows"."request_count" < ${limit}
     RETURNING "request_count"
   `;
-  return rows.length > 0;
+  const allowed = rows.length > 0;
+  // Keep the quota table bounded without adding a scheduler dependency.
+  if (now.getTime() - lastCleanupAt > 60 * 60 * 1000) {
+    lastCleanupAt = now.getTime();
+    prisma.aiUsageWindow.deleteMany({
+      where: { windowStart: { lt: new Date(now.getTime() - RETENTION_MS) } }
+    }).catch(() => { lastCleanupAt = 0; });
+  }
+  return allowed;
 }
 
 module.exports = { consumeAiQuota, WINDOW_MS, DEFAULT_LIMIT };
