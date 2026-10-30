@@ -46,6 +46,52 @@
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
+  const API_BASE = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\\/$/, "");
+  const apiToken = () => localStorage.getItem("academic-tracker-token") || "";
+  async function apiRequest(path, options = {}) {
+    const token = apiToken();
+    if (!token) throw new Error("Your session is missing. Please log in again.");
+    const response = await fetch(API_BASE + path, {
+      ...options,
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token, ...(options.headers || {}) }
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Could not sync your subjects. Please try again.");
+    return data;
+  }
+  async function syncSubjectsFromServer() {
+    if (!apiToken()) return;
+    const data = await apiRequest("/api/subjects?academicYear=" + encodeURIComponent(state.academicYear) + "&term=" + encodeURIComponent(state.term));
+    const remoteSubjects = Array.isArray(data.subjects) ? data.subjects : [];
+    const previous = [...state.subjects];
+    const synced = [];
+    for (const remote of remoteSubjects) {
+      const local = previous.find(subject => subject.serverId === remote.id || subject.name.trim().toLocaleLowerCase("en") === remote.name.trim().toLocaleLowerCase("en"));
+      synced.push({
+        ...(local || {}),
+        id: local?.id || remote.id,
+        serverId: remote.id,
+        name: remote.name,
+        createdAt: remote.createdAt || local?.createdAt || new Date().toISOString()
+      });
+      if (local) {
+        state.targets[local.id] = remote.targetPercentage;
+      } else {
+        state.targets[remote.id] = remote.targetPercentage;
+      }
+    }
+    for (const local of previous) {
+      if (synced.some(subject => subject.id === local.id)) continue;
+      const created = await apiRequest("/api/subjects", {
+        method: "POST",
+        body: JSON.stringify({ name: local.name, targetPercentage: targetFor(local.id) })
+      });
+      const remote = created.subject;
+      synced.push({ ...local, serverId: remote.id });
+    }
+    state.subjects = synced;
+    await save(false);
+  }
   async function load() {
     try {
       const db = await dbOpen();
@@ -54,6 +100,18 @@
         db.close(); if (value) state = {...defaults(),...value};
       } else { const raw=localStorage.getItem(KEY); if(raw) state={...defaults(),...JSON.parse(raw)}; }
     } catch(e) { console.warn("Could not load saved records",e); }
+    try {
+      await syncSubjectsFromServer();
+    } catch (e) {
+      console.error("Could not sync subjects with the account database", e);
+      if (apiToken()) {
+        const notice = document.createElement("p");
+        notice.className = "notice";
+        notice.setAttribute("role", "status");
+        notice.textContent = "Your subjects could not be synced with your account. Changes may remain only on this device until the connection is restored. " + e.message;
+        $("#app")?.prepend(notice);
+      }
+    }
     render();
   }
   async function save(renderAfter = true) {
@@ -184,7 +242,16 @@
     const name=$("#subject-name").value.trim(), target=num($("#subject-target").value);
     if(!name) return;
     if(state.subjects.some(s=>s.name.toLowerCase()===name.toLowerCase())) { alert("That subject already exists."); return; }
-    const sid=id(); state.subjects.push({id:sid,name,createdAt:new Date().toISOString()}); state.targets[sid]=Math.max(0,Math.min(100,target)); state.assessments[sid]=defaultAssessments(); await save(); $("#subject-dialog").close();
+    const sid=id();
+    let serverId = null;
+    if (apiToken()) {
+      try {
+        const result = await apiRequest("/api/subjects", { method: "POST", body: JSON.stringify({ name, targetPercentage: Math.max(0,Math.min(100,target)) }) });
+        serverId = result.subject.id;
+      } catch (error) { alert(error.message); return; }
+    } else { alert("Please log in again before adding a subject so it can be saved to your account."); return; }
+    state.subjects.push({id:sid,serverId,name,createdAt:new Date().toISOString()});
+    state.targets[sid]=Math.max(0,Math.min(100,target)); state.assessments[sid]=defaultAssessments(); await save(); $("#subject-dialog").close();
   }
   async function exportBackup() {
     const blob=new Blob([JSON.stringify({app:"Academic Tracker",schemaVersion:1,exportedAt:new Date().toISOString(),data:state},null,2)],{type:"application/json"});
@@ -250,8 +317,8 @@
       await save();alert("Assessment setup applied to all subjects.");
     }
     if(action==="complete-check") { const missing=state.subjects.filter(s=>!isComplete(s.id)); if(missing.length){alert("Still missing scores for: "+missing.map(s=>s.name+" ("+(itemsFor(s.id).length-getEntered(s.id))+" missing)").join(", "));}else if(!state.subjects.length){alert("Add subjects first.");}else if(confirm("All assessment marks are entered for every subject. Open the current report?"))setView("reports"); }
-    if(action==="rename-subject") {const s=state.subjects.find(x=>x.id===sid);if(!s)return;const name=prompt("Rename subject",s.name);if(name&&name.trim()){s.name=name.trim();await save();}}
-    if(action==="delete-subject") {const s=state.subjects.find(x=>x.id===sid);if(!s||!confirm("Remove "+s.name+" and its saved scores? Export a backup first if needed."))return;state.subjects=state.subjects.filter(x=>x.id!==sid);delete state.targets[sid];delete state.assessments[sid];Object.keys(state.scores).forEach(k=>{if(k.endsWith("|"+sid))delete state.scores[k];});await save();}
+    if(action==="rename-subject") {const s=state.subjects.find(x=>x.id===sid);if(!s)return;const name=prompt("Rename subject",s.name);if(name&&name.trim()){try{if(!s.serverId)throw new Error("This subject is not linked to your account yet.");await apiRequest("/api/subjects/"+encodeURIComponent(s.serverId),{method:"PATCH",body:JSON.stringify({name:name.trim()})});s.name=name.trim();await save();}catch(error){alert(error.message);}}}
+    if(action==="delete-subject") {const s=state.subjects.find(x=>x.id===sid);if(!s||!confirm("Remove "+s.name+" and its saved scores? Export a backup first if needed."))return;try{if(!s.serverId)throw new Error("This subject is not linked to your account yet.");await apiRequest("/api/subjects/"+encodeURIComponent(s.serverId),{method:"DELETE"});state.subjects=state.subjects.filter(x=>x.id!==sid);delete state.targets[sid];delete state.assessments[sid];Object.keys(state.scores).forEach(k=>{if(k.endsWith("|"+sid))delete state.scores[k];});await save();}catch(error){alert(error.message);}}
     if(action==="save-period") {const year=$("#academic-year").value.trim();if(!year){alert("Enter an academic year.");return;}state.academicYear=year;state.term=$("#current-term").value;await save();alert("Academic period saved.");}
     if(action==="export") exportBackup();
     if(action==="import") $("#import-file").click();
