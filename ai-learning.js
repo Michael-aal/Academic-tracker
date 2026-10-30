@@ -438,7 +438,8 @@
           content: requestContent,
           level: user.educationTrack === "HIGHER" ? "higher institution / university" : "secondary school",
           questionCount: Number($("question-count")?.value || 5),
-          difficulty: $("quiz-difficulty")?.value || "medium"
+          difficulty: $("quiz-difficulty")?.value || "medium",
+          timePerQuestionSeconds: Number($("quiz-time-limit")?.value || 0)
         })
       });
       if (state.action === "quiz") {
