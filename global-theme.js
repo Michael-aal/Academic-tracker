@@ -19,6 +19,27 @@
   }
   const storageKey = "academic-tracker-theme";
   const apiBase = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
+
+  // Make the install manifest and install experience available on every page.
+  if (!document.querySelector('link[rel="manifest"]')) {
+    const manifestLink = document.createElement("link");
+    manifestLink.rel = "manifest";
+    manifestLink.href = "./manifest.webmanifest";
+    document.head.appendChild(manifestLink);
+  }
+  if (!document.querySelector('link[data-pwa-install-styles]')) {
+    const installStyles = document.createElement("link");
+    installStyles.rel = "stylesheet";
+    installStyles.href = "./pwa-install.css";
+    installStyles.dataset.pwaInstallStyles = "true";
+    document.head.appendChild(installStyles);
+  }
+  if (!document.querySelector('script[data-pwa-install]')) {
+    const installScript = document.createElement("script");
+    installScript.src = "./pwa-install.js";
+    installScript.dataset.pwaInstall = "true";
+    document.head.appendChild(installScript);
+  }
   const token = localStorage.getItem("academic-tracker-token") || "";
   const themeColor = document.querySelector('meta[name="theme-color"]');
   const icons = {
