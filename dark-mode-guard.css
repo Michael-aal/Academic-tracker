@@ -2,26 +2,26 @@
    White text is allowed; white/light surfaces are not. */
 html[data-theme="dark"] {
   color-scheme: dark !important;
-  --bg: #0b0b16 !important;
-  --panel: #121326 !important;
-  --panel2: #191a32 !important;
-  --line: #343452 !important;
+  --bg: #0b0812 !important;
+  --panel: #110d1b !important;
+  --panel2: #171123 !important;
+  --line: #3a2d4d !important;
   --text: #ffffff !important;
   --muted: #c0bbd6 !important;
-  --ui-bg: #0b0b16 !important;
-  --ui-surface: #121326 !important;
-  --ui-surface-raised: #191a32 !important;
-  --ui-surface-soft: #20203d !important;
-  --ui-border: #343452 !important;
+  --ui-bg: #0b0812 !important;
+  --ui-surface: #110d1b !important;
+  --ui-surface-raised: #171123 !important;
+  --ui-surface-soft: #21172f !important;
+  --ui-border: #3a2d4d !important;
   --ui-text: #ffffff !important;
   --ui-muted: #c0bbd6 !important;
   --ui-accent: #c4b5fd !important;
-  background: #0b0b16 !important;
+  background: #0b0812 !important;
   color: #ffffff !important;
 }
 html[data-theme="dark"] body {
-  background: #0b0b16 !important;
-  background-image: radial-gradient(ellipse at 80% -20%, #201b38 0, transparent 48%) !important;
+  background: #0b0812 !important;
+  background-image: radial-gradient(ellipse at 80% -20%, #251638 0, transparent 48%) !important;
   color: #ffffff !important;
 }
 /* Neutralize the common light surfaces used across page-specific stylesheets. */
@@ -47,16 +47,16 @@ html[data-theme="dark"] :where(
   .calculator-screen, .calc-display, .calc-history, .empty-state
 ) {
   color: #ffffff !important;
-  background-color: #121326 !important;
-  border-color: #343452 !important;
+  background-color: #110d1b !important;
+  border-color: #3a2d4d !important;
   box-shadow: none;
 }
 html[data-theme="dark"] :where(input, select, textarea, button, [contenteditable="true"]) {
   color: #ffffff;
-  border-color: #494667;
+  border-color: #49375f;
 }
 html[data-theme="dark"] :where(input, select, textarea, [contenteditable="true"]) {
-  background-color: #0d0e20 !important;
+  background-color: #110d1b !important;
 }
 html[data-theme="dark"] :where(input, textarea, select)::placeholder {
   color: #c0bbd6 !important;
@@ -79,7 +79,7 @@ html[data-theme="dark"] :where(.button,.btn,.button-primary,.primary,.submit-but
 html[data-theme="dark"] :where(.secondary,.button-secondary,.icon-button,.menu-trigger,.menu-toggle,.show-password,.at-theme-toggle,.calc-key,.track-card) {
   color: #ffffff !important;
   background: #20203b !important;
-  border-color: #494667 !important;
+  border-color: #49375f !important;
 }
 html[data-theme="dark"] :where(.brand-icon,.brand-mark,.at-nav-brand-mark,.feature-icon,.step-number,.icon-box,.subject-icon,.tool-icon,.value-icon) {
   color: #ffffff !important;
