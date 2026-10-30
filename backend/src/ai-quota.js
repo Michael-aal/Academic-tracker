@@ -16,7 +16,7 @@ function utcDayStart(now = new Date()) {
 }
 function usageWindow(planCode, now = new Date()) {
   const window = PLAN_WINDOWS[String(planCode || "").toLowerCase()] || PLAN_WINDOWS.monthly;
-  const start = new Date(now.getTime() - window.days * DAY_MS);
+  const start = new Date(now.getTime() - (window.days - 1) * DAY_MS);
   return { start: utcDayStart(start), end: utcDayStart(now), limit: window.limit, days: window.days };
 }
 async function getEntitlement(userId, now = new Date()) {
