@@ -1,6 +1,6 @@
-const CACHE_NAME = "academic-tracker-v9";
+const CACHE_NAME = "academic-tracker-v10";
 const APP_SHELL = [
-  "./", "./index.html", "./landing.css", "./landing-menu-fix.css", "./landing.js",
+  "./", "./index.html", "./theme-init.js", "./global-theme.js", "./global-light-mode.css", "./dark-mode-guard.css", "./global-navigation.css", "./landing.css", "./landing-calm.css", "./landing-menu-fix.css", "./landing.js",
   "./login.html", "./register.html", "./auth.css", "./auth.js",
   "./dashboard.html", "./dashboard-auth.js",
   "./styles.css", "./ui-polish.css", "./focus.css", "./app.js", "./global-navigation.js", "./vibrant-refresh.css",

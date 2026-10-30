@@ -75,8 +75,10 @@
     if (banner || isInstalled() || wasRecentlyDismissed()) return;
     banner = document.createElement("section");
     banner.className = "at-install-banner";
-    banner.setAttribute("role", "dialog");
+    banner.setAttribute("role", "region");
     banner.setAttribute("aria-label", "Install Academic Tracker");
+    banner.setAttribute("aria-live", "polite");
+    banner.setAttribute("aria-atomic", "true");
     banner.innerHTML = `
       <span class="at-install-mark" aria-hidden="true">A</span>
       <div class="at-install-copy">

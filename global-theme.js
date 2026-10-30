@@ -2,22 +2,24 @@
 (() => {
   "use strict";
   const root = document.documentElement;
-  /* Load the shared light palette on every route, not only pages that link it manually. */
-  if (!document.querySelector('link[data-global-light-mode]')) {
-    const lightStyles = document.createElement("link");
+  /* Reuse the early-loaded theme styles and move them after route CSS for predictable cascade order. */
+  let lightStyles = document.querySelector('link[data-global-light-mode]');
+  if (!lightStyles) {
+    lightStyles = document.createElement("link");
     lightStyles.rel = "stylesheet";
     lightStyles.href = "global-light-mode.css";
     lightStyles.dataset.globalLightMode = "true";
-    document.head.appendChild(lightStyles);
   }
-  /* Loaded centrally so every route receives the same dark-surface corrections. */
-  if (!document.querySelector('link[data-dark-mode-guard]')) {
-    const guard = document.createElement("link");
+  document.head.appendChild(lightStyles);
+
+  let guard = document.querySelector('link[data-dark-mode-guard]');
+  if (!guard) {
+    guard = document.createElement("link");
     guard.rel = "stylesheet";
     guard.href = "dark-mode-guard.css";
     guard.dataset.darkModeGuard = "true";
-    document.head.appendChild(guard);
   }
+  document.head.appendChild(guard);
   if (!document.querySelector('link[data-vibrant-refresh]')) {
     const refresh = document.createElement("link");
     refresh.rel = "stylesheet";
@@ -53,7 +55,9 @@
     installScript.dataset.pwaInstall = "true";
     document.head.appendChild(installScript);
   }
-  const token = localStorage.getItem("academic-tracker-token") || "";
+  const safeStorageGet = key => { try { return localStorage.getItem(key) || ""; } catch (_) { return ""; } };
+  const token = safeStorageGet("academic-tracker-token");
+  let themeRevision = 0;
   const themeColor = document.querySelector('meta[name="theme-color"]');
   const icons = {
     moon: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z"/></svg>',
@@ -88,6 +92,7 @@
       toggle.setAttribute("aria-pressed", String(dark));
     }
     if (persist) {
+      themeRevision++;
       try { localStorage.setItem(storageKey, next); } catch (_) {}
       if (token) fetch(apiBase + "/api/user-data/preferences/main", { method: "PUT", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ data: { theme: next, updatedAt: new Date().toISOString() } }) }).catch(error => console.warn("Could not sync theme preference", error));
     }
@@ -109,6 +114,7 @@
     fetch(apiBase + "/api/user-data/preferences", { headers: { Authorization: "Bearer " + token } })
       .then(response => response.ok ? response.json() : Promise.reject(new Error("Could not load account preferences.")))
       .then(result => {
+        if (themeRevision !== 0) return;
         const saved = result.records?.find(record => record.recordId === "main")?.data;
         if (saved?.theme === "light" || saved?.theme === "dark") {
           applyTheme(saved.theme);
