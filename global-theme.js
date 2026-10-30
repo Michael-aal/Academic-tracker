@@ -18,7 +18,7 @@
     document.head.appendChild(refresh);
   }
   const storageKey = "academic-tracker-theme";
-  const apiBase = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\\/$/, "");
+  const apiBase = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
   const token = localStorage.getItem("academic-tracker-token") || "";
   const themeColor = document.querySelector('meta[name="theme-color"]');
   const icons = {
