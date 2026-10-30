@@ -56,3 +56,28 @@
  .focus-promo>.button{width:100%}
 }
 @media(prefers-reduced-motion:reduce){.focus-progress-track span{transition:none}}
+
+
+/* Focus Shield light mode: consistent white/lavender surfaces and compact hierarchy. */
+html:not([data-theme="dark"]) .focus-intro h2,
+html:not([data-theme="dark"]) .focus-panel-top h3,
+html:not([data-theme="dark"]) .focus-setup-card h3,
+html:not([data-theme="dark"]) .focus-reset-card h3 {color:#28183e!important}
+html:not([data-theme="dark"]) .focus-intro p,
+html:not([data-theme="dark"]) .focus-disclaimer,
+html:not([data-theme="dark"]) .focus-setup-card .notice,
+html:not([data-theme="dark"]) .focus-reset-card .notice {color:#6d617b!important}
+html:not([data-theme="dark"]) .focus-panel {background:radial-gradient(ellipse at 50% 0%,rgba(139,99,210,.10),transparent 65%),linear-gradient(145deg,#fff,#f8f4ff)!important;border-color:#e4d7f5!important;box-shadow:0 12px 32px rgba(91,43,168,.07)!important}
+html:not([data-theme="dark"]) .focus-clock {color:#5b2ba8!important}
+html:not([data-theme="dark"]) .focus-task-current {color:#7545c8!important}
+html:not([data-theme="dark"]) .focus-progress-track {background:#eee7f7!important}
+html:not([data-theme="dark"]) .focus-setup-card,
+html:not([data-theme="dark"]) .focus-reset-card,
+html:not([data-theme="dark"]) .focus-history-card {background:#fff!important;border-color:#e7def5!important}
+html:not([data-theme="dark"]) .focus-setup-card label {color:#5f526f!important}
+html:not([data-theme="dark"]) .focus-setup-card input,
+html:not([data-theme="dark"]) .focus-setup-card select {background:#fff!important;color:#28183e!important;border-color:#ddd0ef!important}
+html:not([data-theme="dark"]) .focus-notifications details {background:#f8f4ff!important;border-color:#e7def5!important}
+html:not([data-theme="dark"]) .focus-notifications summary,
+html:not([data-theme="dark"]) .focus-honesty {color:#5b2ba8!important}
+html:not([data-theme="dark"]) .focus-honesty {background:#f3edff!important}
