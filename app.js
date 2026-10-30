@@ -61,6 +61,7 @@
     } catch(e) { console.warn("Could not load saved records",e); }
     const signedInUserId = accountUserId();
     if (state.accountUserId && signedInUserId && state.accountUserId !== signedInUserId) state = defaults();
+    if (signedInUserId) { state.accountUserId = signedInUserId; await save(false); }
     try { await syncSubjectsFromServer(); }
     catch (e) {
       console.error("Could not sync subjects with the account database", e);
