@@ -6,26 +6,27 @@ const RETENTION_MS = 48 * 60 * 60 * 1000;
 let lastCleanupAt = 0;
 
 /**
- * Atomically consumes one AI request from a fixed 15-minute account window.
- * The conditional upsert is enforced by PostgreSQL, so concurrent API instances
- * cannot each admit requests against stale in-memory counters.
+ * Atomically consumes one AI request from a rolling 15-minute account window.
+ * Locking the account row serializes concurrent requests across API instances;
+ * the count and insert happen in the same PostgreSQL transaction.
  */
 async function consumeAiQuota(prisma, userId, now = new Date(), limit = DEFAULT_LIMIT) {
-  const windowStart = new Date(Math.floor(now.getTime() / WINDOW_MS) * WINDOW_MS);
-  const rows = await prisma.$queryRaw`
-    INSERT INTO "ai_usage_windows" ("id", "user_id", "window_start", "request_count")
-    VALUES (${randomUUID()}, ${userId}, ${windowStart}, 1)
-    ON CONFLICT ("user_id", "window_start")
-    DO UPDATE SET "request_count" = "ai_usage_windows"."request_count" + 1
-    WHERE "ai_usage_windows"."request_count" < ${limit}
-    RETURNING "request_count"
-  `;
-  const allowed = rows.length > 0;
-  // Keep the quota table bounded without adding a scheduler dependency.
+  const cutoff = new Date(now.getTime() - WINDOW_MS);
+  const allowed = await prisma.$transaction(async tx => {
+    await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${userId} FOR UPDATE`;
+    const recentCount = await tx.aiUsageEvent.count({
+      where: { userId, createdAt: { gt: cutoff } }
+    });
+    if (recentCount >= limit) return false;
+    await tx.aiUsageEvent.create({ data: { id: randomUUID(), userId, createdAt: now } });
+    return true;
+  });
+
+  // Keep the audit/quota table bounded without adding a scheduler dependency.
   if (now.getTime() - lastCleanupAt > 60 * 60 * 1000) {
     lastCleanupAt = now.getTime();
-    prisma.aiUsageWindow.deleteMany({
-      where: { windowStart: { lt: new Date(now.getTime() - RETENTION_MS) } }
+    prisma.aiUsageEvent.deleteMany({
+      where: { createdAt: { lt: new Date(now.getTime() - RETENTION_MS) } }
     }).catch(() => { lastCleanupAt = 0; });
   }
   return allowed;
