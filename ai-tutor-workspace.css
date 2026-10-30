@@ -297,7 +297,7 @@
 .ai-tutor-page .tutor-composer .form-foot,
 .ai-tutor-page .tutor-composer-bottom p{display:none!important}
 .ai-tutor-page .tutor-composer{display:flex;align-items:flex-end;gap:8px}
-.ai-tutor-page .tutor-composer textarea{display:block;flex:1;min-width:0;width:100%;height:24px;min-height:24px;max-height:180px;resize:none;overflow-y:hidden;padding:11px 13px;border:0;border-radius:17px;background:transparent;font:400 15px/1.55 inherit;outline:none;box-shadow:none}
+.ai-tutor-page .tutor-composer textarea{display:block;flex:1;min-width:0;width:100%;height:24px;min-height:24px;max-height:180px;resize:none;overflow-y:hidden;padding:11px 13px;border:0;border-radius:17px;background:transparent;font-family:inherit;font-size:15px;font-weight:400;line-height:1.55;outline:none;box-shadow:none}
 .ai-tutor-page .tutor-composer textarea:focus{border:0;box-shadow:none}
 .ai-tutor-page .tutor-composer-bottom{display:flex;flex:0 0 auto;align-items:center;justify-content:flex-end;margin:0;padding:0}
 .ai-tutor-page .tutor-composer-bottom button{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;min-height:40px;padding:0;border:0;border-radius:50%;font-size:0;box-shadow:none}
