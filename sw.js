@@ -79,5 +79,13 @@ self.addEventListener("push", event => {
     data: { url: "./dashboard.html?view=focus" },
     renotify: false
   };
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const visibleClients = windows.filter(client => client.visibilityState === "visible");
+    if (visibleClients.length) {
+      visibleClients.forEach(client => client.postMessage({ type: "focus-notification", title, body: options.body, tag: options.tag }));
+      return;
+    }
+    await self.registration.showNotification(title, options);
+  })());
 });
