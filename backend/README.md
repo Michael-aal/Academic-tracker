@@ -16,6 +16,10 @@ Express + Prisma + PostgreSQL API for personal Academic Tracker accounts. This s
 - `DELETE /api/subjects/:id` — deletes an owned subject and its scores.
 - `GET /api/scores` — lists the signed-in user's scores for a period.
 - `PUT /api/scores/:subjectId` — creates or updates the score record for an owned subject and period.
+- `GET /api/user-data/:kind` — lists only the signed-in user's saved records for an approved category.
+- `PUT /api/user-data/:kind/:recordId` — validates and upserts one user-owned saved record.
+- `DELETE /api/user-data/:kind/:recordId` — deletes only the signed-in user's record.
+- `POST /api/auth/logout` — revokes active bearer tokens for the account by incrementing its session version.
 
 Authenticated endpoints require `Authorization: Bearer <token>`. The frontend must not send or select a user ID to determine ownership; the server derives it from the verified token.
 
@@ -66,9 +70,19 @@ Add these environment variables in Render (never commit real values):
 
 For the simplest first deployment, use Neon's direct PostgreSQL connection string as `DATABASE_URL` so both Prisma Client and the migration command can connect. Keep the connection string private. We can add a separate direct migration URL later if you decide to use Neon's pooled URL for runtime traffic.
 
-## Important current limitation
+## Account data categories
 
-This creates the backend and database schema; it does **not yet connect the existing browser UI to these endpoints**. The current frontend still reads/writes IndexedDB. The next stage is to add registration/login screens and replace local-only persistence for authenticated users with these API calls, while keeping the existing design and backup/import capability.
+The authenticated `user_data_records` table stores validated, per-user JSON records for secondary tracker state, saved video-library items, video watch history, study sessions, Memory Mastery cards and review totals, AI tutor conversations, generated note summaries, focus sessions, and theme preferences. Each record is uniquely scoped by `(user_id, kind, record_id)`, indexed by user/category, limited to approved categories and a 24 KB record payload, and deleted automatically when its owning account is deleted. Existing relational tables remain the source of truth for subjects, secondary assessment scores, university courses/results, support messages, and AI quiz attempts.
+
+Every user-data route requires a verified bearer token and derives ownership from `req.userId`; the client cannot select another user's ID. Responses are marked `private, no-store`. The API applies per-account request limits and category-specific validation.
+
+## Session security
+
+JWTs carry a session-version claim. Authenticated requests compare that claim with the account's current `session_version` in PostgreSQL. Explicit sign-out increments the version and invalidates existing tokens for that account. This currently revokes all devices for that account, not just the current browser. Tokens are still held by the static frontend in browser storage, so a future move to a secure HttpOnly cookie or another XSS-resistant session design remains a security improvement.
+
+## Production migration
+
+Deploy schema changes with `npx prisma migrate deploy` using the Render build command documented above. Do not use `prisma db push` against production. The UI must not be considered fully synced until the database migration has run and the production API has passed authenticated read/write checks.
 
 
 ## AI learning (optional)
