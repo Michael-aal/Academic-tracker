@@ -88,12 +88,14 @@
       }
       const [plans, account, usage] = await Promise.all([request("/api/subscriptions/plans"), request("/api/subscriptions/me"), request("/api/subscriptions/usage")]);
       const sub = account.subscription;
-      $("plan-status").textContent = sub.isPro ? (sub.status === "TRIALING" ? "Pro trial active" : "Pro plan active") : "Free plan";
+      $("plan-status").textContent = sub.planName || (sub.isPro ? "Pro plan active" : "Free plan");
       if (sub.trialEndsAt) {
         const remaining = Math.max(0, Math.ceil((new Date(sub.trialEndsAt).getTime() - Date.now()) / 86400000));
         $("trial-status").textContent = remaining > 0 ? remaining + " day" + (remaining === 1 ? "" : "s") + " left in your trial" : "Trial ended";
       } else if (sub.currentPeriodEnd) {
         $("trial-status").textContent = (sub.cancelAtPeriodEnd ? "Access ends " : "Renews / ends ") + new Date(sub.currentPeriodEnd).toLocaleDateString();
+      } else if (sub.status === "EXPIRED" || sub.status === "CANCELLED") {
+        $("trial-status").textContent = "Previous " + (sub.previousPlanCode || "Pro") + " plan ended";
       } else $("trial-status").textContent = "No payment details needed for Free";
       renderUsage(usage);
       renderPlans(plans, sub);
