@@ -1,5 +1,16 @@
 -- Enforce that a university result and its course always belong to the same account.
 CREATE UNIQUE INDEX "university_courses_id_user_id_key" ON "university_courses"("id", "user_id");
+-- Fail safely instead of silently reassigning any pre-existing cross-account result rows.
+DO $ BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM "university_course_results" result
+    JOIN "university_courses" course ON course."id" = result."course_id"
+    WHERE result."user_id" <> course."user_id"
+  ) THEN
+    RAISE EXCEPTION 'Cannot enforce university result ownership: cross-account course result rows exist.';
+  END IF;
+END $;
 ALTER TABLE "university_course_results" DROP CONSTRAINT "university_course_results_course_id_fkey";
 ALTER TABLE "university_course_results" ADD CONSTRAINT "university_course_results_course_id_user_id_fkey" FOREIGN KEY ("course_id", "user_id") REFERENCES "university_courses"("id", "user_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
