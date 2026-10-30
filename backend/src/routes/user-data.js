@@ -170,21 +170,25 @@ router.put("/:kind/bulk", async (req, res, next) => {
     if (validationError) return res.status(400).json({ error: validationError });
   }
   try {
-    const existing = await prisma.userDataRecord.findMany({
-      where: { userId: req.userId, kind, recordId: { in: [...ids] } },
-      select: { recordId: true }
+    const withinQuota = await prisma.$transaction(async tx => {
+      // Serialize quota-changing writes for this account. Without this lock,
+      // parallel batches could all observe free capacity and exceed the limit.
+      await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${req.userId} FOR UPDATE`;
+      const existing = await tx.userDataRecord.findMany({
+        where: { userId: req.userId, kind, recordId: { in: [...ids] } },
+        select: { recordId: true }
+      });
+      const existingIds = new Set(existing.map(item => item.recordId));
+      const currentCount = await tx.userDataRecord.count({ where: { userId: req.userId, kind } });
+      if (currentCount + records.filter(item => !existingIds.has(item.recordId)).length > (MAX_RECORDS[kind] || 100)) return false;
+      await Promise.all(records.map(item => tx.userDataRecord.upsert({
+        where: { userId_kind_recordId: { userId: req.userId, kind, recordId: item.recordId } },
+        create: { userId: req.userId, kind, recordId: item.recordId, data: item.data },
+        update: { data: item.data }
+      })));
+      return true;
     });
-    const existingIds = new Set(existing.map(item => item.recordId));
-    const currentCount = await prisma.userDataRecord.count({ where: { userId: req.userId, kind } });
-    if (currentCount + records.filter(item => !existingIds.has(item.recordId)).length > (MAX_RECORDS[kind] || 100)) {
-      return res.status(409).json({ error: "This account has reached the saved-record limit for this category." });
-    }
-    const operations = records.map(item => prisma.userDataRecord.upsert({
-      where: { userId_kind_recordId: { userId: req.userId, kind, recordId: item.recordId } },
-      create: { userId: req.userId, kind, recordId: item.recordId, data: item.data },
-      update: { data: item.data }
-    }));
-    await prisma.$transaction(operations);
+    if (!withinQuota) return res.status(409).json({ error: "This account has reached the saved-record limit for this category." });
     res.set("Cache-Control", "private, no-store");
     res.json({ ok: true, saved: records.length });
   } catch (error) { next(error); }
@@ -210,18 +214,24 @@ router.put("/:kind/:recordId", async (req, res, next) => {
   const validationError = validateData(kind, req.body?.data, recordId);
   if (validationError) return res.status(400).json({ error: validationError });
   try {
-    const where = { userId: req.userId, kind, recordId };
-    const existing = await prisma.userDataRecord.findUnique({ where, select: { id: true } });
-    if (!existing) {
-      const count = await prisma.userDataRecord.count({ where: { userId: req.userId, kind } });
-      if (count >= (MAX_RECORDS[kind] || 100)) return res.status(409).json({ error: "This account has reached the saved-record limit for this category. Remove an older item before adding another." });
-    }
-    const record = await prisma.userDataRecord.upsert({
-      where: { userId_kind_recordId: { userId: req.userId, kind, recordId } },
-      create: { userId: req.userId, kind, recordId, data: req.body.data },
-      update: { data: req.body.data },
-      select: { recordId: true, data: true, createdAt: true, updatedAt: true }
+    const record = await prisma.$transaction(async tx => {
+      // Share the same per-account lock as bulk writes so single and batch
+      // requests cannot race each other around category quotas.
+      await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${req.userId} FOR UPDATE`;
+      const where = { userId: req.userId, kind, recordId };
+      const existing = await tx.userDataRecord.findUnique({ where, select: { id: true } });
+      if (!existing) {
+        const count = await tx.userDataRecord.count({ where: { userId: req.userId, kind } });
+        if (count >= (MAX_RECORDS[kind] || 100)) return null;
+      }
+      return tx.userDataRecord.upsert({
+        where: { userId_kind_recordId: { userId: req.userId, kind, recordId } },
+        create: { userId: req.userId, kind, recordId, data: req.body.data },
+        update: { data: req.body.data },
+        select: { recordId: true, data: true, createdAt: true, updatedAt: true }
+      });
     });
+    if (!record) return res.status(409).json({ error: "This account has reached the saved-record limit for this category. Remove an older item before adding another." });
     res.set("Cache-Control", "private, no-store");
     res.json({ record });
   } catch (error) { next(error); }
