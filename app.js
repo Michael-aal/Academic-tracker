@@ -317,10 +317,30 @@
     state.subjects.push({id:subjectId,serverId:serverId || null,name,createdAt:new Date().toISOString()});
     state.targets[subjectId]=Math.max(0,Math.min(100,target)); state.assessments[subjectId]=defaultAssessments(); await save(); $("#subject-dialog").close();
   }
+  async function readLegacyBackup() {
+    const userId = accountUserId();
+    if (!userId) return null;
+    const key = "legacy-backup-" + userId;
+    try {
+      const db = await dbOpen();
+      if (db) {
+        const value = await new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE, "readonly");
+          const request = tx.objectStore(STORE).get(key);
+          request.onsuccess = () => resolve(request.result || null);
+          request.onerror = () => reject(request.error);
+        });
+        db.close();
+        return value;
+      }
+      return JSON.parse(localStorage.getItem("academic-tracker-legacy-backup:" + userId) || "null");
+    } catch (error) { console.warn("Could not read the archived legacy backup", error); return null; }
+  }
   async function exportBackup() {
     try {
       const account = await apiRequest("/api/account/export");
-      const backup = { app: "Academic Tracker", schemaVersion: 2, exportedAt: new Date().toISOString(), data: state, account };
+      const legacyDeviceBackup = await readLegacyBackup();
+      const backup = { app: "Academic Tracker", schemaVersion: 2, exportedAt: new Date().toISOString(), data: state, account, legacyDeviceBackup };
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob), a = document.createElement("a");
       a.href = url; a.download = "academic-tracker-account-backup-" + new Date().toISOString().slice(0, 10) + ".json";
