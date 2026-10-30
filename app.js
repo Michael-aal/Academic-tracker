@@ -129,27 +129,27 @@
       }
     }
     if (state.accountUserId && signedInUserId && state.accountUserId !== signedInUserId) state = defaults();
-    if (signedInUserId) { state.accountUserId = signedInUserId; await save(false); }
+    if (signedInUserId) state.accountUserId = signedInUserId;
     try {
       await syncSubjectsFromServer();
-      const focusData = await apiRequest("/api/user-data/focus-sessions");
-      focusHistory = (focusData.records || []).filter(record => record.recordId !== "active" && record.data?.status === "completed").map(record => ({ ...record.data, savedAt: record.updatedAt })).slice(0, 20);
-      const remoteFocus = focusData.records?.find(record => record.recordId === "active")?.data;
-      if (remoteFocus) {
-        localStorage.setItem(FOCUS_KEY, JSON.stringify(remoteFocus));
-      } else if (focusSession()) {
-        await apiRequest("/api/user-data/focus-sessions/active", { method: "PUT", body: JSON.stringify({ data: focusSession() }) });
-      }
-    }
-    catch (e) {
-      console.error("Could not sync subjects with the account database", e);
+    } catch (e) {
+      console.error("Could not sync academic tracker data with the account database", e);
       if (apiToken()) {
         const notice = document.createElement("p");
         notice.className = "notice";
         notice.setAttribute("role", "status");
-        notice.textContent = "Your subjects could not be synced with your account. Changes may remain only on this device until the connection is restored. " + e.message;
+        notice.textContent = "Your academic records could not be synced with your account. Changes may remain only on this device until the connection is restored. " + e.message;
         $("#app")?.prepend(notice);
       }
+    }
+    try {
+      const focusData = await apiRequest("/api/user-data/focus-sessions");
+      focusHistory = (focusData.records || []).filter(record => record.recordId !== "active" && record.data?.status === "completed").map(record => ({ ...record.data, savedAt: record.updatedAt })).slice(0, 20);
+      const remoteFocus = focusData.records?.find(record => record.recordId === "active")?.data;
+      if (remoteFocus) localStorage.setItem(FOCUS_KEY, JSON.stringify(remoteFocus));
+      else if (focusSession()) await apiRequest("/api/user-data/focus-sessions/active", { method: "PUT", body: JSON.stringify({ data: focusSession() }) });
+    } catch (e) {
+      console.warn("Could not sync focus history with the account database", e);
     }
     render();
   }
