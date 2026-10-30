@@ -2,6 +2,14 @@
 (() => {
   "use strict";
   const root = document.documentElement;
+  /* Load the shared light palette on every route, not only pages that link it manually. */
+  if (!document.querySelector('link[data-global-light-mode]')) {
+    const lightStyles = document.createElement("link");
+    lightStyles.rel = "stylesheet";
+    lightStyles.href = "global-light-mode.css";
+    lightStyles.dataset.globalLightMode = "true";
+    document.head.appendChild(lightStyles);
+  }
   /* Loaded centrally so every route receives the same dark-surface corrections. */
   if (!document.querySelector('link[data-dark-mode-guard]')) {
     const guard = document.createElement("link");
