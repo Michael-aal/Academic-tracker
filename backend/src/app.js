@@ -26,7 +26,7 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Bootstrap-Secret"]
 }));
-app.use(express.json({ limit: "30kb" }));
+app.use(express.json({ limit: "100kb" }));
 
 app.get("/", (_req, res) => res.json({
   name: "Academic Tracker API",
