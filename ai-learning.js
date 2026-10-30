@@ -439,7 +439,7 @@
       tutorPending.append(typing);
       $("result-content").append(tutorPending);
       $("result-panel").scrollIntoView({ behavior: "smooth", block: "end" });
-      $("result-content").scrollTop = $("result-content").scrollHeight;
+      $("result-panel").scrollTop = $("result-panel").scrollHeight;
     }
     try {
       if (state.action === "quiz") localStorage.removeItem(ATTEMPT_KEY);
