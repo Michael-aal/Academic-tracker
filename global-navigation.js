@@ -206,6 +206,14 @@
     document.head.appendChild(themeScript);
   }
 
+  // Load Focus Field notification handling across every authenticated app page.
+  if (!document.querySelector('script[data-focus-push]')) {
+    const pushScript = document.createElement("script");
+    pushScript.src = "focus-push.js";
+    pushScript.defer = true;
+    pushScript.dataset.focusPush = "true";
+    document.head.appendChild(pushScript);
+  }
   // Revoke the server-side session before existing page handlers clear local credentials.
   document.addEventListener("click", event => {
     const button = event.target.closest("#signout, #mobile-signout, #quiz-signout, #profile-signout, #uni-signout, #signout-button, #logout-button, [data-action='signout']");
