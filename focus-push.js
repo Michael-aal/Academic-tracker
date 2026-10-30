@@ -47,7 +47,7 @@
     }
     toast.textContent = "Study session completed — " + subject + ". Take a moment to review what you learned.";
     toast.hidden = false;
-    if (Notification.permission === "granted" && document.visibilityState === "visible") {
+    if ("Notification" in window && Notification.permission === "granted" && document.visibilityState === "visible") {
       navigator.serviceWorker?.ready.then(registration => registration.showNotification("Study session completed", {
         body: subject + " focus session is up.",
         tag: "focus-session-complete",
