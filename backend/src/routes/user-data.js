@@ -138,7 +138,12 @@ function validateData(kind, data, recordId) {
         (data.durationMs !== undefined && (!Number.isFinite(Number(data.durationMs)) || Number(data.durationMs) <= 0))) return "The focus session is invalid.";
   }
 
-  if (kind === "push-subscriptions") {\n    if (!/^push-[a-f0-9]{64}$/.test(recordId) || !validString(data.endpoint, 2000) || !data.endpoint.startsWith("https://") ||\n        !isObject(data.keys) || !validString(data.keys.p256dh, 200) || !validString(data.keys.auth, 200)) return "The push subscription is invalid.";\n  }\n\n  if (kind === "preferences") {
+  if (kind === "push-subscriptions") {
+    if (!/^push-[a-f0-9]{64}$/.test(recordId) || !validString(data.endpoint, 2000) || !data.endpoint.startsWith("https://") ||
+        !isObject(data.keys) || !validString(data.keys.p256dh, 200) || !validString(data.keys.auth, 200)) return "The push subscription is invalid.";
+  }
+
+  if (kind === "preferences") {
     if (recordId !== "main" || (data.theme !== undefined && !["light", "dark"].includes(data.theme))) return "The saved preferences are invalid.";
   }
   return null;
