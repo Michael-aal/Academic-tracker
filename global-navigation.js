@@ -205,4 +205,18 @@
     themeScript.dataset.globalTheme = "true";
     document.head.appendChild(themeScript);
   }
+
+  // Revoke the server-side session before existing page handlers clear local credentials.
+  document.addEventListener("click", event => {
+    const button = event.target.closest("#at-nav-signout, #signout, #mobile-signout, #quiz-signout, #profile-signout, #uni-signout, #signout-button, #logout-button, [data-action='signout']");
+    if (!button) return;
+    const token = localStorage.getItem("academic-tracker-token");
+    if (!token) return;
+    const apiBase = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
+    fetch(apiBase + "/api/auth/logout", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + token },
+      keepalive: true
+    }).catch(error => console.warn("Server-side sign-out could not be confirmed", error));
+  }, true);
 })();
