@@ -12,7 +12,7 @@ const PLAN_CONFIG = {
   monthly: { name: "Monthly Pro", interval: "monthly", amountUsdCents: 1486, days: 30,  env: "PAYSTACK_PLAN_MONTHLY" },
   yearly:  { name: "Yearly Pro",  interval: "annually",amountUsdCents: 3714, days: 365, env: "PAYSTACK_PLAN_YEARLY" }
 };
-const TOOL_LIMITS_PRO = { tutor: 20, quiz: 20, summarize: 20, "study-plan": 20, flashcards: 20 };
+const TOOL_NAMES = ["tutor", "quiz", "summarize", "study-plan", "flashcards"];
 const FREE_LIMIT = 5;
 const PLAN_DAYS = { daily: 1, weekly: 7, monthly: 30, yearly: 365 };
 function encryptProviderToken(value) {
@@ -202,7 +202,7 @@ router.get("/usage", async (req, res, next) => {
       for (const [tool, count] of Object.entries(row.toolCounts || {})) toolCounts[tool] = (toolCounts[tool] || 0) + Number(count || 0);
     }
     const limit = sub.isPro ? null : FREE_LIMIT;
-    res.json({ date: today.toISOString().slice(0, 10), plan: sub.plan, status: sub.status, planCode: rawSub?.planCode || "free", used, limit, remaining: sub.isPro ? null : Math.max(0, FREE_LIMIT - used), windowDays: days, toolCounts, proToolLimits: sub.isPro ? TOOL_LIMITS_PRO : null, resetAt: new Date(today.getTime() + DAY).toISOString() });
+    res.json({ date: today.toISOString().slice(0, 10), plan: sub.plan, status: sub.status, planCode: rawSub?.planCode || "free", used, limit, remaining: sub.isPro ? null : Math.max(0, FREE_LIMIT - used), windowDays: days, toolCounts, proToolLimits: sub.isPro ? Object.fromEntries(TOOL_NAMES.map(tool => [tool, days === 1 ? 20 : days === 7 ? 100 : days === 30 ? 600 : 2000])) : null, resetAt: new Date(today.getTime() + DAY).toISOString() });
   } catch (error) { next(error); }
 });
 
@@ -272,4 +272,4 @@ router.get("/purchases", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
-module.exports = { router, currentSubscription, getCurrentSubscription, FREE_LIMIT, TOOL_LIMITS_PRO };
+module.exports = { router, currentSubscription, getCurrentSubscription, FREE_LIMIT, TOOL_NAMES };
