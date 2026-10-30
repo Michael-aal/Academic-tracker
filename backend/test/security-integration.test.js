@@ -46,3 +46,62 @@ test("PostgreSQL enforces university ownership and concurrent AI quotas", { skip
     }
   }
 });
+
+
+test("PostgreSQL deletion tombstones prevent stale account records from being restored", { skip: !enabled }, async () => {
+  const suffix = randomUUID();
+  let userId;
+  try {
+    const user = await prisma.user.create({
+      data: { name: "Tombstone Test", email: "tombstone-" + suffix + "@example.test", passwordHash: "test-only-hash" },
+      select: { id: true }
+    });
+    userId = user.id;
+    const key = { userId_kind_recordId: { userId, kind: "study-sessions", recordId: "session-" + suffix } };
+    await prisma.userDataRecord.create({ data: { userId, kind: "study-sessions", recordId: key.userId_kind_recordId.recordId, data: { title: "Physics" } } });
+    await prisma.userDataRecord.updateMany({ where: { userId, kind: "study-sessions", recordId: key.userId_kind_recordId.recordId, deletedAt: null }, data: { deletedAt: new Date() } });
+    const active = await prisma.userDataRecord.findMany({ where: { userId, kind: "study-sessions", deletedAt: null } });
+    const deleted = await prisma.userDataRecord.findMany({ where: { userId, kind: "study-sessions", deletedAt: { not: null } }, select: { recordId: true } });
+    assert.equal(active.length, 0);
+    assert.deepEqual(deleted.map(item => item.recordId), [key.userId_kind_recordId.recordId]);
+    await prisma.userDataRecord.upsert({ where: key, create: { userId, kind: "study-sessions", recordId: key.userId_kind_recordId.recordId, data: { title: "Updated Physics" } }, update: { data: { title: "Updated Physics" }, deletedAt: null } });
+    const restored = await prisma.userDataRecord.findUnique({ where: key });
+    assert.equal(restored.deletedAt, null, "an explicit new save can restore the record");
+  } finally {
+    if (userId) await prisma.user.deleteMany({ where: { id: userId } });
+  }
+});
+
+test("PostgreSQL row locking preserves simultaneous answers to different quiz questions", { skip: !enabled }, async () => {
+  const suffix = randomUUID();
+  let userId;
+  try {
+    const user = await prisma.user.create({
+      data: { name: "Quiz Concurrency Test", email: "quiz-lock-" + suffix + "@example.test", passwordHash: "test-only-hash" },
+      select: { id: true }
+    });
+    userId = user.id;
+    const attempt = await prisma.aiQuizAttempt.create({
+      data: {
+        userId,
+        title: "Concurrency test",
+        questionData: { questions: [
+          { id: "q1", options: [{ id: "A" }], correctAnswer: "A" },
+          { id: "q2", options: [{ id: "B" }], correctAnswer: "B" }
+        ] }
+      },
+      select: { id: true }
+    });
+    const saveAnswer = (questionId, optionId) => prisma.$transaction(async tx => {
+      await tx.$queryRaw`SELECT "id" FROM "ai_quiz_attempts" WHERE "id" = ${attempt.id} AND "user_id" = ${userId} FOR UPDATE`;
+      const current = await tx.aiQuizAttempt.findFirst({ where: { id: attempt.id, userId } });
+      const answers = Array.isArray(current.submittedAnswers) ? current.submittedAnswers : [];
+      await tx.aiQuizAttempt.update({ where: { id: attempt.id }, data: { submittedAnswers: [...answers, { questionId, optionId }] } });
+    });
+    await Promise.all([saveAnswer("q1", "A"), saveAnswer("q2", "B")]);
+    const saved = await prisma.aiQuizAttempt.findUnique({ where: { id: attempt.id } });
+    assert.deepEqual(saved.submittedAnswers.map(answer => answer.questionId).sort(), ["q1", "q2"]);
+  } finally {
+    if (userId) await prisma.user.deleteMany({ where: { id: userId } });
+  }
+});

@@ -60,16 +60,17 @@
   async function syncFromAccount() {
     const [cardData, statsData] = await Promise.all([dataRequest("/api/user-data/memory-cards"), dataRequest("/api/user-data/memory-stats")]);
     const remoteCards = Array.isArray(cardData.records) ? cardData.records : [];
+    const deletedIds = new Set(Array.isArray(cardData.deletedIds) ? cardData.deletedIds : []);
     serverCardIds = new Set(remoteCards.map(record => record.recordId));
     const byId = new Map(remoteCards.map(record => [record.recordId, record.data]));
-    for (const card of cards) if (!byId.has(card.id)) byId.set(card.id, card);
+    for (const card of cards) if (!byId.has(card.id) && !deletedIds.has(card.id)) byId.set(card.id, card);
     cards = [...byId.values()];
     const remoteStats = statsData.records?.find(record => record.recordId === "summary")?.data;
     if (remoteStats) reviewStats = { reviewed: Number(remoteStats.reviewed) || 0, correct: Number(remoteStats.correct) || 0 };
     else await dataRequest("/api/user-data/memory-stats/summary", { method: "PUT", body: JSON.stringify({ data: reviewStats }) });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
     localStorage.setItem(STORAGE_KEY + ":stats", JSON.stringify(reviewStats));
-    const localOnly = cards.filter(card => !serverCardIds.has(card.id));
+    const localOnly = cards.filter(card => !serverCardIds.has(card.id) && !deletedIds.has(card.id));
     for (let index = 0; index < localOnly.length; index += 20) {
       const batch = localOnly.slice(index, index + 20);
       await dataRequest("/api/user-data/memory-cards/bulk", { method: "PUT", body: JSON.stringify({ records: batch.map(card => ({ recordId: card.id, data: card })) }) });
