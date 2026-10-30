@@ -198,6 +198,7 @@
   const focusSession = () => { try { return JSON.parse(localStorage.getItem(FOCUS_KEY) || "null"); } catch { return null; } };
   const saveFocusSession = session => {
     if(session) localStorage.setItem(FOCUS_KEY, JSON.stringify(session)); else localStorage.removeItem(FOCUS_KEY);
+    if (!session && apiToken()) apiRequest("/api/user-data/focus-sessions/active", { method: "DELETE" }).catch(error => console.warn("Could not clear saved focus session", error));
     if (session && apiToken()) {
       apiRequest("/api/user-data/focus-sessions/active", { method: "PUT", body: JSON.stringify({ data: session }) })
         .catch(error => console.warn("Could not sync focus session", error));
@@ -312,8 +313,9 @@
       try { const result = await apiRequest("/api/subjects", { method: "POST", body: JSON.stringify({ name, targetPercentage: Math.max(0,Math.min(100,target)) }) }); serverId = result.subject.id; }
       catch (error) { alert(error.message); return; }
     } else { alert("Please log in again before adding a subject so it can be saved to your account."); return; }
-    state.subjects.push({id:sid,serverId,name,createdAt:new Date().toISOString()});
-    state.targets[sid]=Math.max(0,Math.min(100,target)); state.assessments[sid]=defaultAssessments(); await save(); $("#subject-dialog").close();
+    const subjectId = serverId || sid;
+    state.subjects.push({id:subjectId,serverId:serverId || null,name,createdAt:new Date().toISOString()});
+    state.targets[subjectId]=Math.max(0,Math.min(100,target)); state.assessments[subjectId]=defaultAssessments(); await save(); $("#subject-dialog").close();
   }
   async function exportBackup() {
     try {
@@ -331,8 +333,9 @@
     if(!file) return;
     try { const parsed=JSON.parse(await file.text()), data=parsed.data||parsed;
       if(!data||!Array.isArray(data.subjects)||typeof data.scores!=="object") throw new Error("This file does not look like an Academic Tracker backup.");
-      if(!confirm("Restore this backup? It will replace the tracker data currently on this device.")) return;
-      state={...defaults(),...data}; await save(); alert("Backup restored.");
+      if(!confirm("Restore this backup into the account you are currently signed into? Existing account subjects with matching names will be matched; other saved subjects and marks will be merged.")) return;
+      if (data.accountUserId && accountUserId() && data.accountUserId !== accountUserId() && !confirm("This backup was created under a different account. Import its tracker records into your current account?")) return;
+      state={...defaults(),...data,accountUserId:accountUserId()}; await syncSubjectsFromServer(); await save(); alert("Backup restored and synced to your account.");
     } catch(e) { alert("Could not restore backup: "+e.message); }
     finally { $("#import-file").value=""; }
   }
