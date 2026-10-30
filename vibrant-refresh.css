@@ -168,3 +168,20 @@ html[data-theme="light"] :where(.muted,.caption,.meta,.timestamp,.stat-label,.no
 @media (prefers-reduced-motion: reduce) {
   *,*::before,*::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+
+/* Keep layout regions transparent so the violet surfaces retain clear visual hierarchy. */
+html[data-theme="dark"] :where(main,section,article,aside,header,footer,nav,form,fieldset,.app-shell,.main,.main-content,.page-shell,.page-content,.content,.workspace,.workspace-main,.site-main,.dashboard-content,.section-wrap,.auth-main,.ai-shell,.quiz-page-shell,.study-tools-shell,.profile-layout,.support-layout,.uni-layout,.container) {
+  background-color: transparent !important;
+}
+html[data-theme="dark"] :where(.card,.panel,.auth-card,.auth-side,.uni-card,.tool-card,.resource-card,.support-card,.profile-card,.task-picker,.chat-card,.calculator-card,.feature-card,.step-card,.faq-item,.testimonial-card,.stat-card,.cta-panel,.chart-card,.preview-window,.question-card,.quiz-card,.note-card,.planner-card,.summary-card,.flashcard,.chat-container,.tutor-workspace,.modal,.modal-content,.result-panel,.workspace-card,.report-card,.subject-card,.score-card,.study-card,.tool-panel,.learning-card,.video-card,.memory-card,.university-card,.admin-card,.ev-search-panel,.ev-player-panel,.ev-list-panel,.ev-library-panel,.mm-panel,.mm-stat,.uni-stat,.uni-course-row,.uni-result-card,.why-card,.value-strip,.pathway-panel,.focus-panel,.focus-setup-card,.focus-reset-card) {
+  background: linear-gradient(145deg,#171123,#110D1B) !important;
+  color: #F5F3FF !important;
+  border-color: rgba(167,139,250,.24) !important;
+}
+html[data-theme="dark"] :where(.sidebar,.uni-sidebar) { background: #100B19 !important; }
+html[data-theme="dark"] :where(.site-header,.site-footer,.topbar,.compact-topbar,.ai-topbar,.mm-topbar,.ev-topbar,.at-global-header,.at-mobile-nav) { background: rgba(15,10,23,.96) !important; }
+html[data-theme="dark"] :where(p,.description,.helper-text,.stat-foot,.subject-info small,.mm-review-tip,.mm-form-note,.ev-library-intro,.ev-video-copy span,.ev-video-copy p,.uni-muted,.uni-section-heading p) { color: #C4B5D3 !important; }
+html[data-theme="dark"] :where(.eyebrow,.section-kicker,.section-label,.page-kicker,.focus-kicker,.ev-kicker,.mm-kicker,.uni-kicker,.stat-label) { color: #C4B5FD !important; }
+html[data-theme="dark"] :where(h1,h2,h3,h4,h5,h6,.page-title,.stat-value,.card-title) { color: #F5F3FF !important; }
+html[data-theme="light"] :where(main,section,article,aside,header,footer,nav,form,fieldset,.app-shell,.main,.main-content,.page-shell,.page-content,.content,.workspace,.workspace-main,.site-main,.dashboard-content,.section-wrap,.auth-main,.ai-shell,.quiz-page-shell,.study-tools-shell,.profile-layout,.support-layout,.uni-layout,.container) { background-color: transparent !important; }
