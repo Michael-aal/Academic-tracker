@@ -102,32 +102,24 @@ router.get("/attempts/:attemptId", async (req, res, next) => {
 
 router.post("/attempts/:attemptId/answer", async (req, res, next) => {
   try {
-    const attempt = await prisma.aiQuizAttempt.findFirst({ where: { id: req.params.attemptId, userId: req.userId } });
-    if (!attempt) return res.status(404).json({ error: "Quiz attempt not found." });
-    if (attempt.status !== "IN_PROGRESS") return res.status(409).json({ error: "This quiz has already been completed." });
-    const { questionId, optionId } = req.body || {};
-    const quiz = attempt.questionData;
-    const question = quiz.questions.find(item => item.id === questionId);
-    if (!question || !question.options.some(option => option.id === optionId)) return res.status(400).json({ error: "Choose a valid answer for this question." });
-    const existing = Array.isArray(attempt.submittedAnswers) ? attempt.submittedAnswers : [];
-    if (existing.some(answer => answer.questionId === questionId)) return res.status(409).json({ error: "This question has already been submitted." });
-    const updated = await prisma.aiQuizAttempt.updateMany({
-      where: { id: attempt.id, userId: req.userId, status: "IN_PROGRESS" },
-      data: { submittedAnswers: [...existing, { questionId, optionId }] }
+    const outcome = await prisma.$transaction(async tx => {
+      // Serialize answers for this attempt; concurrent JSON-array writes must not overwrite one another.
+      await tx.$queryRaw`SELECT "id" FROM "ai_quiz_attempts" WHERE "id" = ${req.params.attemptId} AND "user_id" = ${req.userId} FOR UPDATE`;
+      const attempt = await tx.aiQuizAttempt.findFirst({ where: { id: req.params.attemptId, userId: req.userId } });
+      if (!attempt) return { status: 404, body: { error: "Quiz attempt not found." } };
+      if (attempt.status !== "IN_PROGRESS") return { status: 409, body: { error: "This quiz has already been completed." } };
+      const { questionId, optionId } = req.body || {};
+      const quiz = attempt.questionData;
+      const question = quiz.questions.find(item => item.id === questionId);
+      if (!question || !question.options.some(option => option.id === optionId)) return { status: 400, body: { error: "Choose a valid answer for this question." } };
+      const existing = Array.isArray(attempt.submittedAnswers) ? attempt.submittedAnswers : [];
+      if (existing.some(answer => answer.questionId === questionId)) return { status: 409, body: { error: "This question has already been submitted." } };
+      await tx.aiQuizAttempt.update({ where: { id: attempt.id }, data: { submittedAnswers: [...existing, { questionId, optionId }] } });
+      return { status: 200, body: { questionId, isCorrect: optionId === question.correctAnswer, correctAnswer: question.correctAnswer, correctText: question.options.find(option => option.id === question.correctAnswer).text, explanation: question.explanation, answeredCount: existing.length + 1, totalQuestions: quiz.questions.length } };
     });
-    if (!updated.count) return res.status(409).json({ error: "Your answer could not be saved. Please reload the quiz." });
-    return res.json({
-      questionId,
-      isCorrect: optionId === question.correctAnswer,
-      correctAnswer: question.correctAnswer,
-      correctText: question.options.find(option => option.id === question.correctAnswer).text,
-      explanation: question.explanation,
-      answeredCount: existing.length + 1,
-      totalQuestions: quiz.questions.length
-    });
+    return res.status(outcome.status).json(outcome.body);
   } catch (error) { return next(error); }
 });
-
 router.post("/attempts/:attemptId/submit", async (req, res, next) => {
   try {
     const attempt = await prisma.aiQuizAttempt.findFirst({ where: { id: req.params.attemptId, userId: req.userId } });
