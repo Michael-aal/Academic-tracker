@@ -5,7 +5,8 @@
   if (!token) { window.location.replace("login.html"); return; }
 
   const $ = id => document.getElementById(id);
-  const ATTEMPT_KEY = "academic-tracker-active-quiz";
+  const ACCOUNT_KEY = (() => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}").id || "account"; } catch { return "account"; } })();
+  const ATTEMPT_KEY = "academic-tracker-active-quiz:" + ACCOUNT_KEY;
   const state = { action: "tutor", answer: "", conversation: [], conversationId: null, quiz: null, attemptId: null, index: 0, selected: {}, answered: {}, submitted: false, result: null };
   const taskCopy = {
     tutor: { title: "Talk to your AI tutor", description: "Ask questions, paste your class notes, and keep asking until it makes sense.", label: "What should we learn together?", placeholder: "Ask a question, paste your notes, or ask me to explain something more simply…", button: "Ask tutor", result: "Your tutoring conversation" },
