@@ -95,7 +95,7 @@ The AI learning routes are authenticated and use OpenRouter from the server; the
 - `OPENROUTER_MODEL` — optional model identifier; defaults to `openai/gpt-4o-mini`.
 - `AI_SITE_URL` — optional site URL sent as provider metadata.
 
-The `/api/ai` endpoint accepts `tutor`, `quiz`, `summarize`, `study-plan`, and `flashcards` actions, limits supplied text to 12,000 characters, and allows 10 requests per account in any rolling 15-minute window. Each request is recorded in PostgreSQL inside a transaction that locks the account row, so concurrent requests and multiple API instances share the same quota. Quota checks fail closed if PostgreSQL is unavailable, and usage events older than 48 hours are cleaned up opportunistically. The admin-only `GET /api/ai/status` endpoint reports configuration status without exposing credentials. No new database tables or migrations are required. AI is disabled until the server-side key is configured.
+The `/api/ai` endpoint accepts `tutor`, `quiz`, `summarize`, `study-plan`, and `flashcards` actions, limits supplied text to 12,000 characters, and allows 10 requests per account in any rolling 15-minute window. Each request is recorded in PostgreSQL inside a transaction that locks the account row, so concurrent requests and multiple API instances share the same quota. Quota checks fail closed if PostgreSQL is unavailable, and usage events older than 48 hours are cleaned up opportunistically. The admin-only `GET /api/ai/status` endpoint reports configuration status without exposing credentials. The `ai_usage_events` migration must be deployed before this quota feature is enabled. AI is disabled until the server-side key is configured.
 
 
 ## Proxy and rate-limit configuration
