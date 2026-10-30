@@ -179,6 +179,7 @@ model UserDataRecord {
 
   @@unique([userId, kind, recordId])
   @@index([userId, kind, updatedAt])
+  @@index([userId, kind, deletedAt])
   @@map("user_data_records")
 }
 
