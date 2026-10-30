@@ -72,7 +72,8 @@
     updateTimerDisplay(0, "expired");
     notice(chosen ? "Time is up. Your selected answer has been saved." : "Time is up. This question was left unanswered.");
     renderQuestion();
-    if (index < quiz.questions.length - 1) window.setTimeout(() => { if (expiredQuestions[question.id] && !result) { index++; renderQuestion(); } }, 1100);
+    const expiredIndex = quiz.questions.findIndex(item => item.id === question.id);
+    if (expiredIndex >= 0 && expiredIndex < quiz.questions.length - 1) window.setTimeout(() => { if (index === expiredIndex && expiredQuestions[question.id] && !result) { index++; renderQuestion(); } }, 1100);
   }
   function startQuestionTimer() {
     stopQuestionTimer();
