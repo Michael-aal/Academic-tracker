@@ -112,6 +112,70 @@
     <button type="button" id="at-nav-more-toggle" data-at-bottom="more" aria-label="Open more pages" aria-expanded="false" aria-controls="at-nav-menu">${icon("more")}<span class="at-nav-label">More</span></button>`;
   document.body.appendChild(bottom);
 
+  // Distraction-free navigation: double-tap/click the page to hide or restore both bars.
+  const chromeToggle = document.createElement("button");
+  chromeToggle.type = "button";
+  chromeToggle.className = "at-nav-restore";
+  chromeToggle.textContent = "☰  Show navigation";
+  chromeToggle.setAttribute("aria-label", "Show top and bottom navigation");
+  chromeToggle.hidden = true;
+  document.body.appendChild(chromeToggle);
+
+  const guide = document.createElement("div");
+  guide.className = "at-nav-gesture-guide";
+  guide.setAttribute("role", "status");
+  guide.innerHTML = '<span><strong>More room to focus</strong><small>Double-tap an empty area to hide the top and bottom navigation. Double-tap again to bring them back.</small></span><button type="button" aria-label="Dismiss navigation tip">×</button>';
+  document.body.appendChild(guide);
+  const hideGuide = () => { guide.hidden = true; try { localStorage.setItem("academic-tracker-nav-guide-seen", "1"); } catch (_) {} };
+  guide.querySelector("button").addEventListener("click", hideGuide);
+
+  const setNavigationVisible = visible => {
+    document.body.classList.toggle("at-nav-chrome-hidden", !visible);
+    chromeToggle.hidden = visible;
+    chromeToggle.setAttribute("aria-expanded", String(visible));
+    try { localStorage.setItem("academic-tracker-nav-hidden", visible ? "0" : "1"); } catch (_) {}
+    if (visible) {
+      closeAllMenusIfReady();
+    }
+  };
+  const closeAllMenusIfReady = () => {
+    [menu, profileMenu].forEach(node => { if (node) node.hidden = true; });
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+    if (profileToggle) profileToggle.setAttribute("aria-expanded", "false");
+    if (moreToggle) moreToggle.setAttribute("aria-expanded", "false");
+  };
+  chromeToggle.addEventListener("click", () => setNavigationVisible(true));
+  try {
+    if (localStorage.getItem("academic-tracker-nav-hidden") === "1") setNavigationVisible(false);
+    if (localStorage.getItem("academic-tracker-nav-guide-seen") !== "1") {
+      guide.hidden = false;
+      window.setTimeout(hideGuide, 9000);
+    } else guide.hidden = true;
+  } catch (_) { guide.hidden = false; }
+
+  let lastTouchTap = null;
+  let touchStart = null;
+  document.addEventListener("pointerdown", event => {
+    if (event.pointerType === "touch") touchStart = { x: event.clientX, y: event.clientY, time: Date.now() };
+  }, { passive: true });
+  document.addEventListener("pointerup", event => {
+    if (event.pointerType !== "touch" || !touchStart) return;
+    const start = touchStart; touchStart = null;
+    const target = event.target;
+    if (Date.now() - start.time > 350 || Math.hypot(event.clientX - start.x, event.clientY - start.y) > 22) { lastTouchTap = null; return; }
+    if (target.closest("a,button,input,textarea,select,summary,[contenteditable='true'],[role='button'],.at-global-header,.at-mobile-nav,.at-nav-restore,.at-nav-gesture-guide")) { lastTouchTap = null; return; }
+    const now = Date.now();
+    if (lastTouchTap && now - lastTouchTap.time < 380 && Math.hypot(event.clientX - lastTouchTap.x, event.clientY - lastTouchTap.y) < 42) {
+      lastTouchTap = null;
+      setNavigationVisible(document.body.classList.contains("at-nav-chrome-hidden"));
+    } else lastTouchTap = { time: now, x: event.clientX, y: event.clientY };
+  }, { passive: true });
+  document.addEventListener("dblclick", event => {
+    if (event.target.closest("a,button,input,textarea,select,summary,[contenteditable='true'],[role='button'],.at-global-header,.at-mobile-nav,.at-nav-restore,.at-nav-gesture-guide")) return;
+    if (String(window.getSelection?.() || "")) return;
+    setNavigationVisible(document.body.classList.contains("at-nav-chrome-hidden"));
+  });
+
   const menuToggle = header.querySelector("#at-nav-menu-toggle");
   const profileToggle = header.querySelector("#at-nav-profile-toggle");
   const menu = header.querySelector("#at-nav-menu");
