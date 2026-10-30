@@ -140,6 +140,7 @@
     }
     if (state.accountUserId && signedInUserId && state.accountUserId !== signedInUserId) state = defaults();
     if (signedInUserId) state.accountUserId = signedInUserId;
+    if (state.syncPending && navigator.onLine) await syncPendingTrackerData();
     try {
       await syncSubjectsFromServer();
     } catch (e) {
