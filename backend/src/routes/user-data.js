@@ -119,4 +119,6 @@ router.delete("/:kind/:recordId", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+router.validateData = validateData;
+router.allowedKinds = ALLOWED_KINDS;
 module.exports = router;
