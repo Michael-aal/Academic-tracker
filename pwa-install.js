@@ -128,10 +128,12 @@
   });
 
   if ("serviceWorker" in navigator && window.isSecureContext) {
-    window.addEventListener("load", () => {
+    const registerWorker = () => {
       navigator.serviceWorker.register("./sw.js", { scope: "./" })
         .catch(error => console.warn("Academic Tracker offline support could not be registered.", error));
-    }, { once: true });
+    };
+    if (document.readyState === "complete") registerWorker();
+    else window.addEventListener("load", registerWorker, { once: true });
   }
 
   if (!isInstalled() && !wasRecentlyDismissed()) {
