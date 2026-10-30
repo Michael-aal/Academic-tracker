@@ -19,6 +19,7 @@
     ["Educational Videos","educational-videos.html","videos"],
     ["Memory Mastery","memory-mastery.html","memory"],
     ["Study Planner","study-plan.html","planner"],
+    ["My Notes","notes.html","notes"],
     ["Notes Summary","notes-summary.html","notes"],
     ["University Dashboard","university-dashboard.html","university"],
     ["Profile","profile.html","user"],
@@ -111,6 +112,12 @@
     <a href="ai-quiz-setup.html" data-at-bottom="quiz">${icon("quiz")}<span class="at-nav-label">Quiz</span></a>
     <button type="button" id="at-nav-more-toggle" data-at-bottom="more" aria-label="Open more pages" aria-expanded="false" aria-controls="at-nav-menu">${icon("more")}<span class="at-nav-label">More</span></button>`;
   document.body.appendChild(bottom);
+
+  // Universal notes access is available on every authenticated app page.
+  const notesScript = document.createElement("script");
+  notesScript.src = "universal-notes.js";
+  notesScript.defer = true;
+  document.body.appendChild(notesScript);
 
   const menuToggle = header.querySelector("#at-nav-menu-toggle");
   const profileToggle = header.querySelector("#at-nav-profile-toggle");
