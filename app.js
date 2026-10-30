@@ -322,7 +322,7 @@
     if(action==="save-period") {const year=$("#academic-year").value.trim();if(!year){alert("Enter an academic year.");return;}state.academicYear=year;state.term=$("#current-term").value;await save();alert("Academic period saved.");}
     if(action==="export") exportBackup();
     if(action==="import") $("#import-file").click();
-    if(action==="save-targets") {for(const inp of document.querySelectorAll("[data-target]")){const v=Number(inp.value);if(!Number.isFinite(v)||v<0||v>100){alert("Targets must be between 0 and 100.");inp.focus();return;}state.targets[inp.dataset.target]=v;}await save();alert("Targets saved.");}
+    if(action==="save-targets") {const updates=[];for(const inp of document.querySelectorAll("[data-target]")){const v=Number(inp.value);if(!Number.isFinite(v)||v<0||v>100){alert("Targets must be between 0 and 100.");inp.focus();return;}const subject=state.subjects.find(item=>item.id===inp.dataset.target);if(!subject?.serverId){alert("A subject is not linked to your account yet. Please refresh and try again.");return;}updates.push(apiRequest("/api/subjects/"+encodeURIComponent(subject.serverId),{method:"PATCH",body:JSON.stringify({targetPercentage:v})}));state.targets[inp.dataset.target]=v;}try{await Promise.all(updates);await save();alert("Targets saved to your account.");}catch(error){alert("Could not save all targets to your account: "+error.message);}}
     if(action==="print") window.print();
   });
   document.addEventListener("click", e => {
