@@ -280,7 +280,8 @@
   document.addEventListener("click", event => {
     const button = event.target.closest("#signout, #mobile-signout, #quiz-signout, #profile-signout, #uni-signout, #signout-button, #logout-button, [data-action='signout']");
     if (!button) return;
-    const token = localStorage.getItem("academic-tracker-token");
+    let token = "";
+    try { token = localStorage.getItem("academic-tracker-token") || ""; } catch (_) {}
     if (!token) return;
     const apiBase = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
     fetch(apiBase + "/api/auth/logout", {
