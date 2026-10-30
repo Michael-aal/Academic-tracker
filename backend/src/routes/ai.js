@@ -86,7 +86,7 @@ router.get("/attempts", async (req, res, next) => {
     const attempts = await prisma.aiQuizAttempt.findMany({
       where: { userId: req.userId, status: "COMPLETED" },
       orderBy: [{ completedAt: "desc" }, { createdAt: "desc" }],
-      take: 8,
+      take: 500,
       select: { id: true, questionData: true, resultData: true, createdAt: true, completedAt: true }
     });
     return res.json({ attempts: attempts.map(attempt => ({
