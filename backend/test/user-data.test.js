@@ -48,3 +48,15 @@ test("validates the secondary tracker aggregate record", () => {
   assert.equal(userDataRouter.validateData("secondary-tracker", tracker, "main"), null);
   assert.match(userDataRouter.validateData("secondary-tracker", tracker, "other"), /record ID is invalid/);
 });
+test("validates study sessions before they are saved", () => {
+  const session = { title: "Physics revision", subject: "Physics", date: "2026-10-30", start: "08:00", end: "09:00", repeat: "none", remind: 10, completed: false };
+  assert.equal(userDataRouter.validateData("study-sessions", session, "session-1"), null);
+  assert.match(userDataRouter.validateData("study-sessions", { ...session, end: "07:30" }, "session-1"), /study session is invalid/);
+});
+
+test("requires timestamps for video watch history", () => {
+  const video = { id: "abcdefghijk", title: "Algebra basics", channelTitle: "Learning channel", description: "", thumbnail: "", watchedAt: Date.now() };
+  assert.equal(userDataRouter.validateData("video-history", video, "abcdefghijk"), null);
+  assert.match(userDataRouter.validateData("video-history", { ...video, watchedAt: 0 }, "abcdefghijk"), /watch timestamp is invalid/);
+});
+
