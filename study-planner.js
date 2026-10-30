@@ -3,7 +3,7 @@
 const $=id=>document.getElementById(id), user=(()=>{try{return JSON.parse(localStorage.getItem("academic-tracker-user")||"{}");}catch{return {};}})();
 const KEY="academic-tracker-study-sessions:"+String(user.id||user.email||"local");
 let sessions=[];try{sessions=JSON.parse(localStorage.getItem(KEY)||"[]");if(!Array.isArray(sessions))sessions=[];}catch{sessions=[];}
-const API_BASE=(window.AT_API_BASE||"https://academic-tracker-0b2q.onrender.com").replace(/\\/$/,"");
+const API_BASE=(window.AT_API_BASE||"https://academic-tracker-0b2q.onrender.com").replace(/\/$/,"");
 const token=localStorage.getItem("academic-tracker-token")||"";
 let serverSessionIds=new Set();
 async function dataRequest(path,options={}){const response=await fetch(API_BASE+path,{...options,headers:{"Content-Type":"application/json",Authorization:"Bearer "+token,...(options.headers||{})}});const data=await response.json().catch(()=>({}));if(response.status===401){localStorage.removeItem("academic-tracker-token");localStorage.removeItem("academic-tracker-user");location.replace("login.html");throw new Error("Your session expired. Please sign in again.");}if(!response.ok)throw new Error(data.error||"Could not sync your study plan.");return data;}
