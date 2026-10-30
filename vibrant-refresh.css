@@ -217,3 +217,10 @@ html[data-theme="light"] :where(.planner-session,.planner-form,.planner-import-p
 html[data-theme="light"] :where(.planner-session p,.planner-session small,.mm-library-card p,.mm-library-meta,.uni-hero p,.uni-note p,.uni-empty,.ev-saved-card span,.focus-panel p,.focus-setup-card p) {
   color: #675779 !important;
 }
+
+.account-data-panel { margin-top: 18px; padding: 18px; border: 1px solid rgba(167,139,250,.25); border-radius: 16px; background: linear-gradient(145deg,#211832,#171123); }
+.account-data-panel h3 { margin: 0 0 8px; color: #F5F3FF; }
+.account-data-panel .notice { margin: 0 0 14px; }
+#account-export-status { margin-top: 10px; min-height: 1.2em; }
+html[data-theme="light"] .account-data-panel { background: #F7F2FF; border-color: #E5D9F8; }
+html[data-theme="light"] .account-data-panel h3 { color: #261638; }
