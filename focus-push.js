@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const API = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\\/$/, "");
+  const API = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/+$/, "");
   const token = () => localStorage.getItem("academic-tracker-token") || "";
   const status = message => {
     const node = document.getElementById("focus-push-status");
