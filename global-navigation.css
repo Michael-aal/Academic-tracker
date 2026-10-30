@@ -433,3 +433,80 @@ html[data-theme="dark"] .at-nav-popover {
   color: #ffffff !important;
   border-color: #302440 !important;
 }
+
+
+/* Mobile/tablet triple-tap navigation collapse. Desktop navigation is never affected. */
+.at-nav-restore[hidden] { display: none !important; }
+.at-nav-restore {
+  display: none;
+}
+@media (max-width: 1024px) {
+  .at-nav-restore {
+    position: fixed;
+    z-index: 1400;
+    right: 16px;
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 46px;
+    padding: 0 15px;
+    border: 1px solid rgba(167,139,250,.48);
+    border-radius: 999px;
+    color: #fff;
+    background: linear-gradient(145deg, #6d28d9, #8b5cf6);
+    box-shadow: 0 12px 32px rgba(35,17,64,.34);
+    font: 700 12px/1.2 "DM Sans", system-ui, sans-serif;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .at-nav-restore span:first-child { display:grid; place-items:center; }
+  .at-nav-restore svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .at-global-header,
+  .at-mobile-nav {
+    transition: transform .28s ease, opacity .22s ease, visibility .28s ease;
+    will-change: transform;
+  }
+  body.at-nav-collapsed .at-global-header {
+    transform: translateY(calc(-100% - 12px));
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  body.at-nav-collapsed .at-mobile-nav {
+    transform: translateY(calc(100% + 18px));
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  body.at-nav-collapsed {
+    padding-bottom: 0 !important;
+  }
+}
+@media (min-width: 1025px) {
+  .at-nav-restore { display: none !important; }
+  body.at-nav-collapsed .at-global-header,
+  body.at-nav-collapsed .at-mobile-nav {
+    transform: none;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .at-global-header,
+  .at-mobile-nav,
+  .at-nav-restore {
+    transition: none !important;
+  }
+}
