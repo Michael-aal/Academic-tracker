@@ -6,6 +6,7 @@
   const defaults = () => ({version:2, accountUserId:null, academicYear:"2026–2027", term:"Term 1", subjects:[], scores:{}, targets:{}, assessments:{}, updatedAt:new Date().toISOString()});
   let state = defaults();
   let view = "dashboard";
+  let focusHistory = [];
   const $ = s => document.querySelector(s);
   const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const num = v => Number.isFinite(Number(v)) ? Number(v) : 0;
@@ -132,6 +133,7 @@
     try {
       await syncSubjectsFromServer();
       const focusData = await apiRequest("/api/user-data/focus-sessions");
+      focusHistory = (focusData.records || []).filter(record => record.recordId !== "active" && record.data?.status === "completed").map(record => ({ ...record.data, savedAt: record.updatedAt })).slice(0, 20);
       const remoteFocus = focusData.records?.find(record => record.recordId === "active")?.data;
       if (remoteFocus) {
         localStorage.setItem(FOCUS_KEY, JSON.stringify(remoteFocus));
@@ -287,6 +289,9 @@
         '</article>'+
       '</div>'+
       '<article class="card focus-reset-card"><div><h3>One distraction doesn’t ruin a session.</h3><p class="notice">If you lose focus, return to your task and continue. Progress is about learning—not a perfect timer streak.</p></div><button class="button secondary" type="button" data-focus-action="reset">Reset session</button></article>'+
+      '<article class="card focus-history-card"><div class="section-heading"><div><h3>Recent focus sessions</h3><p>Your completed sessions are saved to your account.</p></div><span class="badge">'+focusHistory.length+' saved</span></div>'+
+        (focusHistory.length?focusHistory.map(item=>'<div class="subject-row"><div class="subject-icon">◎</div><div class="subject-info"><strong>'+esc(item.task||"Study session")+'</strong><small>'+esc(new Date(item.completedAt||item.savedAt).toLocaleString())+' · '+num(item.durationMinutes)+' minutes</small></div><span class="badge">Complete</span></div>').join(""):'<div class="empty"><strong>No completed sessions yet</strong>Finish a focus session and it will appear here.</div>')+
+      '</article>'+
     '</section>';
   }
   function render() {
