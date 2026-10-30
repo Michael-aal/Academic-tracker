@@ -18,9 +18,9 @@
 </section>
 <div id="subscription-message" class="money-message" role="status" hidden></div>
 <section class="money-panel" aria-labelledby="usage-heading">
-<div class="money-section-head" style="margin-top:0"><div><h2 id="usage-heading">Your AI usage</h2><p class="money-muted">The server counts successful AI requests using UTC calendar days.</p></div><strong id="usage-label">Loading…</strong></div>
+<div class="money-section-head" style="margin-top:0"><div><h2 id="usage-heading">Your AI usage</h2><p class="money-muted">The server tracks successful requests against your account’s current plan and allowance window.</p></div><strong id="usage-label">Loading…</strong></div>
 <div class="money-usage"><span class="money-muted" id="usage-description">Free plan allowance</span><span id="usage-count">—</span><div class="money-progress" aria-label="Daily AI usage"><span id="usage-progress"></span></div></div>
-<p class="money-note">Free accounts receive 5 successful AI requests per day across AI Tutor, quizzes, notes summaries, study plans and flashcards. Failed AI requests do not consume a request.</p>
+<div id="tool-usage" class="money-tool-usage-list" aria-live="polite"></div><p class="money-note">Free accounts receive 5 successful AI requests across all AI tools every rolling 3 days. Pro allowances are separate for each tool: 20 per day, 100 per week, 600 per month or 2,000 per year. Failed AI requests do not consume a request.</p>
 </section>
 <section>
 <div class="money-section-head"><div><h2>Choose your Pro plan</h2><p class="money-muted">The prices below are the indicative USD conversions we discussed.</p></div></div>
