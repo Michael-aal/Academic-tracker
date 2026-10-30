@@ -45,9 +45,10 @@
       await Promise.all([...serverCardIds].filter(id => !ids.has(id)).map(id => dataRequest("/api/user-data/memory-cards/" + encodeURIComponent(id), { method: "DELETE" })));
       await dataRequest("/api/user-data/memory-stats/summary", { method: "PUT", body: JSON.stringify({ data: reviewStats }) });
       serverCardIds = ids;
+      $("form-notice").textContent = "Your memory cards and review progress are synced to your account.";
     } catch (error) {
       console.error("Memory Mastery account sync failed", error);
-      $("form-notice").textContent = "Saved on this device, but account sync failed. Check your connection before switching devices.";
+      $("form-notice").textContent = "Saved locally, but account sync failed. Check your connection before switching devices.";
     }
   }
   async function syncFromAccount() {
@@ -197,10 +198,10 @@
       editingId = null;
       $("save-card-button").textContent = "＋ Save memory card";
       persist(); buildQueue(); renderLibrary();
-      $("form-notice").textContent = "Memory card updated on this device.";
+      $("form-notice").textContent = "Memory card updated. Syncing your changes to your account…";
     } else {
       addCard(values);
-      $("form-notice").textContent = "Memory card saved on this device. Try recalling it before revealing the answer.";
+      $("form-notice").textContent = "Memory card added. Syncing it to your account… Try recalling it before revealing the answer.";
     }
     $("card-form").reset();
     $("review-stage").scrollIntoView({ behavior: "smooth", block: "nearest" });
