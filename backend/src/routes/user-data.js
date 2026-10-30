@@ -46,7 +46,8 @@ function validateData(kind, data, recordId) {
   let bytes;
   try { bytes = Buffer.byteLength(JSON.stringify(data), "utf8"); }
   catch { return "Saved data must be valid JSON."; }
-  if (bytes > 24000) return "Each saved record must be 24 KB or smaller.";
+  const maxBytes = kind === "secondary-tracker" ? 80000 : 24000;
+  if (bytes > maxBytes) return kind === "secondary-tracker" ? "The academic tracker backup must be 80 KB or smaller." : "Each saved record must be 24 KB or smaller.";
 
   if (kind === "secondary-tracker") {
     if (recordId !== "main") return "The secondary tracker record ID is invalid.";
