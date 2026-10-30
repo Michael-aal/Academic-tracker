@@ -14,6 +14,9 @@
     ["Focus Shield","dashboard.html?view=focus","focus"],
     ["Calculator","calculator.html","calculator"],
     ["AI Learning","ai-learning.html","learn"],
+    ["Subscription","subscription.html","more"],
+    ["Study Packs","study-packs.html","notes"],
+    ["For Schools","institution-licensing.html","more"],
     ["AI Tutor","ai-tutor.html","tutor"],
     ["AI Quiz","ai-quiz-setup.html","quiz"],
     ["Educational Videos","educational-videos.html","videos"],
@@ -59,7 +62,7 @@
   };
   const icon = (name) => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + (icons[name] || icons.more) + '</svg>';
   const file = location.pathname.split("/").pop() || "dashboard.html";
-  if (file.startsWith("admin-")) routes.push(["Admin AI","admin-ai.html","more"],["Admin setup","admin-setup.html","more"],["Admin support","admin-support.html","more"]);
+  if (file.startsWith("admin-") || file === "dev-monitor.html") routes.push(["Dev Monitor","dev-monitor.html","more"],["Admin AI","admin-ai.html","more"],["Admin setup","admin-setup.html","more"],["Admin support","admin-support.html","more"]);
   const authPage = file === "login.html" || file === "register.html";
   const currentTitle = (document.title || "Academic Tracker").replace(/^Academic Tracker\s*[·|—-]\s*/i, "").replace(/\s*[·|—-]\s*Academic Tracker.*$/i, "").trim() || "Workspace";
   const header = document.createElement("header");

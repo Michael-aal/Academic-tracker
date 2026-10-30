@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b0812">
+<meta name="description" content="Manage your Academic Tracker Pro plan, trial, AI usage and billing.">
+<title>Subscription · Academic Tracker</title>
+<link rel="stylesheet" href="global-light-mode.css"><link rel="stylesheet" href="site-design-system.css"><link rel="stylesheet" href="premium-theme.css"><link rel="stylesheet" href="global-navigation.css"><link rel="stylesheet" href="dark-mode-guard.css" data-dark-mode-guard><link rel="stylesheet" href="monetization.css">
+<script>try{const t=localStorage.getItem("academic-tracker-theme")==="light"?"light":"dark";document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.dataset.theme="dark";document.documentElement.style.colorScheme="dark";}</script>
+<script src="global-theme.js" data-global-theme defer></script><script src="icon-system.js" defer></script>
+</head>
+<body class="monetization-page">
+<main class="monetization-shell">
+<section class="money-hero">
+<span class="money-eyebrow">YOUR STUDY TOOLS, YOUR CHOICE</span>
+<h1>Make room for <span style="color:var(--money-accent)">deeper learning.</span></h1>
+<p>Start with your 7-day Pro trial, keep the free tracker afterwards, and upgrade when the extra AI support is useful to you.</p>
+<div class="money-status-row"><span class="money-pill"><span class="money-dot"></span><span id="plan-status">Loading your plan…</span></span><span class="money-pill" id="trial-status">Checking trial status</span></div>
+</section>
+<div id="subscription-message" class="money-message" role="status" hidden></div>
+<section class="money-panel" aria-labelledby="usage-heading">
+<div class="money-section-head" style="margin-top:0"><div><h2 id="usage-heading">Your AI usage</h2><p class="money-muted">The server tracks successful requests against your account’s current plan and allowance window.</p></div><strong id="usage-label">Loading…</strong></div>
+<div class="money-usage"><span class="money-muted" id="usage-description">Free plan allowance</span><span id="usage-count">—</span><div class="money-progress" aria-label="Daily AI usage"><span id="usage-progress"></span></div></div>
+<div id="tool-usage" class="money-tool-usage-list" aria-live="polite"></div><p class="money-note">Free accounts receive 5 successful AI requests across all AI tools every 3-day window. Pro allowances are separate for each tool: 20 per day, 100 per week, 600 per month or 2,000 per year. Failed AI requests do not consume a request.</p>
+</section>
+<section>
+<div class="money-section-head"><div><h2>Choose your Pro plan</h2><p class="money-muted">The prices below are the indicative USD conversions we discussed.</p></div></div>
+<div id="plans" class="money-grid" aria-live="polite"><div class="money-card"><p>Loading available plans…</p></div></div>
+<p class="money-note">Billing is not live until the server's payment-provider keys and matching recurring plans are configured. The daily USD price is below Paystack's documented $2 minimum, so it cannot be charged at that amount through Paystack.</p>
+</section>
+<section class="money-panel">
+<div class="money-section-head" style="margin-top:0"><div><h2>Billing history</h2><p class="money-muted">Only verified payments are marked successful.</p></div></div>
+<div id="billing-history" class="money-muted">Loading billing history…</div>
+<div style="margin-top:16px"><button id="cancel-subscription" class="money-button" type="button" hidden>Cancel renewal</button></div>
+<p class="money-note">Cancellation turns off renewal while preserving access through the paid period. Your academic records are not deleted when Pro ends.</p>
+</section>
+<nav class="money-footer-links" aria-label="More student features"><a href="study-packs.html">One-time study packs</a><a href="institution-licensing.html">For schools and institutions</a><a href="ai-learning.html">AI Learning</a><a href="profile.html">Profile</a></nav>
+</main>
+<script src="subscription-page.js"></script><script src="global-navigation.js"></script>
+</body></html>

@@ -1,0 +1,48 @@
+.monetization-page{--money-bg:#0b0812;--money-surface:#151020;--money-surface-2:#1d1730;--money-border:#332747;--money-text:#f7f2ff;--money-muted:#c0b6d3;--money-accent:#b79aff;--money-accent-strong:#8f63ef;--money-good:#83e4c2;--money-danger:#ff9fba;background:var(--money-bg);color:var(--money-text);min-height:100vh}
+html[data-theme="light"] .monetization-page{--money-bg:#f8f5ff;--money-surface:#fff;--money-surface-2:#f0e9ff;--money-border:#ded2f4;--money-text:#241536;--money-muted:#75698a;--money-accent:#6d42c4;--money-accent-strong:#5630a4;--money-good:#187a5a;--money-danger:#b3264c}
+.monetization-shell{width:min(1080px,100% - 32px);margin:0 auto;padding:34px 0 64px}
+.money-hero{padding:clamp(22px,5vw,42px);border:1px solid var(--money-border);border-radius:28px;background:radial-gradient(ellipse at top right,rgba(143,99,239,.2),transparent 50%),var(--money-surface);margin-bottom:28px}
+.money-eyebrow{color:var(--money-accent);font-size:.76rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
+.money-hero h1{font-size:clamp(2rem,6vw,3.5rem);letter-spacing:-.045em;line-height:1.05;margin:12px 0}
+.money-hero p,.money-muted{color:var(--money-muted);line-height:1.65}
+.money-status-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:22px}
+.money-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--money-border);background:var(--money-surface-2);border-radius:999px;padding:9px 13px;font-size:.88rem;font-weight:700}
+.money-dot{width:8px;height:8px;border-radius:50%;background:var(--money-good)}
+.money-section-head{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;margin:30px 0 16px}
+.money-section-head h2{font-size:1.45rem;margin:0 0 5px}
+.money-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.money-card{background:var(--money-surface);border:1px solid var(--money-border);border-radius:22px;padding:20px;display:flex;flex-direction:column;min-width:0}
+.money-card.featured{border-color:var(--money-accent);box-shadow:0 0 0 1px rgba(183,154,255,.15)}
+.money-card h3{font-size:1.05rem;margin:0 0 10px}
+.money-price{font-size:2rem;font-weight:850;letter-spacing:-.05em;margin:0 0 4px}
+.money-price small{font-size:.8rem;font-weight:600;color:var(--money-muted);letter-spacing:0}
+.money-card p{color:var(--money-muted);font-size:.88rem;line-height:1.55}
+.money-card ul{list-style:none;padding:0;margin:10px 0 20px;display:grid;gap:9px;color:var(--money-muted);font-size:.85rem}
+.money-card li:before{content:"✓";color:var(--money-good);font-weight:900;margin-right:8px}
+.money-button{display:inline-flex;justify-content:center;align-items:center;gap:8px;width:100%;border:1px solid var(--money-border);border-radius:13px;padding:12px 14px;background:var(--money-surface-2);color:var(--money-text);font:inherit;font-weight:750;text-decoration:none;cursor:pointer;min-height:44px;transition:transform .16s ease,border-color .16s ease}
+.money-button.primary{background:var(--money-accent-strong);border-color:transparent;color:#fff}
+.money-button:hover:not(:disabled){transform:translateY(-1px);border-color:var(--money-accent)}
+.money-button:focus-visible,.money-input:focus-visible{outline:3px solid var(--money-accent);outline-offset:3px}
+.money-button:disabled{opacity:.58;cursor:not-allowed}
+.money-note{font-size:.82rem;color:var(--money-muted);line-height:1.55;margin-top:10px}
+.money-panel{background:var(--money-surface);border:1px solid var(--money-border);border-radius:22px;padding:20px;margin-top:18px}
+.money-usage{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin:14px 0}
+.money-progress{height:8px;border-radius:999px;background:var(--money-surface-2);overflow:hidden;grid-column:1/-1}
+.money-progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--money-accent-strong),var(--money-accent));border-radius:inherit}
+.money-message{border:1px solid var(--money-border);background:var(--money-surface-2);border-radius:14px;padding:12px 14px;color:var(--money-muted);margin:14px 0;line-height:1.55}
+.money-message[hidden]{display:none}
+.money-pack-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.money-form{display:grid;gap:14px;max-width:650px}
+.money-label{display:grid;gap:7px;font-weight:700;font-size:.9rem}
+.money-input{width:100%;border:1px solid var(--money-border);border-radius:12px;background:var(--money-surface-2);color:var(--money-text);padding:12px 13px;font:inherit;min-height:44px}
+.money-input::placeholder{color:var(--money-muted);opacity:.85}
+.money-footer-links{display:flex;gap:14px;flex-wrap:wrap;margin-top:28px;color:var(--money-muted);font-size:.9rem}
+.money-footer-links a{color:var(--money-accent);text-underline-offset:4px}
+@media(max-width:900px){.money-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.money-pack-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:540px){.monetization-shell{width:calc(100% - 22px);padding-top:18px}.money-grid,.money-pack-grid{grid-template-columns:1fr}.money-card{padding:18px}.money-hero{border-radius:22px;padding:22px}.money-section-head{align-items:start}}
+@media(prefers-reduced-motion:reduce){.money-button{transition:none}.money-button:hover:not(:disabled){transform:none}}
+
+
+.money-tool-usage-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+.money-tool-usage{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--money-border);border-radius:12px;background:var(--money-card,transparent);color:var(--money-text)}
+.money-tool-usage strong{font-variant-numeric:tabular-nums;color:var(--money-accent)}

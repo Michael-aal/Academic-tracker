@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b0812">
+<meta name="description" content="Ask about Academic Tracker plans for schools and higher institutions.">
+<title>Institution Plans · Academic Tracker</title>
+<link rel="stylesheet" href="global-light-mode.css"><link rel="stylesheet" href="site-design-system.css"><link rel="stylesheet" href="premium-theme.css"><link rel="stylesheet" href="global-navigation.css"><link rel="stylesheet" href="dark-mode-guard.css" data-dark-mode-guard><link rel="stylesheet" href="monetization.css">
+<script>try{const t=localStorage.getItem("academic-tracker-theme")==="light"?"light":"dark";document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.dataset.theme="dark";document.documentElement.style.colorScheme="dark";}</script>
+<script src="global-theme.js" data-global-theme defer></script><script src="icon-system.js" defer></script>
+</head>
+<body class="monetization-page">
+<main class="monetization-shell">
+<section class="money-hero"><span class="money-eyebrow">FOR SCHOOLS AND INSTITUTIONS</span><h1>Bring clearer academic tracking to <span style="color:var(--money-accent)">your community.</span></h1><p>Tell us about your school, tutoring group, or higher institution. This form records an inquiry for follow-up; it does not purchase seats or create student accounts.</p><div class="money-status-row"><span class="money-pill">Secondary school</span><span class="money-pill">University</span><span class="money-pill">Tutoring groups</span></div></section>
+<div id="institution-message" class="money-message" role="status" hidden></div>
+<section class="money-panel"><div class="money-section-head" style="margin-top:0"><div><h2>Request institution information</h2><p class="money-muted">No payment is taken through this form.</p></div></div>
+<form id="institution-form" class="money-form">
+<label class="money-label">Institution name<input class="money-input" name="institutionName" required maxlength="180" placeholder="School, university or learning centre"></label>
+<label class="money-label">Contact person's name<input class="money-input" name="contactName" required maxlength="120" placeholder="Your name"></label>
+<label class="money-label">Contact email<input class="money-input" name="contactEmail" type="email" required maxlength="254" placeholder="you@institution.edu"></label>
+<label class="money-label">Estimated student seats<select class="money-input" name="seatCount"><option value="25">5–25 students</option><option value="50">26–50 students</option><option value="100">51–100 students</option><option value="250">101–250 students</option><option value="500">251–500 students</option><option value="1000">501–1,000 students</option><option value="2500">More than 1,000 students</option></select></label>
+<label class="money-label">What would you like to support? <textarea class="money-input" name="notes" rows="4" maxlength="2000" placeholder="For example: student progress tracking, revision resources, or staff reporting. Please do not include students' private records."></textarea></label>
+<button class="money-button primary" id="institution-submit" type="submit">Send inquiry</button>
+</form></section>
+<nav class="money-footer-links" aria-label="More student features"><a href="subscription.html">Pro subscription</a><a href="study-packs.html">Study packs</a><a href="index.html">Home</a></nav>
+</main><script src="institution-licensing.js"></script><script src="global-navigation.js"></script>
+</body></html>

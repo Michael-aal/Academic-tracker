@@ -12,6 +12,9 @@ const adminRoutes = require("./routes/admin");
 const aiRoutes = require("./routes/ai");
 const videoRoutes = require("./routes/videos");
 const universityRoutes = require("./routes/university");
+const subscriptionRoutes = require("./routes/subscriptions");
+const studyPackRoutes = require("./routes/study-packs");
+const institutionLicenseRoutes = require("./routes/institution-licenses");
 
 const app = express();
 // Render terminates TLS and forwards the client IP. Trust only its single
@@ -28,7 +31,7 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Bootstrap-Secret"]
 }));
-app.use(express.json({ limit: "30kb" }));
+app.use(express.json({ limit: "30kb", verify(req, _res, buffer) { req.rawBody = Buffer.from(buffer); } }));
 
 app.get("/", (_req, res) => res.json({
   name: "Academic Tracker API",
@@ -67,6 +70,9 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/university", universityRoutes);
+app.use("/api/subscriptions", subscriptionRoutes.router);
+app.use("/api/study-packs", studyPackRoutes);
+app.use("/api/institutions", institutionLicenseRoutes);
 
 app.use((_req, res) => res.status(404).json({ error: "Route not found." }));
 
