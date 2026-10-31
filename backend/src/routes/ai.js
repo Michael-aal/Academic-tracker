@@ -167,7 +167,28 @@ async function enforceAiQuota(req, res, next) {
   }
 }
 
-router.post("/", aiCreditGate, enforceAiQuota, async (req, res) => {
+function validateAiRequest(req, res, next) {
+  const body = req.body && typeof req.body === "object" ? req.body : {};
+  const action = typeof body.action === "string" ? body.action : "";
+  const content = typeof body.content === "string" ? body.content.trim() : "";
+  const topic = typeof body.topic === "string" ? body.topic.trim() : "";
+  const questionCount = body.questionCount === undefined ? 5 : body.questionCount;
+  const cardCount = body.cardCount === undefined ? 10 : body.cardCount;
+  const difficulty = typeof body.difficulty === "string" ? body.difficulty.toLowerCase() : "medium";
+  const timeLimit = body.timePerQuestionSeconds === undefined ? 0 : body.timePerQuestionSeconds;
+
+  if (!ACTIONS.has(action)) return res.status(400).json({ error: "Choose a supported AI learning task." });
+  if (action === "quiz" && (!Number.isInteger(questionCount) || questionCount < 1 || questionCount > 10)) return res.status(400).json({ error: "Choose between 1 and 10 quiz questions." });
+  if (action === "flashcards" && (!Number.isInteger(cardCount) || cardCount < 1 || cardCount > 20)) return res.status(400).json({ error: "Choose between 1 and 20 memory cards." });
+  if (action === "quiz" && !["easy", "medium", "hard"].includes(difficulty)) return res.status(400).json({ error: "Choose easy, medium, or hard difficulty." });
+  if (action === "quiz" && (!Number.isInteger(timeLimit) || ![0, 10, 15, 20, 30, 60].includes(timeLimit))) return res.status(400).json({ error: "Choose a supported time limit per question." });
+  if (content.length > MAX_INPUT_CHARS) return res.status(413).json({ error: "Your request is too long. Keep your question or notes under 12,000 characters." });
+  if (!content && !topic) return res.status(400).json({ error: "Enter a question, topic, or study notes first." });
+  if (!hasConfiguredProvider()) return res.status(503).json({ error: "AI learning is not configured yet. Please contact the administrator." });
+  return next();
+}
+
+router.post("/", validateAiRequest, aiCreditGate, enforceAiQuota, async (req, res) => {
   const action = typeof req.body?.action === "string" ? req.body.action : "";
   const subject = typeof req.body?.subject === "string" ? req.body.subject.trim().slice(0, 100) : "";
   const topic = typeof req.body?.topic === "string" ? req.body.topic.trim().slice(0, 160) : "";
