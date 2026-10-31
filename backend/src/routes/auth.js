@@ -69,7 +69,26 @@ router.post("/login", loginLimiter, async (req, res, next) => {
     const email = cleanString(req.body?.email, 254).toLowerCase();
     const password = req.body?.password;
     if (!email || typeof password !== "string" || !password) return res.status(400).json({ error: "Enter your email and password." });
+    const configuredAdminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+    const configuredAdminPassword = process.env.ADMIN_PASSWORD || "";
     const user = await prisma.user.findUnique({ where: { email } });
+
+    if (configuredAdminEmail && email === configuredAdminEmail && user?.role === "ADMIN") {
+      if (!configuredAdminPassword) {
+        return res.status(503).json({ error: "Administrator login is not configured on the server." });
+      }
+      // Compare the private environment value without an early-exit string comparison.
+      const supplied = Buffer.from(password, "utf8");
+      const expected = Buffer.from(configuredAdminPassword, "utf8");
+      const passwordMatches = supplied.length === expected.length &&
+        require("node:crypto").timingSafeEqual(supplied, expected);
+      if (!passwordMatches) return res.status(401).json({ error: "Email or password is incorrect." });
+      return res.json({ token: issueToken(user.id, user.sessionVersion), user: publicUser(user) });
+    }
+
+    // Before one-time promotion, the reserved owner account must still be able
+    // to sign in with its existing database password to complete bootstrap.
+    // All ordinary accounts continue to use their own bcrypt password and JWT.
     const valid = user && await bcrypt.compare(password, user.passwordHash);
     if (!valid) return res.status(401).json({ error: "Email or password is incorrect." });
     return res.json({ token: issueToken(user.id, user.sessionVersion), user: publicUser(user) });
