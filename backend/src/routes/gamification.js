@@ -17,7 +17,11 @@ router.use(rateLimit({
   message: { error: "Too many learning activity requests. Please slow down." }
 }));
 
-function stableEventKey(prefix, value) {\n  return prefix + ":" + createHash("sha256").update(String(value)).digest("hex").slice(0, 48);\n}\n\nconst CATEGORY_LABELS = {
+function stableEventKey(prefix, value) {
+  return prefix + ":" + createHash("sha256").update(String(value)).digest("hex").slice(0, 48);
+}
+
+const CATEGORY_LABELS = {
   vocabulary: "Vocabulary",
   spelling: "Spelling",
   grammar: "Grammar",
