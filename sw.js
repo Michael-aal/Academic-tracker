@@ -5,7 +5,7 @@ const APP_SHELL = [
   "./dashboard.html", "./dashboard-auth.js", "./premium.html", "./premium-page.css", "./premium-page.js",
   "./notifications.html", "./notifications.css", "./notifications.js",
   "./english-studio.html", "./english-studio.css", "./english-studio.js", "./exam-simulator.html",
-  "./level-up.html", "./level-up.css", "./level-up.js",
+  "./level-up.html", "./level-up.css", "./level-up.js", "./exam-simulator.js",
   "./styles.css", "./ui-polish.css", "./focus.css", "./app.js", "./global-navigation.js", "./vibrant-refresh.css",
   "./site-design-system.css", "./premium-theme.css", "./global-light-mode.css", "./dark-mode-guard.css", "./theme-page-overrides.css", "./global-theme.js",
   "./manifest.webmanifest", "./assets/icon.svg", "./pwa-install.js", "./pwa-install.css"
