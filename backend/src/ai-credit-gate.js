@@ -8,7 +8,8 @@ const ACTION_CREDIT_COSTS = Object.freeze({
   quiz: 3,
   summarize: 2,
   "study-plan": 2,
-  flashcards: 2
+  flashcards: 2,
+  story: 3
 });
 
 function estimateCredits(body = {}) {
