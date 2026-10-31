@@ -12,7 +12,7 @@ const validCard = {
 };
 
 test("accepts the supported account data categories", () => {
-  for (const kind of ["secondary-tracker", "video-library", "video-history", "study-sessions", "memory-cards", "memory-stats", "tutor-conversations", "note-summaries", "study-notes", "focus-sessions", "preferences"]) {
+  for (const kind of ["secondary-tracker", "video-library", "video-history", "study-sessions", "memory-cards", "memory-stats", "tutor-conversations", "note-summaries", "study-notes", "focus-sessions", "preferences", "learning-progress"]) {
     assert.equal(userDataRouter.allowedKinds.has(kind), true);
   }
 });
@@ -65,4 +65,10 @@ test("validates account-synced study notes", () => {
   const note = { title: "Newton laws", content: "An object remains at rest unless acted on by a net force.", subject: "Physics", topic: "Motion" };
   assert.equal(userDataRouter.validateData("study-notes", note, "note-1"), null);
   assert.match(userDataRouter.validateData("study-notes", { ...note, title: " " }, "note-1"), /study note is invalid/);
+});
+
+test("validates account learning progress records", () => {
+  const progress = { totalXp: 120, events: [{ id: "english-correct:sp-1", type: "english-correct", xp: 3, at: new Date().toISOString() }] };
+  assert.equal(userDataRouter.validateData("learning-progress", progress, "main"), null);
+  assert.match(userDataRouter.validateData("learning-progress", progress, "other"), /learning progress record is invalid/);
 });

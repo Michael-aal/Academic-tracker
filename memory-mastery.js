@@ -244,7 +244,7 @@
       }
       current.dueAt = now() + current.intervalDays * 24 * 60 * 60 * 1000;
     }
-    persist(); renderLibrary(); showNext();
+    persist().then(() => { if (rating !== "again") dataRequest("/api/learning/progress/award", { method: "POST", body: JSON.stringify({ action: "flashcard-reviewed", reference: current.id }) }).catch(() => {}); }); renderLibrary(); showNext();
   }));
   $("library-search").addEventListener("input", renderLibrary);
   $("library-list").addEventListener("click", event => {
