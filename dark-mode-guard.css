@@ -320,3 +320,27 @@ body.at-nav-menu-open .at-notes-launcher {
   visibility: hidden !important;
   pointer-events: none !important;
 }
+
+
+/* Dark-mode contrast contract: if a control keeps a white/light surface,
+   its foreground must be dark. Brand-primary controls retain their own theme colors. */
+html[data-theme="dark"] :where(
+  button, [role="button"], input[type="button"], input[type="submit"], input[type="reset"]
+):where(
+  [class~="bg-white"], [class~="bg-slate-50"], [class~="bg-gray-50"],
+  [class~="bg-zinc-50"], [class~="bg-neutral-50"], [class~="bg-stone-50"],
+  [class~="button-light"], [class~="btn-light"], [class~="surface-light"]
+) {
+  color: #21172f !important;
+  -webkit-text-fill-color: #21172f !important;
+}
+html[data-theme="dark"] :where(
+  button, [role="button"], input[type="button"], input[type="submit"], input[type="reset"]
+):where(
+  [class~="bg-white"], [class~="bg-slate-50"], [class~="bg-gray-50"],
+  [class~="bg-zinc-50"], [class~="bg-neutral-50"], [class~="bg-stone-50"],
+  [class~="button-light"], [class~="btn-light"], [class~="surface-light"]
+) :where(span,small,strong,svg) {
+  color: #21172f !important;
+  -webkit-text-fill-color: #21172f !important;
+}
