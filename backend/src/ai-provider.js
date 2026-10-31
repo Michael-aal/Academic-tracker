@@ -54,7 +54,7 @@ async function requestChatCompletion(payload, options = {}) {
       "Content-Type": "application/json"
     };
     if (providerId === "openrouter") {
-      headers["HTTP-Referer"] = process.env.AI_SITE_URL || "https://academic-tracker-iota.vercel.app";
+      headers["HTTP-Referer"] = process.env.AI_SITE_URL || "https://study-track-lilac.vercel.app";
       headers["X-Title"] = "Academic Tracker";
     }
     try {
