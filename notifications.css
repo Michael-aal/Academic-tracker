@@ -25,7 +25,7 @@ html[data-theme="dark"] .notifications-page{--notice-bg:#100b1b;--notice-card:#1
 .notification-admin-card h2{font-size:21px}
 #notification-compose-form{display:grid;gap:13px;margin-top:18px}
 #notification-compose-form label{display:grid;gap:7px;color:var(--notice-text);font-size:12px;font-weight:750}
-#notification-compose-form input,#notification-compose-form textarea,#notification-compose-form select{width:100%;min-width:0;padding:12px 13px;border:1px solid var(--notice-border);border-radius:11px;background:var(--notice-bg);color:var(--notice-text);font:500 14px/1.45 inherit}
+#notification-compose-form input,#notification-compose-form textarea,#notification-compose-form select{width:100%;min-width:0;padding:12px 13px;border:1px solid var(--notice-border);border-radius:11px;background:var(--notice-bg);color:var(--notice-text);font:inherit;font-size:14px;line-height:1.45}
 #notification-compose-form textarea{resize:vertical}
 .notification-compose-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .notification-primary-button{justify-self:start;padding:12px 17px;border:0;border-radius:11px;background:linear-gradient(135deg,#7c3aed,#9b72f5);color:#fff;font-weight:800;cursor:pointer}
