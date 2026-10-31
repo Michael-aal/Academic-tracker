@@ -84,7 +84,14 @@ router.post("/login", loginLimiter, async (req, res, next) => {
         return res.status(403).json({ error: "The configured administrator account does not exist. Contact the application administrator." });
       }
       if (String(user.role || "").toUpperCase() !== "ADMIN") {
-        return res.status(403).json({ error: "This account is not assigned the ADMIN role. Verify its role in the database." });
+        // Preserve the one-time bootstrap path: the reserved account may sign
+        // in with its existing password, then use the protected bootstrap
+        // endpoint to receive the ADMIN role.
+        const bootstrapPasswordValid = await bcrypt.compare(password, user.passwordHash);
+        if (!bootstrapPasswordValid) {
+          return res.status(403).json({ error: "This account is not assigned the ADMIN role. Verify its role or complete administrator bootstrap." });
+        }
+        return res.json({ token: issueToken(user.id, user.sessionVersion), user: publicUser(user) });
       }
       if (!configuredAdminPassword) {
         return res.status(503).json({ error: "Administrator login is not configured on the server. Set ADMIN_PASSWORD in the API environment." });
