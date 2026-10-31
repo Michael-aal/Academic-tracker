@@ -46,7 +46,7 @@
       '<p class="daily-total" id="daily-total" aria-live="polite"></p>' +
       '<p class="credit-note" id="daily-credit-note"></p>' +
       '<button class="premium-buy" data-plan="daily" type="button">Continue to checkout</button>' +
-      '<p class="daily-hint">Need 7 days? The Weekly plan is a better-value option.</p></article>';
+      '<p class="daily-hint">Need 4–7 days? The Weekly plan is the better-value option.</p></article>';
   }
   function renderPlans() {
     const plans = catalog.plans || [];
