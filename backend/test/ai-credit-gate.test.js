@@ -18,6 +18,8 @@ test("zero-credit accounts are blocked at the API gate instead of falling back t
   const originalTransaction = prisma.$transaction;
   const fakeTx = {
     $queryRaw: async () => [],
+    premiumAccess: { findUnique: async () => null },
+    creditLedger: { findFirst: async () => ({ createdAt: new Date() }) },
     creditLot: {
       findMany: async () => [],
       updateMany: async () => ({ count: 0 })
