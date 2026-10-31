@@ -79,3 +79,228 @@ html[data-theme="dark"] .ai-tutor-page :is(.at-nav-brand-mark,.ai-brand-mark){co
 html[data-theme="light"] .ai-tutor-page :is(.at-nav-brand-mark,.ai-brand-mark){color:#fff!important;background:linear-gradient(145deg,#8b5cf6,#6d28d9)!important}
 html[data-theme="dark"] .ai-tutor-page :is(.at-nav-brand-name span,.at-nav-menu-heading,.at-mobile-nav button[aria-expanded="true"]){color:#c4b5fd!important}
 html[data-theme="light"] .ai-tutor-page :is(.at-nav-brand-name span,.at-nav-menu-heading,.at-mobile-nav button[aria-expanded="true"]){color:#7545c8!important}
+
+
+/* -------------------------------------------------------------------------
+   Site-wide dark-mode contrast audit (final stylesheet in every app route).
+   Cards/panels stay on dark surfaces with light copy. Explicit light controls
+   keep a light surface AND dark copy. Purple primary actions keep white copy.
+   ------------------------------------------------------------------------- */
+html[data-theme="dark"] :is(
+  .card,.panel,.uni-card,.tool-card,.resource-card,.support-card,.profile-card,
+  .task-picker,.chat-card,.calculator-card,.feature-card,.step-card,.faq-item,
+  .testimonial-card,.stat-card,.cta-panel,.chart-card,.preview-window,
+  .question-card,.quiz-card,.note-card,.planner-card,.summary-card,.flashcard,
+  .chat-container,.tutor-workspace,.modal,.modal-content,.result-panel,
+  .tutor-chat-panel,.message-list,.profile-hero,.workspace-card,.report-card,
+  .subject-card,.score-card,.study-card,.tool-panel,.learning-card,.video-card,
+  .memory-card,.university-card,.track-card,.focus-panel,.focus-setup-card,
+  .focus-reset-card,.focus-promo,.notes-library,.notes-editor-panel,
+  .notes-list-item[aria-current="true"],.notes-list-item[aria-current="true"],
+  .mm-panel,.mm-stat,.mm-empty,.mm-flashcard,.mm-library-card,
+  .ev-search-panel,.ev-player-panel,.ev-list-panel,.ev-other-sources,
+  .ev-library-panel,.ev-video-card,.ev-saved-card,
+  .quiz-question-card,.quiz-overview-row,.quiz-finish-panel,.quiz-loading-card,
+  .quiz-result-stat,.quiz-review-card,.ai-tool-card,.ai-hub-extras>div,
+  .tutor-side-card,.tutor-composer-panel,.tutor-welcome,.account-data-panel,
+  .planner-create-option,.planner-sessions-card,.planner-form-card,
+  .at-install-banner,.at-install-help-panel,.why-card,.pathway-panel,.value-strip,
+  .hero-card,.dashboard-preview,.feature,.step,.mini-stats > div,.float-chip,
+  .at-notes-drawer,.planner-card,.quiz-results,.at-chart-card
+) {
+  color: #f5f3ff !important;
+  background-color: #171123 !important;
+  border-color: #49375f !important;
+}
+html[data-theme="dark"] :is(
+  .card,.panel,.uni-card,.tool-card,.resource-card,.support-card,.profile-card,
+  .task-picker,.chat-card,.calculator-card,.feature-card,.step-card,.faq-item,
+  .testimonial-card,.stat-card,.cta-panel,.chart-card,.preview-window,
+  .question-card,.quiz-card,.note-card,.planner-card,.summary-card,.flashcard,
+  .chat-container,.tutor-workspace,.modal,.modal-content,.result-panel,
+  .tutor-chat-panel,.message-list,.profile-hero,.workspace-card,.report-card,
+  .subject-card,.score-card,.study-card,.tool-panel,.learning-card,.video-card,
+  .memory-card,.university-card,.focus-panel,.focus-setup-card,.focus-reset-card,
+  .focus-promo,.notes-library,.notes-editor-panel,.mm-panel,.mm-stat,.mm-empty,
+  .why-card,.pathway-panel,.value-strip,.hero-card,.dashboard-preview,.feature,.step,
+  .mini-stats > div,.float-chip,.at-notes-drawer,.planner-card,.quiz-results,.at-chart-card,
+  .mm-flashcard,.mm-library-card,.ev-search-panel,.ev-player-panel,.ev-list-panel,
+  .ev-other-sources,.ev-library-panel,.ev-video-card,.ev-saved-card,
+  .quiz-question-card,.quiz-overview-row,.quiz-finish-panel,.quiz-loading-card,
+  .quiz-result-stat,.quiz-review-card,.ai-tool-card,.ai-hub-extras>div,
+  .tutor-side-card,.tutor-composer-panel,.tutor-welcome,.account-data-panel,
+  .planner-create-option,.planner-sessions-card,.planner-form-card
+) :is(h1,h2,h3,h4,h5,h6,strong,legend,label,th) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+html[data-theme="dark"] :is(
+  .card,.panel,.uni-card,.tool-card,.resource-card,.support-card,.profile-card,
+  .task-picker,.chat-card,.calculator-card,.feature-card,.step-card,.faq-item,
+  .testimonial-card,.stat-card,.cta-panel,.chart-card,.preview-window,
+  .question-card,.quiz-card,.note-card,.planner-card,.summary-card,.flashcard,
+  .chat-container,.tutor-workspace,.modal,.modal-content,.result-panel,
+  .tutor-chat-panel,.message-list,.profile-hero,.workspace-card,.report-card,
+  .subject-card,.score-card,.study-card,.tool-panel,.learning-card,.video-card,
+  .memory-card,.university-card,.focus-panel,.focus-setup-card,.focus-reset-card,
+  .focus-promo,.notes-library,.notes-editor-panel,.mm-panel,.mm-stat,.mm-empty,
+  .mm-flashcard,.mm-library-card,.ev-search-panel,.ev-player-panel,.ev-list-panel,
+  .ev-other-sources,.ev-library-panel,.ev-video-card,.ev-saved-card,
+  .quiz-question-card,.quiz-overview-row,.quiz-finish-panel,.quiz-loading-card,
+  .quiz-result-stat,.quiz-review-card,.ai-tool-card,.ai-hub-extras>div,
+  .tutor-side-card,.tutor-composer-panel,.tutor-welcome,.account-data-panel,
+  .planner-create-option,.planner-sessions-card,.planner-form-card
+) :is(p,small,.muted,.caption,.meta,.notice,.description,.helper-text,.stat-foot,
+      .notes-list-preview,.notes-list-meta,.ev-video-copy span,.ev-video-copy p,
+      .mm-review-tip,.mm-form-note,.planner-import-hint) {
+  color: #c0bbd6 !important;
+  -webkit-text-fill-color: #c0bbd6 !important;
+}
+
+/* Light utility buttons intentionally remain light, so their copy/icons must
+   be dark. This is paired with a light background in the same declaration. */
+html[data-theme="dark"] :is(
+  button,[role="button"],input[type="button"],input[type="submit"],
+  input[type="reset"],a.button,a.btn
+):is(
+  .bg-white,.bg-slate-50,.bg-gray-50,.bg-zinc-50,.bg-neutral-50,.bg-stone-50,
+  .bg-slate-100,.bg-gray-100,.bg-zinc-100,.bg-neutral-100,.bg-stone-100,
+  .button-light,.btn-light,.surface-light
+) {
+  color: #21172f !important;
+  -webkit-text-fill-color: #21172f !important;
+  background: #f5f3ff !important;
+  background-color: #f5f3ff !important;
+  background-image: none !important;
+  border-color: #d8c9eb !important;
+}
+html[data-theme="dark"] :is(
+  button,[role="button"],input[type="button"],input[type="submit"],
+  input[type="reset"],a.button,a.btn
+):is(
+  .bg-white,.bg-slate-50,.bg-gray-50,.bg-zinc-50,.bg-neutral-50,.bg-stone-50,
+  .bg-slate-100,.bg-gray-100,.bg-zinc-100,.bg-neutral-100,.bg-stone-100,
+  .button-light,.btn-light,.surface-light
+) :is(span,small,strong,svg,i) {
+  color: #21172f !important;
+  -webkit-text-fill-color: #21172f !important;
+  stroke: currentColor;
+}
+/* Catch inline white/light backgrounds on buttons as well as utility classes. */
+html[data-theme="dark"] :is(
+  button,[role="button"],input[type="button"],input[type="submit"],input[type="reset"]
+):is(
+  [style*="background: white"],[style*="background-color: white"],
+  [style*="background:#fff"],[style*="background: #fff"],
+  [style*="background-color:#fff"],[style*="background-color: #fff"],
+  [style*="background: rgb(255, 255, 255)"],
+  [style*="background-color: rgb(255, 255, 255)"]
+) {
+  color: #21172f !important;
+  -webkit-text-fill-color: #21172f !important;
+  background: #f5f3ff !important;
+  background-color: #f5f3ff !important;
+  background-image: none !important;
+  border-color: #d8c9eb !important;
+}
+html[data-theme="dark"] :is(
+  button,[role="button"],input[type="button"],input[type="submit"],input[type="reset"]
+):is(
+  [style*="background: white"],[style*="background-color: white"],
+  [style*="background:#fff"],[style*="background: #fff"],
+  [style*="background-color:#fff"],[style*="background-color: #fff"],
+  [style*="background: rgb(255, 255, 255)"],
+  [style*="background-color: rgb(255, 255, 255)"]
+) :is(span,small,strong,svg,i) {
+  color: #21172f !important;
+  -webkit-text-fill-color: #21172f !important;
+}
+
+/* Explicit branded primary actions: purple background + white foreground. */
+html[data-theme="dark"] :is(
+  .button,.btn,.button-primary,.button.primary,.primary,.submit-button,
+  .cta-button,.btn-primary,.button-small,.notes-create-btn,.notes-save-btn,
+  .mm-primary,.quiz-finish-button,.quiz-primary-link,.ev-library-watch,
+  .at-notes-launcher,.at-nav-restore,.at-install-primary,.at-install-help-close,
+  .tutor-composer-bottom button,.submit-row button,.quiz-submit,.quiz-finish,
+  .focus-controls .button,.planner-apply,.planner-save,.planner-submit
+) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: linear-gradient(135deg,#8b5cf6,#6d28d9) !important;
+  background-color: #6d28d9 !important;
+  border-color: #a78bfa !important;
+}
+/* Secondary/quiet actions use a dark raised surface + light foreground. */
+html[data-theme="dark"] :is(
+  .secondary,.button-secondary,.icon-button,.menu-trigger,.menu-toggle,
+  .show-password,.at-theme-toggle,.calc-key,.notes-icon-btn,.mm-secondary,
+  .mm-ratings button,.mm-library-actions button,.ev-carousel-controls button,
+  .ev-saved-actions button,.ev-save-button,.planner-filters button,
+  .quiz-nav-button,.quiz-secondary-link,.quiz-signout,.quiz-next-button,
+  .tutor-chat-top button,.quick-help-list button,.side-outline-button,
+  .ai-mobile-menu-toggle,.at-nav-icon-button,.at-nav-menu button,
+  .at-mobile-nav button,.at-mobile-nav a,.dropdown-item,.track-card,
+  .notes-list-item,.ev-video-card,.quiz-answer-option,.answer-option,
+  .tool-choice,.planner-upload-control
+) {
+  color: #f5f3ff !important;
+  -webkit-text-fill-color: #f5f3ff !important;
+  background-color: #211832 !important;
+  border-color: #49375f !important;
+}
+html[data-theme="dark"] :is(
+  .secondary,.button-secondary,.icon-button,.menu-trigger,.menu-toggle,
+  .show-password,.at-theme-toggle,.calc-key,.notes-icon-btn,.mm-secondary,
+  .mm-ratings button,.mm-library-actions button,.ev-carousel-controls button,
+  .ev-saved-actions button,.ev-save-button,.planner-filters button,
+  .quiz-nav-button,.quiz-secondary-link,.quiz-signout,.quiz-next-button,
+  .tutor-chat-top button,.quick-help-list button,.side-outline-button,
+  .ai-mobile-menu-toggle,.at-nav-icon-button,.at-nav-menu button,
+  .at-mobile-nav button,.at-mobile-nav a,.dropdown-item,.track-card,
+  .notes-list-item,.ev-video-card,.quiz-answer-option,.answer-option,
+  .tool-choice,.planner-upload-control
+) :is(span,small,strong,svg,i) {
+  color: #f5f3ff !important;
+  -webkit-text-fill-color: #f5f3ff !important;
+  stroke: currentColor;
+}
+/* Disabled controls remain visibly disabled without losing readable labels. */
+html[data-theme="dark"] :is(button,input,select,textarea,[role="button"]):disabled {
+  color: #a69bb9 !important;
+  -webkit-text-fill-color: #a69bb9 !important;
+  background-color: #171123 !important;
+  border-color: #3a2d4d !important;
+  opacity: 1 !important;
+}
+
+
+/* Preserve selected/active states after the shared control normalization. */
+html[data-theme="dark"] :is(
+  .nav-link.active,.dropdown-item.active,.pathway-tab.active,
+  .answer-option.selected,.quiz-answer-option[aria-pressed="true"],
+  .tool-choice.active,.planner-filters button.active,
+  .notes-list-item[aria-current="true"],.ev-video-card[aria-pressed="true"],
+  .at-mobile-nav .at-nav-active,.at-mobile-nav [aria-current="page"],
+  .at-mobile-nav button[aria-expanded="true"],
+  .at-nav-menu a[aria-current="page"]
+) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: rgba(139,92,246,.22) !important;
+  background-color: rgba(139,92,246,.22) !important;
+  border-color: #8b5cf6 !important;
+}
+html[data-theme="dark"] :is(
+  .nav-link.active,.dropdown-item.active,.pathway-tab.active,
+  .answer-option.selected,.quiz-answer-option[aria-pressed="true"],
+  .tool-choice.active,.planner-filters button.active,
+  .notes-list-item[aria-current="true"],.ev-video-card[aria-pressed="true"],
+  .at-mobile-nav .at-nav-active,.at-mobile-nav [aria-current="page"],
+  .at-mobile-nav button[aria-expanded="true"],
+  .at-nav-menu a[aria-current="page"]
+) :is(span,small,strong,svg,i) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  stroke: currentColor;
+}
