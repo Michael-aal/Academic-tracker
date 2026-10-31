@@ -7,11 +7,15 @@ test("allows the configured primary and current Vercel deployment origins", () =
   assert.equal(isAllowedOrigin("https://academic-tracker-nu.vercel.app"), true);
   assert.equal(isAllowedOrigin("https://academic-tracker-iota.vercel.app"), true);
   assert.equal(isAllowedOrigin("https://study-track-lilac.vercel.app"), true);
+  assert.equal(isAllowedOrigin("https://study-track-michael-aals-projects.vercel.app"), true);
+  assert.equal(isAllowedOrigin("https://study-track-git-main-michael-aals-projects.vercel.app"), true);
 });
 
 test("allows project preview URLs but rejects unrelated Vercel sites", () => {
   assert.equal(isAllowedOrigin("https://academic-tracker-git-fix-ui-michael-aals-projects.vercel.app"), true);
   assert.equal(isAllowedOrigin("https://academic-tracker-ah1jhkyoj-michael-aals-projects.vercel.app"), true);
+  assert.equal(isAllowedOrigin("https://study-track-6j3x0xqkn-michael-aals-projects.vercel.app"), true);
+  assert.equal(isAllowedOrigin("https://study-track-git-fix-login-michael-aals-projects.vercel.app"), true);
   assert.equal(isAllowedOrigin("https://academic-tracker-preview-123-other-team.vercel.app"), false);
   assert.equal(isAllowedOrigin("https://unrelated-project.vercel.app"), false);
   assert.equal(isAllowedOrigin("http://academic-tracker-iota.vercel.app"), false);
