@@ -58,3 +58,4 @@ html[data-theme="light"] .quiz-hint-button{color:#5b2ba8!important}
 html[data-theme="light"] .quiz-overview-label,html[data-theme="light"] .quiz-page-footer{color:#6c5a83!important}
 html[data-theme="light"] .quiz-page-header .ai-brand{color:#35224f!important}
 html[data-theme="light"] .quiz-nav-button:disabled,html[data-theme="light"] .quiz-next-button:disabled{opacity:.58}
+\n.quiz-xp-reward{margin:16px 0 0;padding:12px 14px;border:1px solid #6d4aa2;border-radius:11px;background:#211832;color:#e9ddff;font-size:12px;font-weight:800}\n
