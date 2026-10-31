@@ -573,3 +573,46 @@ html[data-theme="light"] :is(.modal-backdrop, .dialog-backdrop, .popup-backdrop,
 @media (prefers-reduced-motion: reduce) {
   :is(.at-nav-popover, .dropdown-menu, .account-menu, .menu-dropdown, .modal-content, .dialog-content, [role="dialog"]) { transition: none !important; }
 }
+
+
+/* Native dialogs and confirmation surfaces: match the shared glass system.
+   This is deliberately placed last to override legacy opaque dialog declarations. */
+html[data-theme="light"] :is(dialog, dialog[open], .modal, .modal-content, .modal-dialog,
+  .confirm-modal, .confirm-dialog, .alert-dialog, .popup-content, .settings-modal,
+  .share-modal, [role="dialog"], [role="alertdialog"]) {
+  color: #35224f !important;
+  background: rgba(255,255,255,.82) !important;
+  background-color: rgba(255,255,255,.82) !important;
+  border: 1px solid rgba(196,181,253,.48) !important;
+  box-shadow: 0 24px 68px rgba(47,28,82,.22), inset 0 1px 0 rgba(255,255,255,.72) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(165%) !important;
+  backdrop-filter: blur(24px) saturate(165%) !important;
+}
+html[data-theme="dark"] :is(dialog, dialog[open], .modal, .modal-content, .modal-dialog,
+  .confirm-modal, .confirm-dialog, .alert-dialog, .popup-content, .settings-modal,
+  .share-modal, [role="dialog"], [role="alertdialog"]) {
+  color: #f5f3ff !important;
+  background: rgba(23,17,35,.86) !important;
+  background-color: rgba(23,17,35,.86) !important;
+  border: 1px solid rgba(167,139,250,.34) !important;
+  box-shadow: 0 26px 72px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.06) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(155%) !important;
+  backdrop-filter: blur(26px) saturate(155%) !important;
+}
+dialog::backdrop, .modal-backdrop, .dialog-backdrop, .popup-backdrop,
+[data-modal-backdrop] {
+  background: rgba(12,8,20,.42) !important;
+  -webkit-backdrop-filter: blur(7px) !important;
+  backdrop-filter: blur(7px) !important;
+}
+html[data-theme="light"] dialog::backdrop,
+html[data-theme="light"] .modal-backdrop,
+html[data-theme="light"] .dialog-backdrop,
+html[data-theme="light"] .popup-backdrop,
+html[data-theme="light"] [data-modal-backdrop] {
+  background: rgba(47,28,82,.18) !important;
+}
+@supports not ((backdrop-filter: blur(1px))) {
+  html[data-theme="light"] :is(dialog, .modal, .modal-content, .modal-dialog, [role="dialog"], [role="alertdialog"]) { background: #fff !important; }
+  html[data-theme="dark"] :is(dialog, .modal, .modal-content, .modal-dialog, [role="dialog"], [role="alertdialog"]) { background: #171123 !important; }
+}
