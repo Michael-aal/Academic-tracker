@@ -5,7 +5,7 @@ const API=(window.AT_API_BASE||"https://academic-tracker-0b2q.onrender.com").rep
 const token=localStorage.getItem("academic-tracker-token");
 if(!token)return;
 const el=(tag,attrs={},text="")=>{const node=document.createElement(tag);Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,v));if(text)node.textContent=text;return node;};
-const css=el("link",{rel:"stylesheet",href:"universal-notes.css"});document.head.append(css);
+const css=el("link",{rel:"stylesheet",href:"universal-notes.css"});css.addEventListener("load",()=>requestAnimationFrame(restoreLauncherPosition),{once:true});document.head.append(css);
 const launcher=el("button",{id:"at-notes-launcher",class:"at-notes-launcher",type:"button","aria-label":"Open quick notes","aria-keyshortcuts":"ArrowUp ArrowDown ArrowLeft ArrowRight Home","title":"Open quick notes · Drag to move · Use arrow keys to reposition"});
 launcher.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z"/><path d="M14 3v5h5M8 12h8M8 16h8"/></svg><span>Quick notes</span>';
 const backdrop=el("div",{class:"at-notes-backdrop","aria-hidden":"true"});
