@@ -18,6 +18,12 @@ async function reserveCredits(userId, amount) {
     const now = new Date();
     const access = await tx.premiumAccess.findUnique({ where: { userId } });
     if (!access || access.expiresAt <= now) return { premium: false };
+    const expired = await tx.creditLot.aggregate({ where: { userId, remainingCredits: { gt: 0 }, expiresAt: { lte: now } }, _sum: { remainingCredits: true } });
+    const expiredCredits = expired._sum.remainingCredits || 0;
+    if (expiredCredits > 0) {
+      await tx.creditLot.updateMany({ where: { userId, remainingCredits: { gt: 0 }, expiresAt: { lte: now } }, data: { remainingCredits: 0 } });
+      await tx.creditWallet.updateMany({ where: { userId }, data: { balance: { decrement: expiredCredits } } });
+    }
     const lots = await tx.creditLot.findMany({
       where: { userId, remainingCredits: { gt: 0 }, expiresAt: { gt: now } },
       orderBy: [{ expiresAt: "asc" }, { createdAt: "asc" }]
