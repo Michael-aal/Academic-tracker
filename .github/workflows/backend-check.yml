@@ -5,6 +5,11 @@ on:
     branches: [main, feature/backend-prisma]
     paths:
       - "backend/**"
+      - "global-theme.js"
+      - "global-navigation.js"
+      - "universal-notes.js"
+      - "universal-notes.css"
+      - "study-track-dark-overhaul.css"
       - "quiz-page.css"
       - "quiz.html"
       - "auth.css"
@@ -29,6 +34,11 @@ on:
   pull_request:
     paths:
       - "backend/**"
+      - "global-theme.js"
+      - "global-navigation.js"
+      - "universal-notes.js"
+      - "universal-notes.css"
+      - "study-track-dark-overhaul.css"
       - "index.html"
       - "landing.css"
       - "landing-redesign.css"
@@ -94,4 +104,4 @@ jobs:
       - name: Run unit and database integration tests
         run: npm test
       - name: Check calculator and AI learning JavaScript syntax
-        run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../app.js && node --check ../ai-learning.js && node --check ../quiz-page.js && node --check ../ai-navigation.js && node --check ../educational-videos.js && node --check ../study-planner.js && node --check ../memory-mastery.js && node --check ../notes-summary.js && node --check ../global-theme.js && node --check ../global-navigation.js && node --check ../account-data.js
+        run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../app.js && node --check ../ai-learning.js && node --check ../quiz-page.js && node --check ../ai-navigation.js && node --check ../educational-videos.js && node --check ../study-planner.js && node --check ../memory-mastery.js && node --check ../notes-summary.js && node --check ../global-theme.js && node --check ../global-navigation.js && node --check ../universal-notes.js && node --check ../account-data.js
