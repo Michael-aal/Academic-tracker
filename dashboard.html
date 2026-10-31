@@ -1,7 +1,8 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <script>try { document.documentElement.dataset.theme = localStorage.getItem("academic-tracker-theme") === "dark" ? "dark" : "light"; } catch (_) { document.documentElement.dataset.theme = "light"; }</script><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#ffffff"><meta name="description" content="Your personal academic accountability tracker.">
   <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="ui-polish.css"><link rel="stylesheet" href="dashboard-menus.css">
@@ -10,6 +11,10 @@
 <link rel="stylesheet" href="site-design-system.css">  <link rel="stylesheet" href="premium-theme.css"><link rel="stylesheet" href="responsive-navbar.css"><link rel="stylesheet" href="focus.css">
   <script src="icon-system.js" defer></script>
   <link rel="stylesheet" href="global-navigation.css">
+  <link rel="stylesheet" href="global-light-mode.css" data-global-light-mode>
+  <link rel="stylesheet" href="dark-mode-guard.css" data-dark-mode-guard>
+  <link rel="stylesheet" href="theme-page-overrides.css" data-page-theme-overrides>
+  <script src="global-theme.js" data-global-theme defer></script>
 </head>
 <body>
   <div class="app-shell">
