@@ -96,5 +96,62 @@
   $("pronounce-custom").addEventListener("click",()=>{const word=$("pronounce-input").value.trim();if(!word){$("practice-message").textContent="Enter a word to hear its pronunciation.";return;}if(word.length>120){$("practice-message").textContent="Keep the word or phrase under 120 characters.";return;}speak(word,$("pronounce-accent").value);});
   $("speak-example").addEventListener("click",()=>speak(lessons[category].example));
   $("english-signout").addEventListener("click",async()=>{try{await api("/api/auth/logout",{method:"POST"});}catch{}localStorage.removeItem("academic-tracker-token");localStorage.removeItem("academic-tracker-user");location.replace("login.html");});
+
+  const curatedStories = [
+    { id:"curated-river", source:"curated", title:"The River That Remembered", genre:"Folktale", readingLevel:"Intermediate", estimatedMinutes:4, content:"In a small village, a river flowed beside the farms. Every morning, Amara visited it with a clay pot. She noticed that the river carried fallen leaves, tiny seeds and stories from the hills.\\n\\nOne dry season, the villagers argued about who should use the remaining water. Amara suggested that they meet beneath the oldest tree and listen to one another. The farmers discovered that they could take turns and repair the narrow channels together.\\n\\nBy working as a team, they protected their crops and the riverbank. Amara learned that a community becomes stronger when people share responsibility instead of blaming one another.", vocabulary:[{word:"clay",partOfSpeech:"noun",meaning:"A soft natural material used to make pots and bricks.",example:"Amara carried water in a clay pot."},{word:"remaining",partOfSpeech:"adjective",meaning:"Still left after some has been used.",example:"They shared the remaining water."},{word:"channels",partOfSpeech:"noun",meaning:"Narrow passages through which water flows.",example:"The farmers repaired the water channels."},{word:"responsibility",partOfSpeech:"noun",meaning:"A duty or task that someone is expected to take care of.",example:"Everyone shared responsibility for the river."}],questions:[{question:"Why did the villagers meet beneath the oldest tree?",answer:"They met to discuss how to share the limited water fairly."},{question:"What solution did Amara suggest?",answer:"She suggested taking turns and repairing the water channels together."},{question:"What lesson did Amara learn?",answer:"A community grows stronger when people cooperate and share responsibility."}]},
+    { id:"curated-clock", source:"curated", title:"The Clockmaker's Small Discovery", genre:"Mystery", readingLevel:"Intermediate", estimatedMinutes:4, content:"Tunde loved visiting his aunt's repair shop. One afternoon, he heard a soft ticking from a wooden box that had been silent for years. His aunt explained that the box belonged to a clockmaker who had worked in the town long ago.\\n\\nInside, Tunde found a note beside a tiny brass wheel. The note said, 'A patient eye notices what a hurried hand misses.' He examined the wheel and saw a small piece of dust trapped between its teeth.\\n\\nAfter cleaning it carefully, the mechanism began to move. The old clock did not tell the correct time, but it had started again. Tunde realised that careful observation can be more useful than rushing to find an answer.", vocabulary:[{word:"mechanism",partOfSpeech:"noun",meaning:"A group of parts working together in a machine.",example:"The mechanism began to move."},{word:"brass",partOfSpeech:"noun",meaning:"A yellowish metal made mainly from copper and zinc.",example:"A tiny brass wheel was inside the box."},{word:"examined",partOfSpeech:"verb",meaning:"Looked at something carefully to understand it.",example:"Tunde examined the wheel."},{word:"observation",partOfSpeech:"noun",meaning:"The act of watching or noticing something carefully.",example:"Careful observation helped Tunde find the problem."}],questions:[{question:"What made Tunde investigate the wooden box?",answer:"He heard a soft ticking sound from a box that had been silent for years."},{question:"What stopped the mechanism from moving?",answer:"A small piece of dust was trapped between the teeth of the wheel."},{question:"What lesson did Tunde learn?",answer:"Careful observation can be more useful than rushing."}]}
+  ];
+  function storyElement(tag,className,text){const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node;}
+  function renderStoryCard(story){
+    const card=document.createElement("article");card.className="story-card";
+    const meta=storyElement("p","story-meta",(story.source==="ai"?"✦ AI GENERATED":"✦ CURATED")+" · "+(story.genre||"Story"));
+    const title=storyElement("h4","",story.title);
+    const detail=storyElement("p","story-card-detail",(story.estimatedMinutes||4)+" min read · "+(story.readingLevel||"Intermediate"));
+    const open=document.createElement("button");open.type="button";open.className="story-open";open.textContent="Read story →";open.addEventListener("click",()=>openStory(story));
+    card.append(meta,title,detail,open);return card;
+  }
+  function openStory(story){
+    const reader=$("story-reader");reader.hidden=false;reader.replaceChildren();
+    const top=document.createElement("div");top.className="story-reader-top";
+    const heading=storyElement("h3","",story.title);const close=document.createElement("button");close.type="button";close.className="story-close";close.textContent="Close";close.addEventListener("click",()=>{reader.hidden=true;});
+    top.append(heading,close);
+    const meta=storyElement("p","story-meta",(story.genre||"Story")+" · "+(story.estimatedMinutes||4)+" min read · "+(story.source==="ai"?"AI generated":"Curated"));
+    const listen=document.createElement("button");listen.type="button";listen.className="story-listen";listen.textContent="▶ Listen to story";listen.addEventListener("click",()=>speak(story.content));
+    const body=document.createElement("div");body.className="story-text";
+    String(story.content||"").split(/\\n\\s*\\n/).filter(Boolean).forEach(paragraph=>body.append(storyElement("p","",paragraph)));
+    const vocabHeading=storyElement("h4","story-subheading","Vocabulary to notice");
+    const vocab=document.createElement("div");vocab.className="story-vocabulary";
+    (story.vocabulary||[]).forEach(item=>{const row=document.createElement("article");row.className="story-vocab-item";row.append(storyElement("strong","",item.word+" · "+(item.partOfSpeech||"word")),storyElement("p","",item.meaning),storyElement("small","",item.example));vocab.append(row);});
+    const questionHeading=storyElement("h4","story-subheading","Check your understanding");
+    const questions=document.createElement("div");questions.className="story-questions";
+    (story.questions||[]).forEach((item,index)=>{const details=document.createElement("details");const summary=storyElement("summary","",(index+1)+". "+item.question);details.append(summary,storyElement("p","",item.answer));questions.append(details);});
+    reader.append(top,meta,listen,body,vocabHeading,vocab,questionHeading,questions);
+    reader.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  async function loadStories(){
+    const root=$("story-library");root.replaceChildren();
+    curatedStories.forEach(story=>root.append(renderStoryCard(story)));
+    try{
+      const data=await api("/api/gamification/english/stories");
+      const saved=Array.isArray(data.stories)?data.stories:[];
+      saved.forEach(story=>root.append(renderStoryCard({...story,source:"ai"})));
+      $("story-count").textContent=(curatedStories.length+saved.length)+" stories";
+    }catch(error){$("story-count").textContent="Curated stories available · "+error.message;}
+  }
+  async function generateStory(){
+    const topic=$("story-topic").value.trim();const genre=$("story-genre").value;
+    if(topic.length<3){$("story-status").textContent="Enter a topic with at least 3 characters.";return;}
+    const button=$("generate-story");button.disabled=true;button.textContent="Creating your story…";$("story-status").textContent="AI is writing an original story and checking its vocabulary…";
+    try{
+      const data=await api("/api/ai",{method:"POST",body:JSON.stringify({action:"story",topic:genre+": "+topic})});
+      if(!data.story||!data.story.title||!data.story.content)throw new Error("The story response was incomplete. Please try again.");
+      $("story-status").textContent="Your story has been saved to your account. "+(data.creditUsage?"Credits used: "+data.creditUsage.charged+".":"");
+      const story={...data.story,source:"ai"};$("story-library").prepend(renderStoryCard(story));$("story-count").textContent=$("story-library").children.length+" stories";openStory(story);
+    }catch(error){$("story-status").textContent=error.message;}
+    finally{button.disabled=false;button.textContent="✦ Generate my story · 3 credits";}
+  }
+  $("generate-story").addEventListener("click",generateStory);
+
   renderLesson();
+  loadStories();
 })();
