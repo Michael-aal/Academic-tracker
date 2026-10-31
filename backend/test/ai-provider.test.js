@@ -38,8 +38,11 @@ test("AI gateway falls back from a rate-limited OpenRouter to xAI", async () => 
     assert.equal(result.data.choices[0].message.content, "ready");
     assert.equal(calls.length, 2);
     assert.equal(calls[1].body.model, "test-grok-model");
-    assert.equal(usage.length, 1);
-    assert.equal(usage[0].provider, "xai");
+    assert.equal(usage.length, 2);
+    assert.equal(usage[0].provider, "openrouter");
+    assert.equal(usage[0].model, "test-openrouter-model");
+    assert.equal(usage[1].provider, "xai");
+    assert.equal(usage[1].model, "test-grok-model");
   } finally {
     global.fetch = originalFetch;
     restoreEnv(names, previous);
