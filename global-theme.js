@@ -25,6 +25,13 @@
     refresh.dataset.vibrantRefresh = "true";
     document.head.appendChild(refresh);
   }
+  if (!document.querySelector('link[data-page-theme-overrides]')) {
+    const pageThemeOverrides = document.createElement("link");
+    pageThemeOverrides.rel = "stylesheet";
+    pageThemeOverrides.href = "theme-page-overrides.css";
+    pageThemeOverrides.dataset.pageThemeOverrides = "true";
+    document.head.appendChild(pageThemeOverrides);
+  }
   const storageKey = "academic-tracker-theme";
   const apiBase = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
   // Capture the browser install event early, before the install UI script loads.
