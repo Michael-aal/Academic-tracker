@@ -135,3 +135,38 @@ html[data-theme="dark"] .at-install-help-panel {
 @media (prefers-reduced-motion: reduce) {
   .at-install-banner, .at-install-banner *, .at-install-help-panel, .at-install-help-panel * { animation: none !important; transition: none !important; }
 }
+
+
+/* Install banner and fallback instructions use the same premium glass treatment. */
+.at-install-banner {
+  border: 1px solid rgba(196,181,253,.48);
+  background: rgba(255,255,255,.78);
+  box-shadow: 0 22px 64px rgba(47,28,82,.22), inset 0 1px 0 rgba(255,255,255,.72);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  backdrop-filter: blur(24px) saturate(170%);
+}
+.at-install-help-panel {
+  border: 1px solid rgba(196,181,253,.48);
+  background: rgba(255,255,255,.80);
+  box-shadow: 0 24px 68px rgba(47,28,82,.24), inset 0 1px 0 rgba(255,255,255,.72);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  backdrop-filter: blur(24px) saturate(170%);
+}
+html[data-theme="dark"] .at-install-banner,
+html[data-theme="dark"] .at-install-help-panel {
+  border-color: rgba(167,139,250,.34);
+  background: rgba(23,17,35,.82);
+  box-shadow: 0 24px 68px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.06);
+  -webkit-backdrop-filter: blur(26px) saturate(155%);
+  backdrop-filter: blur(26px) saturate(155%);
+}
+html[data-theme="light"] .at-install-banner,
+html[data-theme="light"] .at-install-help-panel {
+  color: #35224f;
+  background: rgba(255,255,255,.80);
+}
+@supports not ((backdrop-filter: blur(1px))) {
+  .at-install-banner, .at-install-help-panel { background: #fff; }
+  html[data-theme="dark"] .at-install-banner,
+  html[data-theme="dark"] .at-install-help-panel { background: #171123; }
+}
