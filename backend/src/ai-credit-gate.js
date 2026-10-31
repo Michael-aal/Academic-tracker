@@ -3,7 +3,10 @@ const { prisma } = require("./prisma");
 
 function estimateCredits(body = {}) {
   const action = typeof body.action === "string" ? body.action : "";
-  const chars = typeof body.content === "string" ? Math.min(body.content.length, 12000) : 0;
+  const contentLength = typeof body.content === "string" ? body.content.length : 0;
+  const topicLength = typeof body.topic === "string" ? body.topic.length : 0;
+  const subjectLength = typeof body.subject === "string" ? body.subject.length : 0;
+  const chars = Math.min(contentLength + topicLength + subjectLength, 14000);
   const questionCount = Number.isInteger(body.questionCount) ? body.questionCount : 5;
   let rates = {};
   try { rates = JSON.parse(process.env.AI_CREDIT_RATES_JSON || "{}"); } catch { rates = {}; }
@@ -24,10 +27,16 @@ async function reserveCredits(userId, amount) {
   return prisma.$transaction(async tx => {
     await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${userId} FOR UPDATE`;
     const now = new Date();
-    await tx.creditLot.updateMany({
+    const expiredLots = await tx.creditLot.findMany({
       where: { userId, remainingCredits: { gt: 0 }, expiresAt: { lte: now } },
-      data: { remainingCredits: 0 }
+      select: { id: true, remainingCredits: true }
     });
+    for (const lot of expiredLots) {
+      await tx.creditLot.update({ where: { id: lot.id }, data: { remainingCredits: 0 } });
+      await tx.creditLedger.create({
+        data: { userId, delta: -lot.remainingCredits, kind: "EXPIRED", reference: "expire:" + lot.id, description: "Unused AI credits expired" }
+      });
+    }
     const lots = await tx.creditLot.findMany({
       where: { userId, remainingCredits: { gt: 0 }, expiresAt: { gt: now } },
       orderBy: [{ expiresAt: "asc" }, { createdAt: "asc" }]
