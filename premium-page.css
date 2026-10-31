@@ -5,3 +5,22 @@ html[data-theme="light"]{--premium-bg:#f7f5fb;--premium-panel:#fff;--premium-pan
 @media(max-width:520px){.premium-shell{width:min(100% - 24px,1120px);padding-top:82px}.premium-hero{padding:25px 0 25px;gap:22px}.plan-grid,.bundle-grid{grid-template-columns:1fr 1fr;gap:9px}.plan-card,.bundle-card{padding:14px;border-radius:15px}.plan-card .price,.bundle-card .price{font-size:22px}.plan-card h3,.bundle-card h3{font-size:14px}.premium-buy{font-size:11px;padding:11px 6px}.section-heading{align-items:start;flex-direction:column}.daily-duration{flex-wrap:wrap}.daily-duration span{margin-left:0}.premium-footer{flex-direction:column;gap:5px}.transaction-row{padding:13px}}
 
 .subscription-status-section{margin:0 0 28px}.subscription-status-card{display:flex;justify-content:space-between;align-items:center;gap:22px;padding:22px 24px;border:1px solid var(--premium-line);border-radius:20px;background:linear-gradient(115deg,rgba(139,92,246,.13),transparent 65%),var(--premium-panel);box-shadow:var(--premium-shadow)}.subscription-status-copy h2{font-size:22px;letter-spacing:-.035em;margin:0}.subscription-status-copy>p:not(.premium-eyebrow){color:var(--premium-muted);font-size:13px;margin:7px 0 13px}.subscription-meta{display:flex;flex-wrap:wrap;gap:9px 20px;color:var(--premium-muted);font-size:11px}.subscription-status-side{display:flex;align-items:center;gap:12px;min-width:150px}.subscription-badge{white-space:nowrap;padding:8px 12px;border:1px solid var(--premium-line);border-radius:99px;font-size:11px;font-weight:800;color:var(--premium-muted)}.subscription-badge.is-premium{color:#c4b5fd;border-color:rgba(167,139,250,.45);background:rgba(139,92,246,.12)}.subscription-status-side .premium-buy{min-width:112px;width:auto;padding:11px 14px}@media(max-width:560px){.subscription-status-card{align-items:flex-start;flex-direction:column;padding:18px}.subscription-status-side{width:100%;justify-content:space-between}.subscription-status-side .premium-buy{width:auto}}
+
+/* Dark-mode contrast repair: keep every light-surface control readable. */
+html[data-theme="dark"] .premium-page :is(button,[role="button"],input[type="button"],input[type="submit"],input[type="reset"],a.button,a.btn){
+  color:#f5f3ff!important;-webkit-text-fill-color:#f5f3ff!important;
+}
+html[data-theme="dark"] .premium-page :is(.premium-buy,button.premium-buy){
+  color:#fff!important;-webkit-text-fill-color:#fff!important;
+  background:linear-gradient(135deg,#8b5cf6,#6d28d9)!important;
+  border:1px solid #a78bfa!important;
+}
+html[data-theme="dark"] .premium-page :is(button:not(.premium-buy),[role="button"]:not(.premium-buy),input[type="button"],input[type="reset"]){
+  background-color:#211832!important;background-image:none!important;border-color:#49375f!important;
+}
+html[data-theme="dark"] .premium-page :is(select,input,textarea){
+  color:#f5f3ff!important;-webkit-text-fill-color:#f5f3ff!important;
+  background:#171123!important;border-color:#49375f!important;
+}
+html[data-theme="dark"] .premium-page :is(select,option){color-scheme:dark!important;color:#f5f3ff!important;background-color:#171123!important}
+html[data-theme="dark"] .premium-page :is(button,a,[role="button"]):focus-visible{outline:2px solid #c4b5fd!important;outline-offset:3px!important}
