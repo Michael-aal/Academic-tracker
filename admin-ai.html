@@ -56,7 +56,7 @@
         el("configured").textContent = data.configured ? "Configured" : "Not configured";
         el("configured").className = "status-value " + (data.configured ? "good" : "bad");
         el("model").textContent = (data.providers || []).filter(item => item.configured).map(item => item.id + " · " + item.model).join(", ") || "No provider configured";
-        el("limit").textContent = "30 requests per IP / 15 minutes (safety ceiling)";
+        el("limit").textContent = (data.ipRequestsPer15Minutes || 30) + " requests per IP / 15 minutes (safety ceiling)";
         el("setup-note").textContent = data.note;
       } catch (error) {
         el("setup-note").textContent = error.message;
