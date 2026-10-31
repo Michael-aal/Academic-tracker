@@ -5,7 +5,8 @@ require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 // variable is missing or still contains an old Vercel deployment URL.
 const productionOrigins = [
   "https://academic-tracker-nu.vercel.app",
-  "https://academic-tracker-iota.vercel.app"
+  "https://academic-tracker-iota.vercel.app",
+  "https://study-track-lilac.vercel.app"
 ];
 const developmentOrigins = process.env.NODE_ENV === "production" ? "" : "http://localhost:5173,http://127.0.0.1:5500";
 const configuredOrigins = (process.env.FRONTEND_ORIGIN || developmentOrigins)
