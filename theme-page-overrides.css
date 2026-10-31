@@ -70,3 +70,12 @@ html[data-theme="dark"] :is(.tutor-prompt-grid button>span:first-child,.quick-he
 html[data-theme="dark"] .tutor-prompt-grid button>span:first-child{background:rgba(139,92,246,.14)!important;border-color:rgba(167,139,250,.3)!important}
 html[data-theme="light"] :is(.tutor-prompt-grid button>span:first-child,.quick-help-list button span,.tutor-message-label,.tutor-message-student .tutor-message-label,.tutor-chat-top .result-label){color:#7545c8!important}
 html[data-theme="light"] .tutor-prompt-grid button>span:first-child{background:#f0e7ff!important;border-color:#d8c9eb!important}
+
+
+/* Override legacy tutor tokens and the navigation's page-specific mint overrides. */
+html[data-theme="dark"] body.ai-tutor-page{--tutor-mint:#a78bfa;--tutor-mint-deep:#302044;--at-nav-accent:#a78bfa;--at-nav-accent-strong:#6d28d9}
+html[data-theme="light"] body.ai-tutor-page{--tutor-mint:#7545c8;--tutor-mint-deep:#f0e7ff;--at-nav-accent:#7545c8;--at-nav-accent-strong:#5b2ba8}
+html[data-theme="dark"] .ai-tutor-page :is(.at-nav-brand-mark,.ai-brand-mark){color:#fff!important;background:linear-gradient(145deg,#8b5cf6,#6d28d9)!important}
+html[data-theme="light"] .ai-tutor-page :is(.at-nav-brand-mark,.ai-brand-mark){color:#fff!important;background:linear-gradient(145deg,#8b5cf6,#6d28d9)!important}
+html[data-theme="dark"] .ai-tutor-page :is(.at-nav-brand-name span,.at-nav-menu-heading,.at-mobile-nav button[aria-expanded="true"]){color:#c4b5fd!important}
+html[data-theme="light"] .ai-tutor-page :is(.at-nav-brand-name span,.at-nav-menu-heading,.at-mobile-nav button[aria-expanded="true"]){color:#7545c8!important}
