@@ -40,3 +40,12 @@
 :root[data-theme="light"] .practice-result>p,:root[data-theme="light"] .practice-review p{color:#625873}
 :root[data-theme="light"] .english-bottom{background:#F2EDFA}
 :root[data-theme="light"] .english-bottom p:not(.english-eyebrow),:root[data-theme="light"] .english-footer{color:#70677D}
+
+.pronunciation-tools{display:grid;gap:8px;min-width:min(100%,300px)}
+.pronunciation-input-label{font-size:10px;color:var(--en-muted);font-weight:750}
+.pronunciation-input-row{display:flex;gap:6px}
+.pronunciation-input-row input,.pronunciation-input-row select{min-width:0;padding:9px 10px;border:1px solid var(--en-line);border-radius:9px;background:var(--en-panel);color:var(--en-text);font:inherit;font-size:10px}
+.pronunciation-input-row input{flex:1}
+.pronunciation-input-row button{padding:9px 11px;border:0;border-radius:9px;background:var(--en-accent);color:#fff;font-size:10px;font-weight:800}
+:root[data-theme="light"] .pronunciation-input-row input,:root[data-theme="light"] .pronunciation-input-row select{background:#FFFFFF;color:#251B35}
+@media(max-width:600px){.pronunciation-tools{width:100%}.pronunciation-input-row input{width:100%}}
