@@ -6,7 +6,8 @@ const { requireAdmin } = require("../middleware/admin");
 const { prisma } = require("../prisma");
 const { validateQuiz, publicQuiz, markQuiz } = require("../quiz-schema");
 const { aiCreditGate } = require("../ai-credit-gate");
-const { requestChatCompletion, configuredProviders, hasConfiguredProvider, providerOrder } = require("../ai-provider");\nconst { awardXp } = require("../level-system");
+const { requestChatCompletion, configuredProviders, hasConfiguredProvider, providerOrder } = require("../ai-provider");
+const { awardXp } = require("../level-system");
 
 const router = express.Router();
 router.use(requireAuth);
