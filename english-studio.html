@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0B0812">
+  <meta name="description" content="Build vocabulary, spelling, pronunciation, grammar and English skills with guided practice.">
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem("academic-tracker-theme")==="dark"?"dark":"light"}catch(_){}</script>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="site-design-system.css">
+  <link rel="stylesheet" href="premium-theme.css">
+  <link rel="stylesheet" href="global-navigation.css">
+  <link rel="stylesheet" href="global-light-mode.css" data-global-light-mode>
+  <link rel="stylesheet" href="dark-mode-guard.css" data-dark-mode-guard>
+  <link rel="stylesheet" href="theme-page-overrides.css" data-page-theme-overrides>
+  <link rel="stylesheet" href="english-studio.css">
+  <script src="global-theme.js" defer data-global-theme></script>
+  <title>English Learning Studio · Academic Tracker</title>
+</head>
+<body>
+  <div class="english-shell">
+    <header class="english-header">
+      <a class="english-brand" href="ai-learning.html"><span class="english-brand-mark">A</span> Academic Tracker</a>
+      <nav aria-label="Learning navigation"><a href="ai-learning.html">AI Learning</a><a class="active" href="english-studio.html">English Studio</a><a href="level-up.html">My level</a><button id="english-signout" type="button">Sign out</button></nav>
+    </header>
+    <main class="english-main">
+      <section class="english-hero">
+        <div><p class="english-eyebrow">ENGLISH LEARNING STUDIO</p><h1>Find the right words.<br><span>Build stronger English.</span></h1><p>Learn vocabulary, spell confidently, improve pronunciation and master grammar one activity at a time.</p><div class="english-hero-actions"><a href="#practice">Start practising</a><a class="secondary" href="level-up.html">View my level ↗</a></div></div>
+        <div class="english-hero-art" aria-hidden="true"><span class="art-letter">Aa</span><span class="art-orbit orbit-one"></span><span class="art-orbit orbit-two"></span><span class="art-word">WORDS · GRAMMAR · SPEECH</span></div>
+      </section>
+      <section class="word-of-day" aria-label="Word of the day">
+        <div><p class="english-eyebrow">WORD OF THE DAY</p><h2>Meticulous</h2><p class="word-pronunciation">/məˈtɪkjələs/ · adjective</p><p>Showing great attention to detail; very careful and precise.</p><p class="word-example">Example: She kept meticulous records of every experiment.</p><p class="word-related"><strong>Synonyms:</strong> careful, thorough, precise · <strong>Antonym:</strong> careless</p></div>
+        <button id="speak-word" class="speak-word" type="button" aria-label="Hear the word meticulous"><span>▶</span> Hear pronunciation</button>
+      </section>
+      <section class="english-section" aria-labelledby="category-heading">
+        <div class="english-section-heading"><div><p class="english-eyebrow">CHOOSE A SKILL</p><h2 id="category-heading">What would you like to improve?</h2></div><span class="free-tag">Practice does not use AI credits</span></div>
+        <div id="category-grid" class="category-grid">
+          <button class="category-card active" data-category="vocabulary"><span>Aa</span><strong>Vocabulary</strong><small>Meanings, synonyms and usage</small></button>
+          <button class="category-card" data-category="spelling"><span>✎</span><strong>Spelling</strong><small>Correct spelling and word forms</small></button>
+          <button class="category-card" data-category="grammar"><span>¶</span><strong>Grammar</strong><small>Tenses, concord and sentences</small></button>
+          <button class="category-card" data-category="partsOfSpeech"><span>ABC</span><strong>Parts of speech</strong><small>Nouns, verbs and modifiers</small></button>
+          <button class="category-card" data-category="figuresOfSpeech"><span>❝</span><strong>Figures of speech</strong><small>Literary devices and examples</small></button>
+          <button class="category-card" data-category="comprehension"><span>▤</span><strong>Comprehension</strong><small>Understand and interpret passages</small></button>
+          <button class="category-card" data-category="oralEnglish"><span>◖</span><strong>Oral English</strong><small>Sounds, syllables and word stress</small></button>
+        </div>
+      </section>
+      <section id="practice" class="english-workspace">
+        <div class="lesson-panel">
+          <p class="english-eyebrow">QUICK LESSON</p><h2 id="lesson-title">Vocabulary</h2><p id="lesson-intro">Build a wider vocabulary and learn how to use words accurately.</p>
+          <div id="lesson-content" class="lesson-content"></div>
+          <div class="lesson-actions"><button id="speak-example" type="button">Listen to an example</button><button id="start-challenge" type="button">Start 5-question practice →</button></div>
+        </div>
+        <div class="practice-panel">
+          <div class="practice-panel-heading"><div><p class="english-eyebrow">PRACTICE ARENA</p><h2 id="practice-title">Ready when you are</h2></div><span class="practice-count" id="practice-count">5 questions</span></div>
+          <p id="practice-intro" class="practice-intro">Choose a skill, review the lesson and start a short practice challenge.</p>
+          <div id="question-list" class="question-list"></div>
+          <div class="practice-footer"><p id="practice-message" role="status" aria-live="polite">Your answers are checked securely.</p><button id="submit-practice" type="button" disabled>Submit answers</button></div>
+          <section id="practice-result" class="practice-result" hidden aria-live="polite"></section>
+        </div>
+      </section>
+      <section class="english-bottom">
+        <div><p class="english-eyebrow">YOUR NEXT STEP</p><h2>Make every new word count.</h2><p>Review words, practise grammar and return to difficult topics until they become familiar.</p></div>
+        <a href="level-up.html">Track my learning level ↗</a>
+      </section>
+    </main>
+    <footer class="english-footer">Academic Tracker · Learn it. Practise it. Make it yours.</footer>
+  </div>
+  <script src="english-studio.js"></script>
+  <script src="global-navigation.js"></script>
+</body>
+</html>
