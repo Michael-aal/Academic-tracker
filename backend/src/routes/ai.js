@@ -303,7 +303,7 @@ router.post("/", validateAiRequest, aiCreditGate, enforceAiQuota, async (req, re
             temperature: 0.1,
             response_format: { type: "json_object" },
             max_tokens: Math.min(10000, 2200 + questionCount * 820)
-          }, { signal: retryController.signal, onUsage: (usage, providerId) => recordAiUsage(req, usage, providerId) });
+          }, { signal: retryController.signal, preferredProvider: providerOrder().find(providerId => providerId !== provider) || provider, onUsage: (usage, providerId) => recordAiUsage(req, usage, providerId) });
           provider = retryCompletion.provider;
           model = retryCompletion.model;
           quiz = parseAndValidate(retryCompletion.data?.choices?.[0]?.message?.content, retryCompletion.data?.choices?.[0]?.finish_reason);
