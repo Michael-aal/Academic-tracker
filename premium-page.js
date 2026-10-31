@@ -6,6 +6,7 @@
   let catalog = { plans: [], bundles: [], fxConfigured: false };
   let state = null;
   let displayCurrency = "USD";
+  let dailyDays = 1;
   const usd = cents => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(cents / 100);
   const ngn = kobo => new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(kobo / 100);
   const headers = () => ({ "Content-Type": "application/json", Authorization: "Bearer " + token });
@@ -34,7 +35,7 @@
   }
   function dailyCard(p) {
     const options = Array.from({ length: 6 }, (_, i) => i + 1)
-      .map(days => '<option value="' + days + '">' + days + (days === 1 ? ' day' : ' days') + '</option>').join("");
+      .map(days => '<option value="' + days + '"' + (days === dailyDays ? ' selected' : '') + '>' + days + (days === 1 ? ' day' : ' days') + '</option>').join("");
     return '<article class="plan-card daily-plan-card">' +
       '<p class="plan-kicker">FLEXIBLE ACCESS</p><h3>' + escapeHtml(p.name) + '</h3>' +
       '<div class="price" id="daily-price">' + amountFor(p) + '</div>' +
@@ -56,7 +57,7 @@
         '<div class="price-secondary">' + alternateAmount(p) + '</div>' +
         '<div class="period">' + p.durationDays + ' days of Premium access</div>' +
         '<p class="credit-note">' + (p.credits ? p.credits.toLocaleString() + " credits included" : "AI credits can be purchased separately") + '</p>' +
-        '<button class="premium-buy" data-plan="' + escapeHtml(p.key) + '" type="button">Choose plan</button></article>';
+        '<button class="premium-buy" data-plan="' + escapeHtml(p.key) + '" type="button">' + (catalog.fxConfigured && p.amountNgnKobo != null ? "Continue · Pay " + ngn(p.amountNgnKobo) : "Checkout not configured") + '</button></article>';
     }).join("") : '<div class="loading-card">Premium plans are being configured. Please check back soon.</div>';
     document.querySelectorAll("[data-plan]").forEach(b => b.addEventListener("click", () => startPurchase("PLAN", b.dataset.plan)));
     const daily = plans.find(p => p.key === "daily");
@@ -72,12 +73,13 @@
       '<div class="credits">' + b.credits.toLocaleString() + ' <small>credits</small></div>' +
       '<div class="price">' + amountFor(b) + '</div><div class="price-secondary">' + alternateAmount(b) + '</div>' +
       '<p class="detail">Valid for ' + b.creditValidityDays + ' days</p>' +
-      '<button class="premium-buy" data-bundle="' + escapeHtml(b.key) + '" type="button">Buy credits</button></article>'
+      '<button class="premium-buy" data-bundle="' + escapeHtml(b.key) + '" type="button">' + (catalog.fxConfigured && b.amountNgnKobo != null ? "Buy · Pay " + ngn(b.amountNgnKobo) : "Checkout not configured") + '</button></article>'
     ).join("") : '<div class="loading-card">Credit bundles are being configured.</div>';
     document.querySelectorAll("[data-bundle]").forEach(b => b.addEventListener("click", () => startPurchase("BUNDLE", b.dataset.bundle)));
   }
   function updateDailyTotal() {
-    const days = Number($("daily-days").value || 1);
+    const days = Number($("daily-days").value || dailyDays || 1);
+    dailyDays = days;
     const p = catalog.plans.find(x => x.key === "daily");
     if (!p) return;
     $("daily-price").textContent = amountFor(p, days);
