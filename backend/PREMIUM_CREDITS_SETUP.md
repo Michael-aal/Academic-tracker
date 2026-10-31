@@ -18,7 +18,7 @@ The new tables store Premium access, credit wallets, expiry-dated credit lots, a
 Set these on the Academic Tracker API service:
 
 - `PAYSTACK_SECRET_KEY`: your Paystack secret key. Keep it on Render; never put it in frontend code or commit it.
-- `PAYSTACK_CALLBACK_URL`: `https://academic-tracker-iota.vercel.app/premium.html`
+- `PAYSTACK_CALLBACK_URL`: `https://study-track-lilac.vercel.app/premium.html`
 - `PREMIUM_CATALOG_JSON`: valid JSON containing approved NGN prices in **kobo**, durations, credit grants, and credit validity.
 
 Example structure (replace every zero with your approved values before enabling checkout):
@@ -60,7 +60,7 @@ Configure these server-side environment variables on Render:
 - `AI_PROVIDER_ORDER=openrouter,xai`: ordered provider fallback chain. Only providers with keys are called.
 - `OPENROUTER_API_KEY` and optional `OPENROUTER_MODEL`.
 - `XAI_API_KEY` and optional `XAI_MODEL`. An xAI consumer chatbot account is not an API credential; obtain a developer API key separately.
-- `AI_CREDIT_RATES_JSON`: internal credits per 1,000 input/output tokens, keyed by provider. Start with conservative values and calibrate against actual provider invoices before enabling paid usage.
+- `AI_CREDIT_RATES_JSON`: internal credits per 1,000 input/output tokens, keyed by provider. Optional `models` overrides let you set different rates for exact model IDs. Start conservatively and calibrate against provider invoices before enabling paid usage.
 
 The gateway supports OpenRouter and xAI's OpenAI-compatible chat-completions API. New providers should be added only in the server-side provider registry. Provider fallback is automatic for authentication, rate-limit, timeout, server, and connection failures. The same gateway is used for the quiz regeneration attempt; no AI route should call a provider URL directly.
 
@@ -72,8 +72,8 @@ The AI status endpoint is admin-only and reports configured provider names/model
 - Credit lots retain their own expiry dates; the wallet consumes earliest-expiring credits first.
 - Requests are validated before any credit reservation.
 - Every AI generation request passes through the central backend credit gate. The browser cannot set a balance, cost, provider, or model.
-- Premium accounts must have enough credits before a provider request is made. Free accounts without purchased credits continue using the existing request quota; purchased credit bundles are still consumed through the same gate.
-- Successful requests settle against provider-reported input/output usage using the provider-specific internal rates; unused reserved credits are returned.
+- Every account must have enough unexpired wallet credits before any AI generation request is sent. There is no free-request quota bypass: zero or insufficient credits blocks AI Tutor, quiz generation/regeneration, note summaries, study plans, and flashcards at the API boundary.
+- Successful requests settle against provider-reported input/output usage using provider/model-specific internal rates; unused reserved credits are returned. Each provider attempt records the exact model ID, provider, token counts, request correlation ID, result status, and credits in an append-only usage table. Admins can inspect it through `GET /api/ai/usage`; users can inspect their own records through `GET /api/ai/usage/me`.
 - Failed AI requests are refunded idempotently. Credit lots expiring during a request receive a fresh refund lot rather than losing the refund.
 - The estimator is a reservation safeguard, not an invoice. Calibrate rates and maximum workload costs against real provider invoices before live launch.
 
