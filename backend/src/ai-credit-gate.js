@@ -22,7 +22,7 @@ function estimateCredits(body = {}) {
 async function reserveCredits(userId, amount) {
   const reservationId = randomUUID();
   return prisma.$transaction(async tx => {
-    await tx.$queryRaw\`SELECT "id" FROM "users" WHERE "id" = \${userId} FOR UPDATE\`;
+    await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${userId} FOR UPDATE`;
     const now = new Date();
     await tx.creditLot.updateMany({
       where: { userId, remainingCredits: { gt: 0 }, expiresAt: { lte: now } },
@@ -61,7 +61,7 @@ async function refundCredits(userId, reservation, creditsToRefund = reservation?
   if (!reservation?.reserved || !reservation.reservationId || !Number.isInteger(creditsToRefund) || creditsToRefund <= 0) return;
   creditsToRefund = Math.min(creditsToRefund, reservation.amount);
   await prisma.$transaction(async tx => {
-    await tx.$queryRaw\`SELECT "id" FROM "users" WHERE "id" = \${userId} FOR UPDATE\`;
+    await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${userId} FOR UPDATE`;
     const existing = await tx.creditLedger.findUnique({ where: { reference: "refund:" + reservation.reservationId } });
     if (existing) return;
     let remaining = creditsToRefund;
