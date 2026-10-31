@@ -6,6 +6,7 @@ const { isAllowedOrigin } = require("../src/config");
 test("allows the configured primary and current Vercel deployment origins", () => {
   assert.equal(isAllowedOrigin("https://academic-tracker-nu.vercel.app"), true);
   assert.equal(isAllowedOrigin("https://academic-tracker-iota.vercel.app"), true);
+  assert.equal(isAllowedOrigin("https://study-track-lilac.vercel.app"), true);
 });
 
 test("allows project preview URLs but rejects unrelated Vercel sites", () => {
