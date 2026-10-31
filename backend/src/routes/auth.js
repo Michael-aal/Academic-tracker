@@ -71,11 +71,23 @@ router.post("/login", loginLimiter, async (req, res, next) => {
     if (!email || typeof password !== "string" || !password) return res.status(400).json({ error: "Enter your email and password." });
     const configuredAdminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
     const configuredAdminPassword = process.env.ADMIN_PASSWORD || "";
-    const user = await prisma.user.findUnique({ where: { email } });
+    // Email addresses are case-insensitive. A case-insensitive lookup also
+    // handles older accounts created before registration normalized emails.
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } }
+    });
 
-    if (configuredAdminEmail && email === configuredAdminEmail && user?.role === "ADMIN") {
+    if (configuredAdminEmail && email === configuredAdminEmail) {
+      // Never silently fall back to a database password for the reserved admin
+      // address: that can hide a bad role or missing server configuration.
+      if (!user) {
+        return res.status(403).json({ error: "The configured administrator account does not exist. Contact the application administrator." });
+      }
+      if (String(user.role || "").toUpperCase() !== "ADMIN") {
+        return res.status(403).json({ error: "This account is not assigned the ADMIN role. Verify its role in the database." });
+      }
       if (!configuredAdminPassword) {
-        return res.status(503).json({ error: "Administrator login is not configured on the server." });
+        return res.status(503).json({ error: "Administrator login is not configured on the server. Set ADMIN_PASSWORD in the API environment." });
       }
       // Compare the private environment value without an early-exit string comparison.
       const supplied = Buffer.from(password, "utf8");
@@ -86,9 +98,7 @@ router.post("/login", loginLimiter, async (req, res, next) => {
       return res.json({ token: issueToken(user.id, user.sessionVersion), user: publicUser(user) });
     }
 
-    // Before one-time promotion, the reserved owner account must still be able
-    // to sign in with its existing database password to complete bootstrap.
-    // All ordinary accounts continue to use their own bcrypt password and JWT.
+    // Ordinary accounts continue to use their own bcrypt password and JWT.
     const valid = user && await bcrypt.compare(password, user.passwordHash);
     if (!valid) return res.status(401).json({ error: "Email or password is incorrect." });
     return res.json({ token: issueToken(user.id, user.sessionVersion), user: publicUser(user) });
