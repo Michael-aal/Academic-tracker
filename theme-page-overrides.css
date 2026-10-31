@@ -359,3 +359,39 @@ html[data-theme="dark"] .uni-nav :is(a,button)[aria-current="page"] {
   background: rgba(139,92,246,.22) !important;
   border: 1px solid #8b5cf6 !important;
 }
+
+
+/* Auth back navigation must remain visible in BOTH themes. The arrow is a
+   purple, high-contrast icon control, independent of generic anchor colors. */
+html[data-theme="light"] body[data-mode="login"] .icon-only-back,
+html[data-theme="light"] body[data-mode="register"] .icon-only-back,
+html[data-theme="dark"] body[data-mode="login"] .icon-only-back,
+html[data-theme="dark"] body[data-mode="register"] .icon-only-back {
+  display: inline-grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  place-items: center !important;
+  width: 42px !important;
+  height: 42px !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: linear-gradient(145deg,#8b5cf6,#6d28d9) !important;
+  background-color: #6d28d9 !important;
+  border: 1px solid #a78bfa !important;
+  border-radius: 13px !important;
+}
+html[data-theme="light"] body[data-mode="login"] .icon-only-back svg,
+html[data-theme="light"] body[data-mode="register"] .icon-only-back svg,
+html[data-theme="dark"] body[data-mode="login"] .icon-only-back svg,
+html[data-theme="dark"] body[data-mode="register"] .icon-only-back svg {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 21px !important;
+  height: 21px !important;
+  fill: none !important;
+  stroke: #ffffff !important;
+  stroke-width: 1.9 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
