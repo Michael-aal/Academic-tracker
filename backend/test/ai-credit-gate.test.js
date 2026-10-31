@@ -11,6 +11,7 @@ test("AI actions use the published fixed credit costs regardless of prompt size"
   assert.equal(estimateCredits({ action: "summarize", content: "x".repeat(12000) }), 2);
   assert.equal(estimateCredits({ action: "study-plan", topic: "Algebra" }), 2);
   assert.equal(estimateCredits({ action: "flashcards", topic: "Cell biology", cardCount: 20 }), 2);
+  assert.equal(estimateCredits({ action: "english", topic: "parts of speech" }), 1);
 });
 
 

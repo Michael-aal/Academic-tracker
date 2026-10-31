@@ -66,3 +66,7 @@ test("validates account-synced study notes", () => {
   assert.equal(userDataRouter.validateData("study-notes", note, "note-1"), null);
   assert.match(userDataRouter.validateData("study-notes", { ...note, title: " " }, "note-1"), /study note is invalid/);
 });
+
+test("learning progress cannot be written through the generic user-data API", () => {
+  assert.equal(userDataRouter.allowedKinds.has("learning-progress"), false);
+});

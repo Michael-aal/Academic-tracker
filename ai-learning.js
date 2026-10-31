@@ -480,7 +480,7 @@
           api("/api/user-data/tutor-conversations/" + encodeURIComponent(state.conversationId), {
             method: "PUT",
             body: JSON.stringify({ data: { subject: ($("subject")?.value || "").trim(), topic: String(topic || content).slice(0, 160), messages: state.conversation.slice(-10).map(message => ({ ...message, content: String(message.content || "").slice(0, 1800) })), updatedAt: new Date().toISOString() } })
-          }).catch(error => { console.warn("Could not save tutor conversation", error); setNotice("Your tutor reply is ready, but this conversation could not sync to your account.", true); });
+          }).then(() => api("/api/learning/progress/award", { method: "POST", body: JSON.stringify({ action: "tutor-session-completed", reference: state.conversationId }) })).catch(error => { console.warn("Could not save tutor conversation or award learning XP", error); setNotice("Your tutor reply is ready, but account sync or XP could not be confirmed.", true); });
           renderTutorConversation($("result-content"), topic || content, ($("subject")?.value || "").trim());
           $("result-title").textContent = "Your tutoring conversation";
           $("content").value = "";

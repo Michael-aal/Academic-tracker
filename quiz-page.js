@@ -296,6 +296,7 @@
       }
       const data = await api("/api/ai/attempts/" + encodeURIComponent(attemptId) + "/submit", {method:"POST",body:JSON.stringify({})});
       if (!data.result) throw new Error("The server did not return quiz results. Reload this page to check your saved attempt.");
+      try { await api("/api/learning/progress/award", { method: "POST", body: JSON.stringify({ action: "quiz-completed", reference: attemptId }) }); } catch (xpError) { console.warn("Quiz XP could not sync:", xpError.message); }
       busy = false;
       renderResults(data.result);
     } catch (error) {

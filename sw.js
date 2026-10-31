@@ -1,11 +1,13 @@
-const CACHE_NAME = "academic-tracker-v12";
+const CACHE_NAME = "academic-tracker-v14";
 const APP_SHELL = [
   "./", "./index.html", "./landing.css", "./landing-menu-fix.css", "./landing.js",
   "./login.html", "./register.html", "./auth.css", "./auth.js",
   "./dashboard.html", "./dashboard-auth.js", "./premium.html", "./premium-page.css", "./premium-page.js",
   "./notifications.html", "./notifications.css", "./notifications.js",
   "./styles.css", "./ui-polish.css", "./focus.css", "./app.js", "./global-navigation.js", "./vibrant-refresh.css",
-  "./manifest.webmanifest", "./assets/icon.svg", "./pwa-install.js", "./pwa-install.css"
+  "./manifest.webmanifest", "./assets/icon.svg", "./pwa-install.js", "./pwa-install.css",
+  "./english-studio.html", "./english-studio.css", "./english-studio.js",
+  "./level-up.html", "./level-up.css", "./level-up.js",\n  "./focus-music.js", "./focus-music.css"
 ];
 
 self.addEventListener("install", event => {
