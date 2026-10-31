@@ -178,7 +178,10 @@
       if (response.status === 401) { notificationDot.hidden = true; return; }
       if (!response.ok) return;
       const data = await response.json();
-      notificationDot.hidden = !(Number(data.unreadCount) > 0);
+      const unreadTotal = Number(data.unreadCount) || 0;
+      notificationDot.hidden = unreadTotal === 0;
+      notificationToggle.setAttribute("aria-label", unreadTotal ? "Notifications, " + unreadTotal + " unread" : "Notifications");
+      notificationToggle.title = unreadTotal ? unreadTotal + " unread notification" + (unreadTotal === 1 ? "" : "s") : "Notifications";
       const newest = Array.isArray(data.notifications) ? data.notifications[0] : null;
       if (!notificationBootstrapped) {
         latestNotificationId = newest?.id || null;
