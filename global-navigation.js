@@ -140,7 +140,7 @@
 
   // In-app notification badge + lightweight live polling. No browser/OS notifications are used.
   const notificationDot = header.querySelector("#at-nav-notification-dot");
-  const notificationApiBase = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\\/$/, "");
+  const notificationApiBase = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
   const notificationToken = () => localStorage.getItem("academic-tracker-token") || "";
   let notificationBootstrapped = false;
   let latestNotificationId = null;
