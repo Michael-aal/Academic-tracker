@@ -8,6 +8,7 @@ const APP_SHELL = [
   "./manifest.webmanifest", "./assets/icon.svg", "./pwa-install.js", "./pwa-install.css",
   "./english-studio.html", "./english-studio.css", "./english-studio.js",
   "./level-up.html", "./level-up.css", "./level-up.js",
+  "./exam-simulator.html", "./exam-simulator.js",
   "./focus-music.js", "./focus-music.css"
 ];
 
