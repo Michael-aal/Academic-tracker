@@ -113,6 +113,7 @@ router.get("/me", async (req, res, next) => {
     res.json({
       plan: access && access.expiresAt > now ? { name: "Premium", key: access.planKey, startsAt: access.startsAt, expiresAt: access.expiresAt, active: true } : { name: "Free", active: false },
       credits: { balance: validCredits, lots },
+      aiAvailable: validCredits > 0,
       transactions
     });
   } catch (error) { next(error); }
