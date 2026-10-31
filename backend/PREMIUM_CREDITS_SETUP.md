@@ -19,7 +19,9 @@ Set these on the Academic Tracker API service:
 
 - `PAYSTACK_SECRET_KEY`: your Paystack secret key. Keep it on Render; never put it in frontend code or commit it.
 - `PAYSTACK_CALLBACK_URL`: `https://study-track-lilac.vercel.app/premium.html`
-- `PREMIUM_CATALOG_JSON`: valid JSON containing approved NGN prices in **kobo**, durations, credit grants, and credit validity.
+- `PREMIUM_CATALOG_JSON`: valid JSON containing approved USD base prices in **cents**, durations, credit grants, and credit validity.
+- `USD_NGN_EXCHANGE_RATE`: server-controlled NGN per USD rate used for conversion at checkout.
+- `USD_NGN_EXCHANGE_RATE_AS_OF` (optional): ISO date/time when the configured exchange rate was checked.
 
 Example structure (keep the approved credit quantities and validity settings from your existing catalogue):
 
