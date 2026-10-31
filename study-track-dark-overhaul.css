@@ -91,3 +91,30 @@ html[data-theme="dark"] body #at-nav-menu #at-nav-install-app:hover,
 html[data-theme="dark"] body #at-nav-menu #at-nav-install-app:focus-visible{
   color:#fff!important;background:#302044!important;border-color:#A78BFA!important;
 }
+
+
+/* Catch light utility surfaces left behind by page-specific or utility-class markup. */
+html[data-theme="dark"] body :is(
+  .bg-white,.bg-slate-50,.bg-gray-50,.bg-zinc-50,.bg-neutral-50,
+  [class~="bg-white"],[class~="bg-slate-50"],[class~="bg-gray-50"],
+  [class~="bg-zinc-50"],[class~="bg-neutral-50"]
+){
+  color:#fff!important;
+  background-color:#171123!important;
+  border-color:#3A2D4D!important;
+}
+html[data-theme="dark"] body :is(
+  .text-black,.text-gray-900,.text-slate-900,.text-zinc-900,.text-neutral-900,
+  .text-gray-800,.text-slate-800,.text-zinc-800,.text-neutral-800,
+  [class~="text-black"],[class~="text-gray-900"],[class~="text-slate-900"],
+  [class~="text-zinc-900"],[class~="text-neutral-900"]
+){color:#fff!important}
+html[data-theme="dark"] body :is(
+  .text-gray-700,.text-slate-700,.text-zinc-700,.text-neutral-700,
+  [class~="text-gray-700"],[class~="text-slate-700"],[class~="text-zinc-700"],
+  [class~="text-neutral-700"]
+){color:#C0BBD6!important}
+html[data-theme="dark"] body :is(
+  button.bg-white,button.bg-slate-50,button.bg-gray-50,
+  button.bg-zinc-50,button.bg-neutral-50
+){color:#fff!important;background:#211832!important;border-color:#49375F!important}
