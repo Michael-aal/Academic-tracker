@@ -4,7 +4,7 @@
   if (document.body.classList.contains("at-has-global-navigation")) return;
   const initialFile = location.pathname.split("/").pop() || "dashboard.html";
   if (initialFile === "login.html" || initialFile === "register.html") return;
-  document.body.classList.add("at-has-global-navigation");
+  document.body.classList.add("at-has-global-navigation");\n  if (!document.querySelector("#at-pwa-install-styles")) {\n    const pwaStyles = document.createElement("link");\n    pwaStyles.id = "at-pwa-install-styles";\n    pwaStyles.rel = "stylesheet";\n    pwaStyles.href = "pwa-install.css";\n    document.head.appendChild(pwaStyles);\n  }
 
   const routes = [
     ["Dashboard","dashboard.html","home"],
