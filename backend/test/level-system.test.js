@@ -24,7 +24,7 @@ test("daily XP cap is configured and positive", () => {
 });
 
 test("English bank exposes all planned practice categories", () => {
-  assert.deepEqual(categories(), ["vocabulary", "spelling", "grammar", "partsOfSpeech", "figuresOfSpeech", "comprehension", "oralEnglish"]);
+  assert.deepEqual(categories(), ["vocabulary", "spelling", "grammar", "partsOfSpeech", "figuresOfSpeech", "comprehension", "oralEnglish", "writingSkills", "idiomsAndPhrases", "sentenceCorrection"]);
 });
 
 test("English challenges contain valid answer keys and four options", () => {
