@@ -2,6 +2,7 @@ const express = require("express");
 const crypto = require("node:crypto");
 const { requireAuth } = require("../middleware/auth");
 const { prisma } = require("../prisma");
+const { ensureFreeCredits, FREE_CREDIT_ALLOWANCE, FREE_CREDIT_INTERVAL_MS, ACTION_CREDIT_COSTS } = require("../ai-credit-gate");
 
 const router = express.Router();
 const NGN = "NGN";
@@ -154,16 +155,27 @@ router.use(requireAuth);
 router.get("/me", async (req, res, next) => {
   try {
     const now = new Date();
-    const [access, wallet, lots, transactions] = await Promise.all([
+    await ensureFreeCredits(req.userId, now);
+    const [access, wallet, lots, transactions, lastFreeGrant] = await Promise.all([
       prisma.premiumAccess.findUnique({ where: { userId: req.userId } }),
       prisma.creditWallet.findUnique({ where: { userId: req.userId } }),
       prisma.creditLot.findMany({ where: { userId: req.userId, remainingCredits: { gt: 0 }, expiresAt: { gt: now } }, orderBy: [{ expiresAt: "asc" }, { createdAt: "asc" }], select: { remainingCredits: true, expiresAt: true } }),
-      prisma.paymentTransaction.findMany({ where: { userId: req.userId }, orderBy: { createdAt: "desc" }, take: 12, select: { reference: true, type: true, itemKey: true, amountKobo: true, baseAmountUsdCents: true, exchangeRateTenThousandths: true, exchangeRateAsOf: true, status: true, createdAt: true, paidAt: true } })
+      prisma.paymentTransaction.findMany({ where: { userId: req.userId }, orderBy: { createdAt: "desc" }, take: 12, select: { reference: true, type: true, itemKey: true, amountKobo: true, baseAmountUsdCents: true, exchangeRateTenThousandths: true, exchangeRateAsOf: true, status: true, createdAt: true, paidAt: true } }),
+      prisma.creditLedger.findFirst({ where: { userId: req.userId, kind: "FREE_REFRESH" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } })
     ]);
     const validCredits = lots.reduce((sum, lot) => sum + lot.remainingCredits, 0);
     res.json({
       plan: access && access.expiresAt > now ? { name: "Premium", key: access.planKey, startsAt: access.startsAt, expiresAt: access.expiresAt, active: true } : { name: "Free", active: false },
-      credits: { balance: validCredits, lots },
+      credits: {
+        balance: validCredits,
+        lots,
+        freeAllowance: access && access.expiresAt > now ? null : {
+          amount: FREE_CREDIT_ALLOWANCE,
+          refreshHours: FREE_CREDIT_INTERVAL_MS / (60 * 60 * 1000),
+          nextRefreshAt: lastFreeGrant ? new Date(lastFreeGrant.createdAt.getTime() + FREE_CREDIT_INTERVAL_MS) : null
+        }
+      },
+      creditPolicy: { costs: ACTION_CREDIT_COSTS },
       aiAvailable: validCredits > 0,
       transactions
     });
