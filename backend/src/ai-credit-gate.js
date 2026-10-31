@@ -115,7 +115,7 @@ async function aiCreditGate(req, res, next) {
     res.json = payload => {
       if (finalized) return res;
       finalized = true;
-      if (res.statusCode >= 400) {
+      if (res.statusCode >= 400 && !req.aiUsageAuditFailure) {
         refundCredits(req.userId, reservation)
           .catch(error => console.error("AI credit refund failed:", error.code || error.name))
           .finally(() => sendJson(payload));
