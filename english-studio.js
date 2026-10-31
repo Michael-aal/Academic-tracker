@@ -25,7 +25,7 @@ function speakStory(value){if(!("speechSynthesis" in window)){$("story-status").
 function openStory(story){
  const reader=$("story-reader");reader.hidden=false;reader.replaceChildren();
  const top=storyNode("div","story-reader-top"),heading=storyNode("h3","",story.title),close=storyNode("button","story-close","Close");
- close.type="button";close.addEventListener("click",()=>{reader.hidden=true;speechSynthesis?.cancel?.();});top.append(heading,close);
+ close.type="button";close.addEventListener("click",()=>{reader.hidden=true;if("speechSynthesis" in window)window.speechSynthesis.cancel();});top.append(heading,close);
  const meta=storyNode("p","story-meta",(story.genre||"Story")+" · "+(story.estimatedMinutes||4)+" min read · "+(story.source==="ai"?"AI generated":"Curated"));
  const listen=storyNode("button","story-listen","▶ Listen to story");listen.type="button";listen.addEventListener("click",()=>speakStory(story.content));
  const body=storyNode("div","story-text");String(story.content||"").split(/\n\s*\n/).filter(Boolean).forEach(paragraph=>body.append(storyNode("p","",paragraph)));
