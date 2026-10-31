@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <script>try { document.documentElement.dataset.theme = localStorage.getItem("academic-tracker-theme") === "dark" ? "dark" : "light"; } catch (_) { document.documentElement.dataset.theme = "light"; }</script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0B0812">
   <meta name="description" content="Take your personalized Academic Tracker revision quiz.">
@@ -11,7 +12,10 @@
   <script src="icon-system.js" defer></script>
   <title>Revision Quiz · Academic Tracker</title>
   <link rel="stylesheet" href="global-navigation.css">
-  <script src="global-theme.js" defer></script>
+  <script src="global-theme.js" defer></script data-global-theme>
+  <link rel="stylesheet" href="global-light-mode.css" data-global-light-mode>
+  <link rel="stylesheet" href="dark-mode-guard.css" data-dark-mode-guard>
+  <link rel="stylesheet" href="theme-page-overrides.css" data-page-theme-overrides>
 </head>
 <body class="quiz-page-body">
   <div class="quiz-page-shell">
