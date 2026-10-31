@@ -9,14 +9,16 @@ test("allows the configured primary and current Vercel deployment origins", () =
   assert.equal(isAllowedOrigin("https://study-track-lilac.vercel.app"), true);
 });
 
-test("allows project preview URLs but rejects unrelated Vercel sites", () => {
+test("allows preview URLs for both project slugs but rejects unrelated Vercel sites", () => {
   assert.equal(isAllowedOrigin("https://academic-tracker-git-fix-ui-michael-aals-projects.vercel.app"), true);
   assert.equal(isAllowedOrigin("https://academic-tracker-ah1jhkyoj-michael-aals-projects.vercel.app"), true);
+  assert.equal(isAllowedOrigin("https://study-track-git-fix-cors-michael-aals-projects.vercel.app"), true);
+  assert.equal(isAllowedOrigin("https://study-track-abc123-michael-aals-projects.vercel.app"), true);
+  assert.equal(isAllowedOrigin("https://study-track-preview-123-other-team.vercel.app"), false);
   assert.equal(isAllowedOrigin("https://academic-tracker-preview-123-other-team.vercel.app"), false);
   assert.equal(isAllowedOrigin("https://unrelated-project.vercel.app"), false);
-  assert.equal(isAllowedOrigin("http://academic-tracker-iota.vercel.app"), false);
+  assert.equal(isAllowedOrigin("http://study-track-lilac.vercel.app"), false);
 });
-
 
 test("does not allow localhost origins by default in production", () => {
   const output = execFileSync(process.execPath, ["-e", 'const { isAllowedOrigin } = require("./src/config"); process.stdout.write(String(isAllowedOrigin("http://localhost:5173")));'], {
