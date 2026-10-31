@@ -104,7 +104,9 @@ html[data-theme="dark"] :is(
   .quiz-result-stat,.quiz-review-card,.ai-tool-card,.ai-hub-extras>div,
   .tutor-side-card,.tutor-composer-panel,.tutor-welcome,.account-data-panel,
   .planner-create-option,.planner-sessions-card,.planner-form-card,
-  .at-install-banner,.at-install-help-panel
+  .at-install-banner,.at-install-help-panel,.why-card,.pathway-panel,.value-strip,
+  .hero-card,.dashboard-preview,.feature,.step,.mini-stats > div,.float-chip,
+  .at-notes-drawer,.planner-card,.quiz-results,.at-chart-card
 ) {
   color: #f5f3ff !important;
   background-color: #171123 !important;
@@ -120,6 +122,8 @@ html[data-theme="dark"] :is(
   .subject-card,.score-card,.study-card,.tool-panel,.learning-card,.video-card,
   .memory-card,.university-card,.focus-panel,.focus-setup-card,.focus-reset-card,
   .focus-promo,.notes-library,.notes-editor-panel,.mm-panel,.mm-stat,.mm-empty,
+  .why-card,.pathway-panel,.value-strip,.hero-card,.dashboard-preview,.feature,.step,
+  .mini-stats > div,.float-chip,.at-notes-drawer,.planner-card,.quiz-results,.at-chart-card,
   .mm-flashcard,.mm-library-card,.ev-search-panel,.ev-player-panel,.ev-list-panel,
   .ev-other-sources,.ev-library-panel,.ev-video-card,.ev-saved-card,
   .quiz-question-card,.quiz-overview-row,.quiz-finish-panel,.quiz-loading-card,
