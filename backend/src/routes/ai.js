@@ -6,7 +6,7 @@ const { requireAdmin } = require("../middleware/admin");
 const { prisma } = require("../prisma");
 const { validateQuiz, publicQuiz, markQuiz } = require("../quiz-schema");
 const { aiCreditGate } = require("../ai-credit-gate");
-const { requestChatCompletion, configuredProviders, hasConfiguredProvider, providerOrder } = require("../ai-provider");
+const { requestChatCompletion, configuredProviders, hasConfiguredProvider, providerOrder } = require("../ai-provider");\nconst { awardXp } = require("../level-system");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -74,16 +74,27 @@ function aiUsageAudit(req, res, next) {
 async function persistAiUsage(req) {
   if (!Array.isArray(req.aiUsageEvents) || req.aiUsageEvents.length === 0) return;
   const requestId = randomUUID();
-  await prisma.aiUsageRecord.createMany({
-    data: req.aiUsageEvents.map(event => ({
-      userId: req.userId, requestId, action: String(req.body?.action || "unknown").slice(0, 30),
-      provider: String(event.provider || "unknown").slice(0, 30),
-      model: String(event.model || "unknown").slice(0, 120),
-      inputTokens: event.inputTokens, outputTokens: event.outputTokens,
-      cachedInputTokens: event.cachedInputTokens, reasoningTokens: event.reasoningTokens,
-      creditsCharged: event.creditsCharged, usageKnown: event.usageKnown,
-      status: event.status, providerStatus: event.providerStatus
-    }))
+  const action = String(req.body?.action || "unknown").slice(0, 30);
+  await prisma.$transaction(async tx => {
+    await tx.aiUsageRecord.createMany({
+      data: req.aiUsageEvents.map(event => ({
+        userId: req.userId, requestId, action,
+        provider: String(event.provider || "unknown").slice(0, 30),
+        model: String(event.model || "unknown").slice(0, 120),
+        inputTokens: event.inputTokens, outputTokens: event.outputTokens,
+        cachedInputTokens: event.cachedInputTokens, reasoningTokens: event.reasoningTokens,
+        creditsCharged: event.creditsCharged, usageKnown: event.usageKnown,
+        status: event.status, providerStatus: event.providerStatus
+      }))
+    });
+    const activityPoints = { tutor: 2, summarize: 2, "study-plan": 2, flashcards: 2 };
+    if (Object.prototype.hasOwnProperty.call(activityPoints, action)) {
+      await awardXp(tx, req.userId, {
+        eventKey: "ai:" + requestId, activity: action,
+        description: ({ tutor: "Completed an AI tutoring session", summarize: "Created a study-note summary", "study-plan": "Generated a study plan", flashcards: "Generated revision flashcards" })[action],
+        points: activityPoints[action]
+      });
+    }
   });
 }
 
