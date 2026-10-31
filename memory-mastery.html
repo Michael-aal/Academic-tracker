@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <script>try { document.documentElement.dataset.theme = localStorage.getItem("academic-tracker-theme") === "dark" ? "dark" : "light"; } catch (_) { document.documentElement.dataset.theme = "light"; }</script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0B0812">
   <meta name="description" content="Build lasting memory with active recall, spaced repetition, and practice.">
@@ -11,6 +12,10 @@
 <link rel="stylesheet" href="site-design-system.css">  <link rel="stylesheet" href="premium-theme.css">
   <script src="icon-system.js" defer></script>
   <link rel="stylesheet" href="global-navigation.css">
+  <link rel="stylesheet" href="global-light-mode.css" data-global-light-mode>
+  <link rel="stylesheet" href="dark-mode-guard.css" data-dark-mode-guard>
+  <link rel="stylesheet" href="theme-page-overrides.css" data-page-theme-overrides>
+  <script src="global-theme.js" data-global-theme defer></script>
 </head>
 <body>
   <div class="mm-shell">
