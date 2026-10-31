@@ -22,6 +22,15 @@ const aiIpLimiter = rateLimit({
 router.use(aiIpLimiter);
 
 const MAX_INPUT_CHARS = 12000;
+function recordAiUsage(req, usage) {
+  const prompt = Number(usage?.prompt_tokens || 0);
+  const completion = Number(usage?.completion_tokens || 0);
+  if (!Number.isFinite(prompt) || !Number.isFinite(completion)) return;
+  req.aiUsageTotals = req.aiUsageTotals || { prompt: 0, completion: 0 };
+  req.aiUsageTotals.prompt += prompt;
+  req.aiUsageTotals.completion += completion;
+  req.aiActualCredits = Math.max(1, Math.ceil(req.aiUsageTotals.prompt / 1000 + req.aiUsageTotals.completion / 500));
+}
 const ACTIONS = new Set(["tutor", "quiz", "summarize", "study-plan", "flashcards"]);
 // Quiz attempts do not call the AI provider, but answer/submit endpoints still
 // perform database reads and writes. Keep those operations bounded per account.
@@ -206,6 +215,7 @@ router.post("/", aiCreditGate, enforceAiQuota, async (req, res) => {
     });
 
     const data = await response.json().catch(() => ({}));
+    recordAiUsage(req, data?.usage);
     if (!response.ok) {
       const upstreamMessage = data?.error?.message;
       console.error("OpenRouter request failed:", response.status, typeof upstreamMessage === "string" ? upstreamMessage.slice(0, 250) : "No provider message");
@@ -301,6 +311,7 @@ router.post("/", aiCreditGate, enforceAiQuota, async (req, res) => {
             })
           });
           const retryData = await retryResponse.json().catch(() => ({}));
+          recordAiUsage(req, retryData?.usage);
           if (!retryResponse.ok) {
             const retryMessage = retryData?.error?.message;
             throw new Error("Retry provider request failed (" + retryResponse.status + "): " + (typeof retryMessage === "string" ? retryMessage.slice(0, 180) : "no provider message"));
