@@ -30,7 +30,7 @@ test("AI gateway falls back from a rate-limited OpenRouter to xAI", async () => 
 
     const usage = [];
     const result = await requestChatCompletion({ messages: [{ role: "user", content: "hello" }] }, {
-      onUsage: (value, provider) => usage.push({ value, provider })
+      onUsage: (value, provider, model) => usage.push({ value, provider, model })
     });
 
     assert.equal(result.provider, "xai");
