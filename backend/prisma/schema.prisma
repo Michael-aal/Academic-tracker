@@ -272,6 +272,7 @@ model PaymentTransaction {
   amountKobo  Int      @map("amount_kobo")
   credits     Int      @default(0)
   durationDays Int     @default(0) @map("duration_days")
+  creditValidityDays Int @default(30) @map("credit_validity_days")
   status      String   @default("PENDING") @db.VarChar(20)
   paidAt      DateTime? @map("paid_at")
   createdAt   DateTime @default(now()) @map("created_at")
