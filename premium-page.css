@@ -27,3 +27,33 @@ html[data-theme="dark"] .premium-page :is(select,input,textarea){color:#f5f3ff!i
 html[data-theme="dark"] .premium-page :is(select,option){color-scheme:dark!important;color:#f5f3ff!important;background-color:#171123!important}
 html[data-theme="dark"] .premium-page :is(button,a,[role="button"]):focus-visible{outline:2px solid #c4b5fd!important;outline-offset:3px!important}
 @media(max-width:560px){.section-heading-actions{width:100%;justify-content:space-between}.daily-plan-card{grid-column:1/-1}.currency-switch button{min-width:48px}}
+
+
+/* Refined Premium storefront layout */
+.premium-shell{max-width:1160px}
+.premium-hero{position:relative;isolation:isolate}
+.premium-hero:before{content:"";position:absolute;z-index:-1;inset:2% 18% 12% -14%;pointer-events:none;background:radial-gradient(ellipse,rgba(139,92,246,.13),transparent 68%);filter:blur(12px)}
+.plan-card,.bundle-card{display:flex;flex-direction:column;position:relative;overflow:hidden;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.plan-card:before,.bundle-card:before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,transparent,rgba(167,139,250,.7),transparent);opacity:.45}
+.plan-card:hover,.bundle-card:hover{transform:translateY(-3px);border-color:rgba(167,139,250,.55);box-shadow:0 24px 60px rgba(57,35,95,.16)}
+.plan-card .period,.bundle-card .detail{min-height:38px}
+.plan-card .credit-note{flex:1;line-height:1.55}
+.plan-card .premium-buy,.bundle-card .premium-buy{margin-top:auto;min-height:44px}
+.plan-card.featured{box-shadow:0 18px 55px rgba(112,74,180,.13);border-color:rgba(167,139,250,.72)}
+.plan-card.featured:after{content:"POPULAR CHOICE";position:absolute;top:15px;right:-31px;transform:rotate(36deg);padding:5px 34px;background:#7545c8;color:#fff;font-size:8px;font-weight:900;letter-spacing:.1em}
+.plan-card .price,.bundle-card .price{overflow-wrap:anywhere}
+.price-secondary{line-height:1.5}
+.premium-buy{min-height:44px;transition:filter .18s ease,transform .18s ease,opacity .18s ease}
+.premium-buy:not(:disabled):hover{filter:brightness(1.08);transform:translateY(-1px)}
+.premium-buy:disabled{opacity:.55;cursor:not-allowed;filter:saturate(.55)}
+.daily-days-select:focus-visible,.currency-switch button:focus-visible,.premium-buy:focus-visible{outline:3px solid rgba(167,139,250,.7);outline-offset:3px}
+.page-alert{line-height:1.55}
+.subscription-status-card{backdrop-filter:blur(12px)}
+.wallet-card{position:relative;overflow:hidden}
+.wallet-card:after{content:"";position:absolute;width:180px;height:180px;right:-100px;bottom:-125px;border-radius:50%;border:1px solid rgba(196,181,253,.2);box-shadow:0 0 0 18px rgba(196,181,253,.035),0 0 0 38px rgba(196,181,253,.025);pointer-events:none}
+@media(max-width:560px){
+ .premium-hero h1{font-size:clamp(36px,11vw,52px)}
+ .plan-card,.bundle-card{min-height:100%}
+ .plan-card.featured:after{font-size:7px;right:-35px}
+}
+@media(prefers-reduced-motion:reduce){.plan-card,.bundle-card,.premium-buy{transition:none}.plan-card:hover,.bundle-card:hover,.premium-buy:not(:disabled):hover{transform:none}}

@@ -28,6 +28,7 @@
       ? (item.amountNgnKobo != null ? "≈ " + ngn(item.amountNgnKobo * multiplier) : "Naira conversion unavailable")
       : usd(item.amountUsdCents * multiplier);
   }
+  function checkoutReady(item) { return Boolean(catalog.paymentsConfigured && catalog.fxConfigured && item?.amountNgnKobo != null); }
   function currencySwitch() {
     $("currency-usd").setAttribute("aria-pressed", String(displayCurrency === "USD"));
     $("currency-ngn").setAttribute("aria-pressed", String(displayCurrency === "NGN"));
@@ -45,7 +46,7 @@
       '<select class="daily-days-select" id="daily-days">' + options + '</select>' +
       '<p class="daily-total" id="daily-total" aria-live="polite"></p>' +
       '<p class="credit-note" id="daily-credit-note"></p>' +
-      '<button class="premium-buy" data-plan="daily" type="button">Continue to checkout</button>' +
+      '<button class="premium-buy" data-plan="daily" type="button"' + (checkoutReady(p) ? "" : " disabled") + '>' + (checkoutReady(p) ? "Continue to checkout" : "Checkout unavailable") + '</button>' +
       '<p class="daily-hint">Need 4–7 days? The Weekly plan is the better-value option.</p></article>';
   }
   function renderPlans() {
@@ -57,7 +58,7 @@
         '<div class="price-secondary">' + alternateAmount(p) + '</div>' +
         '<div class="period">' + p.durationDays + ' days of Premium access</div>' +
         '<p class="credit-note">' + (p.credits ? p.credits.toLocaleString() + " credits included" : "AI credits can be purchased separately") + '</p>' +
-        '<button class="premium-buy" data-plan="' + escapeHtml(p.key) + '" type="button">' + (catalog.fxConfigured && p.amountNgnKobo != null ? "Continue · Pay " + ngn(p.amountNgnKobo) : "Checkout not configured") + '</button></article>';
+        '<button class="premium-buy" data-plan="' + escapeHtml(p.key) + '" type="button"' + (checkoutReady(p) ? "" : " disabled") + '>' + (checkoutReady(p) ? "Continue · Pay " + ngn(p.amountNgnKobo) : "Checkout unavailable") + '</button></article>';
     }).join("") : '<div class="loading-card">Premium plans are being configured. Please check back soon.</div>';
     document.querySelectorAll("[data-plan]").forEach(b => b.addEventListener("click", () => startPurchase("PLAN", b.dataset.plan)));
     const daily = plans.find(p => p.key === "daily");
@@ -73,7 +74,7 @@
       '<div class="credits">' + b.credits.toLocaleString() + ' <small>credits</small></div>' +
       '<div class="price">' + amountFor(b) + '</div><div class="price-secondary">' + alternateAmount(b) + '</div>' +
       '<p class="detail">Valid for ' + b.creditValidityDays + ' days</p>' +
-      '<button class="premium-buy" data-bundle="' + escapeHtml(b.key) + '" type="button">' + (catalog.fxConfigured && b.amountNgnKobo != null ? "Buy · Pay " + ngn(b.amountNgnKobo) : "Checkout not configured") + '</button></article>'
+      '<button class="premium-buy" data-bundle="' + escapeHtml(b.key) + '" type="button"' + (checkoutReady(b) ? "" : " disabled") + '>' + (checkoutReady(b) ? "Buy · Pay " + ngn(b.amountNgnKobo) : "Checkout unavailable") + '</button></article>'
     ).join("") : '<div class="loading-card">Credit bundles are being configured.</div>';
     document.querySelectorAll("[data-bundle]").forEach(b => b.addEventListener("click", () => startPurchase("BUNDLE", b.dataset.bundle)));
   }
@@ -87,12 +88,14 @@
     $("daily-total").textContent = days + (days === 1 ? " day" : " days") + " · " + (p.credits * days).toLocaleString() + " AI credits included";
     $("daily-credit-note").textContent = "Credits are calculated per day and added after Paystack confirms payment.";
     const button = document.querySelector('[data-plan="daily"]');
-    if (button) button.textContent = catalog.fxConfigured && p.amountNgnKobo != null
-      ? "Continue · Pay " + ngn(p.amountNgnKobo * days) : "Checkout not configured";
+    if (button) {
+      button.disabled = !checkoutReady(p);
+      button.textContent = checkoutReady(p) ? "Continue · Pay " + ngn(p.amountNgnKobo * days) : "Checkout unavailable";
+    }
   }
   async function startPurchase(type, key) {
     if (!token) { location.href = "login.html"; return; }
-    if (!catalog.fxConfigured) { alertUser("Naira conversion is not configured yet. Please contact support."); return; }
+    if (!catalog.paymentsConfigured || !catalog.fxConfigured) { alertUser("Paystack checkout is not configured yet. Please contact support."); return; }
     const body = { type, key };
     if (type === "PLAN" && key === "daily") body.days = Number($("daily-days").value || 1);
     try {
