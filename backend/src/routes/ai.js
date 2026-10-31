@@ -32,13 +32,7 @@ function recordAiUsage(req, usage = {}, provider = "unknown", model = "unknown",
   const reasoning = Number(usage?.completion_tokens_details?.reasoning_tokens ?? usage?.output_tokens_details?.reasoning_tokens ?? 0);
   const valid = [input, output, cached, reasoning].every(value => Number.isSafeInteger(value) && value >= 0);
   const usageKnown = hasInput && hasOutput && valid;
-  let rates = {};
-  try { rates = JSON.parse(process.env.AI_CREDIT_RATES_JSON || "{}"); } catch { rates = {}; }
-  const providerRates = rates[provider] || {};
-  const selected = providerRates.models?.[model] || providerRates;
-  const inputRate = Number.isFinite(Number(selected.inputPer1k)) ? Math.max(0, Number(selected.inputPer1k)) : 1;
-  const outputRate = Number.isFinite(Number(selected.outputPer1k)) ? Math.max(0, Number(selected.outputPer1k)) : 2;
-  const eventCredits = usageKnown ? Math.ceil((input * inputRate + output * outputRate) / 1000) : 0;
+  const eventCredits = 0; // Final fixed action cost is assigned once by aiUsageAudit.
   req.aiUsageEvents = req.aiUsageEvents || [];
   req.aiUsageEvents.push({
     provider, model, inputTokens: valid ? input : 0, outputTokens: valid ? output : 0,
@@ -47,9 +41,7 @@ function recordAiUsage(req, usage = {}, provider = "unknown", model = "unknown",
     status: providerOk ? "PROVIDER_OK" : "PROVIDER_FAILED",
     providerStatus: Number.isInteger(providerStatus) ? providerStatus : 0
   });
-  req.aiActualCredits = req.aiUsageEvents.every(event => event.usageKnown)
-    ? Math.max(1, req.aiUsageEvents.reduce((sum, event) => sum + event.creditsCharged, 0))
-    : undefined;
+  // Credit charges are fixed per AI action; provider token usage remains audit-only.
 }
 
 function aiUsageAudit(req, res, next) {
@@ -61,7 +53,8 @@ function aiUsageAudit(req, res, next) {
     if (!Array.isArray(req.aiUsageEvents) || req.aiUsageEvents.length === 0) return sendJson(payload);
     if (res.statusCode >= 400) {
       for (const event of req.aiUsageEvents) event.creditsCharged = 0;
-    } else if (!req.aiUsageEvents.every(event => event.usageKnown)) {
+    } else {
+      // Charge the fixed action cost once per request, even when provider fallback occurs.
       for (const event of req.aiUsageEvents) event.creditsCharged = 0;
       req.aiUsageEvents[req.aiUsageEvents.length - 1].creditsCharged = req.aiCreditReservation?.amount || 0;
     }

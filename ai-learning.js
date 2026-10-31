@@ -7,7 +7,7 @@
   const $ = id => document.getElementById(id);
   const ACCOUNT_KEY = (() => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}").id || "account"; } catch { return "account"; } })();
   const ATTEMPT_KEY = "academic-tracker-active-quiz:" + ACCOUNT_KEY;
-  const state = { action: "tutor", answer: "", conversation: [], conversationId: null, quiz: null, attemptId: null, index: 0, selected: {}, answered: {}, submitted: false, result: null };
+  const state = { action: "tutor", creditBalance: null, creditCosts: { tutor: 2, quiz: 3, summarize: 2, "study-plan": 2, flashcards: 2 }, answer: "", conversation: [], conversationId: null, quiz: null, attemptId: null, index: 0, selected: {}, answered: {}, submitted: false, result: null };
   const taskCopy = {
     tutor: { title: "Talk to your AI tutor", description: "Ask questions, paste your class notes, and keep asking until it makes sense.", label: "What should we learn together?", placeholder: "Ask a question, paste your notes, or ask me to explain something more simply…", button: "Ask tutor", result: "Your tutoring conversation" },
     quiz: { title: "Build a revision quiz", description: "Create practice questions from a topic or your own notes.", label: "Paste your notes or describe the topic", placeholder: "Paste your notes here, or describe the topic you want to practise…", button: "Generate my quiz", result: "Your practice quiz" },
@@ -134,6 +134,22 @@
     if (text !== undefined) node.textContent = text;
     return node;
   }
+  const creditCostNotice = el("p", "ai-credit-cost-note");
+  const formFoot = document.querySelector(".form-foot");
+  if (formFoot) formFoot.insertAdjacentElement("afterend", creditCostNotice);
+  function renderCreditNotice() {
+    const cost = state.creditCosts[state.action] ?? 2;
+    const balance = Number.isFinite(state.creditBalance) ? state.creditBalance.toLocaleString() + " available" : "checking wallet";
+    creditCostNotice.textContent = "This request costs " + cost + " credits · " + balance + ". Failed requests are refunded.";
+  }
+  api("/api/premium/me").then(data => {
+    state.creditBalance = Number(data.credits?.balance || 0);
+    state.creditCosts = { ...state.creditCosts, ...(data.creditPolicy?.costs || {}) };
+    renderCreditNotice();
+  }).catch(() => {
+    creditCostNotice.textContent = "AI credits are checked securely before each request.";
+  });
+
   function setAction(action) {
     if (state.action !== action) state.conversation = [];
     state.action = action;
@@ -152,6 +168,7 @@
     $("char-count").textContent = "0 / 12,000 characters";
     $("result-panel").hidden = true;
     setNotice("");
+    renderCreditNotice();
   }
 
   function renderTutorConversation(host, videoQuery, subject) {
@@ -442,6 +459,8 @@
           timePerQuestionSeconds: Number($("quiz-time-limit")?.value || 0)
         })
       });
+      state.creditBalance = Number.isFinite(data.creditUsage?.balance) ? data.creditUsage.balance : state.creditBalance;
+      renderCreditNotice();
       if (state.action === "quiz") {
         const expectedCount = Number($("question-count")?.value || 5);
         const validQuiz = data.quiz && typeof data.quiz.title === "string" && Array.isArray(data.quiz.questions) && data.quiz.questions.length === expectedCount && data.quiz.questions.every(question => question && typeof question.id === "string" && typeof question.question === "string" && Array.isArray(question.options) && question.options.length === 4 && question.options.every(option => option && typeof option.id === "string" && typeof option.text === "string"));

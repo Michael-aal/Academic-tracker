@@ -1,28 +1,74 @@
 const { randomUUID } = require("node:crypto");
 const { prisma } = require("./prisma");
 
+const FREE_CREDIT_ALLOWANCE = 60;
+const FREE_CREDIT_INTERVAL_MS = 72 * 60 * 60 * 1000;
+const ACTION_CREDIT_COSTS = Object.freeze({
+  tutor: 2,
+  quiz: 3,
+  summarize: 2,
+  "study-plan": 2,
+  flashcards: 2
+});
+
 function estimateCredits(body = {}) {
   const action = typeof body.action === "string" ? body.action : "";
-  const contentLength = typeof body.content === "string" ? body.content.length : 0;
-  const topicLength = typeof body.topic === "string" ? body.topic.length : 0;
-  const subjectLength = typeof body.subject === "string" ? body.subject.length : 0;
-  const chars = Math.min(contentLength + topicLength + subjectLength, 14000);
-  const questionCount = Number.isInteger(body.questionCount) ? body.questionCount : 5;
-  let rates = {};
-  try { rates = JSON.parse(process.env.AI_CREDIT_RATES_JSON || "{}"); } catch { rates = {}; }
-  const configuredRates = Object.values(rates).filter(value => value && typeof value === "object").flatMap(value => [value, ...Object.values(value.models || {}).filter(modelRate => modelRate && typeof modelRate === "object")]);
-  const inputRate = Math.max(1, ...configuredRates.map(value => Number.isFinite(Number(value.inputPer1k)) ? Math.max(0, Number(value.inputPer1k)) : 1));
-  const outputRate = Math.max(2, ...configuredRates.map(value => Number.isFinite(Number(value.outputPer1k)) ? Math.max(0, Number(value.outputPer1k)) : 2));
-  const maxOutputTokens = action === "quiz" ? Math.min(10000, 1800 + Math.max(1, Math.min(10, questionCount)) * 820) : action === "flashcards" ? 5000 : 1800;
-  const attempts = action === "quiz" ? 2 : 1;
-  // Reserve against a conservative prompt size, the full configured output cap,
-  // quiz regeneration, and provider fallback. Actual usage settles the reserve.
-  const estimatedInputTokens = Math.ceil(chars / 3) + 6000;
-  const worstCase = attempts * (estimatedInputTokens * inputRate + maxOutputTokens * outputRate) / 1000;
-  return Math.max(1, Math.ceil(worstCase * 1.2));
+  return ACTION_CREDIT_COSTS[action] || 2;
+}
+
+async function ensureFreeCredits(userId, now = new Date()) {
+  return prisma.$transaction(async tx => {
+    await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${userId} FOR UPDATE`;
+    const access = await tx.premiumAccess.findUnique({ where: { userId } });
+    if (access && access.expiresAt > now) return { granted: false, reason: "premium" };
+
+    const lastGrant = await tx.creditLedger.findFirst({
+      where: { userId, kind: "FREE_REFRESH" },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true }
+    });
+    if (lastGrant && now.getTime() - lastGrant.createdAt.getTime() < FREE_CREDIT_INTERVAL_MS) {
+      return {
+        granted: false,
+        nextRefreshAt: new Date(lastGrant.createdAt.getTime() + FREE_CREDIT_INTERVAL_MS)
+      };
+    }
+
+    const expiresAt = new Date(now.getTime() + FREE_CREDIT_INTERVAL_MS);
+    await tx.creditLot.create({
+      data: {
+        userId,
+        originalCredits: FREE_CREDIT_ALLOWANCE,
+        remainingCredits: FREE_CREDIT_ALLOWANCE,
+        expiresAt
+      }
+    });
+    await tx.creditLedger.create({
+      data: {
+        userId,
+        delta: FREE_CREDIT_ALLOWANCE,
+        kind: "FREE_REFRESH",
+        reference: "free-refresh:" + userId + ":" + now.getTime(),
+        description: "Free plan AI credits refreshed"
+      }
+    });
+
+    const validLots = await tx.creditLot.aggregate({
+      where: { userId, remainingCredits: { gt: 0 }, expiresAt: { gt: now } },
+      _sum: { remainingCredits: true }
+    });
+    const balance = validLots._sum.remainingCredits || 0;
+    await tx.creditWallet.upsert({
+      where: { userId },
+      create: { userId, balance },
+      update: { balance }
+    });
+    return { granted: true, amount: FREE_CREDIT_ALLOWANCE, expiresAt, balance };
+  }, { isolationLevel: "Serializable" });
 }
 
 async function reserveCredits(userId, amount) {
+  await ensureFreeCredits(userId);
   const reservationId = randomUUID();
   return prisma.$transaction(async tx => {
     await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${userId} FOR UPDATE`;
@@ -149,4 +195,4 @@ async function aiCreditGate(req, res, next) {
   } catch (error) { return next(error); }
 }
 
-module.exports = { aiCreditGate, estimateCredits, reserveCredits, refundCredits };
+module.exports = { aiCreditGate, estimateCredits, reserveCredits, refundCredits, ensureFreeCredits, FREE_CREDIT_ALLOWANCE, FREE_CREDIT_INTERVAL_MS, ACTION_CREDIT_COSTS };

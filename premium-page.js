@@ -122,7 +122,12 @@
       : "Expiry: No active subscription";
     $("credit-balance").textContent = Number(state.credits.balance || 0).toLocaleString();
     const nextExpiry = state.credits.lots?.[0]?.expiresAt;
-    $("wallet-expiry").textContent = nextExpiry ? "Next credit expiry: " + new Date(nextExpiry).toLocaleDateString() : "No active credit expiry";
+    const freeRefresh = state.credits.freeAllowance?.nextRefreshAt;
+    $("wallet-expiry").textContent = !p.active && freeRefresh
+      ? "Next free refill: " + new Date(freeRefresh).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) + " · Free credits expire after 72 hours"
+      : nextExpiry ? "Next credit expiry: " + new Date(nextExpiry).toLocaleDateString() : "No active credit expiry";
+    const costs = state.creditPolicy?.costs || {};
+    $("credit-costs").textContent = "Per request: Tutor " + (costs.tutor ?? 2) + " · Quiz " + (costs.quiz ?? 3) + " · Notes " + (costs.summarize ?? 2) + " · Study plan " + (costs["study-plan"] ?? 2) + " · Flashcards " + (costs.flashcards ?? 2) + " credits";
     const cap = Math.max(1000, Number(state.credits.balance || 0));
     $("wallet-meter-fill").style.width = Math.min(100, Number(state.credits.balance || 0) / cap * 100) + "%";
     if (p.active) $("wallet-expiry").textContent = "Premium access until " + new Date(p.expiresAt).toLocaleDateString() + " · " + (nextExpiry ? "Next credits expire " + new Date(nextExpiry).toLocaleDateString() : "No active credits");

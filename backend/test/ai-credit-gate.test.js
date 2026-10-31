@@ -1,50 +1,75 @@
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { estimateCredits, aiCreditGate } = require("../src/ai-credit-gate");
+const { estimateCredits, aiCreditGate, ensureFreeCredits, FREE_CREDIT_ALLOWANCE, FREE_CREDIT_INTERVAL_MS } = require("../src/ai-credit-gate");
 const { prisma } = require("../src/prisma");
 
-test("AI reservations are positive and increase for larger generation workloads", () => {
-  const previous = {
-    AI_CREDIT_RATES_JSON: process.env.AI_CREDIT_RATES_JSON,
-    AI_PROVIDER_ORDER: process.env.AI_PROVIDER_ORDER
+test("AI actions use the published fixed credit costs regardless of prompt size", () => {
+  assert.equal(estimateCredits({ action: "tutor", content: "Explain photosynthesis." }), 2);
+  assert.equal(estimateCredits({ action: "tutor", content: "x".repeat(12000) }), 2);
+  assert.equal(estimateCredits({ action: "quiz", content: "Cell biology", questionCount: 10 }), 3);
+  assert.equal(estimateCredits({ action: "summarize", content: "x".repeat(12000) }), 2);
+  assert.equal(estimateCredits({ action: "study-plan", topic: "Algebra" }), 2);
+  assert.equal(estimateCredits({ action: "flashcards", topic: "Cell biology", cardCount: 20 }), 2);
+});
+
+
+
+test("Free accounts receive 60 credits once per 72-hour window", async () => {
+  const originalTransaction = prisma.$transaction;
+  const now = new Date("2026-10-31T12:00:00.000Z");
+  let lotData = null;
+  let ledgerData = null;
+  let walletData = null;
+  const fakeTx = {
+    $queryRaw: async () => [],
+    premiumAccess: { findUnique: async () => null },
+    creditLedger: {
+      findFirst: async () => null,
+      create: async ({ data }) => { ledgerData = data; }
+    },
+    creditLot: {
+      create: async ({ data }) => { lotData = data; },
+      aggregate: async () => ({ _sum: { remainingCredits: FREE_CREDIT_ALLOWANCE } })
+    },
+    creditWallet: { upsert: async ({ create, update }) => { walletData = create || update; } }
   };
+  prisma.$transaction = async callback => callback(fakeTx);
   try {
-    process.env.AI_PROVIDER_ORDER = "openrouter,xai";
-    process.env.AI_CREDIT_RATES_JSON = JSON.stringify({
-      openrouter: { inputPer1k: 1, outputPer1k: 2 },
-      xai: { inputPer1k: 2, outputPer1k: 3 }
-    });
-    const tutor = estimateCredits({ action: "tutor", content: "Explain photosynthesis." });
-    const quiz = estimateCredits({ action: "quiz", content: "Cell biology", questionCount: 10 });
-    const flashcards = estimateCredits({ action: "flashcards", content: "Cell biology", cardCount: 20 });
-    assert.ok(Number.isSafeInteger(tutor) && tutor > 0);
-    assert.ok(quiz > tutor);
-    assert.ok(flashcards > tutor);
+    const result = await ensureFreeCredits("free-user", now);
+    assert.equal(result.granted, true);
+    assert.equal(result.amount, 60);
+    assert.equal(lotData.originalCredits, 60);
+    assert.equal(lotData.remainingCredits, 60);
+    assert.equal(lotData.expiresAt.getTime(), now.getTime() + FREE_CREDIT_INTERVAL_MS);
+    assert.equal(ledgerData.kind, "FREE_REFRESH");
+    assert.equal(ledgerData.delta, 60);
+    assert.ok(walletData);
   } finally {
-    if (previous.AI_CREDIT_RATES_JSON === undefined) delete process.env.AI_CREDIT_RATES_JSON;
-    else process.env.AI_CREDIT_RATES_JSON = previous.AI_CREDIT_RATES_JSON;
-    if (previous.AI_PROVIDER_ORDER === undefined) delete process.env.AI_PROVIDER_ORDER;
-    else process.env.AI_PROVIDER_ORDER = previous.AI_PROVIDER_ORDER;
+    prisma.$transaction = originalTransaction;
   }
 });
 
-test("AI reservation estimates honor exact-model rate overrides", () => {
-  const previous = process.env.AI_CREDIT_RATES_JSON;
+test("Free refresh does not stack or grant early inside the 72-hour window", async () => {
+  const originalTransaction = prisma.$transaction;
+  const now = new Date("2026-10-31T12:00:00.000Z");
+  const previousGrant = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  let created = false;
+  const fakeTx = {
+    $queryRaw: async () => [],
+    premiumAccess: { findUnique: async () => null },
+    creditLedger: { findFirst: async () => ({ createdAt: previousGrant }) },
+    creditLot: { create: async () => { created = true; } },
+    creditWallet: { upsert: async () => { created = true; } }
+  };
+  prisma.$transaction = async callback => callback(fakeTx);
   try {
-    process.env.AI_CREDIT_RATES_JSON = JSON.stringify({ openrouter: { inputPer1k: 1, outputPer1k: 2 } });
-    const normal = estimateCredits({ action: "tutor", content: "Explain energy." });
-    process.env.AI_CREDIT_RATES_JSON = JSON.stringify({
-      openrouter: {
-        inputPer1k: 1, outputPer1k: 2,
-        models: { "expensive-model": { inputPer1k: 100, outputPer1k: 200 } }
-      }
-    });
-    const highRate = estimateCredits({ action: "tutor", content: "Explain energy." });
-    assert.ok(highRate > normal);
+    const result = await ensureFreeCredits("free-user", now);
+    assert.equal(result.granted, false);
+    assert.equal(result.nextRefreshAt.getTime(), previousGrant.getTime() + FREE_CREDIT_INTERVAL_MS);
+    assert.equal(created, false);
   } finally {
-    if (previous === undefined) delete process.env.AI_CREDIT_RATES_JSON;
-    else process.env.AI_CREDIT_RATES_JSON = previous;
+    prisma.$transaction = originalTransaction;
   }
 });
 
@@ -52,6 +77,8 @@ test("zero-credit accounts are blocked at the API gate instead of falling back t
   const originalTransaction = prisma.$transaction;
   const fakeTx = {
     $queryRaw: async () => [],
+    premiumAccess: { findUnique: async () => null },
+    creditLedger: { findFirst: async () => ({ createdAt: new Date() }) },
     creditLot: {
       findMany: async () => [],
       updateMany: async () => ({ count: 0 })
