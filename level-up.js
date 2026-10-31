@@ -43,6 +43,29 @@
         row.append(copy, xp); activity.append(row);
       });
     }
+    try {
+      const response = await fetch(API_BASE + "/api/gamification/insights", { headers: { Authorization: "Bearer " + token } });
+      const insights = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(insights.error || "Insights are temporarily unavailable.");
+      const insightRoot = $("learning-insights"); insightRoot.replaceChildren();
+      if (!insights.topics?.length) {
+        const empty = document.createElement("p"); empty.className = "level-muted"; empty.textContent = "Complete a quiz to build topic-level learning insights."; insightRoot.append(empty);
+      } else if (!insights.weakTopics?.length) {
+        const strong = document.createElement("p"); strong.className = "level-muted"; strong.textContent = "Your recent quiz averages are at least 70% across tracked topics. Keep revising to maintain progress."; insightRoot.append(strong);
+      } else {
+        insights.weakTopics.forEach(item => {
+          const row = document.createElement("article"); row.className = "activity-item";
+          const copy = document.createElement("div"); const title = document.createElement("strong"); title.textContent = item.subject + " · " + item.topic;
+          const meta = document.createElement("small"); meta.textContent = item.attempts + " completed quiz attempt(s) · " + item.confidence + " · " + item.message;
+          copy.append(title, meta);
+          const score = document.createElement("span"); score.className = "activity-xp"; score.textContent = item.average + "% average";
+          row.append(copy, score); insightRoot.append(row);
+        });
+      }
+    } catch (error) {
+      const insightRoot = $("learning-insights"); insightRoot.replaceChildren();
+      const message = document.createElement("p"); message.className = "level-muted"; message.textContent = error.message; insightRoot.append(message);
+    }
     $("level-notice").textContent = "Your progress is synced to your account.";
   }
   $("level-signout").addEventListener("click", async () => {
