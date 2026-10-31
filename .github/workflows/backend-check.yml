@@ -29,6 +29,16 @@ on:
       - "ai-navigation.js"
       - "ai-tool-pages.css"
       - "premium-theme.css"
+      - "premium.html"
+      - "premium-page.css"
+      - "premium-page.js"
+      - "theme-page-overrides.css"
+      - "ai-learning.css"
+      - "ai-tutor-workspace.css"
+      - "notifications.html"
+      - "notifications.css"
+      - "notifications.js"
+      - "global-navigation.css"
       - "ai-learning.html"
       - "ai-tutor.html"
       - "ai-quiz-setup.html"
@@ -100,7 +110,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Validate Prisma schema
-        run: node --check src/routes/user-data.js && node --check src/routes/account.js && node --check src/middleware/auth.js && node --check src/routes/auth.js && node --check src/routes/ai.js && node --check src/ai-quota.js && node --check src/app.js && node --check src/routes/university.js && npx prisma validate
+        run: node --check src/routes/user-data.js && node --check src/routes/account.js && node --check src/middleware/auth.js && node --check src/routes/auth.js && node --check src/routes/premium.js && node --check src/routes/notifications.js && node --check src/routes/ai.js && node --check src/ai-quota.js && node --check src/app.js && node --check src/routes/university.js && npx prisma validate
       - name: Generate Prisma client
         run: npx prisma generate
       - name: Apply migrations to a clean PostgreSQL database
@@ -145,4 +155,4 @@ jobs:
           print("All local script and link assets referenced by root HTML pages exist.")
           PY
       - name: Check calculator and AI learning JavaScript syntax
-        run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../app.js && node --check ../ai-learning.js && node --check ../quiz-page.js && node --check ../ai-navigation.js && node --check ../educational-videos.js && node --check ../study-planner.js && node --check ../memory-mastery.js && node --check ../notes-summary.js && node --check ../global-theme.js && node --check ../global-navigation.js && node --check ../universal-notes.js && node --check ../account-data.js
+        run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../app.js && node --check ../ai-learning.js && node --check ../quiz-page.js && node --check ../ai-navigation.js && node --check ../educational-videos.js && node --check ../study-planner.js && node --check ../memory-mastery.js && node --check ../notes-summary.js && node --check ../global-theme.js && node --check ../global-navigation.js && node --check ../premium-page.js && node --check ../notifications.js && node --check ../universal-notes.js && node --check ../account-data.js
