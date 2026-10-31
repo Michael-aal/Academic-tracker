@@ -56,6 +56,7 @@
     university:'<path d="m2 9 10-6 10 6-10 6L2 9Z"/><path d="M6 11v6c4 3 8 3 12 0v-6M22 9v7"/>',
     support:'<path d="M4 5h16v12H8l-4 4z"/><path d="M8 9h8M8 13h5"/>',
     settings:'<circle cx="12" cy="12" r="3"/><path d="m19 13 2 1-2 4-2-1-2 1v2H9v-2l-2-1-2 1-2-4 2-1v-2l-2-1 2-4 2 1 2-1V4h6v2l2 1 2-1 2 4-2 1v2Z"/>',
+    install:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 7v8m-3-3 3 3 3-3M8 17h8"/>',
     more:'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>'
   };
   const icon = (name) => '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + (icons[name] || icons.more) + '</svg>';
@@ -78,6 +79,9 @@
     <div class="at-nav-popover at-nav-menu" id="at-nav-menu" hidden>
       <div class="at-nav-menu-heading">Your workspace</div>
       ${routes.map(([label,href,key]) => `<a href="${href}" data-at-route="${href}">${icon(key)}<span>${label}</span></a>`).join("")}
+      <div class="at-nav-menu-separator"></div>
+      <div class="at-nav-menu-heading">App</div>
+      <button type="button" id="at-nav-install-app" data-at-install-app>${icon("install")}<span>Install as App</span></button>
       <div class="at-nav-menu-separator"></div>
       <a href="index.html">Website home</a>
       ${authPage ? '<a href="login.html">Log in</a><a href="register.html">Create account</a>' : ""}
@@ -124,6 +128,7 @@
   const menu = header.querySelector("#at-nav-menu");
   const profileMenu = header.querySelector("#at-nav-profile-menu");
   const moreToggle = bottom.querySelector("#at-nav-more-toggle");
+  const installButton = menu.querySelector("#at-nav-install-app");
   let lastMenuTrigger = null;
   const setOpen = (target, trigger, open) => {
     target.hidden = !open;
@@ -158,6 +163,16 @@
     setOpen(profileMenu,profileToggle,open);
     if (open) lastMenuTrigger = profileToggle;
   });
+  installButton.addEventListener("click", () => {
+    closeAll();
+    if (typeof window.ATInstallApp === "function") {
+      window.ATInstallApp();
+      return;
+    }
+    const installScript = document.querySelector('script[data-pwa-install]');
+    if (installScript) installScript.addEventListener("load", () => window.ATInstallApp?.(), { once: true });
+  });
+  window.addEventListener("at-pwa-install-ready", () => window.ATRefreshInstallUI?.());
   document.addEventListener("click", event => {
     if (!header.contains(event.target) && !bottom.contains(event.target)) closeAll();
   });
@@ -229,7 +244,9 @@
   let navHidden = false;
   const applyNavigationVisibility = () => {
     const enabled = compactNavigation.matches;
-    navHidden = enabled && localStorage.getItem(navVisibilityKey) === "true";
+    let storedHidden = false;
+    try { storedHidden = localStorage.getItem(navVisibilityKey) === "true"; } catch (_) {}
+    navHidden = enabled && storedHidden;
     document.body.classList.toggle("at-nav-collapsed", navHidden);
     navRestore.hidden = !navHidden;
     if (!enabled) {
@@ -274,7 +291,8 @@
   document.addEventListener("click", event => {
     const button = event.target.closest("#signout, #mobile-signout, #quiz-signout, #profile-signout, #uni-signout, #signout-button, #logout-button, [data-action='signout']");
     if (!button) return;
-    const token = localStorage.getItem("academic-tracker-token");
+    let token = "";
+    try { token = localStorage.getItem("academic-tracker-token") || ""; } catch (_) {}
     if (!token) return;
     const apiBase = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
     fetch(apiBase + "/api/auth/logout", {
