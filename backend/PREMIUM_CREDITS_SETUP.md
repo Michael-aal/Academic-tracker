@@ -55,7 +55,7 @@ Configure these server-side environment variables on Render:
 - `AI_PROVIDER_ORDER=openrouter,xai`: ordered provider fallback chain. Only providers with keys are called.
 - `OPENROUTER_API_KEY` and optional `OPENROUTER_MODEL`.
 - `XAI_API_KEY` and optional `XAI_MODEL`. An xAI consumer chatbot account is not an API credential; obtain a developer API key separately.
-- `AI_CREDIT_RATES_JSON`: internal credits per 1,000 input/output tokens, keyed by provider. Optional `models` overrides let you set different rates for exact model IDs. Start conservatively and calibrate against provider invoices before enabling paid usage.
+- No AI credit-rate environment variable is required. AI requests use fixed action costs configured in `backend/src/ai-credit-gate.js`; provider token usage is recorded separately for cost monitoring.
 
 The gateway supports OpenRouter and xAI's OpenAI-compatible chat-completions API. New providers should be added only in the server-side provider registry. Provider fallback is automatic for authentication, rate-limit, timeout, server, and connection failures. The same gateway is used for the quiz regeneration attempt; no AI route should call a provider URL directly.
 
@@ -68,14 +68,18 @@ The AI status endpoint is admin-only and reports configured provider names/model
 - Requests are validated before any credit reservation.
 - Every AI generation request passes through the central backend credit gate. The browser cannot set a balance, cost, provider, or model.
 - Every account must have enough unexpired wallet credits before any AI generation request is sent. There is no free-request quota bypass: zero or insufficient credits blocks AI Tutor, quiz generation/regeneration, note summaries, study plans, and flashcards at the API boundary.
-- Successful requests settle against provider-reported input/output usage using provider/model-specific internal rates; unused reserved credits are returned. Each provider attempt records the exact model ID, provider, token counts, request correlation ID, result status, and credits in an append-only usage table. Admins can inspect it through `GET /api/ai/usage`; users can inspect their own records through `GET /api/ai/usage/me`.
+- Free accounts receive **60 credits every 72 hours**. The first grant is created lazily when the account opens its wallet or makes its first AI request. A database row lock and ledger entry prevent duplicate refreshes across API instances.
+- Free credits expire after 72 hours and do not roll over. Missed refresh periods do not accumulate; returning after a longer absence grants one fresh 60-credit allowance.
+- Active Premium accounts do not receive the Free-plan refresh while their Premium access is active. Purchased credits remain in separate expiry-dated lots.
+- Fixed costs per successful AI request: AI Tutor **2**, Quiz **3**, Notes Summary **2**, Study Plan **2**, and Flashcards **2** credits. The backend enforces these costs; client-supplied costs are ignored.
+- Failed AI requests are refunded idempotently. Successful requests are charged the fixed action cost, regardless of provider fallback. Actual input/output token counts, provider, model, request correlation ID, and result status remain recorded separately for cost monitoring. Admins can inspect usage through `GET /api/ai/usage`; users can inspect their own records through `GET /api/ai/usage/me`.
 - Failed AI requests are refunded idempotently. Credit lots expiring during a request receive a fresh refund lot rather than losing the refund.
 - The estimator is a reservation safeguard, not an invoice. Calibrate rates and maximum workload costs against real provider invoices before live launch.
 
 ## 6. API
 
 - `GET /api/premium/catalog`: public package catalog and payment configuration status.
-- `GET /api/premium/me`: authenticated Premium status, active credit lots, and recent transactions.
+- `GET /api/premium/me`: authenticated Premium status, active credit lots, the Free refresh schedule, fixed AI action costs, and recent transactions.
 - `POST /api/premium/initialize`: authenticated Paystack checkout initialization.
 - `POST /api/premium/verify`: authenticated transaction verification.
 - `POST /api/premium/webhook`: Paystack server-to-server webhook.
