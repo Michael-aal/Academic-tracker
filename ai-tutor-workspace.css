@@ -274,3 +274,8 @@ html[data-theme="dark"] .ai-tutor-page :is(.tutor-composer-bottom button,#submit
 html[data-theme="dark"] .ai-tutor-page :is(.tutor-prompt-grid button,.quick-help-list button,.tutor-chat-top button,.side-outline-button,.at-nav-icon-button,[class*="voice"] button,[class*="voice"] [role="button"],[class*="voice"] select){color:#f5f3ff!important;-webkit-text-fill-color:#f5f3ff!important;background:#211832!important;background-image:none!important;border-color:#49375f!important}
 html[data-theme="dark"] .ai-tutor-page :is(input,select,textarea){color:#f5f3ff!important;-webkit-text-fill-color:#f5f3ff!important;background:#110d1b!important;border-color:#49375f!important}
 html[data-theme="dark"] .ai-tutor-page :is(button,a,[role="button"]):focus-visible{outline:2px solid #c4b5fd!important;outline-offset:3px!important}
+
+
+/* Normalize every non-primary tutor action to a dark raised surface. */
+html[data-theme="dark"] .ai-tutor-page :is(button,[role="button"],a.button,a.btn):not(.tutor-composer-bottom button):not(#submit-learning){background:#211832!important;background-color:#211832!important;background-image:none!important;border-color:#49375f!important}
+html[data-theme="dark"] .ai-tutor-page :is(.active,[aria-pressed="true"]){background:rgba(139,92,246,.24)!important;background-color:rgba(139,92,246,.24)!important;border-color:#8b5cf6!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
