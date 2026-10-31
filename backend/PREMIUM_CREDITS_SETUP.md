@@ -23,23 +23,16 @@ Set these on the Academic Tracker API service:
 - `USD_NGN_EXCHANGE_RATE`: server-controlled NGN per USD rate used for conversion at checkout.
 - `USD_NGN_EXCHANGE_RATE_AS_OF` (optional): ISO date/time when the configured exchange rate was checked.
 
-Example structure (keep the approved credit quantities and validity settings from your existing catalogue):
+Configure the `plans` object with these exact USD prices and durations. Preserve your approved credit counts and expiry policy; the credit values below are not being changed by this code update:
 
-```json
-{
-  "plans": {
-    "daily":   { "name": "Daily Premium",   "amountUsdCents": 50,   "durationDays": 1,   "credits": 100,  "creditValidityDays": 30 },
-    "weekly":  { "name": "Weekly Premium",  "amountUsdCents": 200,  "durationDays": 7,   "credits": 500,  "creditValidityDays": 30 },
-    "monthly": { "name": "Monthly Premium", "amountUsdCents": 799,  "durationDays": 30,  "credits": 1000, "creditValidityDays": 30 },
-    "yearly":  { "name": "Yearly Premium",  "amountUsdCents": 5500, "durationDays": 365, "credits": 0,    "creditValidityDays": 30 }
-  },
-  "bundles": {
-    "starter": { "name": "Starter", "amountUsdCents": 0, "credits": 100, "creditValidityDays": 7 }
-  }
-}
-```
+| Plan key | `amountUsdCents` | Duration |
+|---|---:|---:|
+| `daily` | `50` | 1 day per unit; customers may select 1–6 days |
+| `weekly` | `200` | 7 days |
+| `monthly` | `799` | 30 days |
+| `yearly` | `5500` | 365 days |
 
-The USD prices above are stored as integer cents. Daily's $0.50 price and credit grant are **per day**; customers can select 1–6 days, and both amount and credits are multiplied by the selected number of days. Weekly is 7 days ($2.00), monthly is 30 days ($7.99), and annual is 365 days ($55.00). The daily selector is capped at six so the 7-day weekly package remains a separate, better-value choice. The example credit quantities are placeholders only: retain the actual approved values from your live catalogue.
+For the `daily` plan, the configured `credits` value is the per-day allowance. The backend multiplies both price and credits by the selected 1–6 days. Set this per-day credit allowance to the approved lower daily amount; it is intentionally not guessed here. Each credit bundle must also use an `amountUsdCents` base price. Keep the existing bundle credit counts and validity values unless you intentionally revise them.
 
 All prices are defined in USD. The backend converts the USD-cent amount to NGN kobo using `USD_NGN_EXCHANGE_RATE`, saves the exact rate snapshot and converted kobo amount on the payment record, and sends only the saved NGN amount to Paystack. The customer's display toggle does not change the entitlement or server-calculated checkout amount. A later rate change cannot alter an already initialized transaction.
 
