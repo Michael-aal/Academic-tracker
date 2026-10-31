@@ -65,7 +65,9 @@ async function requestChatCompletion(payload, options = {}) {
         body: JSON.stringify({ ...payload, model })
       });
       const data = await response.json().catch(() => ({}));
-      if (data?.usage && typeof onUsage === "function") onUsage(data.usage, providerId);
+      if (typeof onUsage === "function") {
+        try { onUsage(data?.usage || {}, providerId, model, response.status, response.ok); } catch (_) { /* Usage logging must not trigger provider retries. */ }
+      }
       if (response.ok && typeof data?.choices?.[0]?.message?.content === "string" && data.choices[0].message.content.trim()) {
         return { data, provider: providerId, model };
       }
@@ -86,6 +88,9 @@ async function requestChatCompletion(payload, options = {}) {
         throw error;
       }
     } catch (error) {
+      if (typeof onUsage === "function") {
+        try { onUsage({}, providerId, model, 0, false); } catch (_) { /* Ignore telemetry callback failures. */ }
+      }
       if (error.name === "AbortError") throw error;
       if (error.status && error.status < 500 && ![401, 403, 408, 429].includes(error.status)) throw error;
       failures.push(providerId + ": " + (error.message || "connection failed").slice(0, 180));
