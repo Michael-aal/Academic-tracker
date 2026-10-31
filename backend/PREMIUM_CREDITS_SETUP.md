@@ -21,27 +21,27 @@ Set these on the Academic Tracker API service:
 - `PAYSTACK_CALLBACK_URL`: `https://study-track-lilac.vercel.app/premium.html`
 - `PREMIUM_CATALOG_JSON`: valid JSON containing approved NGN prices in **kobo**, durations, credit grants, and credit validity.
 
-Example structure (replace every zero with your approved values before enabling checkout):
+Example structure (keep the approved credit quantities and validity settings from your existing catalogue):
 
 ```json
 {
   "plans": {
-    "daily":   { "name": "Daily Premium",   "amountKobo": 0, "durationDays": 1,   "credits": 100, "creditValidityDays": 30 },
-    "weekly":  { "name": "Weekly Premium",  "amountKobo": 0, "durationDays": 7,   "credits": 500, "creditValidityDays": 30 },
-    "monthly": { "name": "Monthly Premium", "amountKobo": 0, "durationDays": 30,  "credits": 1000, "creditValidityDays": 30 },
-    "yearly":  { "name": "Yearly Premium",  "amountKobo": 0, "durationDays": 365, "credits": 0, "creditValidityDays": 30 }
+    "daily":   { "name": "Daily Premium",   "amountUsdCents": 50,   "durationDays": 1,   "credits": 100,  "creditValidityDays": 30 },
+    "weekly":  { "name": "Weekly Premium",  "amountUsdCents": 200,  "durationDays": 7,   "credits": 500,  "creditValidityDays": 30 },
+    "monthly": { "name": "Monthly Premium", "amountUsdCents": 799,  "durationDays": 30,  "credits": 1000, "creditValidityDays": 30 },
+    "yearly":  { "name": "Yearly Premium",  "amountUsdCents": 5500, "durationDays": 365, "credits": 0,    "creditValidityDays": 30 }
   },
   "bundles": {
-    "starter": { "name": "Starter", "amountKobo": 0, "credits": 100, "creditValidityDays": 7 },
-    "plus":    { "name": "Plus",    "amountKobo": 0, "credits": 500, "creditValidityDays": 30 },
-    "pro":     { "name": "Pro",     "amountKobo": 0, "credits": 1000, "creditValidityDays": 60 }
+    "starter": { "name": "Starter", "amountUsdCents": 0, "credits": 100, "creditValidityDays": 7 }
   }
 }
 ```
 
-For the daily plan, `amountKobo` and `credits` are per day; the student can choose one, two, or three days. Other plan amounts and credit grants are one-time for the selected period. A yearly plan with monthly credit allowances would need a separate scheduled grant policy; this version grants its configured credits at purchase time.
+The USD prices above are stored as integer cents. Daily's $0.50 price and credit grant are **per day**; customers can select 1–6 days, and both amount and credits are multiplied by the selected number of days. Weekly is 7 days ($2.00), monthly is 30 days ($7.99), and annual is 365 days ($55.00). The daily selector is capped at six so the 7-day weekly package remains a separate, better-value choice. The example credit quantities are placeholders only: retain the actual approved values from your live catalogue.
 
-Paystack amount examples: NGN 500 = `50000` kobo. Checkout is disabled for catalog entries with zero or invalid prices. Configure test-mode credentials and test transactions before switching to live credentials.
+All prices are defined in USD. The backend converts the USD-cent amount to NGN kobo using `USD_NGN_EXCHANGE_RATE`, saves the exact rate snapshot and converted kobo amount on the payment record, and sends only the saved NGN amount to Paystack. The customer's display toggle does not change the entitlement or server-calculated checkout amount. A later rate change cannot alter an already initialized transaction.
+
+Paystack checkout remains NGN-only in this integration. A configured exchange rate is required before checkout is enabled. Never send a client-supplied amount, exchange rate, or credit count to Paystack. Configure test-mode credentials and complete successful, failed, cancelled, and duplicate-webhook tests before switching to live credentials.
 
 ## 3. Configure the Paystack webhook
 
