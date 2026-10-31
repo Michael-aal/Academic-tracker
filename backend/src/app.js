@@ -14,6 +14,7 @@ const videoRoutes = require("./routes/videos");
 const universityRoutes = require("./routes/university");
 const userDataRoutes = require("./routes/user-data");
 const accountRoutes = require("./routes/account");
+const premiumRoutes = require("./routes/premium");
 
 const app = express();
 // The API is hosted behind Render's single reverse-proxy hop. Trust only that
@@ -50,7 +51,7 @@ const apiLimiter = rateLimit({
 app.use("/api", apiLimiter);
 // Parse JSON only after the coarse request limiter has run, so oversized or
 // malformed request floods do not bypass the first protection layer.
-app.use(express.json({ limit: "100kb" }));
+app.use(express.json({ limit: "100kb", verify: (req, _res, buffer) => { req.rawBody = Buffer.from(buffer); } }));
 
 app.get("/", (_req, res) => res.json({
   name: "Academic Tracker API",
@@ -91,6 +92,7 @@ app.use("/api/videos", videoRoutes);
 app.use("/api/university", universityRoutes);
 app.use("/api/user-data", userDataRoutes);
 app.use("/api/account", accountRoutes);
+app.use("/api/premium", premiumRoutes);
 
 app.use((_req, res) => res.status(404).json({ error: "Route not found." }));
 

@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0B0812"><link rel="stylesheet" href="ai-learning.css">
   <title>AI Service Status · Academic Tracker</title>
   <style>
-    .admin-wrap{max-width:850px;margin:54px auto;padding:0 22px}.admin-card{background:#0D1B35;border:1px solid rgba(163,170,221,.15);border-radius:18px;padding:26px}.admin-card h1{font-size:32px;letter-spacing:-.04em;margin:8px 0}.admin-card>p{color:#a0a6c2}.status-row{display:flex;justify-content:space-between;gap:20px;padding:17px 0;border-bottom:1px solid rgba(163,170,221,.15)}.status-row:last-of-type{border:0}.status-row span{color:#a0a6c2}.status-value{font-weight:750}.status-value.good{color:#b69cff}.status-value.bad{color:#ffaaa5}.setup-note{background:#14264A;border:1px solid rgba(163,170,221,.15);border-radius:12px;padding:16px;margin-top:24px;color:#d5d8ed;font-size:13px;white-space:pre-wrap}.admin-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}.admin-actions a,.admin-actions button{padding:10px 13px;border-radius:10px;border:1px solid rgba(163,170,221,.2);background:#1B2C50;color:#f5f5ff;cursor:pointer}.admin-error{color:#ffaaa5}
+    .admin-wrap{max-width:850px;margin:54px auto;padding:0 22px}.admin-card{background:#0D1B35;border:1px solid rgba(163,170,221,.15);border-radius:18px;padding:26px}.admin-card h1{font-size:32px;letter-spacing:-.04em;margin:8px 0}.admin-card>p{color:#a0a6c2}.status-row{display:flex;justify-content:space-between;gap:20px;padding:17px 0;border-bottom:1px solid rgba(163,170,221,.15)}.status-row:last-of-type{border:0}.status-row span{color:#a0a6c2}.status-value{font-weight:750}.status-value.good{color:#b69cff}.status-value.bad{color:#ffaaa5}.setup-note{background:#14264A;border:1px solid rgba(163,170,221,.15);border-radius:12px;padding:16px;margin-top:24px;color:#d5d8ed;font-size:13px;white-space:pre-wrap}.admin-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}.admin-actions a,.admin-actions button{padding:10px 13px;border-radius:10px;border:1px solid rgba(163,170,221,.2);background:#1B2C50;color:#f5f5ff;cursor:pointer}.admin-error{color:#ffaaa5}.usage-card{margin-top:18px;background:#0D1B35;border:1px solid rgba(163,170,221,.15);border-radius:18px;padding:22px}.usage-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.usage-list{display:grid;gap:10px;margin-top:16px}.usage-item{padding:14px;border:1px solid rgba(163,170,221,.15);border-radius:12px;background:#09162b}.usage-item strong{display:block;color:#f5f5ff;overflow-wrap:anywhere}.usage-meta{margin-top:6px;color:#a0a6c2;font-size:12px;line-height:1.6}.usage-empty{color:#a0a6c2;font-size:13px}.usage-refresh{padding:9px 12px;border-radius:9px;border:1px solid rgba(163,170,221,.2);background:#1B2C50;color:#f5f5ff;cursor:pointer}
   </style>
   <link rel="stylesheet" href="visual-refresh.css">
 <link rel="stylesheet" href="site-design-system.css">  <link rel="stylesheet" href="premium-theme.css">
@@ -32,6 +32,11 @@
       <div id="setup-note" class="setup-note" role="status">Checking the backend…</div>
       <div class="admin-actions"><button id="refresh" type="button">Refresh status</button><a href="ai-learning.html">Open student AI tools</a></div>
     </section>
+    <section class="usage-card" aria-labelledby="usage-title">
+      <div class="usage-head"><div><p class="section-kicker">METERING & COST CONTROL</p><h2 id="usage-title">AI usage records</h2><p>This audit shows each provider attempt, exact model ID, token counts and internal credits. Prompts and study notes are never displayed.</p></div><button class="usage-refresh" id="usage-refresh" type="button">Refresh usage</button></div>
+      <div id="usage-summary" class="usage-meta" role="status">Loading usage records…</div>
+      <div id="usage-list" class="usage-list"><p class="usage-empty">Loading…</p></div>
+    </section>
   </main>
   <script>
   (() => {
@@ -50,17 +55,47 @@
         el("provider").textContent = data.provider;
         el("configured").textContent = data.configured ? "Configured" : "Not configured";
         el("configured").className = "status-value " + (data.configured ? "good" : "bad");
-        el("model").textContent = data.model;
-        el("limit").textContent = data.requestsPer15Minutes + " requests per account / 15 minutes";
+        el("model").textContent = (data.providers || []).filter(item => item.configured).map(item => item.id + " · " + item.model).join(", ") || "No provider configured";
+        el("limit").textContent = (data.ipRequestsPer15Minutes || 30) + " requests per IP / 15 minutes (safety ceiling)";
         el("setup-note").textContent = data.note;
       } catch (error) {
         el("setup-note").textContent = error.message;
         el("setup-note").classList.add("admin-error");
       }
     }
+    async function loadUsage() {
+      const summary = el("usage-summary");
+      const host = el("usage-list");
+      summary.textContent = "Loading usage records…";
+      host.replaceChildren();
+      try {
+        const response = await fetch(API_BASE + "/api/ai/usage?days=30", { headers: { Authorization: "Bearer " + token } });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "Could not load AI usage records.");
+        const records = Array.isArray(data.records) ? data.records : [];
+        summary.textContent = records.length + " provider attempts recorded in the last " + data.days + " days. Maximum 200 recent records shown.";
+        if (!records.length) {
+          const empty = document.createElement("p"); empty.className = "usage-empty"; empty.textContent = "No AI usage has been recorded yet."; host.append(empty); return;
+        }
+        for (const item of records) {
+          const card = document.createElement("article"); card.className = "usage-item";
+          const title = document.createElement("strong");
+          title.textContent = (item.user?.name || "Student") + " · " + item.action + " · " + item.provider + " / " + item.model;
+          const meta = document.createElement("div"); meta.className = "usage-meta";
+          const tokens = "Input " + item.inputTokens + " · Output " + item.outputTokens + " · Cached " + item.cachedInputTokens + " · Reasoning " + item.reasoningTokens;
+          const details = "Account: " + (item.user?.email || item.user?.id || "—") + " · Credits: " + item.creditsCharged + " · " + (item.usageKnown ? "Provider usage reported" : "Usage unavailable; reservation estimate applies") + " · " + item.status + " (HTTP " + item.providerStatus + ") · " + new Date(item.createdAt).toLocaleString();
+          meta.textContent = tokens + " | " + details;
+          card.append(title, meta); host.append(card);
+        }
+      } catch (error) {
+        summary.textContent = error.message;
+        const empty = document.createElement("p"); empty.className = "usage-empty"; empty.textContent = "Usage data could not be loaded."; host.append(empty);
+      }
+    }
     el("refresh").addEventListener("click", load);
+    el("usage-refresh").addEventListener("click", loadUsage);
     el("signout").addEventListener("click", () => { localStorage.removeItem("academic-tracker-token"); localStorage.removeItem("academic-tracker-user"); window.location.replace("login.html"); });
-    load();
+    load(); loadUsage();
   })();
   </script>
   <script src="global-navigation.js"></script>

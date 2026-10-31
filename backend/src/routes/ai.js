@@ -1,16 +1,18 @@
 const express = require("express");
+const { randomUUID } = require("node:crypto");
 const rateLimit = require("express-rate-limit");
 const { requireAuth } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/admin");
 const { prisma } = require("../prisma");
 const { validateQuiz, publicQuiz, markQuiz } = require("../quiz-schema");
-const { consumeAiQuota } = require("../ai-quota");
+const { aiCreditGate } = require("../ai-credit-gate");
+const { requestChatCompletion, configuredProviders, hasConfiguredProvider, providerOrder } = require("../ai-provider");
 
 const router = express.Router();
 router.use(requireAuth);
 
-// The persistent database quota is per account. Add an independent IP ceiling
-// as well, so creating multiple accounts cannot trivially bypass AI cost controls.
+// Every generation request must reserve unexpired wallet credits in aiCreditGate.
+// An independent IP ceiling also limits automated abuse across multiple accounts.
 const aiIpLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 30,
@@ -21,6 +23,77 @@ const aiIpLimiter = rateLimit({
 router.use(aiIpLimiter);
 
 const MAX_INPUT_CHARS = 12000;
+function recordAiUsage(req, usage = {}, provider = "unknown", model = "unknown", providerStatus = 0, providerOk = false) {
+  const hasInput = usage?.prompt_tokens !== undefined || usage?.input_tokens !== undefined;
+  const hasOutput = usage?.completion_tokens !== undefined || usage?.output_tokens !== undefined;
+  const input = Number(usage?.prompt_tokens ?? usage?.input_tokens ?? 0);
+  const output = Number(usage?.completion_tokens ?? usage?.output_tokens ?? 0);
+  const cached = Number(usage?.prompt_tokens_details?.cached_tokens ?? usage?.input_tokens_details?.cached_tokens ?? 0);
+  const reasoning = Number(usage?.completion_tokens_details?.reasoning_tokens ?? usage?.output_tokens_details?.reasoning_tokens ?? 0);
+  const valid = [input, output, cached, reasoning].every(value => Number.isSafeInteger(value) && value >= 0);
+  const usageKnown = hasInput && hasOutput && valid;
+  let rates = {};
+  try { rates = JSON.parse(process.env.AI_CREDIT_RATES_JSON || "{}"); } catch { rates = {}; }
+  const providerRates = rates[provider] || {};
+  const selected = providerRates.models?.[model] || providerRates;
+  const inputRate = Number.isFinite(Number(selected.inputPer1k)) ? Math.max(0, Number(selected.inputPer1k)) : 1;
+  const outputRate = Number.isFinite(Number(selected.outputPer1k)) ? Math.max(0, Number(selected.outputPer1k)) : 2;
+  const eventCredits = usageKnown ? Math.ceil((input * inputRate + output * outputRate) / 1000) : 0;
+  req.aiUsageEvents = req.aiUsageEvents || [];
+  req.aiUsageEvents.push({
+    provider, model, inputTokens: valid ? input : 0, outputTokens: valid ? output : 0,
+    cachedInputTokens: valid ? cached : 0, reasoningTokens: valid ? reasoning : 0,
+    creditsCharged: eventCredits, usageKnown,
+    status: providerOk ? "PROVIDER_OK" : "PROVIDER_FAILED",
+    providerStatus: Number.isInteger(providerStatus) ? providerStatus : 0
+  });
+  req.aiActualCredits = req.aiUsageEvents.every(event => event.usageKnown)
+    ? Math.max(1, req.aiUsageEvents.reduce((sum, event) => sum + event.creditsCharged, 0))
+    : undefined;
+}
+
+function aiUsageAudit(req, res, next) {
+  const sendJson = res.json.bind(res);
+  let finalized = false;
+  res.json = payload => {
+    if (finalized) return res;
+    finalized = true;
+    if (!Array.isArray(req.aiUsageEvents) || req.aiUsageEvents.length === 0) return sendJson(payload);
+    if (res.statusCode >= 400) {
+      for (const event of req.aiUsageEvents) event.creditsCharged = 0;
+    } else if (!req.aiUsageEvents.every(event => event.usageKnown)) {
+      for (const event of req.aiUsageEvents) event.creditsCharged = 0;
+      req.aiUsageEvents[req.aiUsageEvents.length - 1].creditsCharged = req.aiCreditReservation?.amount || 0;
+    }
+    persistAiUsage(req)
+      .then(() => sendJson(payload))
+      .catch(error => {
+        req.aiUsageAuditFailure = true;
+        res.statusCode = 503;
+        console.error("AI usage audit write failed:", error.code || error.name);
+        sendJson({ error: "AI usage could not be recorded safely. Please retry shortly." });
+      });
+    return res;
+  };
+  return next();
+}
+
+async function persistAiUsage(req) {
+  if (!Array.isArray(req.aiUsageEvents) || req.aiUsageEvents.length === 0) return;
+  const requestId = randomUUID();
+  await prisma.aiUsageRecord.createMany({
+    data: req.aiUsageEvents.map(event => ({
+      userId: req.userId, requestId, action: String(req.body?.action || "unknown").slice(0, 30),
+      provider: String(event.provider || "unknown").slice(0, 30),
+      model: String(event.model || "unknown").slice(0, 120),
+      inputTokens: event.inputTokens, outputTokens: event.outputTokens,
+      cachedInputTokens: event.cachedInputTokens, reasoningTokens: event.reasoningTokens,
+      creditsCharged: event.creditsCharged, usageKnown: event.usageKnown,
+      status: event.status, providerStatus: event.providerStatus
+    }))
+  });
+}
+
 const ACTIONS = new Set(["tutor", "quiz", "summarize", "study-plan", "flashcards"]);
 // Quiz attempts do not call the AI provider, but answer/submit endpoints still
 // perform database reads and writes. Keep those operations bounded per account.
@@ -66,17 +139,47 @@ function buildPrompt({ action, subject, topic, content, level, questionCount, ca
   ].join("\n\n");
 }
 
+router.get("/usage", requireAdmin, async (req, res, next) => {
+  try {
+    const daysRaw = Number(req.query.days || 30);
+    const days = Number.isInteger(daysRaw) ? Math.min(90, Math.max(1, daysRaw)) : 30;
+    const where = { createdAt: { gte: new Date(Date.now() - days * 24 * 60 * 60 * 1000) } };
+    if (typeof req.query.userId === "string" && req.query.userId.trim()) where.userId = req.query.userId.trim();
+    const records = await prisma.aiUsageRecord.findMany({
+      where, orderBy: { createdAt: "desc" }, take: 200,
+      select: {
+        id: true, requestId: true, action: true, provider: true, model: true,
+        inputTokens: true, outputTokens: true, cachedInputTokens: true, reasoningTokens: true,
+        creditsCharged: true, usageKnown: true, status: true, providerStatus: true, createdAt: true,
+        user: { select: { id: true, name: true, email: true } }
+      }
+    });
+    res.json({ days, records });
+  } catch (error) { next(error); }
+});
+
+router.get("/usage/me", async (req, res, next) => {
+  try {
+    const records = await prisma.aiUsageRecord.findMany({
+      where: { userId: req.userId }, orderBy: { createdAt: "desc" }, take: 100,
+      select: { requestId: true, action: true, provider: true, model: true, inputTokens: true, outputTokens: true, cachedInputTokens: true, reasoningTokens: true, creditsCharged: true, usageKnown: true, status: true, createdAt: true }
+    });
+    res.json({ records });
+  } catch (error) { next(error); }
+});
+
 router.get("/status", requireAdmin, (_req, res) => {
-  const configured = Boolean(process.env.OPENROUTER_API_KEY);
+  const providers = configuredProviders();
+  const configured = hasConfiguredProvider();
   res.json({
     configured,
-    provider: "OpenRouter",
-    model: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
+    provider: providers.find(item => item.configured)?.id || null,
+    providers,
     maxInputCharacters: MAX_INPUT_CHARS,
-    requestsPer15Minutes: 10,
+    ipRequestsPer15Minutes: 30,
     note: configured
       ? "AI requests are enabled. The provider key is stored server-side."
-      : "AI is not enabled yet. Add OPENROUTER_API_KEY to the backend host environment and redeploy."
+      : "AI is not enabled yet. Configure at least one approved provider key on the backend host and redeploy."
   });
 });
 
@@ -138,17 +241,28 @@ router.post("/attempts/:attemptId/submit", async (req, res, next) => {
     return res.status(outcome.status).json(outcome.body);
   } catch (error) { return next(error); }
 });
-async function enforceAiQuota(req, res, next) {
-  try {
-    const allowed = await consumeAiQuota(prisma, req.userId);
-    if (!allowed) return res.status(429).json({ error: "You've reached the AI learning limit for now. Please try again in 15 minutes." });
-    return next();
-  } catch (error) {
-    return next(error);
-  }
+function validateAiRequest(req, res, next) {
+  const body = req.body && typeof req.body === "object" ? req.body : {};
+  const action = typeof body.action === "string" ? body.action : "";
+  const content = typeof body.content === "string" ? body.content.trim() : "";
+  const topic = typeof body.topic === "string" ? body.topic.trim() : "";
+  const questionCount = body.questionCount === undefined ? 5 : body.questionCount;
+  const cardCount = body.cardCount === undefined ? 10 : body.cardCount;
+  const difficulty = typeof body.difficulty === "string" ? body.difficulty.toLowerCase() : "medium";
+  const timeLimit = body.timePerQuestionSeconds === undefined ? 0 : body.timePerQuestionSeconds;
+
+  if (!ACTIONS.has(action)) return res.status(400).json({ error: "Choose a supported AI learning task." });
+  if (action === "quiz" && (!Number.isInteger(questionCount) || questionCount < 1 || questionCount > 10)) return res.status(400).json({ error: "Choose between 1 and 10 quiz questions." });
+  if (action === "flashcards" && (!Number.isInteger(cardCount) || cardCount < 1 || cardCount > 20)) return res.status(400).json({ error: "Choose between 1 and 20 memory cards." });
+  if (action === "quiz" && !["easy", "medium", "hard"].includes(difficulty)) return res.status(400).json({ error: "Choose easy, medium, or hard difficulty." });
+  if (action === "quiz" && (!Number.isInteger(timeLimit) || ![0, 10, 15, 20, 30, 60].includes(timeLimit))) return res.status(400).json({ error: "Choose a supported time limit per question." });
+  if (content.length > MAX_INPUT_CHARS) return res.status(413).json({ error: "Your request is too long. Keep your question or notes under 12,000 characters." });
+  if (!content && !topic) return res.status(400).json({ error: "Enter a question, topic, or study notes first." });
+  if (!hasConfiguredProvider()) return res.status(503).json({ error: "AI learning is not configured yet. Please contact the administrator." });
+  return next();
 }
 
-router.post("/", enforceAiQuota, async (req, res) => {
+router.post("/", validateAiRequest, aiCreditGate, aiUsageAudit, async (req, res) => {
   const action = typeof req.body?.action === "string" ? req.body.action : "";
   const subject = typeof req.body?.subject === "string" ? req.body.subject.trim().slice(0, 100) : "";
   const topic = typeof req.body?.topic === "string" ? req.body.topic.trim().slice(0, 160) : "";
@@ -168,11 +282,12 @@ router.post("/", enforceAiQuota, async (req, res) => {
     return res.status(413).json({ error: "Your request is too long. Keep your question or notes under 12,000 characters." });
   }
   if (!content && !topic) return res.status(400).json({ error: "Enter a question, topic, or study notes first." });
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!hasConfiguredProvider()) {
     return res.status(503).json({ error: "AI learning is not configured yet. Please contact the administrator." });
   }
 
-  const model = process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
+  let model = null;
+  let provider = null;
   const controller = new AbortController();
   // Ten-question quizzes need substantially more generation time than short tutor replies.
   const requestTimeoutMs = action === "quiz" ? 90000 : 45000;
@@ -183,38 +298,15 @@ router.post("/", enforceAiQuota, async (req, res) => {
     if (!user) return res.status(401).json({ error: "Account not found. Please sign in again." });
     const courses = user.educationTrack === "HIGHER" ? await prisma.universityCourse.findMany({ where: { userId: req.userId }, select: { code: true, title: true, creditUnits: true, targetScore: true, results: { orderBy: { updatedAt: "desc" }, take: 6, select: { academicYear: true, semester: true, caScore: true, examScore: true } } }, orderBy: { code: "asc" }, take: 60 }) : [];
     const studentProfile = { ...user, courses };
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        Authorization: "Bearer " + process.env.OPENROUTER_API_KEY,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.AI_SITE_URL || "https://academic-tracker-nu.vercel.app",
-        "X-Title": "Academic Tracker"
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) }],
-        temperature: action === "quiz" ? 0.2 : 0.4,
-        ...(action === "quiz" ? { response_format: { type: "json_object" } } : {}),
-        // Scale the output budget with the requested count; structured JSON needs room for
-        // every option, explanation, and closing delimiter at the maximum question count.
-        max_tokens: action === "quiz" ? Math.min(10000, 1800 + questionCount * 820) : action === "flashcards" ? 5000 : 1800
-      })
-    });
-
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const upstreamMessage = data?.error?.message;
-      console.error("OpenRouter request failed:", response.status, typeof upstreamMessage === "string" ? upstreamMessage.slice(0, 250) : "No provider message");
-      if (response.status === 401 || response.status === 403) {
-        return res.status(502).json({ error: "The AI provider rejected the server credentials. Please ask the administrator to check the AI configuration." });
-      }
-      if (response.status === 429) {
-        return res.status(503).json({ error: "The AI service is busy or its provider quota has been reached. Please try again later." });
-      }
-      return res.status(502).json({ error: "The AI provider could not complete this request. Please try again later." });
-    }
+    const completion = await requestChatCompletion({
+      messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) }],
+      temperature: action === "quiz" ? 0.2 : 0.4,
+      ...(action === "quiz" ? { response_format: { type: "json_object" } } : {}),
+      max_tokens: action === "quiz" ? Math.min(10000, 1800 + questionCount * 820) : action === "flashcards" ? 5000 : 1800
+    }, { signal: controller.signal, onUsage: (usage, providerId, usedModel, providerStatus, providerOk) => recordAiUsage(req, usage, providerId, usedModel, providerStatus, providerOk) });
+    const data = completion.data;
+    provider = completion.provider;
+    model = completion.model;
 
     const answer = data?.choices?.[0]?.message?.content;
     if (typeof answer !== "string" || !answer.trim()) {
@@ -244,7 +336,7 @@ router.post("/", enforceAiQuota, async (req, res) => {
           seen.add(normalized);
           return { question, answer: answerText };
         });
-        return res.json({ cards, action, model });
+        return res.json({ cards, action, model, provider });
       } catch (validationError) {
         console.error("AI flashcard validation failed:", validationError.message);
         return res.status(502).json({ error: "The AI returned incomplete or invalid memory cards. No cards were added; please try again." });
@@ -281,29 +373,15 @@ router.post("/", enforceAiQuota, async (req, res) => {
           const retryPrompt = buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) +
             "\n\nFINAL OUTPUT CHECK: Your previous attempt did not satisfy the required schema. Regenerate the entire quiz from scratch. Return only valid JSON with exactly " + questionCount +
             " questions. Each question must include id, question, options (exactly four {id,text} objects with IDs A/B/C/D), correctAnswer (one of A/B/C/D), explanation, and a non-empty hint. Keep each question and explanation concise, use short option text, do not repeat the topic as filler, and do not return partial JSON or Markdown fences.";
-          const retryResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            signal: retryController.signal,
-            headers: {
-              Authorization: "Bearer " + process.env.OPENROUTER_API_KEY,
-              "Content-Type": "application/json",
-              "HTTP-Referer": process.env.AI_SITE_URL || "https://academic-tracker-nu.vercel.app",
-              "X-Title": "Academic Tracker"
-            },
-            body: JSON.stringify({
-              model,
-              messages: [{ role: "user", content: retryPrompt }],
-              temperature: 0.1,
-              response_format: { type: "json_object" },
-              max_tokens: Math.min(10000, 2200 + questionCount * 820)
-            })
-          });
-          const retryData = await retryResponse.json().catch(() => ({}));
-          if (!retryResponse.ok) {
-            const retryMessage = retryData?.error?.message;
-            throw new Error("Retry provider request failed (" + retryResponse.status + "): " + (typeof retryMessage === "string" ? retryMessage.slice(0, 180) : "no provider message"));
-          }
-          quiz = parseAndValidate(retryData?.choices?.[0]?.message?.content, retryData?.choices?.[0]?.finish_reason);
+          const retryCompletion = await requestChatCompletion({
+            messages: [{ role: "user", content: retryPrompt }],
+            temperature: 0.1,
+            response_format: { type: "json_object" },
+            max_tokens: Math.min(10000, 2200 + questionCount * 820)
+          }, { signal: retryController.signal, preferredProvider: providerOrder().find(providerId => providerId !== provider) || provider, onUsage: (usage, providerId) => recordAiUsage(req, usage, providerId) });
+          provider = retryCompletion.provider;
+          model = retryCompletion.model;
+          quiz = parseAndValidate(retryCompletion.data?.choices?.[0]?.message?.content, retryCompletion.data?.choices?.[0]?.finish_reason);
         } catch (retryError) {
           console.error("AI quiz retry failed validation:", retryError.message);
           return res.status(502).json({ error: "The AI could not produce a complete quiz after retrying. No quiz was created; please try again with a shorter topic or fewer questions." });
@@ -313,9 +391,9 @@ router.post("/", enforceAiQuota, async (req, res) => {
       }
       quiz.timePerQuestionSeconds = timePerQuestionSeconds;
       const attempt = await prisma.aiQuizAttempt.create({ data: { userId: req.userId, title: quiz.title, subject, topic, difficulty, questionData: quiz, status: "IN_PROGRESS" }, select: { id: true } });
-      return res.status(201).json({ quiz: publicQuiz(quiz), attemptId: attempt.id, action, model });
+      return res.status(201).json({ quiz: publicQuiz(quiz), attemptId: attempt.id, action, model, provider });
     }
-    res.json({ answer: answer.trim(), action, model });
+    res.json({ answer: answer.trim(), action, model, provider });
   } catch (error) {
     if (error.name === "AbortError") return res.status(504).json({ error: "The AI request took too long. Please try again." });
     console.error("AI request error:", error.message);

@@ -1,12 +1,13 @@
 (() => {
   "use strict";
   const $ = id => document.getElementById(id);
-  const state = { expression: "", justCalculated: false, lastResult: 0, history: [] };
+  const state = { expression: "", justCalculated: false, lastResult: 0, history: [], angleMode: "DEG" };
   const operators = ["+", "-", "*", "/"];
   const displayExpression = value => value.replace(/\*/g, "×").replace(/\//g, "÷").replace(/-/g, "−");
 
   function render() {
     $("expression").textContent = state.expression ? displayExpression(state.expression) : "Ready to calculate";
+    $("angle-mode").textContent = state.angleMode;
     if (state.justCalculated) {
       $("display").textContent = state.lastResult;
     } else {
@@ -50,6 +51,16 @@
     } else state.expression += op;
     render();
   }
+  function appendScientific(value) {
+    clearError();
+    if (state.justCalculated) {
+      if (/^[+*/^!%)]/.test(value)) state.expression = String(state.lastResult);
+      else state.expression = "";
+      state.justCalculated = false;
+    }
+    state.expression += value;
+    render();
+  }
   function appendParen(paren) {
     clearError();
     if (state.justCalculated) { state.expression = ""; state.justCalculated = false; }
@@ -81,7 +92,7 @@
     if (!state.expression.trim()) { error("Enter a calculation first."); return; }
     try {
       const completedExpression = state.expression;
-      const result = CalculatorEngine.evaluate(completedExpression);
+      const result = CalculatorEngine.evaluate(completedExpression, { angleMode: state.angleMode });
       const formatted = CalculatorEngine.format(result);
       addHistory(completedExpression, formatted);
       state.lastResult = formatted;
@@ -138,6 +149,15 @@
     const value = Number(score) / Number(total) * 100;
     $("score-percent").textContent = Number.isFinite(value) ? CalculatorEngine.format(value) + "%" : "—";
   }
+  $("scientific-keys").addEventListener("click", event => {
+    const button = event.target.closest("button");
+    if (!button || button.dataset.insert === undefined) return;
+    appendScientific(button.dataset.insert);
+  });
+  $("angle-mode").addEventListener("click", () => {
+    state.angleMode = state.angleMode === "DEG" ? "RAD" : "DEG";
+    render();
+  });
   $("keys").addEventListener("click", event => {
     const button = event.target.closest("button");
     if (!button) return;
@@ -162,6 +182,7 @@
     if (event.key === ".") { appendDigit("."); return; }
     if (operators.includes(event.key)) { event.preventDefault(); appendOperator(event.key); return; }
     if (event.key === "%") { percent(); return; }
+    if (event.key === "^" || event.key === "!") { appendScientific(event.key); return; }
     if (event.key === "(" || event.key === ")") { appendParen(event.key); return; }
     if (event.key === "Enter" || event.key === "=") { event.preventDefault(); calculate(); return; }
     if (event.key === "Escape") { state.expression = ""; state.justCalculated = false; clearError(); render(); return; }
