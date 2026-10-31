@@ -49,3 +49,28 @@
 .pronunciation-input-row button{padding:9px 11px;border:0;border-radius:9px;background:var(--en-accent);color:#fff;font-size:10px;font-weight:800}
 :root[data-theme="light"] .pronunciation-input-row input,:root[data-theme="light"] .pronunciation-input-row select{background:#FFFFFF;color:#251B35}
 @media(max-width:600px){.pronunciation-tools{width:100%}.pronunciation-input-row input{width:100%}}
+
+
+.stories-section{margin-top:34px;padding:22px;border:1px solid var(--en-line);border-radius:19px;background:var(--en-panel)}
+.stories-subtitle{margin:6px 0 0;color:var(--en-muted);font-size:12px}
+.story-generator{display:grid;grid-template-columns:1fr minmax(250px,.8fr);gap:20px;margin:18px 0;padding:19px;border:1px solid var(--en-line);border-radius:15px;background:var(--en-panel2)}
+.story-generator h3{margin:0;font-size:19px}.story-generator>div>p:not(.english-eyebrow){color:var(--en-muted);font-size:12px;line-height:1.6}
+.story-generator-controls{display:grid;gap:7px}.story-generator-controls label{font-size:10px;font-weight:800;color:var(--en-muted)}
+.story-generator-controls input,.story-generator-controls select{width:100%;min-width:0;padding:11px;border:1px solid var(--en-line);border-radius:10px;background:var(--en-panel);color:var(--en-text);font:inherit;font-size:12px}
+.story-generator-controls button,.story-listen{padding:12px;border:0;border-radius:10px;background:var(--en-accent);color:#fff;font-size:11px;font-weight:850}
+.story-generator-controls button:disabled{opacity:.6}.story-generator-controls #story-status{margin:2px 0;color:var(--en-muted);font-size:10px}
+.story-library-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 12px}.story-library-heading h3{margin:0;font-size:17px}.story-library-heading span{color:var(--en-muted);font-size:10px}
+.story-library{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.story-card{display:flex;flex-direction:column;min-width:0;padding:15px;border:1px solid var(--en-line);border-radius:13px;background:var(--en-panel)}
+.story-meta{margin:0 0 9px;color:#A78BFA;font-size:9px;font-weight:850;letter-spacing:.08em}
+.story-card h4{margin:0;font-size:14px;line-height:1.4}.story-card-detail{margin:7px 0 14px;color:var(--en-muted);font-size:10px}
+.story-open{margin-top:auto;padding:9px 10px;border:1px solid var(--en-line);border-radius:9px;background:var(--en-panel2);color:var(--en-text);font-size:10px;font-weight:800;text-align:left}
+.story-reader{margin-top:16px;padding:20px;border:1px solid var(--en-line);border-radius:15px;background:var(--en-panel)}
+.story-reader-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.story-reader-top h3{margin:0;font-size:22px}.story-close{padding:7px 10px;border:1px solid var(--en-line);border-radius:8px;background:var(--en-panel2);color:var(--en-text);font-size:10px}
+.story-listen{margin:5px 0 14px}.story-text{max-width:760px;color:var(--en-text);font-size:13px;line-height:1.85}.story-text p{margin:0 0 13px}
+.story-subheading{margin:20px 0 10px;font-size:14px}.story-vocabulary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.story-vocab-item{padding:12px;border:1px solid var(--en-line);border-radius:10px;background:var(--en-panel2)}.story-vocab-item strong{font-size:11px}.story-vocab-item p{margin:5px 0;color:var(--en-muted);font-size:11px;line-height:1.5}.story-vocab-item small{color:var(--en-text);font-size:10px}
+.story-questions{display:grid;gap:8px}.story-questions details{padding:11px;border:1px solid var(--en-line);border-radius:10px;background:var(--en-panel2)}.story-questions summary{cursor:pointer;color:var(--en-text);font-size:11px;font-weight:750}.story-questions details p{margin:9px 0 0;color:var(--en-muted);font-size:11px;line-height:1.6}
+:root[data-theme="light"] .story-generator{background:#F4EFFB}.story-generator-controls input,:root[data-theme="light"] .story-generator-controls select{background:#fff;color:#251B35}
+@media(max-width:850px){.story-library{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.stories-section{padding:14px}.story-generator{grid-template-columns:1fr;padding:14px}.story-library{grid-template-columns:1fr}.story-vocabulary{grid-template-columns:1fr}.story-reader{padding:14px}.story-reader-top h3{font-size:18px}}
