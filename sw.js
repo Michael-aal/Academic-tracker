@@ -3,7 +3,9 @@ const APP_SHELL = [
   "./", "./index.html", "./landing.css", "./landing-menu-fix.css", "./landing.js",
   "./login.html", "./register.html", "./auth.css", "./auth.js",
   "./dashboard.html", "./dashboard-auth.js", "./premium.html", "./premium-page.css", "./premium-page.js",
-  "./notifications.html", "./notifications.css", "./notifications.js",\n  "./english-studio.html", "./english-studio.css", "./english-studio.js",\n  "./level-up.html", "./level-up.css", "./level-up.js",
+  "./notifications.html", "./notifications.css", "./notifications.js",
+  "./english-studio.html", "./english-studio.css", "./english-studio.js",
+  "./level-up.html", "./level-up.css", "./level-up.js",
   "./styles.css", "./ui-polish.css", "./focus.css", "./app.js", "./global-navigation.js", "./vibrant-refresh.css",
   "./manifest.webmanifest", "./assets/icon.svg", "./pwa-install.js", "./pwa-install.css"
 ];
