@@ -77,11 +77,14 @@ async function grantPaidTransaction(reference, verified) {
     }
     const dateLabel = value => new Intl.DateTimeFormat("en-NG", { dateStyle: "medium", timeZone: "Africa/Lagos" }).format(value);
     const amountLabel = new Intl.NumberFormat("en-NG", { style: "currency", currency: NGN, maximumFractionDigits: 2 }).format(payment.amountKobo / 100);
-    const currentPlan = payment.type === "PLAN" ? payment.itemKey.charAt(0).toUpperCase() + payment.itemKey.slice(1) + " Premium" : "Free";
+    const activeAccess = await tx.premiumAccess.findUnique({ where: { userId: payment.userId } });
+    const currentPlan = activeAccess && activeAccess.expiresAt > now
+      ? activeAccess.planKey.charAt(0).toUpperCase() + activeAccess.planKey.slice(1) + " Premium"
+      : "Free";
     const paymentTitle = payment.type === "PLAN" ? "Your Premium payment is confirmed" : "Your AI credits have been added";
     const paymentBody = payment.type === "PLAN"
-      ? "We received " + amountLabel + ". Your " + payment.durationDays + "-day " + payment.itemKey + " Premium plan is active from " + dateLabel(now) + " until " + dateLabel(new Date((await tx.premiumAccess.findUnique({ where: { userId: payment.userId } })).expiresAt)) + ". " + payment.credits + " AI credits have been added. Payment reference: " + reference + "."
-      : "We received " + amountLabel + ". " + payment.credits + " AI credits have been added to your wallet. Your current plan remains " + currentPlan + ". Credits expire on " + dateLabel(new Date(now.getTime() + (payment.creditValidityDays || 30) * DAY)) + ". Payment reference: " + reference + ".";
+      ? "We received " + amountLabel + ". Your " + payment.durationDays + "-day " + currentPlan + " plan is active from " + dateLabel(activeAccess.startsAt) + " until " + dateLabel(activeAccess.expiresAt) + ". " + payment.credits + " AI credits have been added. Confirmed on " + dateLabel(now) + ". Payment reference: " + reference + "."
+      : "We received " + amountLabel + ". " + payment.credits + " AI credits have been added to your wallet. Your current plan is " + currentPlan + ". Credits expire on " + dateLabel(new Date(now.getTime() + (payment.creditValidityDays || 30) * DAY)) + ". Confirmed on " + dateLabel(now) + ". Payment reference: " + reference + ".";
     await tx.notification.create({
       data: {
         userId: payment.userId,
