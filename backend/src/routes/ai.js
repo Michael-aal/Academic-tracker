@@ -5,6 +5,7 @@ const { requireAdmin } = require("../middleware/admin");
 const { prisma } = require("../prisma");
 const { validateQuiz, publicQuiz, markQuiz } = require("../quiz-schema");
 const { consumeAiQuota } = require("../ai-quota");
+const { aiCreditGate } = require("../ai-credit-gate");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -139,6 +140,7 @@ router.post("/attempts/:attemptId/submit", async (req, res, next) => {
   } catch (error) { return next(error); }
 });
 async function enforceAiQuota(req, res, next) {
+  if (req.aiCreditReservation?.premium) return next();
   try {
     const allowed = await consumeAiQuota(prisma, req.userId);
     if (!allowed) return res.status(429).json({ error: "You've reached the AI learning limit for now. Please try again in 15 minutes." });
@@ -148,7 +150,7 @@ async function enforceAiQuota(req, res, next) {
   }
 }
 
-router.post("/", enforceAiQuota, async (req, res) => {
+router.post("/", aiCreditGate, enforceAiQuota, async (req, res) => {
   const action = typeof req.body?.action === "string" ? req.body.action : "";
   const subject = typeof req.body?.subject === "string" ? req.body.subject.trim().slice(0, 100) : "";
   const topic = typeof req.body?.topic === "string" ? req.body.topic.trim().slice(0, 160) : "";
