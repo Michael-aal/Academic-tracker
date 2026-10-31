@@ -16,9 +16,10 @@ const configuredOrigins = (process.env.FRONTEND_ORIGIN || developmentOrigins)
 
 const allowedOrigins = [...new Set([...productionOrigins, ...configuredOrigins])];
 
-// Allow preview deployments for this Vercel project only. Do not use a broad
-// *.vercel.app rule: that would let unrelated sites call the API from browsers.
-const previewOriginPattern = /^https:\/\/academic-tracker-[a-z0-9-]+-michael-aals-projects\.vercel\.app$/;
+// Allow preview deployments for either historical or current Vercel project
+// slug, but only under this account's Vercel team hostname. Never use a broad
+// *.vercel.app rule: unrelated sites must not be able to call this API.
+const previewOriginPattern = /^https:\/\/(?:academic-tracker|study-track)-[a-z0-9-]+-michael-aals-projects\.vercel\.app$/;
 function isAllowedOrigin(origin) {
   return allowedOrigins.includes(origin) || previewOriginPattern.test(origin);
 }
