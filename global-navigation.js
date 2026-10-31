@@ -222,7 +222,7 @@
     else signOut.addEventListener("click", () => existingSignOut.click());
   }
   // Ensure theme controller is available on all application pages.
-  if (!document.querySelector('script[data-global-theme]')) {
+  if (!document.querySelector('script[data-global-theme], script[src$="global-theme.js"]')) {
     const themeScript = document.createElement("script");
     themeScript.src = "global-theme.js";
     themeScript.defer = true;
