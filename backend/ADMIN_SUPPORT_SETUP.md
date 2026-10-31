@@ -28,7 +28,21 @@ curl -X POST "https://academic-tracker-0b2q.onrender.com/api/auth/admin/bootstra
 
 The endpoint only promotes the signed-in account if its email matches the server-configured `ADMIN_EMAIL`. The secret is checked on the server. Do not share the JWT or bootstrap secret. After promotion, the admin can open `admin-support.html` from the dashboard's **Admin messages** shortcut.
 
-## 3. User experience
+#
+## 3. Use a private environment-managed owner password
+
+After the account has been promoted to `ADMIN`, you can switch its login password to a value managed by Render:
+
+1. In Render → backend service → Environment, set `ADMIN_EMAIL=academictracker@gmail.com`.
+2. Set `ADMIN_PASSWORD` to a new, unique password that you generate privately. Do not reuse a password shared in a chat.
+3. Save the environment changes and redeploy the backend.
+4. Sign in through the normal Study Track login page with the configured email and password. Successful login returns the normal signed JWT and the existing frontend routes the administrator to `admin-support.html`.
+
+When the entered email matches `ADMIN_EMAIL`, the backend checks only `ADMIN_PASSWORD` and requires the matching database account to already have role `ADMIN`. A wrong password never falls back to the account's database password. If the environment password is missing, that administrator login is refused. Other users continue to authenticate with their own bcrypt-hashed database passwords.
+
+Keep `ADMIN_PASSWORD` only in Render's private environment settings (or an ignored local `.env` file). Never add a real password to `.env.example`, frontend code, GitHub, screenshots, or support messages. Changing `ADMIN_PASSWORD` in Render and redeploying changes the administrator's login password without changing the database password hash.
+
+## 4. User experience
 
 - A regular account opens `support.html` from **Messages**.
 - The administrator opens `admin-support.html`, searches users, and selects one user at a time.
