@@ -102,3 +102,18 @@ html[data-theme="dark"] .at-install-instructions {
 @media (prefers-reduced-motion: reduce) {
   .at-install-banner, .at-install-banner * { animation: none !important; transition: none !important; }
 }
+
+.at-install-menu-item {
+  display:flex; align-items:center; width:100%; min-height:42px; padding:10px 13px;
+  border:0; border-radius:10px; background:transparent; color:inherit; text-align:left;
+  font:inherit; font-weight:650; cursor:pointer;
+}
+.at-install-menu-item:hover { background:rgba(139,92,246,.12); }
+.at-install-menu-item::before { content:"↓"; display:inline-grid; place-items:center; width:25px; height:25px; margin-right:10px; border-radius:8px; color:#fff; background:#7c3aed; }
+.at-install-help-dialog {
+  position:fixed; z-index:2000; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:min(380px,calc(100vw - 32px)); margin:0; padding:18px;
+  border-radius:16px; box-shadow:0 20px 70px rgba(0,0,0,.28);
+  background:#fff; color:#35224f;
+}
+html[data-theme="dark"] .at-install-help-dialog { background:#171123; color:#f5f3ff; }
