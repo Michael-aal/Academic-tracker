@@ -101,3 +101,24 @@ The `/api/ai` endpoint accepts `tutor`, `quiz`, `summarize`, `study-plan`, and `
 ## Proxy and rate-limit configuration
 
 In production, Express trusts exactly one reverse-proxy hop because the API is deployed behind Render's ingress. This allows IP-based rate limits to use the originating client address rather than grouping every visitor under the proxy address. Forwarded headers are not trusted in local development. The coarse IP limiter uses the built-in in-memory store and is intended as a single-instance safeguard; use a shared rate-limit store before horizontally scaling general API traffic. AI spend limits are PostgreSQL-backed and shared across instances.
+
+
+## English Learning Studio and level progression
+
+The authenticated `/api/gamification` routes provide:
+- `GET /api/gamification/me` — account-scoped XP, level, daily XP allowance, streak, badges and recent activity.
+- `GET /api/gamification/insights` — topic averages and revision suggestions calculated from the student's completed AI quiz attempts. Each topic includes an evidence-count label; a small sample is not presented as a confident diagnosis.
+- `GET /api/gamification/english/categories` — available English practice categories.
+- `GET /api/gamification/english/challenge?category=<category>` — creates a short, server-held English challenge and returns questions without the answer key.
+- `POST /api/gamification/english/submit` — validates answers against the server-held challenge, marks it once, and awards XP.
+- `POST /api/gamification/quiz/:attemptId/claim` — awards XP only for an owned, completed quiz attempt.
+- `POST /api/gamification/study-session/:recordId/claim` — awards XP after a completed study session has synced to the account.
+- `POST /api/gamification/flashcard/:recordId/claim` — awards a small daily XP amount for a saved flashcard review.
+
+XP profiles and idempotent activity events use the existing account-scoped `user_data_records` table, so this feature does not require a new database migration. All awards are performed server-side in a transaction that locks the owning account row. A per-account daily XP cap limits farming, and repeated claims for the same event are ignored.
+
+Successful AI Tutor, note-summary, study-plan and flashcard-generation requests also award small XP amounts through the existing AI usage audit transaction. Failed provider responses do not award XP. Quiz generation itself does not award quiz XP; the student must complete and submit the quiz.
+
+English spelling, grammar, vocabulary, parts-of-speech, figures-of-speech, comprehension, oral-English, writing, idiom and sentence-correction practice uses a curated server-side question bank and does not consume AI credits. The browser speech synthesis API is used for pronunciation playback when supported by the device.
+
+The Exam Simulator reuses the validated AI quiz endpoint and the existing per-question timer. It is timed revision practice, not a replacement for a school's official examination platform.
