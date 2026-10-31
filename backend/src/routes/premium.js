@@ -17,16 +17,16 @@ function catalog() {
 function exchangeRateSnapshot() {
   const rate = Number(process.env.USD_NGN_EXCHANGE_RATE);
   if (!Number.isFinite(rate) || rate < 1 || rate > 100000) return null;
-  const micros = Math.round(rate * 1000000);
-  if (!Number.isSafeInteger(micros) || micros < 1) return null;
+  const scaled = Math.round(rate * 10000);
+  if (!Number.isSafeInteger(scaled) || scaled < 1) return null;
   const configuredAsOf = process.env.USD_NGN_EXCHANGE_RATE_AS_OF;
   const asOf = configuredAsOf && !Number.isNaN(Date.parse(configuredAsOf))
     ? new Date(configuredAsOf)
     : new Date();
-  return { rate, micros, asOf };
+  return { rate, scaled, asOf };
 }
-function usdCentsToNgnKobo(usdCents, rateMicros) {
-  const amount = Math.round((usdCents * rateMicros) / 1000000);
+function usdCentsToNgnKobo(usdCents, rateScaled) {
+  const amount = Math.round((usdCents * rateScaled) / 10000);
   return Number.isSafeInteger(amount) ? amount : null;
 }
 function safeCatalog() {
@@ -34,7 +34,7 @@ function safeCatalog() {
   const fx = exchangeRateSnapshot();
   const clean = source => Object.entries(source).map(([key, item]) => {
     const amountUsdCents = Number(item.amountUsdCents);
-    const amountNgnKobo = fx ? usdCentsToNgnKobo(amountUsdCents, fx.micros) : null;
+    const amountNgnKobo = fx ? usdCentsToNgnKobo(amountUsdCents, fx.scaled) : null;
     return {
       key, name: String(item.name || key), amountUsdCents, amountNgnKobo,
       durationDays: Number(item.durationDays || 0), credits: Number(item.credits || 0),
@@ -107,7 +107,7 @@ async function grantPaidTransaction(reference, verified) {
     const dateLabel = value => new Intl.DateTimeFormat("en-NG", { dateStyle: "medium", timeZone: "Africa/Lagos" }).format(value);
     const amountLabel = new Intl.NumberFormat("en-NG", { style: "currency", currency: NGN, maximumFractionDigits: 2 }).format(payment.amountKobo / 100);
     const usdLabel = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((payment.baseAmountUsdCents || 0) / 100);
-    const fxLabel = payment.exchangeRateMicros ? (payment.exchangeRateMicros / 1000000).toLocaleString("en-NG", { maximumFractionDigits: 4 }) : "unavailable";
+    const fxLabel = payment.exchangeRateTenThousandths ? (payment.exchangeRateTenThousandths / 10000).toLocaleString("en-NG", { maximumFractionDigits: 4 }) : "unavailable";
     const paymentAmountLabel = payment.baseAmountUsdCents > 0 ? usdLabel + " (rate ₦" + fxLabel + "/$) · charged " + amountLabel : amountLabel;
     const activeAccess = await tx.premiumAccess.findUnique({ where: { userId: payment.userId } });
     const currentPlan = activeAccess && activeAccess.expiresAt > now
@@ -123,7 +123,7 @@ async function grantPaidTransaction(reference, verified) {
         title: paymentTitle,
         body: paymentBody,
         category: payment.type === "PLAN" ? "SUBSCRIPTION" : "AI_CREDITS",
-        metadata: { paymentReference: reference, amountKobo: payment.amountKobo, baseAmountUsdCents: payment.baseAmountUsdCents, exchangeRateMicros: payment.exchangeRateMicros, credits: payment.credits, durationDays: payment.durationDays, paymentType: payment.type, confirmedAt: now.toISOString() }
+        metadata: { paymentReference: reference, amountKobo: payment.amountKobo, baseAmountUsdCents: payment.baseAmountUsdCents, exchangeRateTenThousandths: payment.exchangeRateTenThousandths, credits: payment.credits, durationDays: payment.durationDays, paymentType: payment.type, confirmedAt: now.toISOString() }
       }
     });
     await tx.paymentTransaction.update({ where: { reference }, data: { status: "PAID", paidAt: now } });
@@ -158,7 +158,7 @@ router.get("/me", async (req, res, next) => {
       prisma.premiumAccess.findUnique({ where: { userId: req.userId } }),
       prisma.creditWallet.findUnique({ where: { userId: req.userId } }),
       prisma.creditLot.findMany({ where: { userId: req.userId, remainingCredits: { gt: 0 }, expiresAt: { gt: now } }, orderBy: [{ expiresAt: "asc" }, { createdAt: "asc" }], select: { remainingCredits: true, expiresAt: true } }),
-      prisma.paymentTransaction.findMany({ where: { userId: req.userId }, orderBy: { createdAt: "desc" }, take: 12, select: { reference: true, type: true, itemKey: true, amountKobo: true, baseAmountUsdCents: true, exchangeRateMicros: true, exchangeRateAsOf: true, status: true, createdAt: true, paidAt: true } })
+      prisma.paymentTransaction.findMany({ where: { userId: req.userId }, orderBy: { createdAt: "desc" }, take: 12, select: { reference: true, type: true, itemKey: true, amountKobo: true, baseAmountUsdCents: true, exchangeRateTenThousandths: true, exchangeRateAsOf: true, status: true, createdAt: true, paidAt: true } })
     ]);
     const validCredits = lots.reduce((sum, lot) => sum + lot.remainingCredits, 0);
     res.json({
@@ -187,10 +187,10 @@ router.post("/initialize", async (req, res, next) => {
     const credits = type === "PLAN" && key === "daily" ? item.credits * days : item.credits;
     if (!Number.isSafeInteger(amountUsdCents) || amountUsdCents < 1 || !Number.isSafeInteger(amountKobo) || amountKobo < 10000 || !Number.isSafeInteger(credits) || credits < 0) return res.status(400).json({ error: "Package or currency conversion is invalid." });
     const reference = makeReference();
-    const payment = await prisma.paymentTransaction.create({ data: { userId: req.userId, reference, type, itemKey: key, amountKobo, baseAmountUsdCents: amountUsdCents, exchangeRateMicros: fx.micros, exchangeRateAsOf: fx.asOf, credits, durationDays: type === "PLAN" ? (days || item.durationDays) : 0, creditValidityDays: item.creditValidityDays } });
+    const payment = await prisma.paymentTransaction.create({ data: { userId: req.userId, reference, type, itemKey: key, amountKobo, baseAmountUsdCents: amountUsdCents, exchangeRateTenThousandths: fx.micros, exchangeRateAsOf: fx.asOf, credits, durationDays: type === "PLAN" ? (days || item.durationDays) : 0, creditValidityDays: item.creditValidityDays } });
     const response = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST", headers: { Authorization: "Bearer " + paystackSecret(), "Content-Type": "application/json" },
-      body: JSON.stringify({ email: (await prisma.user.findUnique({ where: { id: req.userId }, select: { email: true } })).email, amount: amountKobo, currency: NGN, reference, callback_url: (process.env.PAYSTACK_CALLBACK_URL || "https://study-track-lilac.vercel.app/premium.html"), metadata: { userId: req.userId, type, key, durationDays: days || item.durationDays || 0, baseAmountUsdCents: amountUsdCents, exchangeRateMicros: fx.micros } })
+      body: JSON.stringify({ email: (await prisma.user.findUnique({ where: { id: req.userId }, select: { email: true } })).email, amount: amountKobo, currency: NGN, reference, callback_url: (process.env.PAYSTACK_CALLBACK_URL || "https://study-track-lilac.vercel.app/premium.html"), metadata: { userId: req.userId, type, key, durationDays: days || item.durationDays || 0, baseAmountUsdCents: amountUsdCents, exchangeRateTenThousandths: fx.micros } })
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.status || !data.data?.authorization_url) {
