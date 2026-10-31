@@ -22,7 +22,7 @@ function exchangeRateSnapshot() {
   const configuredAsOf = process.env.USD_NGN_EXCHANGE_RATE_AS_OF;
   const asOf = configuredAsOf && !Number.isNaN(Date.parse(configuredAsOf))
     ? new Date(configuredAsOf)
-    : new Date();
+    : null;
   return { rate, scaled, asOf };
 }
 function usdCentsToNgnKobo(usdCents, rateScaled) {
@@ -32,12 +32,12 @@ function usdCentsToNgnKobo(usdCents, rateScaled) {
 function safeCatalog() {
   const { plans, bundles } = catalog();
   const fx = exchangeRateSnapshot();
-  const clean = source => Object.entries(source).map(([key, item]) => {
+  const clean = (source, isPlan = false) => Object.entries(source).map(([key, item]) => {
     const amountUsdCents = Number(item.amountUsdCents);
     const amountNgnKobo = fx ? usdCentsToNgnKobo(amountUsdCents, fx.scaled) : null;
     return {
       key, name: String(item.name || key), amountUsdCents, amountNgnKobo,
-      durationDays: Number(item.durationDays || 0), credits: Number(item.credits || 0),
+      durationDays: isPlan ? ({ daily: 1, weekly: 7, monthly: 30, yearly: 365 }[key] || Number(item.durationDays || 0)) : Number(item.durationDays || 0), credits: Number(item.credits || 0),
       creditValidityDays: Number(item.creditValidityDays || 30), description: String(item.description || "")
     };
   }).filter(x => Number.isSafeInteger(x.amountUsdCents) && x.amountUsdCents > 0 &&
@@ -48,7 +48,7 @@ function safeCatalog() {
   return {
     currency: "USD", checkoutCurrency: NGN, exchangeRate: fx?.rate ?? null,
     exchangeRateAsOf: fx?.asOf?.toISOString() ?? null, fxConfigured: Boolean(fx),
-    plans: clean(plans).filter(item => item.durationDays >= 1),
+    plans: clean(plans, true).filter(item => item.durationDays >= 1),
     bundles: clean(bundles)
   };
 }
