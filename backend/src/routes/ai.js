@@ -90,7 +90,7 @@ async function persistAiUsage(req) {
       }))
     });
     const activityPoints = { tutor: 2, summarize: 2, "study-plan": 2, flashcards: 2 };
-    if (req.aiResponseSucceeded && req.aiUsageEvents.some(event => event.status === "PROVIDER_OK") && Object.prototype.hasOwnProperty.call(activityPoints, action)) {
+    if (req.aiResponseSucceeded && Object.prototype.hasOwnProperty.call(activityPoints, action)) {
       await awardXp(tx, req.userId, {
         eventKey: "ai:" + requestId, activity: action,
         description: ({ tutor: "Completed an AI tutoring session", summarize: "Created a study-note summary", "study-plan": "Generated a study plan", flashcards: "Generated revision flashcards" })[action],
