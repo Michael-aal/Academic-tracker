@@ -5,6 +5,10 @@ on:
     branches: [main, feature/backend-prisma]
     paths:
       - "backend/**"
+      - "*.html"
+      - "*.css"
+      - "*.js"
+      - "assets/**"
       - "global-theme.js"
       - "global-navigation.js"
       - "universal-notes.js"
@@ -103,5 +107,42 @@ jobs:
         run: npx prisma migrate deploy
       - name: Run unit and database integration tests
         run: npm test
+      - name: Verify local frontend asset references
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          from urllib.parse import urlsplit
+
+          root = Path("..").resolve()
+          missing = []
+
+          class AssetParser(HTMLParser):
+              def __init__(self, page):
+                  super().__init__()
+                  self.page = page
+
+              def handle_starttag(self, tag, attrs):
+                  attrs = dict(attrs)
+                  value = attrs.get("src") if tag == "script" else attrs.get("href") if tag == "link" else None
+                  if not value:
+                      return
+                  parsed = urlsplit(value)
+                  if parsed.scheme or parsed.netloc or not parsed.path:
+                      return
+                  target = (root / parsed.path.lstrip("/")).resolve()
+                  if not target.is_file():
+                      missing.append(f"{self.page}: {value}")
+
+          for page in root.glob("*.html"):
+              parser = AssetParser(page.name)
+              parser.feed(page.read_text(encoding="utf-8"))
+
+          if missing:
+              print("Missing local frontend assets:")
+              print("\\n".join(missing))
+              raise SystemExit(1)
+          print("All local script and link assets referenced by root HTML pages exist.")
+          PY
       - name: Check calculator and AI learning JavaScript syntax
         run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../app.js && node --check ../ai-learning.js && node --check ../quiz-page.js && node --check ../ai-navigation.js && node --check ../educational-videos.js && node --check ../study-planner.js && node --check ../memory-mastery.js && node --check ../notes-summary.js && node --check ../global-theme.js && node --check ../global-navigation.js && node --check ../universal-notes.js && node --check ../account-data.js
