@@ -183,14 +183,14 @@ router.post("/initialize", async (req, res, next) => {
     const fx = exchangeRateSnapshot();
     if (!fx) return res.status(503).json({ error: "USD-to-NGN conversion is not configured yet. Please contact support." });
     const amountUsdCents = type === "PLAN" && key === "daily" ? item.amountUsdCents * days : item.amountUsdCents;
-    const amountKobo = usdCentsToNgnKobo(amountUsdCents, fx.micros);
+    const amountKobo = usdCentsToNgnKobo(amountUsdCents, fx.scaled);
     const credits = type === "PLAN" && key === "daily" ? item.credits * days : item.credits;
     if (!Number.isSafeInteger(amountUsdCents) || amountUsdCents < 1 || !Number.isSafeInteger(amountKobo) || amountKobo < 10000 || !Number.isSafeInteger(credits) || credits < 0) return res.status(400).json({ error: "Package or currency conversion is invalid." });
     const reference = makeReference();
-    const payment = await prisma.paymentTransaction.create({ data: { userId: req.userId, reference, type, itemKey: key, amountKobo, baseAmountUsdCents: amountUsdCents, exchangeRateTenThousandths: fx.micros, exchangeRateAsOf: fx.asOf, credits, durationDays: type === "PLAN" ? (days || item.durationDays) : 0, creditValidityDays: item.creditValidityDays } });
+    const payment = await prisma.paymentTransaction.create({ data: { userId: req.userId, reference, type, itemKey: key, amountKobo, baseAmountUsdCents: amountUsdCents, exchangeRateTenThousandths: fx.scaled, exchangeRateAsOf: fx.asOf, credits, durationDays: type === "PLAN" ? (days || item.durationDays) : 0, creditValidityDays: item.creditValidityDays } });
     const response = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST", headers: { Authorization: "Bearer " + paystackSecret(), "Content-Type": "application/json" },
-      body: JSON.stringify({ email: (await prisma.user.findUnique({ where: { id: req.userId }, select: { email: true } })).email, amount: amountKobo, currency: NGN, reference, callback_url: (process.env.PAYSTACK_CALLBACK_URL || "https://study-track-lilac.vercel.app/premium.html"), metadata: { userId: req.userId, type, key, durationDays: days || item.durationDays || 0, baseAmountUsdCents: amountUsdCents, exchangeRateTenThousandths: fx.micros } })
+      body: JSON.stringify({ email: (await prisma.user.findUnique({ where: { id: req.userId }, select: { email: true } })).email, amount: amountKobo, currency: NGN, reference, callback_url: (process.env.PAYSTACK_CALLBACK_URL || "https://study-track-lilac.vercel.app/premium.html"), metadata: { userId: req.userId, type, key, durationDays: days || item.durationDays || 0, baseAmountUsdCents: amountUsdCents, exchangeRateTenThousandths: fx.scaled } })
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.status || !data.data?.authorization_url) {
