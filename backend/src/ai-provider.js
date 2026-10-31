@@ -65,11 +65,12 @@ async function requestChatCompletion(payload, options = {}) {
         body: JSON.stringify({ ...payload, model })
       });
       const data = await response.json().catch(() => ({}));
+      const reportedModel = typeof data?.model === "string" && data.model.trim() ? data.model.trim() : model;
       if (typeof onUsage === "function") {
-        try { onUsage(data?.usage || {}, providerId, model, response.status, response.ok); } catch (_) { /* Usage logging must not trigger provider retries. */ }
+        try { onUsage(data?.usage || {}, providerId, reportedModel, response.status, response.ok); } catch (_) { /* Usage logging must not trigger provider retries. */ }
       }
       if (response.ok && typeof data?.choices?.[0]?.message?.content === "string" && data.choices[0].message.content.trim()) {
-        return { data, provider: providerId, model };
+        return { data, provider: providerId, model: reportedModel };
       }
       if (response.ok) {
         failures.push(providerId + ": empty or malformed completion response");
