@@ -34,7 +34,8 @@ function recordAiUsage(req, usage = {}, provider = "unknown", model = "unknown",
   const usageKnown = hasInput && hasOutput && valid;
   let rates = {};
   try { rates = JSON.parse(process.env.AI_CREDIT_RATES_JSON || "{}"); } catch { rates = {}; }
-  const selected = rates[provider] || {};
+  const providerRates = rates[provider] || {};
+  const selected = providerRates.models?.[model] || providerRates;
   const inputRate = Number.isFinite(Number(selected.inputPer1k)) ? Math.max(0, Number(selected.inputPer1k)) : 1;
   const outputRate = Number.isFinite(Number(selected.outputPer1k)) ? Math.max(0, Number(selected.outputPer1k)) : 2;
   const eventCredits = usageKnown ? Math.ceil((input * inputRate + output * outputRate) / 1000) : 0;
