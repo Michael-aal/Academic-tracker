@@ -140,7 +140,7 @@ jobs:
 
           if missing:
               print("Missing local frontend assets:")
-              print("\\n".join(missing))
+              print("\n".join(missing))
               raise SystemExit(1)
           print("All local script and link assets referenced by root HTML pages exist.")
           PY
