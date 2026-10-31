@@ -11,8 +11,8 @@ const { requestChatCompletion, configuredProviders, hasConfiguredProvider, provi
 const router = express.Router();
 router.use(requireAuth);
 
-// The persistent database quota is per account. Add an independent IP ceiling
-// as well, so creating multiple accounts cannot trivially bypass AI cost controls.
+// Every generation request must reserve unexpired wallet credits in aiCreditGate.
+// An independent IP ceiling also limits automated abuse across multiple accounts.
 const aiIpLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 30,
@@ -176,7 +176,7 @@ router.get("/status", requireAdmin, (_req, res) => {
     provider: providers.find(item => item.configured)?.id || null,
     providers,
     maxInputCharacters: MAX_INPUT_CHARS,
-    requestsPer15Minutes: 10,
+    ipRequestsPer15Minutes: 30,
     note: configured
       ? "AI requests are enabled. The provider key is stored server-side."
       : "AI is not enabled yet. Configure at least one approved provider key on the backend host and redeploy."
