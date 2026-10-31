@@ -17,9 +17,10 @@ const ALLOWED_KINDS = new Set([
   "note-summaries",
   "study-notes",
   "focus-sessions",
-  "preferences"
+  "preferences",
+  "learning-progress"
 ]);
-const MAX_RECORDS = { "secondary-tracker": 1, "video-library": 300, "video-history": 300, "study-sessions": 500, "memory-cards": 500, "memory-stats": 1, "tutor-conversations": 200, "note-summaries": 200, "study-notes": 200, "focus-sessions": 500, "preferences": 1 };
+const MAX_RECORDS = { "secondary-tracker": 1, "video-library": 300, "video-history": 300, "study-sessions": 500, "memory-cards": 500, "memory-stats": 1, "tutor-conversations": 200, "note-summaries": 200, "study-notes": 200, "focus-sessions": 500, "preferences": 1, "learning-progress": 1 };
 const limiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 120,
@@ -149,6 +150,10 @@ function validateData(kind, data, recordId) {
 
   if (kind === "preferences") {
     if (recordId !== "main" || (data.theme !== undefined && !["light", "dark"].includes(data.theme))) return "The saved preferences are invalid.";
+  }
+  if (kind === "learning-progress") {
+    if (recordId !== "main" || !Number.isSafeInteger(data.totalXp) || data.totalXp < 0 || !Array.isArray(data.events) || data.events.length > 500) return "The learning progress record is invalid.";
+    for (const event of data.events) if (!isObject(event) || !validString(event.id, 180) || !event.id || !validString(event.type, 40) || !Number.isInteger(event.xp) || event.xp < 0 || !validString(event.at, 40) || Number.isNaN(Date.parse(event.at))) return "A learning progress event is invalid.";
   }
   return null;
 }
