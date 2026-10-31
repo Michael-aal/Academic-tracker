@@ -41,3 +41,15 @@
 .calc-scientific-keys .calc-key:hover{background:#30234c}
 .angle-toggle{min-height:34px;padding:4px 14px;font-size:12px;letter-spacing:.04em}
 @media(max-width:420px){.calc-scientific-keys{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.calc-scientific-keys .calc-key{min-height:43px;font-size:13px}}
+
+/* Align the calculator surfaces with Study Track's purple visual system. */
+.calculator-card,.calculator-side .card{background:linear-gradient(145deg,#171123,#110D1B);border-color:#302641}
+.calc-display{background:#0B0812;border-color:#302641}
+.calc-key{background:#171123;border-color:#302641;color:#f5f1ff}
+.calc-key:hover{background:#211a35}
+.calc-key.utility{background:#211a35;color:#d8ccff}
+.calc-key.operator{background:#302344;border-color:#49345f;color:#d8ccff}
+.calc-key.equals{background:#8B5CF6;border-color:#8B5CF6;color:#fff}
+.calc-field input{background:#0B0812;border-color:#302641;color:#f5f1ff}
+.percent-result{background:#211a35}
+.percent-result strong,.history-item strong{color:#c4a8ff}
