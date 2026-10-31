@@ -28,7 +28,7 @@ const registrationLimiter = rateLimit({
 
 const publicUser = user => ({
   id: user.id, name: user.name, email: user.email, role: user.role,
-  isAdmin: ["ADMIN", "DEVELOPER", "DEV"].includes(user.role),
+  isAdmin: ["ADMIN", "DEVELOPER", "DEV"].includes(String(user.role || "").toUpperCase()),
   educationTrack: user.educationTrack || "SECONDARY",
   institutionName: user.institutionName || null,
   programme: user.programme || null,
