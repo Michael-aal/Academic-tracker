@@ -10,6 +10,8 @@ test("allows the configured primary and current Vercel deployment origins", () =
 
 test("allows project preview URLs but rejects unrelated Vercel sites", () => {
   assert.equal(isAllowedOrigin("https://academic-tracker-git-fix-ui-michael-aals-projects.vercel.app"), true);
+  assert.equal(isAllowedOrigin("https://academic-tracker-ah1jhkyoj-michael-aals-projects.vercel.app"), true);
+  assert.equal(isAllowedOrigin("https://academic-tracker-preview-123-other-team.vercel.app"), false);
   assert.equal(isAllowedOrigin("https://unrelated-project.vercel.app"), false);
   assert.equal(isAllowedOrigin("http://academic-tracker-iota.vercel.app"), false);
 });

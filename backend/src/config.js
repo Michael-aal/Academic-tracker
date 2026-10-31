@@ -17,7 +17,7 @@ const allowedOrigins = [...new Set([...productionOrigins, ...configuredOrigins])
 
 // Allow preview deployments for this Vercel project only. Do not use a broad
 // *.vercel.app rule: that would let unrelated sites call the API from browsers.
-const previewOriginPattern = /^https:\/\/academic-tracker-git-[a-z0-9-]+-michael-aals-projects\.vercel\.app$/;
+const previewOriginPattern = /^https:\/\/academic-tracker-[a-z0-9-]+-michael-aals-projects\.vercel\.app$/;
 function isAllowedOrigin(origin) {
   return allowedOrigins.includes(origin) || previewOriginPattern.test(origin);
 }
