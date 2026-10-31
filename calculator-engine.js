@@ -49,9 +49,9 @@
       throw new Error("Check the function name and number of values.");
     }
     function factorial(n){if(!Number.isInteger(n)||n<0||n>170)throw new Error("Factorial needs a whole number from 0 to 170.");let v=1;for(let i=2;i<=n;i++)v*=i;return finite(v);}
-    function expression(){let v=term();while(peek()?.type==="operator"&&["+","+ -".trim()].includes(peek().value)){const op=take().value;const r=term();v=finite(op==="+"?v+r:v-r);}return v;}
+    function expression(){let v=term();while(peek()?.type==="operator"&&["+","-"].includes(peek().value)){const op=take().value;const r=term();v=finite(op==="+"?v+r:v-r);}return v;}
     function term(){let v=unary();while(peek()?.type==="operator"&&["*","/"].includes(peek().value)){const op=take().value,r=unary();if(op==="/"&&r===0)throw new Error("You can't divide by zero.");v=finite(op==="*"?v*r:v/r);}return v;}
-    function unary(){if(peek()?.type==="operator"&&["+","+ -".trim()].includes(peek().value)){const op=take().value,v=unary();return op==="-"?-v:v;}return power();}
+    function unary(){if(peek()?.type==="operator"&&["+","-"].includes(peek().value)){const op=take().value,v=unary();return op==="-"?-v:v;}return power();}
     function power(){let v=postfix();if(peek()?.type==="operator"&&peek().value==="^"){take();v=finite(Math.pow(v,unary()));}return finite(v);}
     function postfix(){let v=primary();while(peek()?.type==="operator"&&(peek().value==="%"||peek().value==="!")){const op=take().value;v=op==="%"?v/100:factorial(v);}return finite(v);}
     function primary(){
