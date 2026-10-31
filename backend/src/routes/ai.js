@@ -89,11 +89,11 @@ async function persistAiUsage(req) {
         status: event.status, providerStatus: event.providerStatus
       }))
     });
-    const activityPoints = { tutor: 2, summarize: 2, "study-plan": 2, flashcards: 2 };
+    const activityPoints = { tutor: 2, summarize: 2, "study-plan": 2, flashcards: 2, story: 2 };
     if (req.aiResponseSucceeded && Object.prototype.hasOwnProperty.call(activityPoints, action)) {
       await awardXp(tx, req.userId, {
         eventKey: "ai:" + requestId, activity: action,
-        description: ({ tutor: "Completed an AI tutoring session", summarize: "Created a study-note summary", "study-plan": "Generated a study plan", flashcards: "Generated revision flashcards" })[action],
+        description: ({ tutor: "Completed an AI tutoring session", summarize: "Created a study-note summary", "study-plan": "Generated a study plan", flashcards: "Generated revision flashcards", story: "Created an English learning story" })[action],
         points: activityPoints[action]
       });
     }
@@ -351,7 +351,7 @@ router.post("/", validateAiRequest, aiCreditGate, aiUsageAudit, async (req, res)
     }
     if (action === "story") {
       try {
-        const cleaned = answer.trim().replace(/^\\x60{3}(?:json)?\\s*/i, "").replace(/\\s*\\x60{3}$/i, "").trim();
+        const cleaned = answer.trim().replace(/^\x60{3}(?:json)?\s*/i, "").replace(/\s*\x60{3}$/i, "").trim();
         const parsed = JSON.parse(cleaned);
         const title = typeof parsed.title === "string" ? parsed.title.trim() : "";
         const storyText = typeof parsed.story === "string" ? parsed.story.trim() : "";
