@@ -39,6 +39,8 @@ model User {
   creditLots            CreditLot[]
   creditLedger          CreditLedger[]
   paymentTransactions   PaymentTransaction[]
+  notifications         Notification[]          @relation("NotificationRecipient")
+  sentNotifications    Notification[]          @relation("NotificationCreator")
 
   @@map("users")
 }
@@ -271,6 +273,9 @@ model PaymentTransaction {
   type        String   @db.VarChar(20)
   itemKey     String   @map("item_key") @db.VarChar(40)
   amountKobo  Int      @map("amount_kobo")
+  baseAmountUsdCents Int @default(0) @map("base_amount_usd_cents")
+  exchangeRateTenThousandths Int @default(0) @map("exchange_rate_ten_thousandths")
+  exchangeRateAsOf DateTime? @map("exchange_rate_as_of")
   credits     Int      @default(0)
   durationDays Int     @default(0) @map("duration_days")
   creditValidityDays Int @default(30) @map("credit_validity_days")
@@ -305,4 +310,23 @@ model AiUsageRecord {
   @@index([provider, model, createdAt])
   @@index([requestId])
   @@map("ai_usage_records")
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  createdById String?  @map("created_by_id")
+  title       String   @db.VarChar(120)
+  body        String   @db.VarChar(4000)
+  category    String   @default("ANNOUNCEMENT") @db.VarChar(30)
+  metadata    Json?
+  readAt      DateTime? @map("read_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  user        User     @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  createdBy   User?    @relation("NotificationCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt, createdAt])
+  @@index([createdById])
+  @@map("notifications")
 }

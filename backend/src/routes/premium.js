@@ -12,16 +12,45 @@ function catalog() {
   try { config = JSON.parse(process.env.PREMIUM_CATALOG_JSON || "{}"); } catch { throw new Error("PREMIUM_CATALOG_JSON must be valid JSON."); }
   const plans = config.plans && typeof config.plans === "object" ? config.plans : {};
   const bundles = config.bundles && typeof config.bundles === "object" ? config.bundles : {};
-  return { currency: NGN, plans, bundles };
+  return { currency: "USD", checkoutCurrency: NGN, plans, bundles };
+}
+function exchangeRateSnapshot() {
+  const rate = Number(process.env.USD_NGN_EXCHANGE_RATE);
+  if (!Number.isFinite(rate) || rate < 1 || rate > 100000) return null;
+  const scaled = Math.round(rate * 10000);
+  if (!Number.isSafeInteger(scaled) || scaled < 1) return null;
+  const configuredAsOf = process.env.USD_NGN_EXCHANGE_RATE_AS_OF;
+  const asOf = configuredAsOf && !Number.isNaN(Date.parse(configuredAsOf))
+    ? new Date(configuredAsOf)
+    : null;
+  return { rate, scaled, asOf };
+}
+function usdCentsToNgnKobo(usdCents, rateScaled) {
+  const amount = Math.round((usdCents * rateScaled) / 10000);
+  return Number.isSafeInteger(amount) ? amount : null;
 }
 function safeCatalog() {
   const { plans, bundles } = catalog();
-  const clean = source => Object.entries(source).map(([key, item]) => ({
-    key, name: String(item.name || key), amountKobo: Number(item.amountKobo),
-    durationDays: Number(item.durationDays || 0), credits: Number(item.credits || 0),
-    creditValidityDays: Number(item.creditValidityDays || 30), description: String(item.description || "")
-  })).filter(x => Number.isSafeInteger(x.amountKobo) && x.amountKobo >= 10000 && Number.isSafeInteger(x.credits) && x.credits >= 0 && x.credits <= 1000000 && Number.isInteger(x.creditValidityDays) && x.creditValidityDays >= 1 && x.creditValidityDays <= 365 && (x.durationDays === 0 || (Number.isInteger(x.durationDays) && x.durationDays >= 1 && x.durationDays <= 365)));
-  return { currency: NGN, plans: clean(plans).filter(item => item.durationDays >= 1), bundles: clean(bundles) };
+  const fx = exchangeRateSnapshot();
+  const clean = (source, isPlan = false) => Object.entries(source).map(([key, item]) => {
+    const amountUsdCents = Number(item.amountUsdCents);
+    const amountNgnKobo = fx ? usdCentsToNgnKobo(amountUsdCents, fx.scaled) : null;
+    return {
+      key, name: String(item.name || key), amountUsdCents, amountNgnKobo,
+      durationDays: isPlan ? ({ daily: 1, weekly: 7, monthly: 30, yearly: 365 }[key] || Number(item.durationDays || 0)) : Number(item.durationDays || 0), credits: Number(item.credits || 0),
+      creditValidityDays: Number(item.creditValidityDays || 30), description: String(item.description || "")
+    };
+  }).filter(x => Number.isSafeInteger(x.amountUsdCents) && x.amountUsdCents > 0 &&
+    (x.amountNgnKobo === null || (Number.isSafeInteger(x.amountNgnKobo) && x.amountNgnKobo >= 10000)) &&
+    Number.isSafeInteger(x.credits) && x.credits >= 0 && x.credits <= 1000000 &&
+    Number.isInteger(x.creditValidityDays) && x.creditValidityDays >= 1 && x.creditValidityDays <= 365 &&
+    (x.durationDays === 0 || (Number.isInteger(x.durationDays) && x.durationDays >= 1 && x.durationDays <= 365)));
+  return {
+    currency: "USD", checkoutCurrency: NGN, exchangeRate: fx?.rate ?? null,
+    exchangeRateAsOf: fx?.asOf?.toISOString() ?? null, fxConfigured: Boolean(fx),
+    plans: clean(plans, true).filter(item => item.durationDays >= 1),
+    bundles: clean(bundles)
+  };
 }
 function makeReference() { return "AT-" + crypto.randomBytes(16).toString("hex"); }
 function paystackSecret() { return process.env.PAYSTACK_SECRET_KEY || ""; }
@@ -75,6 +104,28 @@ async function grantPaidTransaction(reference, verified) {
       await tx.creditLot.create({ data: { userId: payment.userId, originalCredits: payment.credits, remainingCredits: payment.credits, expiresAt: new Date(now.getTime() + (payment.creditValidityDays || 30) * DAY) } });
       await tx.creditLedger.create({ data: { userId: payment.userId, delta: payment.credits, kind: "PURCHASE", reference: "paystack:" + reference, description: payment.itemKey + " credit bundle" } });
     }
+    const dateLabel = value => new Intl.DateTimeFormat("en-NG", { dateStyle: "medium", timeZone: "Africa/Lagos" }).format(value);
+    const amountLabel = new Intl.NumberFormat("en-NG", { style: "currency", currency: NGN, maximumFractionDigits: 2 }).format(payment.amountKobo / 100);
+    const usdLabel = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((payment.baseAmountUsdCents || 0) / 100);
+    const fxLabel = payment.exchangeRateTenThousandths ? (payment.exchangeRateTenThousandths / 10000).toLocaleString("en-NG", { maximumFractionDigits: 4 }) : "unavailable";
+    const paymentAmountLabel = payment.baseAmountUsdCents > 0 ? usdLabel + " (rate ₦" + fxLabel + "/$) · charged " + amountLabel : amountLabel;
+    const activeAccess = await tx.premiumAccess.findUnique({ where: { userId: payment.userId } });
+    const currentPlan = activeAccess && activeAccess.expiresAt > now
+      ? activeAccess.planKey.charAt(0).toUpperCase() + activeAccess.planKey.slice(1) + " Premium"
+      : "Free";
+    const paymentTitle = payment.type === "PLAN" ? "Your Premium payment is confirmed" : "Your AI credits have been added";
+    const paymentBody = payment.type === "PLAN"
+      ? "We received " + paymentAmountLabel + ". Your " + payment.durationDays + "-day " + currentPlan + " plan is active from " + dateLabel(activeAccess.startsAt) + " until " + dateLabel(activeAccess.expiresAt) + ". " + payment.credits + " AI credits have been added (credits expire on " + dateLabel(new Date(now.getTime() + (payment.creditValidityDays || 30) * DAY)) + "). Confirmed on " + dateLabel(now) + ". Payment reference: " + reference + "."
+      : "We received " + paymentAmountLabel + ". " + payment.credits + " AI credits have been added to your wallet. Your current plan is " + currentPlan + ". Credits expire on " + dateLabel(new Date(now.getTime() + (payment.creditValidityDays || 30) * DAY)) + ". Confirmed on " + dateLabel(now) + ". Payment reference: " + reference + ".";
+    await tx.notification.create({
+      data: {
+        userId: payment.userId,
+        title: paymentTitle,
+        body: paymentBody,
+        category: payment.type === "PLAN" ? "SUBSCRIPTION" : "AI_CREDITS",
+        metadata: { paymentReference: reference, amountKobo: payment.amountKobo, baseAmountUsdCents: payment.baseAmountUsdCents, exchangeRateTenThousandths: payment.exchangeRateTenThousandths, credits: payment.credits, durationDays: payment.durationDays, paymentType: payment.type, confirmedAt: now.toISOString() }
+      }
+    });
     await tx.paymentTransaction.update({ where: { reference }, data: { status: "PAID", paidAt: now } });
     return { status: 200, alreadyProcessed: false };
   }, { isolationLevel: "Serializable" });
@@ -83,7 +134,7 @@ async function grantPaidTransaction(reference, verified) {
 router.get("/catalog", (_req, res) => {
   try {
     const data = safeCatalog();
-    res.json({ ...data, paymentsConfigured: Boolean(paystackSecret()), configured: data.plans.length > 0 || data.bundles.length > 0 });
+    res.json({ ...data, paymentsConfigured: Boolean(paystackSecret()) && data.fxConfigured, configured: data.plans.length > 0 || data.bundles.length > 0 });
   } catch { res.status(503).json({ error: "Premium packages are temporarily unavailable." }); }
 });
 
@@ -107,7 +158,7 @@ router.get("/me", async (req, res, next) => {
       prisma.premiumAccess.findUnique({ where: { userId: req.userId } }),
       prisma.creditWallet.findUnique({ where: { userId: req.userId } }),
       prisma.creditLot.findMany({ where: { userId: req.userId, remainingCredits: { gt: 0 }, expiresAt: { gt: now } }, orderBy: [{ expiresAt: "asc" }, { createdAt: "asc" }], select: { remainingCredits: true, expiresAt: true } }),
-      prisma.paymentTransaction.findMany({ where: { userId: req.userId }, orderBy: { createdAt: "desc" }, take: 12, select: { reference: true, type: true, itemKey: true, amountKobo: true, status: true, createdAt: true, paidAt: true } })
+      prisma.paymentTransaction.findMany({ where: { userId: req.userId }, orderBy: { createdAt: "desc" }, take: 12, select: { reference: true, type: true, itemKey: true, amountKobo: true, baseAmountUsdCents: true, exchangeRateTenThousandths: true, exchangeRateAsOf: true, status: true, createdAt: true, paidAt: true } })
     ]);
     const validCredits = lots.reduce((sum, lot) => sum + lot.remainingCredits, 0);
     res.json({
@@ -125,18 +176,21 @@ router.post("/initialize", async (req, res, next) => {
     const type = req.body?.type === "PLAN" ? "PLAN" : req.body?.type === "BUNDLE" ? "BUNDLE" : "";
     const key = typeof req.body?.key === "string" ? req.body.key : "";
     const days = type === "PLAN" && key === "daily" ? Number(req.body?.days || 1) : null;
-    if (!type || !key || (days !== null && (!Number.isInteger(days) || days < 1 || days > 3))) return res.status(400).json({ error: "Choose a valid package." });
+    if (!type || !key || (days !== null && (!Number.isInteger(days) || days < 1 || days > 6))) return res.status(400).json({ error: "Choose between 1 and 6 daily access days." });
     const { plans, bundles } = safeCatalog();
     const item = (type === "PLAN" ? plans : bundles).find(x => x.key === key);
     if (!item) return res.status(400).json({ error: "That package is not available." });
-    const amountKobo = type === "PLAN" && key === "daily" ? item.amountKobo * days : item.amountKobo;
+    const fx = exchangeRateSnapshot();
+    if (!fx) return res.status(503).json({ error: "USD-to-NGN conversion is not configured yet. Please contact support." });
+    const amountUsdCents = type === "PLAN" && key === "daily" ? item.amountUsdCents * days : item.amountUsdCents;
+    const amountKobo = usdCentsToNgnKobo(amountUsdCents, fx.scaled);
     const credits = type === "PLAN" && key === "daily" ? item.credits * days : item.credits;
-    if (!Number.isSafeInteger(amountKobo) || amountKobo < 10000 || !Number.isSafeInteger(credits) || credits < 0) return res.status(400).json({ error: "Package configuration is invalid." });
+    if (!Number.isSafeInteger(amountUsdCents) || amountUsdCents < 1 || !Number.isSafeInteger(amountKobo) || amountKobo < 10000 || !Number.isSafeInteger(credits) || credits < 0) return res.status(400).json({ error: "Package or currency conversion is invalid." });
     const reference = makeReference();
-    const payment = await prisma.paymentTransaction.create({ data: { userId: req.userId, reference, type, itemKey: key, amountKobo, credits, durationDays: type === "PLAN" ? (days || item.durationDays) : 0, creditValidityDays: item.creditValidityDays } });
+    const payment = await prisma.paymentTransaction.create({ data: { userId: req.userId, reference, type, itemKey: key, amountKobo, baseAmountUsdCents: amountUsdCents, exchangeRateTenThousandths: fx.scaled, exchangeRateAsOf: fx.asOf, credits, durationDays: type === "PLAN" ? (days || item.durationDays) : 0, creditValidityDays: item.creditValidityDays } });
     const response = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST", headers: { Authorization: "Bearer " + paystackSecret(), "Content-Type": "application/json" },
-      body: JSON.stringify({ email: (await prisma.user.findUnique({ where: { id: req.userId }, select: { email: true } })).email, amount: amountKobo, currency: NGN, reference, callback_url: (process.env.PAYSTACK_CALLBACK_URL || "https://study-track-lilac.vercel.app/premium.html"), metadata: { userId: req.userId, type, key, durationDays: days || item.durationDays || 0 } })
+      body: JSON.stringify({ email: (await prisma.user.findUnique({ where: { id: req.userId }, select: { email: true } })).email, amount: amountKobo, currency: NGN, reference, callback_url: (process.env.PAYSTACK_CALLBACK_URL || "https://study-track-lilac.vercel.app/premium.html"), metadata: { userId: req.userId, type, key, durationDays: days || item.durationDays || 0, baseAmountUsdCents: amountUsdCents, exchangeRateTenThousandths: fx.scaled } })
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.status || !data.data?.authorization_url) {

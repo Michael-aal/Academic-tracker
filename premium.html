@@ -21,9 +21,14 @@
 <div id="page-alert" class="page-alert" role="status" hidden></div>
 <section class="subscription-status-section" aria-labelledby="subscription-title"><div class="subscription-status-card"><div class="subscription-status-copy"><p class="premium-eyebrow">YOUR ACCOUNT</p><h2 id="subscription-title">Plan &amp; Subscription</h2><p id="subscription-description">Checking your current plan…</p><div class="subscription-meta"><span id="subscription-period">Plan: —</span><span id="subscription-expiry">Expiry: —</span></div></div><div class="subscription-status-side"><span id="subscription-badge" class="subscription-badge">Checking</span><button id="manage-plan-button" class="premium-buy" type="button">View plans</button></div></div></section>
 <section class="membership-section">
-  <div class="section-heading"><div><p class="premium-eyebrow">ACCESS PLANS</p><h2>Choose your Premium period</h2><p>Premium access is time-based. Credits are shown separately.</p></div><span class="current-plan" id="current-plan">Checking plan…</span></div>
+  <div class="section-heading"><div><p class="premium-eyebrow">ACCESS PLANS</p><h2>Choose your Premium period</h2><p>Premium access is time-based. Credits are shown separately.</p></div><div class="section-heading-actions">
+    <div class="currency-switch" role="group" aria-label="Display currency">
+      <button type="button" id="currency-usd" aria-pressed="true">USD</button>
+      <button type="button" id="currency-ngn" aria-pressed="false">NGN</button>
+    </div>
+    <span class="current-plan" id="current-plan">Checking plan…</span>
+  </div></div>
   <div class="plan-grid" id="plan-grid"><div class="loading-card">Loading available plans…</div></div>
-  <div class="daily-duration" id="daily-duration" hidden><label for="daily-days">Daily access duration</label><select id="daily-days"><option value="1">1 day</option><option value="2">2 days</option><option value="3">3 days</option></select><span id="daily-total"></span></div>
 </section>
 <section class="membership-section bundle-section">
   <div class="section-heading"><div><p class="premium-eyebrow">TOP UP ANYTIME</p><h2>Buy AI credits</h2><p>Like a data bundle: pick a package, pay once, and use credits across AI Tutor, Quiz, Notes Summary and more.</p></div></div>
@@ -34,7 +39,7 @@
   <div class="section-heading"><div><p class="premium-eyebrow">ACCOUNT ACTIVITY</p><h2>Recent transactions</h2></div></div>
   <div class="transaction-list" id="transaction-list"><p class="empty-state">Your purchases will appear here.</p></div>
 </section>
-<footer class="premium-footer"><span>Secure payments powered by Paystack.</span><span>Premium access and AI credits are managed separately.</span></footer>
+<footer class="premium-footer"><span>Secure payments powered by Paystack. Checkout is charged in NGN.</span><span>USD is the base price; NGN is the converted display amount. Premium access and AI credits are managed separately.</span></footer>
 </main>
 <script src="premium-page.js"></script><script src="global-navigation.js"></script>
 </body></html>

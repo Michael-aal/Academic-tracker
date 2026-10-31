@@ -16,7 +16,8 @@
     ["Focus Shield","dashboard.html?view=focus","focus"],
     ["Calculator","calculator.html","calculator"],
     ["AI Learning","ai-learning.html","learn"],
-    ["Premium & AI Credits","premium.html","more"],
+    ["Subscription","premium.html","more"],
+    ["Notifications","notifications.html","notifications"],
     ["AI Tutor","ai-tutor.html","tutor"],
     ["AI Quiz","ai-quiz-setup.html","quiz"],
     ["Educational Videos","educational-videos.html","videos"],
@@ -57,6 +58,7 @@
     planner:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     notes:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h7M9 16h7"/>',
     university:'<path d="m2 9 10-6 10 6-10 6L2 9Z"/><path d="M6 11v6c4 3 8 3 12 0v-6M22 9v7"/>',
+    notifications:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>',
     support:'<path d="M4 5h16v12H8l-4 4z"/><path d="M8 9h8M8 13h5"/>',
     settings:'<circle cx="12" cy="12" r="3"/><path d="m19 13 2 1-2 4-2-1-2 1v2H9v-2l-2-1-2 1-2-4 2-1v-2l-2-1 2-4 2 1 2-1V4h6v2l2 1 2-1 2 4-2 1v2Z"/>',
     install:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 7v8m-3-3 3 3 3-3M8 17h8"/>',
@@ -76,6 +78,7 @@
     </a>
     <p class="at-nav-page-title" aria-current="page"></p>
     <div class="at-nav-actions">
+      <button class="at-nav-icon-button at-nav-notification-button" id="at-nav-notifications" type="button" aria-label="Notifications" title="Notifications"><span class="at-nav-notification-icon">${icon("notifications")}</span><span class="at-nav-notification-dot" id="at-nav-notification-dot" hidden></span></button>
       <button class="at-nav-icon-button" id="at-nav-menu-toggle" type="button" aria-label="Open page menu" aria-expanded="false" aria-controls="at-nav-menu">${icon("menu")}</button>
       <button class="at-nav-icon-button" id="at-nav-profile-toggle" type="button" aria-label="Open account menu" aria-expanded="false" aria-controls="at-nav-profile-menu">${icon("user")}</button>
     </div>
@@ -131,7 +134,81 @@
   const menu = header.querySelector("#at-nav-menu");
   const profileMenu = header.querySelector("#at-nav-profile-menu");
   const moreToggle = bottom.querySelector("#at-nav-more-toggle");
+  const notificationToggle = header.querySelector("#at-nav-notifications");
+  if (!localStorage.getItem("academic-tracker-token")) notificationToggle.hidden = true;
+  notificationToggle.addEventListener("click", () => { window.location.href = "notifications.html"; });
   const installButton = menu.querySelector("#at-nav-install-app");
+
+  // In-app notification badge + lightweight live polling. No browser/OS notifications are used.
+  const notificationDot = header.querySelector("#at-nav-notification-dot");
+  const notificationApiBase = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
+  const notificationToken = () => localStorage.getItem("academic-tracker-token") || "";
+  let notificationBootstrapped = false;
+  let latestNotificationId = null;
+  let notificationPollBusy = false;
+  let notificationToastTimer = null;
+  const toast = document.createElement("aside");
+  toast.className = "at-notification-toast";
+  toast.hidden = true;
+  toast.setAttribute("role", "status");
+  toast.setAttribute("aria-live", "polite");
+  toast.innerHTML = '<span class="at-notification-toast-mark" aria-hidden="true">✦</span><span class="at-notification-toast-copy"><strong></strong><small></small></span><button type="button" aria-label="Dismiss notification">×</button>';
+  document.body.appendChild(toast);
+  const showNotificationToast = item => {
+    if (!item || file === "notifications.html" || document.visibilityState !== "visible") return;
+    toast.querySelector("strong").textContent = item.title || "New notification";
+    toast.querySelector("small").textContent = item.body || "Open your notification center to read this update.";
+    toast.hidden = false;
+    toast.onclick = event => {
+      if (event.target.closest("button")) { toast.hidden = true; return; }
+      window.location.href = "notifications.html?id=" + encodeURIComponent(item.id);
+    };
+    clearTimeout(notificationToastTimer);
+    notificationToastTimer = setTimeout(() => { toast.hidden = true; }, 9000);
+  };
+  const pollNotifications = async () => {
+    const token = notificationToken();
+    if (!token || notificationPollBusy) { if (!token) notificationDot.hidden = true; return; }
+    notificationPollBusy = true;
+    try {
+      const response = await fetch(notificationApiBase + "/api/notifications?limit=5", {
+        headers: { Authorization: "Bearer " + token, "Cache-Control": "no-store" },
+        cache: "no-store"
+      });
+      if (response.status === 401) { notificationDot.hidden = true; return; }
+      if (!response.ok) return;
+      const data = await response.json();
+      const unreadTotal = Number(data.unreadCount) || 0;
+      notificationDot.hidden = unreadTotal === 0;
+      notificationToggle.setAttribute("aria-label", unreadTotal ? "Notifications, " + unreadTotal + " unread" : "Notifications");
+      notificationToggle.title = unreadTotal ? unreadTotal + " unread notification" + (unreadTotal === 1 ? "" : "s") : "Notifications";
+      const newest = Array.isArray(data.notifications) ? data.notifications[0] : null;
+      if (!notificationBootstrapped) {
+        latestNotificationId = newest?.id || null;
+        notificationBootstrapped = true;
+      } else if (newest && newest.id !== latestNotificationId) {
+        latestNotificationId = newest.id;
+      }
+      const ageMs = newest?.createdAt ? Date.now() - new Date(newest.createdAt).getTime() : Infinity;
+      let alreadyToasted = "";
+      try { alreadyToasted = sessionStorage.getItem("at-last-notification-toast") || ""; } catch (_) {}
+      if (newest && !newest.readAt && ageMs >= 0 && ageMs < 180000 && alreadyToasted !== newest.id && document.visibilityState === "visible") {
+        try { sessionStorage.setItem("at-last-notification-toast", newest.id); } catch (_) {}
+        showNotificationToast(newest);
+      }
+    } catch (_) {
+      // Keep the app usable when temporarily offline; the next poll retries.
+    } finally {
+      notificationPollBusy = false;
+    }
+  };
+  toast.querySelector("button").addEventListener("click", event => { event.stopPropagation(); toast.hidden = true; });
+  pollNotifications();
+  window.setInterval(pollNotifications, 20000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") pollNotifications(); });
+  window.addEventListener("focus", pollNotifications);
+  window.addEventListener("at-notifications-updated", pollNotifications);
+
   let lastMenuTrigger = null;
   const setOpen = (target, trigger, open) => {
     target.hidden = !open;
