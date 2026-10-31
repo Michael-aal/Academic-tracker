@@ -52,6 +52,26 @@ function recordAiUsage(req, usage = {}, provider = "unknown", model = "unknown",
     : undefined;
 }
 
+function aiUsageAudit(req, res, next) {
+  const sendJson = res.json.bind(res);
+  let finalized = false;
+  res.json = payload => {
+    if (finalized) return res;
+    finalized = true;
+    if (!Array.isArray(req.aiUsageEvents) || req.aiUsageEvents.length === 0) return sendJson(payload);
+    persistAiUsage(req)
+      .then(() => sendJson(payload))
+      .catch(error => {
+        req.aiUsageAuditFailure = true;
+        res.statusCode = 503;
+        console.error("AI usage audit write failed:", error.code || error.name);
+        sendJson({ error: "AI usage could not be recorded safely. Please retry shortly." });
+      });
+    return res;
+  };
+  return next();
+}
+
 async function persistAiUsage(req) {
   if (!Array.isArray(req.aiUsageEvents) || req.aiUsageEvents.length === 0) return;
   const requestId = randomUUID();
@@ -236,7 +256,7 @@ function validateAiRequest(req, res, next) {
   return next();
 }
 
-router.post("/", validateAiRequest, aiCreditGate, async (req, res) => {
+router.post("/", validateAiRequest, aiCreditGate, aiUsageAudit, async (req, res) => {
   const action = typeof req.body?.action === "string" ? req.body.action : "";
   const subject = typeof req.body?.subject === "string" ? req.body.subject.trim().slice(0, 100) : "";
   const topic = typeof req.body?.topic === "string" ? req.body.topic.trim().slice(0, 160) : "";
@@ -373,8 +393,6 @@ router.post("/", validateAiRequest, aiCreditGate, async (req, res) => {
     console.error("AI request error:", error.message);
     res.status(502).json({ error: "Could not reach the AI provider. Check the server connection and try again." });
   } finally {
-    try { await persistAiUsage(req); }
-    catch (usageError) { console.error("AI usage audit write failed:", usageError.code || usageError.name); }
     clearTimeout(timeout);
   }
 });
