@@ -51,7 +51,9 @@ on:
       - "level-up.css"
       - "level-up.js"
       - "exam-simulator.html"
-      - "exam-simulator.js"\n      - "focus-music.js"\n      - "focus-music.css"
+      - "exam-simulator.js"
+      - "focus-music.js"
+      - "focus-music.css"
       - "notes-workspace.js"
       - "memory-mastery.js"
       - "study-planner.js"
@@ -85,6 +87,15 @@ on:
       - "ai-quiz-setup.html"
       - "notes-summary.html"
       - "study-plan.html"
+      - "english-studio.html"
+      - "english-studio.css"
+      - "english-studio.js"
+      - "level-up.html"
+      - "level-up.css"
+      - "level-up.js"
+      - "exam-simulator.html"
+      - "exam-simulator.js"
+      - "sw.js"
       - ".github/workflows/backend-check.yml"
   workflow_dispatch:
 
@@ -162,7 +173,8 @@ jobs:
 
           if missing:
               print("Missing local frontend assets:")
-              print("\n".join(missing))
+              print("
+".join(missing))
               raise SystemExit(1)
           print("All local script and link assets referenced by root HTML pages exist.")
           PY
