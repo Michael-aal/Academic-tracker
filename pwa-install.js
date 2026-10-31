@@ -4,8 +4,7 @@
   if (window.__AT_PWA_INSTALL_INITIALIZED) return;
   window.__AT_PWA_INSTALL_INITIALIZED = true;
 
-  const DISMISS_KEY = "at-pwa-install-dismissed-until";
-  const DISMISS_DAYS = 7;
+  const PROMPT_SEEN_KEY = "at-pwa-landing-prompt-seen-v1";
   let deferredPrompt = window.__AT_DEFERRED_INSTALL_PROMPT || null;
   let banner = null;
   let instructions = null;
@@ -14,32 +13,50 @@
     window.matchMedia("(display-mode: standalone)").matches ||
     window.navigator.standalone === true;
 
-  const wasRecentlyDismissed = () => {
-    try {
-      return Number(localStorage.getItem(DISMISS_KEY) || 0) > Date.now();
-    } catch (_) {
-      return false;
-    }
+  const isLandingPage = () => {
+    const path = window.location.pathname.replace(/\/+$/, "") || "/";
+    return path === "/" || path.endsWith("/index.html");
   };
 
-  const rememberDismissal = () => {
-    try {
-      localStorage.setItem(DISMISS_KEY, String(Date.now() + DISMISS_DAYS * 86400000));
-    } catch (_) {}
+  const hasSeenLandingPrompt = () => {
+    try { return localStorage.getItem(PROMPT_SEEN_KEY) === "true"; }
+    catch (_) { return false; }
+  };
+
+  const rememberLandingPromptChoice = () => {
+    try { localStorage.setItem(PROMPT_SEEN_KEY, "true"); } catch (_) {}
   };
 
   const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  function refreshInstallUI() {
+    const installed = isInstalled();
+    document.querySelectorAll("[data-at-install-app]").forEach(button => {
+      button.hidden = installed;
+      button.disabled = installed;
+      button.setAttribute("aria-hidden", String(installed));
+    });
+  }
 
   function hideBanner() {
     if (banner) banner.remove();
     banner = null;
   }
 
+  function hideInstructions() {
+    if (instructions) instructions.remove();
+    instructions = null;
+  }
+
   function showInstructions() {
-    if (!banner || instructions) return;
-    instructions = document.createElement("div");
-    instructions.className = "at-install-instructions";
+    if (instructions || isInstalled()) return;
+    instructions = document.createElement("section");
+    instructions.className = "at-install-help-panel";
+    instructions.setAttribute("role", "dialog");
+    instructions.setAttribute("aria-modal", "false");
+    instructions.setAttribute("aria-label", "How to install Academic Tracker");
+
     const steps = isIOS()
       ? [
           "Open this page in Safari.",
@@ -63,20 +80,46 @@
     close.type = "button";
     close.className = "at-install-help-close";
     close.textContent = "Got it";
-    close.addEventListener("click", () => {
-      instructions?.remove();
-      instructions = null;
-    });
+    close.addEventListener("click", hideInstructions);
     instructions.append(heading, list, close);
-    banner.querySelector(".at-install-copy").appendChild(instructions);
+    document.body.appendChild(instructions);
+    close.focus();
   }
 
+  async function requestInstall() {
+    if (isInstalled()) {
+      refreshInstallUI();
+      return;
+    }
+    const promptEvent = deferredPrompt || window.__AT_DEFERRED_INSTALL_PROMPT || null;
+    if (!promptEvent) {
+      showInstructions();
+      return;
+    }
+
+    try {
+      promptEvent.prompt();
+      await promptEvent.userChoice;
+    } catch (error) {
+      console.warn("The browser install prompt could not be completed.", error);
+      showInstructions();
+    } finally {
+      deferredPrompt = null;
+      window.__AT_DEFERRED_INSTALL_PROMPT = null;
+      refreshInstallUI();
+    }
+  }
+
+  // The landing-page choice is permanent for this browser profile. Installation
+  // remains available later from the authenticated app's workspace dropdown.
   function createBanner() {
-    if (banner || isInstalled() || wasRecentlyDismissed()) return;
+    if (!isLandingPage() || banner || isInstalled() || hasSeenLandingPrompt()) return;
     banner = document.createElement("section");
     banner.className = "at-install-banner";
-    banner.setAttribute("role", "dialog");
+    banner.setAttribute("role", "region");
     banner.setAttribute("aria-label", "Install Academic Tracker");
+    banner.setAttribute("aria-live", "polite");
+    banner.setAttribute("aria-atomic", "true");
     banner.innerHTML = `
       <span class="at-install-mark" aria-hidden="true">A</span>
       <div class="at-install-copy">
@@ -84,48 +127,50 @@
         <p>Get quicker access from your phone’s home screen.</p>
       </div>
       <div class="at-install-actions">
-        <button type="button" class="at-install-primary">Install app</button>
-        <button type="button" class="at-install-dismiss" aria-label="Not now">Not now</button>
+        <button type="button" class="at-install-primary">Install Now</button>
+        <button type="button" class="at-install-dismiss" aria-label="Not Now">Not Now</button>
       </div>`;
     document.body.appendChild(banner);
 
     banner.querySelector(".at-install-primary").addEventListener("click", async () => {
-      if (!deferredPrompt) {
-        showInstructions();
-        return;
-      }
-      deferredPrompt.prompt();
-      try {
-        const choice = await deferredPrompt.userChoice;
-        if (choice?.outcome === "accepted") hideBanner();
-      } catch (error) {
-        console.warn("The browser install prompt could not be completed.", error);
-        showInstructions();
-      }
-      deferredPrompt = null;
+      rememberLandingPromptChoice();
+      hideBanner();
+      await requestInstall();
     });
 
     banner.querySelector(".at-install-dismiss").addEventListener("click", () => {
-      rememberDismissal();
+      rememberLandingPromptChoice();
       hideBanner();
     });
   }
+
+  window.ATInstallApp = requestInstall;
+  window.ATRefreshInstallUI = refreshInstallUI;
 
   window.addEventListener("beforeinstallprompt", event => {
     event.preventDefault();
     deferredPrompt = event;
     window.__AT_DEFERRED_INSTALL_PROMPT = event;
-    if (banner) {
-      const button = banner.querySelector(".at-install-primary");
-      if (button) button.textContent = "Install app";
-    }
+    refreshInstallUI();
   });
 
   window.addEventListener("appinstalled", () => {
     deferredPrompt = null;
+    window.__AT_DEFERRED_INSTALL_PROMPT = null;
+    rememberLandingPromptChoice();
     hideBanner();
-    try { localStorage.removeItem(DISMISS_KEY); } catch (_) {}
+    hideInstructions();
+    refreshInstallUI();
   });
+
+  window.addEventListener("at-pwa-install-ready", refreshInstallUI);
+  window.addEventListener("load", refreshInstallUI, { once: true });
+  if (document.body && "MutationObserver" in window) {
+    const installButtonObserver = new MutationObserver(refreshInstallUI);
+    installButtonObserver.observe(document.body, { childList: true, subtree: true });
+  }
+  refreshInstallUI();
+  window.dispatchEvent(new Event("at-pwa-install-ready"));
 
   if ("serviceWorker" in navigator && window.isSecureContext) {
     const registerWorker = () => {
@@ -136,7 +181,7 @@
     else window.addEventListener("load", registerWorker, { once: true });
   }
 
-  if (!isInstalled() && !wasRecentlyDismissed()) {
+  if (isLandingPage() && !isInstalled() && !hasSeenLandingPrompt()) {
     window.setTimeout(createBanner, 900);
   }
 })();
