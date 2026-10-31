@@ -57,7 +57,7 @@ async function grantPaidTransaction(reference, verified) {
     if (payment.type === "PLAN") {
       const existing = await tx.premiumAccess.findUnique({ where: { userId: payment.userId } });
       const startsAt = existing && existing.expiresAt > now ? existing.expiresAt : now;
-      const days = Number(payment.durationDays || plan.durationDays);
+      const days = Number(payment.durationDays);
       if (!Number.isInteger(days) || days < 1 || days > 365) return { status: 400, error: "Invalid plan duration." };
       const expiresAt = new Date(startsAt.getTime() + days * DAY);
       await tx.premiumAccess.upsert({
