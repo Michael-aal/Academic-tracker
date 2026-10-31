@@ -7,7 +7,11 @@ const APP_SHELL = [
   "./styles.css", "./ui-polish.css", "./focus.css", "./app.js", "./global-navigation.js", "./vibrant-refresh.css",
   "./manifest.webmanifest", "./assets/icon.svg", "./pwa-install.js", "./pwa-install.css",
   "./english-studio.html", "./english-studio.css", "./english-studio.js",
-  "./level-up.html", "./level-up.css", "./level-up.js",\n  "./focus-music.js", "./focus-music.css"
+  "./level-up.html", "./level-up.css", "./level-up.js",
+  "./calculator.html", "./calculator.css", "./calculator.js", "./calculator-engine.js",
+  "./quiz.html", "./quiz-page.css", "./quiz-page.js",
+  "./notes.html", "./notes-workspace.css", "./notes-workspace.js",
+  "./notes-summary.html", "./notes-summary.js", "./universal-notes.css", "./universal-notes.js"
 ];
 
 self.addEventListener("install", event => {
