@@ -244,7 +244,7 @@
       }
       current.dueAt = now() + current.intervalDays * 24 * 60 * 60 * 1000;
     }
-    persist().then(() => dataRequest("/api/gamification/flashcard/" + encodeURIComponent(current.id) + "/claim", { method: "POST" }).catch(error => console.warn("Flashcard review saved; XP claim pending:", error.message))); renderLibrary(); showNext();
+    const reviewedCardId = current.id;\n    persist().then(() => dataRequest("/api/gamification/flashcard/" + encodeURIComponent(reviewedCardId) + "/claim", { method: "POST" }).catch(error => console.warn("Flashcard review saved; XP claim pending:", error.message))); renderLibrary(); showNext();
   }));
   $("library-search").addEventListener("input", renderLibrary);
   $("library-list").addEventListener("click", event => {
