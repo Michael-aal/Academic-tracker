@@ -1,7 +1,7 @@
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { estimateCredits, aiCreditGate } = require("../src/ai-credit-gate");
+const { estimateCredits, aiCreditGate, ensureFreeCredits, FREE_CREDIT_ALLOWANCE, FREE_CREDIT_INTERVAL_MS } = require("../src/ai-credit-gate");
 const { prisma } = require("../src/prisma");
 
 test("AI actions use the published fixed credit costs regardless of prompt size", () => {
@@ -13,6 +13,65 @@ test("AI actions use the published fixed credit costs regardless of prompt size"
   assert.equal(estimateCredits({ action: "flashcards", topic: "Cell biology", cardCount: 20 }), 2);
 });
 
+
+
+test("Free accounts receive 60 credits once per 72-hour window", async () => {
+  const originalTransaction = prisma.$transaction;
+  const now = new Date("2026-10-31T12:00:00.000Z");
+  let lotData = null;
+  let ledgerData = null;
+  let walletData = null;
+  const fakeTx = {
+    $queryRaw: async () => [],
+    premiumAccess: { findUnique: async () => null },
+    creditLedger: {
+      findFirst: async () => null,
+      create: async ({ data }) => { ledgerData = data; }
+    },
+    creditLot: {
+      create: async ({ data }) => { lotData = data; },
+      aggregate: async () => ({ _sum: { remainingCredits: FREE_CREDIT_ALLOWANCE } })
+    },
+    creditWallet: { upsert: async ({ create, update }) => { walletData = create || update; } }
+  };
+  prisma.$transaction = async callback => callback(fakeTx);
+  try {
+    const result = await ensureFreeCredits("free-user", now);
+    assert.equal(result.granted, true);
+    assert.equal(result.amount, 60);
+    assert.equal(lotData.originalCredits, 60);
+    assert.equal(lotData.remainingCredits, 60);
+    assert.equal(lotData.expiresAt.getTime(), now.getTime() + FREE_CREDIT_INTERVAL_MS);
+    assert.equal(ledgerData.kind, "FREE_REFRESH");
+    assert.equal(ledgerData.delta, 60);
+    assert.ok(walletData);
+  } finally {
+    prisma.$transaction = originalTransaction;
+  }
+});
+
+test("Free refresh does not stack or grant early inside the 72-hour window", async () => {
+  const originalTransaction = prisma.$transaction;
+  const now = new Date("2026-10-31T12:00:00.000Z");
+  const previousGrant = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  let created = false;
+  const fakeTx = {
+    $queryRaw: async () => [],
+    premiumAccess: { findUnique: async () => null },
+    creditLedger: { findFirst: async () => ({ createdAt: previousGrant }) },
+    creditLot: { create: async () => { created = true; } },
+    creditWallet: { upsert: async () => { created = true; } }
+  };
+  prisma.$transaction = async callback => callback(fakeTx);
+  try {
+    const result = await ensureFreeCredits("free-user", now);
+    assert.equal(result.granted, false);
+    assert.equal(result.nextRefreshAt.getTime(), previousGrant.getTime() + FREE_CREDIT_INTERVAL_MS);
+    assert.equal(created, false);
+  } finally {
+    prisma.$transaction = originalTransaction;
+  }
+});
 
 test("zero-credit accounts are blocked at the API gate instead of falling back to free quota", async () => {
   const originalTransaction = prisma.$transaction;
