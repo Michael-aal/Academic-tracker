@@ -71,8 +71,9 @@ router.post("/login", loginLimiter, async (req, res, next) => {
     if (!email || typeof password !== "string" || !password) return res.status(400).json({ error: "Enter your email and password." });
     const configuredAdminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
     const configuredAdminPassword = process.env.ADMIN_PASSWORD || "";
+    const user = await prisma.user.findUnique({ where: { email } });
 
-    if (configuredAdminEmail && email === configuredAdminEmail) {
+    if (configuredAdminEmail && email === configuredAdminEmail && user?.role === "ADMIN") {
       if (!configuredAdminPassword) {
         return res.status(503).json({ error: "Administrator login is not configured on the server." });
       }
@@ -81,15 +82,13 @@ router.post("/login", loginLimiter, async (req, res, next) => {
       const expected = Buffer.from(configuredAdminPassword, "utf8");
       const passwordMatches = supplied.length === expected.length &&
         require("node:crypto").timingSafeEqual(supplied, expected);
-      const admin = await prisma.user.findUnique({ where: { email } });
-      if (!passwordMatches || !admin || admin.role !== "ADMIN") {
-        return res.status(401).json({ error: "Email or password is incorrect." });
-      }
-      return res.json({ token: issueToken(admin.id, admin.sessionVersion), user: publicUser(admin) });
+      if (!passwordMatches) return res.status(401).json({ error: "Email or password is incorrect." });
+      return res.json({ token: issueToken(user.id, user.sessionVersion), user: publicUser(user) });
     }
 
-    // All other accounts continue to use their own bcrypt password and normal JWT flow.
-    const user = await prisma.user.findUnique({ where: { email } });
+    // Before one-time promotion, the reserved owner account must still be able
+    // to sign in with its existing database password to complete bootstrap.
+    // All ordinary accounts continue to use their own bcrypt password and JWT.
     const valid = user && await bcrypt.compare(password, user.passwordHash);
     if (!valid) return res.status(401).json({ error: "Email or password is incorrect." });
     return res.json({ token: issueToken(user.id, user.sessionVersion), user: publicUser(user) });
