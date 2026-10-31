@@ -186,15 +186,13 @@
       if (!notificationBootstrapped) {
         latestNotificationId = newest?.id || null;
         notificationBootstrapped = true;
-        const ageMs = newest?.createdAt ? Date.now() - new Date(newest.createdAt).getTime() : Infinity;
-        let alreadyToasted = "";
-        try { alreadyToasted = sessionStorage.getItem("at-last-notification-toast") || ""; } catch (_) {}
-        if (newest && !newest.readAt && ageMs >= 0 && ageMs < 180000 && alreadyToasted !== newest.id) {
-          try { sessionStorage.setItem("at-last-notification-toast", newest.id); } catch (_) {}
-          showNotificationToast(newest);
-        }
       } else if (newest && newest.id !== latestNotificationId) {
         latestNotificationId = newest.id;
+      }
+      const ageMs = newest?.createdAt ? Date.now() - new Date(newest.createdAt).getTime() : Infinity;
+      let alreadyToasted = "";
+      try { alreadyToasted = sessionStorage.getItem("at-last-notification-toast") || ""; } catch (_) {}
+      if (newest && !newest.readAt && ageMs >= 0 && ageMs < 180000 && alreadyToasted !== newest.id && document.visibilityState === "visible") {
         try { sessionStorage.setItem("at-last-notification-toast", newest.id); } catch (_) {}
         showNotificationToast(newest);
       }
