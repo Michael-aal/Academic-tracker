@@ -242,7 +242,7 @@
     $("quiz-workspace").querySelector(".quiz-question-card").hidden = true;
     $("quiz-workspace").querySelector(".quiz-page-navigation").hidden = true;
     $("quiz-workspace").querySelector(".quiz-finish-panel").hidden = true;
-    notice("Quiz completed. Your result has been saved to your account.");
+    notice("Quiz completed. Your result has been saved to your account.");\n    api("/api/gamification/quiz/" + encodeURIComponent(attemptId) + "/claim", { method: "POST", body: JSON.stringify({}) })\n      .then(reward => {\n        const xp = el("p", "quiz-xp-reward", reward.duplicate ? "XP for this quiz has already been recorded." : "+" + reward.xpAwarded + " XP earned. Your learning level has been updated.");\n        $("quiz-results").append(xp);\n      })\n      .catch(error => console.warn("Quiz result saved; XP update could not sync yet:", error.message));
   }
   async function load() {
     if (!attemptId) { showError("No active quiz was found. Create a quiz first, then it will open here."); return; }
