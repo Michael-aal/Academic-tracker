@@ -83,7 +83,7 @@ async function grantPaidTransaction(reference, verified) {
       : "Free";
     const paymentTitle = payment.type === "PLAN" ? "Your Premium payment is confirmed" : "Your AI credits have been added";
     const paymentBody = payment.type === "PLAN"
-      ? "We received " + amountLabel + ". Your " + payment.durationDays + "-day " + currentPlan + " plan is active from " + dateLabel(activeAccess.startsAt) + " until " + dateLabel(activeAccess.expiresAt) + ". " + payment.credits + " AI credits have been added. Confirmed on " + dateLabel(now) + ". Payment reference: " + reference + "."
+      ? "We received " + amountLabel + ". Your " + payment.durationDays + "-day " + currentPlan + " plan is active from " + dateLabel(activeAccess.startsAt) + " until " + dateLabel(activeAccess.expiresAt) + ". " + payment.credits + " AI credits have been added (credits expire on " + dateLabel(new Date(now.getTime() + (payment.creditValidityDays || 30) * DAY)) + "). Confirmed on " + dateLabel(now) + ". Payment reference: " + reference + "."
       : "We received " + amountLabel + ". " + payment.credits + " AI credits have been added to your wallet. Your current plan is " + currentPlan + ". Credits expire on " + dateLabel(new Date(now.getTime() + (payment.creditValidityDays || 30) * DAY)) + ". Confirmed on " + dateLabel(now) + ". Payment reference: " + reference + ".";
     await tx.notification.create({
       data: {
