@@ -35,3 +35,16 @@ html[data-theme="light"] :is(.quiz-eyebrow,.quiz-question-meta,.quiz-hint-button
 html[data-theme="light"] :is(.quiz-page-heading h1,.quiz-overview-row strong,.quiz-finish-panel strong,.quiz-results h2,.quiz-results h3,.quiz-loading-card h1){color:#261638!important}
 html[data-theme="light"] :is(.quiz-timer-chip,.quiz-next-button){color:#5b2ba8!important;background:#f0e7ff!important;border-color:#d8c9eb!important}
 @media(max-width:560px){html[data-theme="dark"] :is(.quiz-question-card h2,#question-text),html[data-theme="light"] :is(.quiz-question-card h2,#question-text){font-size:clamp(19px,5vw,24px);line-height:1.5}}
+
+
+html[data-theme="dark"] :is(.answer-option.answer-correct,.feedback-correct,.quiz-review-card.review-correct){color:#fff!important;background:rgba(139,92,246,.16)!important;border-color:rgba(167,139,250,.55)!important}
+html[data-theme="dark"] :is(.answer-option.answer-incorrect,.feedback-incorrect,.quiz-review-card.review-incorrect){color:#fff!important;background:rgba(248,113,113,.10)!important;border-color:rgba(248,113,113,.45)!important}
+html[data-theme="dark"] :is(.answer-option.answer-correct .answer-letter,.answer-option.answer-incorrect .answer-letter){color:#fff!important;background:#6d28d9!important;border-color:#a78bfa!important}
+html[data-theme="dark"] :is(.tutor-heading,.tutor-footer,.tutor-sidebar-note,.tutor-chat-top){border-color:#3a2d4d!important;color:#c8bfd8!important}
+html[data-theme="dark"] .tutor-composer-panel{background:rgba(23,17,35,.97)!important;border-color:rgba(167,139,250,.35)!important}
+html[data-theme="dark"] .tutor-composer textarea{background:#110d1b!important;color:#fff!important}
+html[data-theme="light"] :is(.answer-option.answer-correct,.feedback-correct,.quiz-review-card.review-correct){color:#4e279f!important;background:#f0e7ff!important;border-color:#bba4e8!important}
+html[data-theme="light"] :is(.answer-option.answer-incorrect,.feedback-incorrect,.quiz-review-card.review-incorrect){color:#8f2434!important;background:#fff1f2!important;border-color:#f0c1c7!important}
+html[data-theme="light"] :is(.tutor-heading,.tutor-footer,.tutor-sidebar-note,.tutor-chat-top){border-color:#e5d9f8!important;color:#675779!important}
+html[data-theme="light"] .tutor-composer-panel{background:rgba(255,255,255,.98)!important;border-color:#e5d9f8!important}
+html[data-theme="light"] .tutor-composer textarea{background:#faf7ff!important;color:#35224f!important}
