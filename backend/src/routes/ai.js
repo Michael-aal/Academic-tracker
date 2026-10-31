@@ -100,7 +100,7 @@ async function persistAiUsage(req) {
   });
 }
 
-const ACTIONS = new Set(["tutor", "quiz", "summarize", "study-plan", "flashcards"]);
+const ACTIONS = new Set(["tutor", "quiz", "summarize", "study-plan", "flashcards", "story"]);
 // Quiz attempts do not call the AI provider, but answer/submit endpoints still
 // perform database reads and writes. Keep those operations bounded per account.
 const quizAttemptLimiter = rateLimit({
@@ -130,7 +130,8 @@ function buildPrompt({ action, subject, topic, content, level, questionCount, ca
     quiz: "Return only one complete valid JSON object with top-level keys title and questions; do not include Markdown or surrounding text. Generate exactly " + questionCount + " unique, complete, academically accurate multiple-choice questions for the specified subject, topic, academic level, and " + difficulty + " difficulty. Each question object must contain these exact keys: id (unique string), question (complete string), options (array of exactly four objects), correctAnswer (one option ID), explanation (accurate string), and hint (non-empty clue that does not reveal the answer). Each option object must contain exactly id and text; option IDs must be A, B, C, D exactly once. correctAnswer must exactly match one of those IDs. Do not use alternate property names such as label/value, omit fields, duplicate questions/options, or stop before closing the JSON. Use supplied notes as the primary source when present and do not invent facts. Verify the question count and answer keys before returning JSON.",
     summarize: "Summarize the supplied study material for revision. Start with a short overview, then organize the main ideas under clear headings with important facts, definitions, steps, and formulas where relevant. Keep the summary focused on the supplied topic and subject, preserve the meaning, and do not add unsupported claims. Do not generate quiz questions, tests, flashcards, or self-test questions. If no notes were supplied, ask the student to paste notes.",
     flashcards: "Return only a JSON object with a cards array. Generate exactly " + cardCount + " accurate study flashcards for the specified subject and topic, using the supplied notes as the primary source when present. Each card must contain a concise question field and an accurate answer field. Make cards useful for active recall: definitions, processes, causes, formulas, distinctions, and key facts. Do not write multiple-choice options, quiz scores, or a test. Do not invent details absent from the notes when notes are provided. Keep each question under 700 characters and each answer under 1800 characters.",
-    "study-plan": "Create a realistic, encouraging 7-day study plan for the supplied subject/topic, considering the student's programme, registered courses and target grades when relevant. Use short sessions, active recall, practice questions and review days. Include a clear daily task and a simple way to check understanding. Do not assume the student's available hours; suggest flexible 20–30 minute blocks."
+    "study-plan": "Create a realistic, encouraging 7-day study plan for the supplied subject/topic, considering the student's programme, registered courses and target grades when relevant. Use short sessions, active recall, practice questions and review days. Include a clear daily task and a simple way to check understanding. Do not assume the student's available hours; suggest flexible 20–30 minute blocks.",
+    story: "Create one original, engaging English-learning short story suitable for a secondary-school learner. Return ONLY valid JSON with keys title, genre, readingLevel, estimatedMinutes, story, vocabulary, and questions. story must be 3–7 short paragraphs of clear, natural English. vocabulary must contain 4–6 objects with word, partOfSpeech, meaning, and example. questions must contain exactly 3 comprehension questions, each with question and answer. Make the plot coherent, age-appropriate, culturally inclusive, and genuinely original. Do not copy or imitate a known story. Use the requested topic and genre. Do not include graphic content, romance, or unsafe challenges."
   };
 
   return [
@@ -296,7 +297,7 @@ router.post("/", validateAiRequest, aiCreditGate, aiUsageAudit, async (req, res)
   let provider = null;
   const controller = new AbortController();
   // Ten-question quizzes need substantially more generation time than short tutor replies.
-  const requestTimeoutMs = action === "quiz" ? 90000 : 45000;
+  const requestTimeoutMs = action === "quiz" ? 90000 : action === "story" ? 70000 : 45000;
   const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
 
   try {
@@ -308,7 +309,7 @@ router.post("/", validateAiRequest, aiCreditGate, aiUsageAudit, async (req, res)
       messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) }],
       temperature: action === "quiz" ? 0.2 : 0.4,
       ...(action === "quiz" ? { response_format: { type: "json_object" } } : {}),
-      max_tokens: action === "quiz" ? Math.min(10000, 1800 + questionCount * 820) : action === "flashcards" ? 5000 : 1800
+      max_tokens: action === "quiz" ? Math.min(10000, 1800 + questionCount * 820) : action === "flashcards" ? 5000 : action === "story" ? 3200 : 1800
     }, { signal: controller.signal, onUsage: (usage, providerId, usedModel, providerStatus, providerOk) => recordAiUsage(req, usage, providerId, usedModel, providerStatus, providerOk) });
     const data = completion.data;
     provider = completion.provider;
@@ -346,6 +347,23 @@ router.post("/", validateAiRequest, aiCreditGate, aiUsageAudit, async (req, res)
       } catch (validationError) {
         console.error("AI flashcard validation failed:", validationError.message);
         return res.status(502).json({ error: "The AI returned incomplete or invalid memory cards. No cards were added; please try again." });
+      }
+    }
+    if (action === "story") {
+      try {
+        const cleaned = answer.trim().replace(/^\\x60{3}(?:json)?\\s*/i, "").replace(/\\s*\\x60{3}$/i, "").trim();
+        const parsed = JSON.parse(cleaned);
+        const title = typeof parsed.title === "string" ? parsed.title.trim() : "";
+        const storyText = typeof parsed.story === "string" ? parsed.story.trim() : "";
+        const vocabulary = Array.isArray(parsed.vocabulary) ? parsed.vocabulary : [];
+        const questions = Array.isArray(parsed.questions) ? parsed.questions : [];
+        if (data?.choices?.[0]?.finish_reason === "length" || title.length < 3 || title.length > 120 || storyText.length < 250 || storyText.length > 7000 || vocabulary.length < 4 || vocabulary.length > 6 || questions.length !== 3) throw new Error("Story response did not meet the required structure.");
+        const safeVocabulary = vocabulary.map(item => ({ word: String(item?.word || "").trim().slice(0, 60), partOfSpeech: String(item?.partOfSpeech || "").trim().slice(0, 40), meaning: String(item?.meaning || "").trim().slice(0, 300), example: String(item?.example || "").trim().slice(0, 300) }));
+        if (safeVocabulary.some(item => !item.word || !item.meaning || !item.example) || questions.some(item => !String(item?.question || "").trim() || !String(item?.answer || "").trim())) throw new Error("Story vocabulary or comprehension questions are incomplete.");
+        return res.json({ story: { title, genre: String(parsed.genre || "Adventure").slice(0, 40), readingLevel: String(parsed.readingLevel || "Intermediate").slice(0, 40), estimatedMinutes: Math.max(1, Math.min(20, Number(parsed.estimatedMinutes) || 5), content: storyText, vocabulary: safeVocabulary, questions: questions.map(item => ({ question: String(item.question).trim().slice(0, 500), answer: String(item.answer).trim().slice(0, 700) })) }, action, model, provider });
+      } catch (validationError) {
+        console.error("AI story validation failed:", validationError.message);
+        return res.status(502).json({ error: "The AI could not create a complete story. No story was saved; please try again." });
       }
     }
     if (action === "quiz") {
