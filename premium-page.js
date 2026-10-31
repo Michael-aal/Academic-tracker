@@ -30,6 +30,12 @@
   function renderAccount(){
     if(!state)return;
     const p=state.plan;$("current-plan").textContent=p.active?"Premium · Active":"Free plan";
+    const badge=$("subscription-badge");
+    badge.textContent=p.active?"PREMIUM ACTIVE":"FREE PLAN";
+    badge.classList.toggle("is-premium",Boolean(p.active));
+    $("subscription-description").textContent=p.active?"Your Premium membership is active. Enjoy your included benefits until the expiry date below.":"You are currently using the Free plan. Upgrade whenever you need Premium access.";
+    $("subscription-period").textContent=p.active?"Plan: "+String(p.key||"Premium").replace(/-/g," ").replace(/\\b\\w/g,x=>x.toUpperCase()):"Plan: Free";
+    $("subscription-expiry").textContent=p.active&&p.expiresAt?"Expires: "+new Date(p.expiresAt).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"}):"Expiry: No active subscription";
     $("credit-balance").textContent=Number(state.credits.balance||0).toLocaleString();
     const nextExpiry=state.credits.lots?.[0]?.expiresAt;
     $("wallet-expiry").textContent=nextExpiry?"Next credit expiry: "+new Date(nextExpiry).toLocaleDateString():"No active credit expiry";
@@ -47,6 +53,7 @@
   async function init(){
     if(!token){location.href="login.html";return;}
     $("daily-days").addEventListener("change",updateDailyTotal);
+    $("manage-plan-button").addEventListener("click",()=>$("plan-grid").scrollIntoView({behavior:"smooth",block:"start"}));
     try{
       await verifyReturn();
       const [c,a]=await Promise.all([fetch(API+"/premium/catalog").then(r=>r.json()),request("/premium/me")]);
