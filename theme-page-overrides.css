@@ -242,7 +242,7 @@ html[data-theme="dark"] :is(
   .ai-mobile-menu-toggle,.at-nav-icon-button,.at-nav-menu button,
   .at-mobile-nav button,.at-mobile-nav a,.dropdown-item,.track-card,
   .notes-list-item,.ev-video-card,.quiz-answer-option,.answer-option,
-  .tool-choice,.planner-upload-control,.focus-controls button
+  .tool-choice,.planner-upload-control
 ) {
   color: #f5f3ff !important;
   -webkit-text-fill-color: #f5f3ff !important;
@@ -259,7 +259,7 @@ html[data-theme="dark"] :is(
   .ai-mobile-menu-toggle,.at-nav-icon-button,.at-nav-menu button,
   .at-mobile-nav button,.at-mobile-nav a,.dropdown-item,.track-card,
   .notes-list-item,.ev-video-card,.quiz-answer-option,.answer-option,
-  .tool-choice,.planner-upload-control,.focus-controls button
+  .tool-choice,.planner-upload-control
 ) :is(span,small,strong,svg,i) {
   color: #f5f3ff !important;
   -webkit-text-fill-color: #f5f3ff !important;
