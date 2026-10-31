@@ -75,6 +75,22 @@ async function grantPaidTransaction(reference, verified) {
       await tx.creditLot.create({ data: { userId: payment.userId, originalCredits: payment.credits, remainingCredits: payment.credits, expiresAt: new Date(now.getTime() + (payment.creditValidityDays || 30) * DAY) } });
       await tx.creditLedger.create({ data: { userId: payment.userId, delta: payment.credits, kind: "PURCHASE", reference: "paystack:" + reference, description: payment.itemKey + " credit bundle" } });
     }
+    const dateLabel = value => new Intl.DateTimeFormat("en-NG", { dateStyle: "medium", timeZone: "Africa/Lagos" }).format(value);
+    const amountLabel = new Intl.NumberFormat("en-NG", { style: "currency", currency: NGN, maximumFractionDigits: 2 }).format(payment.amountKobo / 100);
+    const currentPlan = payment.type === "PLAN" ? payment.itemKey.charAt(0).toUpperCase() + payment.itemKey.slice(1) + " Premium" : "Free";
+    const paymentTitle = payment.type === "PLAN" ? "Your Premium payment is confirmed" : "Your AI credits have been added";
+    const paymentBody = payment.type === "PLAN"
+      ? "We received " + amountLabel + ". Your " + payment.durationDays + "-day " + payment.itemKey + " Premium plan is active from " + dateLabel(now) + " until " + dateLabel(new Date((await tx.premiumAccess.findUnique({ where: { userId: payment.userId } })).expiresAt)) + ". " + payment.credits + " AI credits have been added. Payment reference: " + reference + "."
+      : "We received " + amountLabel + ". " + payment.credits + " AI credits have been added to your wallet. Your current plan remains " + currentPlan + ". Credits expire on " + dateLabel(new Date(now.getTime() + (payment.creditValidityDays || 30) * DAY)) + ". Payment reference: " + reference + ".";
+    await tx.notification.create({
+      data: {
+        userId: payment.userId,
+        title: paymentTitle,
+        body: paymentBody,
+        category: payment.type === "PLAN" ? "SUBSCRIPTION" : "AI_CREDITS",
+        metadata: { paymentReference: reference, amountKobo: payment.amountKobo, credits: payment.credits, durationDays: payment.durationDays, paymentType: payment.type, confirmedAt: now.toISOString() }
+      }
+    });
     await tx.paymentTransaction.update({ where: { reference }, data: { status: "PAID", paidAt: now } });
     return { status: 200, alreadyProcessed: false };
   }, { isolationLevel: "Serializable" });
