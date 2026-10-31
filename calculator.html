@@ -5,7 +5,7 @@
   <script>try { document.documentElement.dataset.theme = localStorage.getItem("academic-tracker-theme") === "dark" ? "dark" : "light"; } catch (_) { document.documentElement.dataset.theme = "light"; }</script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0B0812">
-  <meta name="description" content="A simple, safe calculator for everyday calculations and study work.">
+  <meta name="description" content="A scientific calculator for everyday calculations and study work.">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
@@ -35,12 +35,12 @@
   </aside>
   <main class="main calculator-main">
     <header class="topbar">
-      <div class="page-heading"><p class="eyebrow">STUDY TOOLS</p><h1>Calculator</h1></div>
+      <div class="page-heading"><p class="eyebrow">STUDY TOOLS</p><h1>Scientific calculator</h1></div>
       <a class="button secondary" href="dashboard.html">Back to dashboard</a>
     </header>
     <section class="calculator-layout">
       <section class="calculator-card" aria-label="Calculator">
-        <div class="calculator-heading"><div><h2>Calculate</h2><p>Clear answers, without leaving your workspace.</p></div><span class="calc-icon" aria-hidden="true">＋</span></div>
+        <div class="calculator-heading"><div><h2>Scientific workspace</h2><p>Clear answers, without leaving your workspace.</p></div><span class="calc-icon" aria-hidden="true">＋</span></div>
         <div class="calc-display">
           <div id="expression" class="calc-expression" aria-label="Current expression">Ready to calculate</div>
           <output id="display" class="calc-result" aria-live="polite" aria-label="Result">0</output>
@@ -70,6 +70,34 @@
           <button class="calc-key utility" type="button" data-action="left-paren">(</button>
           <button class="calc-key utility" type="button" data-action="right-paren">)</button>
         </div>
+        <div class="scientific-toolbar">
+          <span>Scientific functions</span>
+          <button class="calc-key utility angle-toggle" id="angle-mode" type="button" data-action="angle" aria-label="Toggle angle mode">DEG</button>
+        </div>
+        <div class="calc-scientific-keys" id="scientific-keys" aria-label="Scientific functions">
+          <button class="calc-key utility" type="button" data-insert="sin(">sin</button>
+          <button class="calc-key utility" type="button" data-insert="cos(">cos</button>
+          <button class="calc-key utility" type="button" data-insert="tan(">tan</button>
+          <button class="calc-key utility" type="button" data-insert="asin(">sin⁻¹</button>
+          <button class="calc-key utility" type="button" data-insert="acos(">cos⁻¹</button>
+          <button class="calc-key utility" type="button" data-insert="atan(">tan⁻¹</button>
+          <button class="calc-key utility" type="button" data-insert="sqrt(">√</button>
+          <button class="calc-key utility" type="button" data-insert="cbrt(">∛</button>
+          <button class="calc-key utility" type="button" data-insert="^2">x²</button>
+          <button class="calc-key utility" type="button" data-insert="^">xʸ</button>
+          <button class="calc-key utility" type="button" data-insert="ln(">ln</button>
+          <button class="calc-key utility" type="button" data-insert="log(">log</button>
+          <button class="calc-key utility" type="button" data-insert="log10(">log₁₀</button>
+          <button class="calc-key utility" type="button" data-insert="exp(">eˣ</button>
+          <button class="calc-key utility" type="button" data-insert="!">x!</button>
+          <button class="calc-key utility" type="button" data-insert="pi">π</button>
+          <button class="calc-key utility" type="button" data-insert="e">e</button>
+          <button class="calc-key utility" type="button" data-insert="abs(">abs</button>
+          <button class="calc-key utility" type="button" data-insert="(">(</button>
+          <button class="calc-key utility" type="button" data-insert=")">)</button>
+        </div>
+        <p class="calc-hint">Scientific functions include trigonometry, inverse trigonometry, roots, powers, logarithms, factorials and constants. Trigonometry uses the selected DEG or RAD mode.</p>
+        <p class="calc-hint">Keyboard supported: numbers, +, −, *, /, %, ^, !, parentheses, Enter, Backspace and Esc.</p>
         <p class="calc-hint">Keyboard supported: numbers, +, −, *, /, %, parentheses, Enter, Backspace and Esc. Percent means one hundredth of the entered value.</p>
       </section>
       <aside class="calculator-side">
