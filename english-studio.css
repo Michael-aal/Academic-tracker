@@ -11,3 +11,32 @@
 .english-bottom{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:32px;padding:21px 23px;border:1px solid var(--en-line);border-radius:17px;background:var(--en-panel2)}.english-bottom h2{margin:0;font-size:21px}.english-bottom p:not(.english-eyebrow){margin:5px 0 0;color:var(--en-muted);font-size:11px}.english-footer{max-width:1120px;margin:auto;padding:0 24px 26px;color:var(--en-muted);font-size:10px}
 @media(max-width:850px){.english-hero-art{width:160px;flex-basis:160px}.art-letter{font-size:70px}.category-grid{grid-template-columns:repeat(2,1fr)}.english-workspace{grid-template-columns:1fr}}
 @media(max-width:600px){.english-header{height:auto;min-height:65px;padding:12px 14px}.english-header nav{gap:11px}.english-header nav a:not(.active){display:none}.english-main{padding:22px 14px 42px}.english-hero{padding:22px;min-height:0}.english-hero-art{display:none}.english-hero h1{font-size:35px}.word-of-day{align-items:flex-start;flex-direction:column;padding:18px}.speak-word{width:100%}.english-section-heading{align-items:flex-start;flex-direction:column}.category-grid{gap:8px}.category-card{min-height:108px;padding:12px}.lesson-panel,.practice-panel{padding:16px}.practice-footer{align-items:stretch;flex-direction:column}.practice-footer button{width:100%}.english-bottom{align-items:flex-start;flex-direction:column}.english-bottom>a{width:100%;text-align:center}}
+
+:root[data-theme="light"]{--en-bg:#F8F6FC;--en-panel:#FFFFFF;--en-panel2:#F2EDFA;--en-line:#E5DDED;--en-text:#251B35;--en-muted:#70677D;--en-accent:#7C3AED}
+:root[data-theme="light"] body{background:var(--en-bg);color:var(--en-text)}
+:root[data-theme="light"] .english-hero{background:radial-gradient(circle at 80% 35%,#E9DFFF 0,transparent 38%),linear-gradient(120deg,#FFFFFF,#F4EFFB)}
+:root[data-theme="light"] .english-hero>div:first-child>p:not(.english-eyebrow){color:#625873}
+:root[data-theme="light"] .english-hero h1 span{color:#6D28D9}
+:root[data-theme="light"] .english-hero-art .art-letter{color:#6D28D9}
+:root[data-theme="light"] .word-of-day{background:linear-gradient(120deg,#F1EAFE,#FFFFFF);border-color:#D9C8F2}
+:root[data-theme="light"] .word-of-day h2{color:#251B35}
+:root[data-theme="light"] .word-of-day p{color:#625873}
+:root[data-theme="light"] .word-pronunciation{color:#6D28D9!important}
+:root[data-theme="light"] .speak-word{background:#EEE6FA;border-color:#D5C2F0;color:#4C1D95}
+:root[data-theme="light"] .category-card{background:#FFFFFF;color:#251B35}
+:root[data-theme="light"] .category-card.active{background:#F1EAFE;border-color:#8B5CF6}
+:root[data-theme="light"] .category-card small{color:#70677D}
+:root[data-theme="light"] .lesson-panel,:root[data-theme="light"] .practice-panel{background:#FFFFFF}
+:root[data-theme="light"] .lesson-point,:root[data-theme="light"] .practice-question{background:#FAF8FD;border-color:#E5DDED}
+:root[data-theme="light"] .lesson-point strong,:root[data-theme="light"] .practice-question h3{color:#30233F}
+:root[data-theme="light"] .lesson-point p,:root[data-theme="light"] .practice-intro,:root[data-theme="light"] .practice-footer p{color:#70677D}
+:root[data-theme="light"] .lesson-example{background:#F4EFFB;color:#49365F}
+:root[data-theme="light"] .lesson-actions button{background:#F2EDFA;color:#4C1D95;border-color:#D9C8F2}
+:root[data-theme="light"] .practice-option{background:#FFFFFF;color:#30233F;border-color:#E5DDED}
+:root[data-theme="light"] .practice-option.selected{background:#EEE6FA;border-color:#8B5CF6}
+:root[data-theme="light"] .option-letter{background:#F1EAFE;color:#5B21B6}
+:root[data-theme="light"] .practice-result{background:#F4EFFB;border-color:#D9C8F2}
+:root[data-theme="light"] .practice-review article{background:#FFFFFF}
+:root[data-theme="light"] .practice-result>p,:root[data-theme="light"] .practice-review p{color:#625873}
+:root[data-theme="light"] .english-bottom{background:#F2EDFA}
+:root[data-theme="light"] .english-bottom p:not(.english-eyebrow),:root[data-theme="light"] .english-footer{color:#70677D}
