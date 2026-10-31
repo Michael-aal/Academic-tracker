@@ -6,7 +6,7 @@ const { prisma } = require("../prisma");
 const { validateQuiz, publicQuiz, markQuiz } = require("../quiz-schema");
 const { consumeAiQuota } = require("../ai-quota");
 const { aiCreditGate } = require("../ai-credit-gate");
-const { requestChatCompletion, configuredProviders, hasConfiguredProvider } = require("../ai-provider");
+const { requestChatCompletion, configuredProviders, hasConfiguredProvider, providerOrder } = require("../ai-provider");
 
 const router = express.Router();
 router.use(requireAuth);
