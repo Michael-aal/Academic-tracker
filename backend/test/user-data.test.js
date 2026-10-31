@@ -12,7 +12,7 @@ const validCard = {
 };
 
 test("accepts the supported account data categories", () => {
-  for (const kind of ["secondary-tracker", "video-library", "video-history", "study-sessions", "memory-cards", "memory-stats", "tutor-conversations", "note-summaries", "study-notes", "focus-sessions", "preferences", "learning-progress"]) {
+  for (const kind of ["secondary-tracker", "video-library", "video-history", "study-sessions", "memory-cards", "memory-stats", "tutor-conversations", "note-summaries", "study-notes", "focus-sessions", "preferences"]) {
     assert.equal(userDataRouter.allowedKinds.has(kind), true);
   }
 });
@@ -67,8 +67,6 @@ test("validates account-synced study notes", () => {
   assert.match(userDataRouter.validateData("study-notes", { ...note, title: " " }, "note-1"), /study note is invalid/);
 });
 
-test("validates account learning progress records", () => {
-  const progress = { totalXp: 120, events: [{ id: "english-correct:sp-1", type: "english-correct", xp: 3, at: new Date().toISOString() }] };
-  assert.equal(userDataRouter.validateData("learning-progress", progress, "main"), null);
-  assert.match(userDataRouter.validateData("learning-progress", progress, "other"), /learning progress record is invalid/);
+test("learning progress cannot be written through the generic user-data API", () => {
+  assert.equal(userDataRouter.allowedKinds.has("learning-progress"), false);
 });
