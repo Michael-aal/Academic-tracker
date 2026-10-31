@@ -63,3 +63,10 @@ html[data-theme="dark"] :is(.tutor-eyebrow,.tutor-back:hover,.ai-tutor-page .ai-
 html[data-theme="dark"] :is(.tutor-context input:focus,.tutor-composer textarea:focus){border-color:#a78bfa!important;box-shadow:0 0 0 3px rgba(139,92,246,.16)!important}
 html[data-theme="light"] :is(.tutor-eyebrow,.tutor-back:hover,.ai-tutor-page .ai-global-nav a:hover,.ai-tutor-page .ai-global-nav button:hover,.tutor-composer-heading .section-kicker){color:#7545c8!important}
 html[data-theme="light"] :is(.tutor-context input:focus,.tutor-composer textarea:focus){border-color:#8b5cf6!important;box-shadow:0 0 0 3px rgba(117,69,200,.14)!important}
+
+
+/* Final tutor-specific accent cleanup: no teal survives in interactive content. */
+html[data-theme="dark"] :is(.tutor-prompt-grid button>span:first-child,.quick-help-list button span,.tutor-message-label,.tutor-message-student .tutor-message-label,.tutor-chat-top .result-label){color:#c4b5fd!important}
+html[data-theme="dark"] .tutor-prompt-grid button>span:first-child{background:rgba(139,92,246,.14)!important;border-color:rgba(167,139,250,.3)!important}
+html[data-theme="light"] :is(.tutor-prompt-grid button>span:first-child,.quick-help-list button span,.tutor-message-label,.tutor-message-student .tutor-message-label,.tutor-chat-top .result-label){color:#7545c8!important}
+html[data-theme="light"] .tutor-prompt-grid button>span:first-child{background:#f0e7ff!important;border-color:#d8c9eb!important}
