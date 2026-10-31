@@ -201,3 +201,32 @@ html[data-theme="dark"] .at-install-dismiss { color: #d5c9e8 !important; }
   html[data-theme="dark"] .at-install-banner,
   html[data-theme="dark"] .at-install-help-panel { background: #171123 !important; }
 }
+
+
+/* Explicit install prompt button contrast.
+   Do not let broad dark-mode button resets turn these controls white-on-white. */
+html[data-theme="dark"] .at-install-banner .at-install-primary,
+html[data-theme="dark"] .at-install-help-panel .at-install-help-close {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: #6d28d9 !important;
+  background-color: #6d28d9 !important;
+  background-image: none !important;
+  border: 1px solid #a78bfa !important;
+}
+html[data-theme="dark"] .at-install-banner .at-install-dismiss {
+  color: #f5f3ff !important;
+  -webkit-text-fill-color: #f5f3ff !important;
+  background: rgba(109,40,217,.20) !important;
+  background-color: rgba(109,40,217,.20) !important;
+  border: 1px solid rgba(167,139,250,.42) !important;
+}
+html[data-theme="dark"] .at-install-banner .at-install-primary:hover,
+html[data-theme="dark"] .at-install-help-panel .at-install-help-close:hover {
+  background: #5b21b6 !important;
+  background-color: #5b21b6 !important;
+}
+html[data-theme="dark"] .at-install-banner .at-install-dismiss:hover {
+  background: rgba(109,40,217,.34) !important;
+  background-color: rgba(109,40,217,.34) !important;
+}
