@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0B0812">
+  <meta name="description" content="Track your Academic Tracker learning level, XP, streaks and achievements.">
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem("academic-tracker-theme")==="dark"?"dark":"light"}catch(_){}</script>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="site-design-system.css">
+  <link rel="stylesheet" href="premium-theme.css">
+  <link rel="stylesheet" href="global-navigation.css">
+  <link rel="stylesheet" href="global-light-mode.css" data-global-light-mode>
+  <link rel="stylesheet" href="dark-mode-guard.css" data-dark-mode-guard>
+  <link rel="stylesheet" href="theme-page-overrides.css" data-page-theme-overrides>
+  <link rel="stylesheet" href="level-up.css">
+  <script src="global-theme.js" defer data-global-theme></script>
+  <title>My Learning Level · Academic Tracker</title>
+</head>
+<body>
+  <div class="level-shell">
+    <header class="level-header">
+      <a class="level-brand" href="ai-learning.html"><span class="level-brand-mark">A</span> Academic Tracker</a>
+      <nav aria-label="Learning navigation">
+        <a href="ai-learning.html">AI Learning</a>
+        <a href="english-studio.html">English Studio</a>
+        <a class="active" href="level-up.html">My level</a>
+        <button id="level-signout" type="button">Sign out</button>
+      </nav>
+    </header>
+    <main class="level-main">
+      <section class="level-heading">
+        <p class="level-eyebrow">YOUR LEARNING JOURNEY</p>
+        <h1>Every effort moves you forward.</h1>
+        <p>Earn experience by learning, practising and completing real study activities.</p>
+      </section>
+      <p id="level-notice" class="level-notice" role="status" aria-live="polite">Loading your learning profile…</p>
+      <section class="level-hero" aria-labelledby="level-title">
+        <div class="level-orb" aria-hidden="true"><span id="level-number">—</span><small>LEVEL</small></div>
+        <div class="level-hero-copy">
+          <p class="level-eyebrow">CURRENT RANK</p>
+          <h2 id="level-title">Loading level…</h2>
+          <p id="level-xp-total">— XP earned</p>
+          <div class="level-progress-track" role="progressbar" aria-label="Progress to next level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="level-progress"><span id="level-progress-fill"></span></div>
+          <p id="level-progress-label">Loading next level…</p>
+        </div>
+      </section>
+      <section class="level-stats" aria-label="Learning statistics">
+        <article><span>Today's XP</span><strong id="daily-xp">—</strong><small id="daily-cap">Daily limit</small></article>
+        <article><span>Learning streak</span><strong id="streak-days">—</strong><small>Consecutive active days</small></article>
+        <article><span>Next level</span><strong id="xp-to-next">—</strong><small>XP remaining</small></article>
+      </section>
+      <section class="level-section">
+        <div class="level-section-heading"><div><p class="level-eyebrow">MILESTONES</p><h2>Achievements</h2></div><span id="badge-count" class="level-count">— earned</span></div>
+        <div id="badge-grid" class="badge-grid"><div class="level-skeleton"></div><div class="level-skeleton"></div><div class="level-skeleton"></div></div>
+      </section>
+      <section class="level-section">
+        <div class="level-section-heading"><div><p class="level-eyebrow">YOUR PROGRESS</p><h2>Recent activity</h2></div></div>
+        <div id="activity-list" class="activity-list"><p class="level-muted">Your completed learning activities will appear here.</p></div>
+      </section>
+      <section class="level-next">
+        <div><p class="level-eyebrow">KEEP MOVING</p><h2>What will you learn next?</h2><p>Practise English, complete a quiz or review your flashcards to earn experience.</p></div>
+        <div class="level-actions"><a href="english-studio.html">English Studio</a><a href="ai-learning.html">AI Learning</a><a href="memory-mastery.html">Memory Mastery</a></div>
+      </section>
+    </main>
+    <footer class="level-footer">Academic Tracker · Progress built through learning.</footer>
+  </div>
+  <script src="level-up.js"></script>
+  <script src="global-navigation.js"></script>
+</body>
+</html>
