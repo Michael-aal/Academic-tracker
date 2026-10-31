@@ -138,3 +138,7 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(109,40,217,.22),transpare
 .pathway-tab:hover,.pathway-tab.active{background:#20172F;color:#F5F3FF;border-color:#8B5CF6}
 .pathway-points li:before,.faq-item summary:after{color:#A78BFA}
 @media(max-width:720px){.site-nav{background:rgba(17,13,27,.99);border-color:rgba(167,139,250,.2)}.feature-icon{width:44px;height:44px}}
+
+
+/* Keep decorative external-link arrow badges out of the landing-page hero. */
+.chip-icon:has(.arrow-icon){display:none!important}
