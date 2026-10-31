@@ -72,7 +72,10 @@ router.post("/login", loginLimiter, async (req, res, next) => {
     const configuredAdminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
     const configuredAdminPassword = process.env.ADMIN_PASSWORD || "";
 
-    if (configuredAdminEmail && email === configuredAdminEmail && configuredAdminPassword) {
+    if (configuredAdminEmail && email === configuredAdminEmail) {
+      if (!configuredAdminPassword) {
+        return res.status(503).json({ error: "Administrator login is not configured on the server." });
+      }
       // Compare the private environment value without an early-exit string comparison.
       const supplied = Buffer.from(password, "utf8");
       const expected = Buffer.from(configuredAdminPassword, "utf8");
