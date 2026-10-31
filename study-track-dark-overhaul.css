@@ -60,26 +60,26 @@ html[data-theme="dark"] body .at-nav-restore{color:#fff!important;background:#21
 
 /* Memory Mastery uses its own .mm-* component system rather than generic cards.
    Bring every custom surface into the shared purple dark theme without touching light mode. */
-html[data-theme="dark"] body.memory-mastery-page :is(.mm-topbar,.mm-panel,.mm-stat,.mm-empty,.mm-flashcard,.mm-library-card,.mm-count,.mm-secondary,.mm-ratings button,.mm-add input,.mm-add textarea,.mm-library-actions input,.mm-library-meta span){
+html[data-theme="dark"] body :is(.mm-topbar,.mm-panel,.mm-stat,.mm-empty,.mm-flashcard,.mm-library-card,.mm-count,.mm-secondary,.mm-ratings button,.mm-add input,.mm-add textarea,.mm-library-actions input,.mm-library-meta span){
   color:#fff!important;
   background:#171123!important;
   border-color:#3A2D4D!important;
 }
-html[data-theme="dark"] body.memory-mastery-page :is(.mm-hero>p,.mm-principles span,.mm-stat span,.mm-stat small,.mm-panel-heading p:not(.section-kicker),.mm-empty p,.mm-card-meta,.mm-face-label,.mm-flashcard>p,.mm-rating-title,.mm-ratings small,.mm-review-tip,.mm-form-note,.mm-library-card p,.mm-library-meta,.mm-add form label,.mm-library-empty){
+html[data-theme="dark"] body :is(.mm-hero>p,.mm-principles span,.mm-stat span,.mm-stat small,.mm-panel-heading p:not(.section-kicker),.mm-empty p,.mm-card-meta,.mm-face-label,.mm-flashcard>p,.mm-rating-title,.mm-ratings small,.mm-review-tip,.mm-form-note,.mm-library-card p,.mm-library-meta,.mm-add form label,.mm-library-empty){
   color:#C0BBD6!important;
 }
-html[data-theme="dark"] body.memory-mastery-page :is(.mm-brand,.mm-panel-heading h2,.mm-flashcard h3,.mm-library-card h3,.mm-stat strong,.mm-empty h3,.mm-library-card strong){
+html[data-theme="dark"] body :is(.mm-brand,.mm-panel-heading h2,.mm-flashcard h3,.mm-library-card h3,.mm-stat strong,.mm-empty h3,.mm-library-card strong){
   color:#fff!important;
 }
-html[data-theme="dark"] body.memory-mastery-page .mm-primary{
+html[data-theme="dark"] body .mm-primary{
   color:#fff!important;background:linear-gradient(135deg,#8B5CF6,#6D28D9)!important;border:1px solid #A78BFA!important;
 }
-html[data-theme="dark"] body.memory-mastery-page .mm-secondary{
+html[data-theme="dark"] body .mm-secondary{
   color:#F5F0FF!important;background:#211832!important;border:1px solid #49375F!important;
 }
-html[data-theme="dark"] body.memory-mastery-page .mm-flashcard #review-answer,
-html[data-theme="dark"] body.memory-mastery-page .mm-notice{color:#D8CCFF!important}
-html[data-theme="dark"] body.memory-mastery-page :is(.mm-brand-mark,.mm-empty-icon,.mm-principles b,.mm-card-meta span:first-child){
+html[data-theme="dark"] body .mm-flashcard #review-answer,
+html[data-theme="dark"] body .mm-notice{color:#D8CCFF!important}
+html[data-theme="dark"] body :is(.mm-brand-mark,.mm-empty-icon,.mm-principles b,.mm-card-meta span:first-child){
   color:#D8CCFF!important;
 }
 
