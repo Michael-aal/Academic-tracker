@@ -13,7 +13,7 @@
       const rest=input.slice(i);
       const n=/^(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?/i.exec(rest);
       if(n){const value=Number(n[0]);if(!Number.isFinite(value))throw new Error("That number is too large.");tokens.push({type:"number",value});i+=n[0].length;continue;}
-      const id=/^[a-z]+/i.exec(rest);
+      const id=/^(?:log10|[a-z]+)/i.exec(rest);
       if(id){tokens.push({type:"identifier",value:id[0].toLowerCase()});i+=id[0].length;continue;}
       const ch=input[i];
       if("+-*/^()%!, ".includes(ch)){tokens.push({type:ch==="("||ch===")"||ch===","?ch:"operator",value:ch});i++;continue;}
@@ -67,7 +67,7 @@
           if(peek()?.type!==")")throw new Error("Add the missing closing bracket.");take();return call(name,args);
         }
         if(name==="pi")return Math.PI;if(name==="e")return Math.E;
-        throw new Error("Unknown constant or function: "+name+".");
+        throw new Error("Check the expression: unknown constant or function "+name+".");
       }
       throw new Error("Check the expression and try again.");
     }
