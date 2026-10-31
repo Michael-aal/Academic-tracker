@@ -274,7 +274,7 @@ model PaymentTransaction {
   itemKey     String   @map("item_key") @db.VarChar(40)
   amountKobo  Int      @map("amount_kobo")
   baseAmountUsdCents Int @default(0) @map("base_amount_usd_cents")
-  exchangeRateMicros Int @default(0) @map("exchange_rate_micros")
+  exchangeRateTenThousandths Int @default(0) @map("exchange_rate_ten_thousandths")
   exchangeRateAsOf DateTime? @map("exchange_rate_as_of")
   credits     Int      @default(0)
   durationDays Int     @default(0) @map("duration_days")
