@@ -43,6 +43,8 @@ async function verifyWithPaystack(reference) {
 
 async function grantPaidTransaction(reference, verified) {
   return prisma.$transaction(async tx => {
+    // Serialize webhook and browser verification for this reference before reading status.
+    await tx.$queryRaw`SELECT "id" FROM "payment_transactions" WHERE "reference" = ${reference} FOR UPDATE`;
     const payment = await tx.paymentTransaction.findUnique({ where: { reference } });
     if (!payment) return { status: 404, error: "Payment reference was not found." };
     if (payment.status === "PAID") return { status: 200, alreadyProcessed: true };
@@ -53,8 +55,6 @@ async function grantPaidTransaction(reference, verified) {
     await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${payment.userId} FOR UPDATE`;
     const now = new Date();
     if (payment.type === "PLAN") {
-      const plan = safeCatalog().plans.find(item => item.key === payment.itemKey);
-      if (!plan) return { status: 409, error: "This plan is no longer available. Contact support." };
       const existing = await tx.premiumAccess.findUnique({ where: { userId: payment.userId } });
       const startsAt = existing && existing.expiresAt > now ? existing.expiresAt : now;
       const days = Number(payment.durationDays || plan.durationDays);
@@ -67,15 +67,13 @@ async function grantPaidTransaction(reference, verified) {
       });
       if (payment.credits > 0) {
         await tx.creditWallet.upsert({ where: { userId: payment.userId }, create: { userId: payment.userId, balance: payment.credits }, update: { balance: { increment: payment.credits } } });
-        await tx.creditLot.create({ data: { userId: payment.userId, originalCredits: payment.credits, remainingCredits: payment.credits, expiresAt: new Date(now.getTime() + (plan.creditValidityDays || 30) * DAY) } });
-        await tx.creditLedger.create({ data: { userId: payment.userId, delta: payment.credits, kind: "PLAN_GRANT", reference: "paystack:" + reference, description: "Credits included with " + plan.name } });
+        await tx.creditLot.create({ data: { userId: payment.userId, originalCredits: payment.credits, remainingCredits: payment.credits, expiresAt: new Date(now.getTime() + (payment.creditValidityDays || 30) * DAY) } });
+        await tx.creditLedger.create({ data: { userId: payment.userId, delta: payment.credits, kind: "PLAN_GRANT", reference: "paystack:" + reference, description: "Credits included with " + payment.itemKey } });
       }
     } else {
-      const bundle = safeCatalog().bundles.find(item => item.key === payment.itemKey);
-      if (!bundle) return { status: 409, error: "This credit bundle is no longer available. Contact support." };
       await tx.creditWallet.upsert({ where: { userId: payment.userId }, create: { userId: payment.userId, balance: payment.credits }, update: { balance: { increment: payment.credits } } });
-      await tx.creditLot.create({ data: { userId: payment.userId, originalCredits: payment.credits, remainingCredits: payment.credits, expiresAt: new Date(now.getTime() + bundle.creditValidityDays * DAY) } });
-      await tx.creditLedger.create({ data: { userId: payment.userId, delta: payment.credits, kind: "PURCHASE", reference: "paystack:" + reference, description: bundle.name + " credit bundle" } });
+      await tx.creditLot.create({ data: { userId: payment.userId, originalCredits: payment.credits, remainingCredits: payment.credits, expiresAt: new Date(now.getTime() + (payment.creditValidityDays || 30) * DAY) } });
+      await tx.creditLedger.create({ data: { userId: payment.userId, delta: payment.credits, kind: "PURCHASE", reference: "paystack:" + reference, description: payment.itemKey + " credit bundle" } });
     }
     await tx.paymentTransaction.update({ where: { reference }, data: { status: "PAID", paidAt: now } });
     return { status: 200, alreadyProcessed: false };
@@ -134,7 +132,7 @@ router.post("/initialize", async (req, res, next) => {
     const credits = type === "PLAN" && key === "daily" ? item.credits * days : item.credits;
     if (!Number.isSafeInteger(amountKobo) || amountKobo < 10000 || !Number.isSafeInteger(credits) || credits < 0) return res.status(400).json({ error: "Package configuration is invalid." });
     const reference = makeReference();
-    const payment = await prisma.paymentTransaction.create({ data: { userId: req.userId, reference, type, itemKey: key, amountKobo, credits, durationDays: type === "PLAN" ? (days || item.durationDays) : 0 } });
+    const payment = await prisma.paymentTransaction.create({ data: { userId: req.userId, reference, type, itemKey: key, amountKobo, credits, durationDays: type === "PLAN" ? (days || item.durationDays) : 0, creditValidityDays: item.creditValidityDays } });
     const response = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST", headers: { Authorization: "Bearer " + paystackSecret(), "Content-Type": "application/json" },
       body: JSON.stringify({ email: (await prisma.user.findUnique({ where: { id: req.userId }, select: { email: true } })).email, amount: amountKobo, currency: NGN, reference, callback_url: (process.env.PAYSTACK_CALLBACK_URL || "https://academic-tracker-iota.vercel.app/premium.html"), metadata: { userId: req.userId, type, key, durationDays: days || item.durationDays || 0 } })
