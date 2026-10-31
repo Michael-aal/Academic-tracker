@@ -56,3 +56,38 @@ html[data-theme="dark"] body :is(.at-global-header,.at-mobile-nav){color:#fff!im
 html[data-theme="dark"] body .at-nav-restore{color:#fff!important;background:#211832!important;border-color:#49375F!important}
 @media(max-width:760px){html[data-theme="dark"] body.quiz-page-body .quiz-main{padding:22px 15px 38px!important}html[data-theme="dark"] body.quiz-page-body .quiz-overview-row{grid-template-columns:1fr;gap:9px}html[data-theme="dark"] .at-notes-drawer{width:100vw;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}}
 @media(prefers-reduced-motion:reduce){html[data-theme="dark"] body *,html[data-theme="dark"] body *:before,html[data-theme="dark"] body *:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+
+/* Memory Mastery uses its own .mm-* component system rather than generic cards.
+   Bring every custom surface into the shared purple dark theme without touching light mode. */
+html[data-theme="dark"] body.memory-mastery-page :is(.mm-topbar,.mm-panel,.mm-stat,.mm-empty,.mm-flashcard,.mm-library-card,.mm-count,.mm-secondary,.mm-ratings button,.mm-add input,.mm-add textarea,.mm-library-actions input,.mm-library-meta span){
+  color:#fff!important;
+  background:#171123!important;
+  border-color:#3A2D4D!important;
+}
+html[data-theme="dark"] body.memory-mastery-page :is(.mm-hero>p,.mm-principles span,.mm-stat span,.mm-stat small,.mm-panel-heading p:not(.section-kicker),.mm-empty p,.mm-card-meta,.mm-face-label,.mm-flashcard>p,.mm-rating-title,.mm-ratings small,.mm-review-tip,.mm-form-note,.mm-library-card p,.mm-library-meta,.mm-add form label,.mm-library-empty){
+  color:#C0BBD6!important;
+}
+html[data-theme="dark"] body.memory-mastery-page :is(.mm-brand,.mm-panel-heading h2,.mm-flashcard h3,.mm-library-card h3,.mm-stat strong,.mm-empty h3,.mm-library-card strong){
+  color:#fff!important;
+}
+html[data-theme="dark"] body.memory-mastery-page .mm-primary{
+  color:#fff!important;background:linear-gradient(135deg,#8B5CF6,#6D28D9)!important;border:1px solid #A78BFA!important;
+}
+html[data-theme="dark"] body.memory-mastery-page .mm-secondary{
+  color:#F5F0FF!important;background:#211832!important;border:1px solid #49375F!important;
+}
+html[data-theme="dark"] body.memory-mastery-page .mm-flashcard #review-answer,
+html[data-theme="dark"] body.memory-mastery-page .mm-notice{color:#D8CCFF!important}
+html[data-theme="dark"] body.memory-mastery-page :is(.mm-brand-mark,.mm-empty-icon,.mm-principles b,.mm-card-meta span:first-child){
+  color:#D8CCFF!important;
+}
+
+/* The install item must remain a real, visible menu row in dark mode. */
+html[data-theme="dark"] body #at-nav-menu #at-nav-install-app{
+  color:#fff!important;background:#211832!important;border:1px solid #49375F!important;
+}
+html[data-theme="dark"] body #at-nav-menu #at-nav-install-app:hover,
+html[data-theme="dark"] body #at-nav-menu #at-nav-install-app:focus-visible{
+  color:#fff!important;background:#302044!important;border-color:#A78BFA!important;
+}
