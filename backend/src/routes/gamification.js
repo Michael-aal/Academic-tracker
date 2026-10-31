@@ -82,6 +82,14 @@ router.get("/insights", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+router.get("/english/stories", async (req, res, next) => {
+  try {
+    const records = await prisma.userDataRecord.findMany({ where: { userId: req.userId, kind: "english-stories" }, orderBy: { updatedAt: "desc" }, take: 30, select: { recordId: true, data: true, createdAt: true } });
+    res.set("Cache-Control", "private, no-store");
+    res.json({ stories: records.map(record => ({ ...record.data, id: record.recordId, createdAt: record.createdAt })) });
+  } catch (error) { next(error); }
+});
+
 router.get("/english/categories", (_req, res) => {
   res.json({ categories: categories().map(id => ({ id, name: CATEGORY_LABELS[id] })) });
 });
