@@ -164,7 +164,13 @@
   });
 
   window.addEventListener("at-pwa-install-ready", refreshInstallUI);
+  window.addEventListener("load", refreshInstallUI, { once: true });
+  if (document.body && "MutationObserver" in window) {
+    const installButtonObserver = new MutationObserver(refreshInstallUI);
+    installButtonObserver.observe(document.body, { childList: true, subtree: true });
+  }
   refreshInstallUI();
+  window.dispatchEvent(new Event("at-pwa-install-ready"));
 
   if ("serviceWorker" in navigator && window.isSecureContext) {
     const registerWorker = () => {
