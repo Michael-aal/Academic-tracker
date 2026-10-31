@@ -73,8 +73,7 @@ The AI status endpoint is admin-only and reports configured provider names/model
 - Active Premium accounts do not receive the Free-plan refresh while their Premium access is active. Purchased credits remain in separate expiry-dated lots.
 - Fixed costs per successful AI request: AI Tutor **2**, Quiz **3**, Notes Summary **2**, Study Plan **2**, and Flashcards **2** credits. The backend enforces these costs; client-supplied costs are ignored.
 - Failed AI requests are refunded idempotently. Successful requests are charged the fixed action cost, regardless of provider fallback. Actual input/output token counts, provider, model, request correlation ID, and result status remain recorded separately for cost monitoring. Admins can inspect usage through `GET /api/ai/usage`; users can inspect their own records through `GET /api/ai/usage/me`.
-- Failed AI requests are refunded idempotently. Credit lots expiring during a request receive a fresh refund lot rather than losing the refund.
-- The estimator is a reservation safeguard, not an invoice. Calibrate rates and maximum workload costs against real provider invoices before live launch.
+- Credit lots expiring during a request receive a fresh refund lot rather than losing the refund.
 
 ## 6. API
 
