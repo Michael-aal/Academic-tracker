@@ -47,9 +47,7 @@ function recordAiUsage(req, usage = {}, provider = "unknown", model = "unknown",
     status: providerOk ? "PROVIDER_OK" : "PROVIDER_FAILED",
     providerStatus: Number.isInteger(providerStatus) ? providerStatus : 0
   });
-  req.aiActualCredits = req.aiUsageEvents.every(event => event.usageKnown)
-    ? Math.max(1, req.aiUsageEvents.reduce((sum, event) => sum + event.creditsCharged, 0))
-    : undefined;
+  // Credit charges are fixed per AI action; provider token usage remains audit-only.
 }
 
 function aiUsageAudit(req, res, next) {
@@ -61,7 +59,8 @@ function aiUsageAudit(req, res, next) {
     if (!Array.isArray(req.aiUsageEvents) || req.aiUsageEvents.length === 0) return sendJson(payload);
     if (res.statusCode >= 400) {
       for (const event of req.aiUsageEvents) event.creditsCharged = 0;
-    } else if (!req.aiUsageEvents.every(event => event.usageKnown)) {
+    } else {
+      // Charge the fixed action cost once per request, even when provider fallback occurs.
       for (const event of req.aiUsageEvents) event.creditsCharged = 0;
       req.aiUsageEvents[req.aiUsageEvents.length - 1].creditsCharged = req.aiCreditReservation?.amount || 0;
     }
