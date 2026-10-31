@@ -33,6 +33,11 @@ model User {
   dataRecords           UserDataRecord[]
   subjectDeletions       SubjectDeletion[]
   aiUsageEvents         AiUsageEvent[]
+  premiumAccess         PremiumAccess?
+  creditWallet          CreditWallet?
+  creditLots            CreditLot[]
+  creditLedger          CreditLedger[]
+  paymentTransactions   PaymentTransaction[]
 
   @@map("users")
 }
@@ -207,4 +212,70 @@ model SubjectDeletion {
   @@unique([userId, subjectId])
   @@index([userId, deletedAt])
   @@map("subject_deletions")
+}
+
+
+model PremiumAccess {
+  id        String   @id @default(cuid())
+  userId    String   @unique @map("user_id")
+  planKey   String   @map("plan_key") @db.VarChar(20)
+  startsAt  DateTime @map("starts_at")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([expiresAt])
+  @@map("premium_access")
+}
+
+model CreditWallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique @map("user_id")
+  balance   Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("credit_wallets")
+}
+
+model CreditLot {
+  id               String   @id @default(cuid())
+  userId           String   @map("user_id")
+  originalCredits  Int      @map("original_credits")
+  remainingCredits Int      @map("remaining_credits")
+  expiresAt        DateTime @map("expires_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, expiresAt, createdAt])
+  @@map("credit_lots")
+}
+
+model CreditLedger {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  delta       Int
+  kind        String   @db.VarChar(30)
+  reference   String?  @unique @db.VarChar(120)
+  description String   @db.VarChar(240)
+  createdAt   DateTime @default(now()) @map("created_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
+  @@map("credit_ledger")
+}
+
+model PaymentTransaction {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  reference   String   @unique @db.VarChar(120)
+  type        String   @db.VarChar(20)
+  itemKey     String   @map("item_key") @db.VarChar(40)
+  amountKobo  Int      @map("amount_kobo")
+  credits     Int      @default(0)
+  status      String   @default("PENDING") @db.VarChar(20)
+  paidAt      DateTime? @map("paid_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@map("payment_transactions")
 }
