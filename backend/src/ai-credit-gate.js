@@ -41,21 +41,26 @@ async function reserveCredits(userId, amount) {
   }, { isolationLevel: "Serializable" });
 }
 
-async function refundCredits(userId, reservation) {
-  if (!reservation?.premium || !reservation.reservationId) return;
+async function refundCredits(userId, reservation, creditsToRefund = reservation?.amount) {
+  if (!reservation?.premium || !reservation.reservationId || !Number.isInteger(creditsToRefund) || creditsToRefund <= 0) return;
+  creditsToRefund = Math.min(creditsToRefund, reservation.amount);
   await prisma.$transaction(async tx => {
     const existing = await tx.creditLedger.findUnique({ where: { reference: "refund:" + reservation.reservationId } });
     if (existing) return;
     await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${userId} FOR UPDATE`;
-    for (const allocation of reservation.allocations) {
+    let remaining = creditsToRefund;
+    for (const allocation of [...reservation.allocations].reverse()) {
+      if (!remaining) break;
+      const restore = Math.min(remaining, allocation.credits);
       await tx.creditLot.updateMany({
         where: { id: allocation.lotId, userId },
-        data: { remainingCredits: { increment: allocation.credits } }
+        data: { remainingCredits: { increment: restore } }
       });
+      remaining -= restore;
     }
-    await tx.creditWallet.updateMany({ where: { userId }, data: { balance: { increment: reservation.amount } } });
+    await tx.creditWallet.updateMany({ where: { userId }, data: { balance: { increment: creditsToRefund } } });
     await tx.creditLedger.create({
-      data: { userId, delta: reservation.amount, kind: "AI_REFUND", reference: "refund:" + reservation.reservationId, description: "Refund for unsuccessful AI request" }
+      data: { userId, delta: creditsToRefund, kind: "AI_REFUND", reference: "refund:" + reservation.reservationId, description: "Refund of unused or unsuccessful AI credits" }
     });
   }, { isolationLevel: "Serializable" });
 }
@@ -85,7 +90,15 @@ async function aiCreditGate(req, res, next) {
           .finally(() => sendJson(payload));
         return res;
       }
-      return sendJson({ ...payload, creditUsage: { charged: reservation.amount, estimated: true, balance: reservation.available } });
+      const charged = Number.isInteger(req.aiActualCredits) ? Math.min(reservation.amount, Math.max(1, req.aiActualCredits)) : reservation.amount;
+      const unused = reservation.amount - charged;
+      if (unused > 0) {
+        refundCredits(req.userId, reservation, unused)
+          .catch(error => console.error("AI credit settlement failed:", error.code || error.name))
+          .finally(() => sendJson({ ...payload, creditUsage: { charged, estimated: !Number.isInteger(req.aiActualCredits), balance: reservation.available + unused } }));
+        return res;
+      }
+      return sendJson({ ...payload, creditUsage: { charged, estimated: !Number.isInteger(req.aiActualCredits), balance: reservation.available } });
     };
     return next();
   } catch (error) { return next(error); }
