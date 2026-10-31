@@ -1,5 +1,5 @@
 const express = require("express");
-const { randomUUID } = require("node:crypto");
+const { randomUUID, createHash } = require("node:crypto");
 const rateLimit = require("express-rate-limit");
 const { requireAuth } = require("../middleware/auth");
 const { prisma } = require("../prisma");
@@ -17,7 +17,7 @@ router.use(rateLimit({
   message: { error: "Too many learning activity requests. Please slow down." }
 }));
 
-const CATEGORY_LABELS = {
+function stableEventKey(prefix, value) {\n  return prefix + ":" + createHash("sha256").update(String(value)).digest("hex").slice(0, 48);\n}\n\nconst CATEGORY_LABELS = {
   vocabulary: "Vocabulary",
   spelling: "Spelling",
   grammar: "Grammar",
@@ -120,7 +120,7 @@ router.post("/english/submit", async (req, res, next) => {
       const questions = Array.isArray(data.questions) ? data.questions : [];
       const answerMap = new Map();
       for (const item of answers) {
-        if (!item || typeof item.questionId !== "string" || !Number.isInteger(item.optionIndex) ||
+        if (!item || typeof item.questionId !== "string" || !Number.isInteger(item.optionIndex) || item.optionIndex < 0 || item.optionIndex > 3 ||
             answerMap.has(item.questionId)) return { status: 400, body: { error: "One or more submitted answers are invalid." } };
         answerMap.set(item.questionId, item.optionIndex);
       }
@@ -175,7 +175,7 @@ router.post("/study-session/:recordId/claim", async (req, res, next) => {
     });
     if (!session || session.data?.completed !== true) return res.status(409).json({ error: "Complete and sync this study session before claiming XP." });
     const result = await prisma.$transaction(tx => awardXp(tx, req.userId, {
-      eventKey: "study-session:" + req.params.recordId, activity: "study",
+      eventKey: stableEventKey("study-session", req.params.recordId), activity: "study",
       description: "Completed a planned study session", points: 5
     }));
     res.json({ xpAwarded: result.awarded, duplicate: result.duplicate });
@@ -191,7 +191,7 @@ router.post("/flashcard/:recordId/claim", async (req, res, next) => {
     if (!card || typeof card.data?.question !== "string" || typeof card.data?.answer !== "string") return res.status(404).json({ error: "Saved flashcard not found." });
     const date = new Date().toISOString().slice(0, 10);
     const result = await prisma.$transaction(tx => awardXp(tx, req.userId, {
-      eventKey: "flashcard:" + req.params.recordId + ":" + date, activity: "flashcard",
+      eventKey: stableEventKey("flashcard:" + date, req.params.recordId), activity: "flashcard",
       description: "Reviewed a flashcard", points: 1
     }));
     res.json({ xpAwarded: result.awarded, duplicate: result.duplicate });
