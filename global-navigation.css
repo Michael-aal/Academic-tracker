@@ -510,3 +510,66 @@ html[data-theme="dark"] .at-nav-popover {
     transition: none !important;
   }
 }
+
+
+/* Shared glass-surface system for dialogs, confirmation prompts and popovers.
+   Keep the surface readable while allowing the page behind it to softly blur. */
+:root {
+  --at-glass-light: rgba(255,255,255,.78);
+  --at-glass-dark: rgba(23,17,35,.80);
+  --at-glass-border-light: rgba(227,216,243,.88);
+  --at-glass-border-dark: rgba(167,139,250,.30);
+  --at-glass-shadow: 0 22px 64px rgba(22,12,38,.24);
+}
+html[data-theme="light"] :is(
+  .at-nav-popover, .dropdown-menu, .account-menu, .menu-dropdown,
+  .ai-tools-menu, .ai-more-menu, .ai-mobile-menu,
+  .modal-content, .modal-dialog, .dialog, .dialog-content,
+  .confirm-modal, .confirm-dialog, .alert-dialog, .popup-content,
+  .settings-modal, .share-modal, [role="dialog"]
+) {
+  color: #35224f;
+  background: var(--at-glass-light) !important;
+  background-color: var(--at-glass-light) !important;
+  border-color: var(--at-glass-border-light) !important;
+  box-shadow: var(--at-glass-shadow) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(165%) !important;
+  backdrop-filter: blur(22px) saturate(165%) !important;
+}
+html[data-theme="dark"] :is(
+  .at-nav-popover, .dropdown-menu, .account-menu, .menu-dropdown,
+  .ai-tools-menu, .ai-more-menu, .ai-mobile-menu,
+  .modal-content, .modal-dialog, .dialog, .dialog-content,
+  .confirm-modal, .confirm-dialog, .alert-dialog, .popup-content,
+  .settings-modal, .share-modal, [role="dialog"]
+) {
+  color: #f5f3ff;
+  background: var(--at-glass-dark) !important;
+  background-color: var(--at-glass-dark) !important;
+  border-color: var(--at-glass-border-dark) !important;
+  box-shadow: 0 24px 68px rgba(0,0,0,.48) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(155%) !important;
+  backdrop-filter: blur(24px) saturate(155%) !important;
+}
+/* Full-screen modal backdrops should dim the page without becoming opaque. */
+:is(.modal-backdrop, .dialog-backdrop, .popup-backdrop, [data-modal-backdrop]) {
+  background: rgba(12,8,20,.38) !important;
+  -webkit-backdrop-filter: blur(5px) !important;
+  backdrop-filter: blur(5px) !important;
+}
+html[data-theme="light"] :is(.modal-backdrop, .dialog-backdrop, .popup-backdrop, [data-modal-backdrop]) {
+  background: rgba(47,28,82,.16) !important;
+}
+/* Restore the glass effect that earlier dropdown hardening rules disabled. */
+.at-nav-popover, .dropdown-menu, .account-menu, .menu-dropdown,
+.ai-tools-menu, .ai-more-menu, .ai-mobile-menu {
+  -webkit-backdrop-filter: blur(22px) saturate(160%) !important;
+  backdrop-filter: blur(22px) saturate(160%) !important;
+}
+@supports not ((backdrop-filter: blur(1px))) {
+  html[data-theme="light"] :is(.at-nav-popover, .dropdown-menu, .account-menu, .menu-dropdown, .ai-tools-menu, .ai-more-menu, .ai-mobile-menu, .modal-content, .dialog-content, [role="dialog"]) { background: #fff !important; }
+  html[data-theme="dark"] :is(.at-nav-popover, .dropdown-menu, .account-menu, .menu-dropdown, .ai-tools-menu, .ai-more-menu, .ai-mobile-menu, .modal-content, .dialog-content, [role="dialog"]) { background: #171123 !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.at-nav-popover, .dropdown-menu, .account-menu, .menu-dropdown, .modal-content, .dialog-content, [role="dialog"]) { transition: none !important; }
+}
