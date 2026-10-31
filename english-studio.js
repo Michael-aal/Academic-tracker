@@ -92,7 +92,8 @@
   document.querySelectorAll("[data-category]").forEach(button=>button.addEventListener("click",()=>chooseCategory(button.dataset.category)));
   $("start-challenge").addEventListener("click",startChallenge);
   $("submit-practice").addEventListener("click",submitChallenge);
-  $("speak-word").addEventListener("click",()=>speak("Meticulous"));\n  $("pronounce-custom").addEventListener("click",()=>{const word=$("pronounce-input").value.trim();if(!word){$("practice-message").textContent="Enter a word to hear its pronunciation.";return;}if(word.length>120){$("practice-message").textContent="Keep the word or phrase under 120 characters.";return;}speak(word,$("pronounce-accent").value);});
+  $("speak-word").addEventListener("click",()=>speak("Meticulous"));
+  $("pronounce-custom").addEventListener("click",()=>{const word=$("pronounce-input").value.trim();if(!word){$("practice-message").textContent="Enter a word to hear its pronunciation.";return;}if(word.length>120){$("practice-message").textContent="Keep the word or phrase under 120 characters.";return;}speak(word,$("pronounce-accent").value);});
   $("speak-example").addEventListener("click",()=>speak(lessons[category].example));
   $("english-signout").addEventListener("click",async()=>{try{await api("/api/auth/logout",{method:"POST"});}catch{}localStorage.removeItem("academic-tracker-token");localStorage.removeItem("academic-tracker-user");location.replace("login.html");});
   renderLesson();
