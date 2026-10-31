@@ -34,6 +34,47 @@ router.get("/me", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+router.get("/insights", async (req, res, next) => {
+  try {
+    const attempts = await prisma.aiQuizAttempt.findMany({
+      where: { userId: req.userId, status: "COMPLETED" },
+      orderBy: { completedAt: "desc" },
+      take: 100,
+      select: { subject: true, topic: true, resultData: true, completedAt: true }
+    });
+    const groups = new Map();
+    for (const attempt of attempts) {
+      const subject = String(attempt.subject || "General").trim() || "General";
+      const topic = String(attempt.topic || "General practice").trim() || "General practice";
+      const key = (subject + "::" + topic).toLocaleLowerCase();
+      const percentage = Number(attempt.resultData?.percentage);
+      if (!Number.isFinite(percentage) || percentage < 0 || percentage > 100) continue;
+      const group = groups.get(key) || { subject, topic, total: 0, attempts: 0, best: 0, latestAt: attempt.completedAt };
+      group.total += percentage;
+      group.attempts += 1;
+      group.best = Math.max(group.best, percentage);
+      if (!group.latestAt || (attempt.completedAt && attempt.completedAt > group.latestAt)) group.latestAt = attempt.completedAt;
+      groups.set(key, group);
+    }
+    const topics = [...groups.values()].map(group => ({
+      subject: group.subject, topic: group.topic, attempts: group.attempts,
+      average: Math.round(group.total / group.attempts), best: group.best,
+      confidence: group.attempts >= 3 ? "stronger signal" : group.attempts === 2 ? "early pattern" : "limited evidence",
+      latestAt: group.latestAt
+    })).sort((a, b) => a.average - b.average);
+    const weakTopics = topics.filter(item => item.average < 70).slice(0, 6);
+    const overallAverage = topics.length ? Math.round(topics.reduce((sum, item) => sum + item.average * item.attempts, 0) / topics.reduce((sum, item) => sum + item.attempts, 0)) : null;
+    const recommendations = weakTopics.map(item => ({
+      subject: item.subject, topic: item.topic,
+      message: item.average < 50 ? "Review the lesson, then practise a smaller set of questions." : "Revisit the key ideas and try another practice quiz.",
+      evidence: item.confidence
+    }));
+    if (!attempts.length) recommendations.push({ subject: "Getting started", topic: "First practice", message: "Complete a quiz to begin building evidence-based topic insights.", evidence: "No completed quizzes yet" });
+    res.set("Cache-Control", "private, no-store");
+    res.json({ completedQuizCount: attempts.length, overallAverage, topics, weakTopics, recommendations });
+  } catch (error) { next(error); }
+});
+
 router.get("/english/categories", (_req, res) => {
   res.json({ categories: categories().map(id => ({ id, name: CATEGORY_LABELS[id] })) });
 });
