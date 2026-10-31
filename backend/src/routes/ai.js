@@ -59,6 +59,12 @@ function aiUsageAudit(req, res, next) {
     if (finalized) return res;
     finalized = true;
     if (!Array.isArray(req.aiUsageEvents) || req.aiUsageEvents.length === 0) return sendJson(payload);
+    if (res.statusCode >= 400) {
+      for (const event of req.aiUsageEvents) event.creditsCharged = 0;
+    } else if (!req.aiUsageEvents.every(event => event.usageKnown)) {
+      for (const event of req.aiUsageEvents) event.creditsCharged = 0;
+      req.aiUsageEvents[req.aiUsageEvents.length - 1].creditsCharged = req.aiCreditReservation?.amount || 0;
+    }
     persistAiUsage(req)
       .then(() => sendJson(payload))
       .catch(error => {
