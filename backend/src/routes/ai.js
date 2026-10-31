@@ -32,13 +32,7 @@ function recordAiUsage(req, usage = {}, provider = "unknown", model = "unknown",
   const reasoning = Number(usage?.completion_tokens_details?.reasoning_tokens ?? usage?.output_tokens_details?.reasoning_tokens ?? 0);
   const valid = [input, output, cached, reasoning].every(value => Number.isSafeInteger(value) && value >= 0);
   const usageKnown = hasInput && hasOutput && valid;
-  let rates = {};
-  try { rates = JSON.parse(process.env.AI_CREDIT_RATES_JSON || "{}"); } catch { rates = {}; }
-  const providerRates = rates[provider] || {};
-  const selected = providerRates.models?.[model] || providerRates;
-  const inputRate = Number.isFinite(Number(selected.inputPer1k)) ? Math.max(0, Number(selected.inputPer1k)) : 1;
-  const outputRate = Number.isFinite(Number(selected.outputPer1k)) ? Math.max(0, Number(selected.outputPer1k)) : 2;
-  const eventCredits = usageKnown ? Math.ceil((input * inputRate + output * outputRate) / 1000) : 0;
+  const eventCredits = 0; // Final fixed action cost is assigned once by aiUsageAudit.
   req.aiUsageEvents = req.aiUsageEvents || [];
   req.aiUsageEvents.push({
     provider, model, inputTokens: valid ? input : 0, outputTokens: valid ? output : 0,
