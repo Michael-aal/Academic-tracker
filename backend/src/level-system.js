@@ -80,7 +80,7 @@ function badgeList(events, profile) {
     { id: "first-steps", name: "First Steps", description: "Complete your first learning activity.", earned: events.length >= 1 },
     { id: "quiz-starter", name: "Quiz Starter", description: "Complete your first quiz.", earned: count("quiz") >= 1 },
     { id: "quiz-regular", name: "Quiz Regular", description: "Complete five quizzes.", earned: count("quiz") >= 5 },
-    { id: "english-explorer", name: "English Explorer", description: "Complete an English practice challenge.", earned: count("english") >= 1 },
+    { id: "english-explorer", name: "English Explorer", description: "Complete an English practice challenge.", earned: count("english") >= 1 },\n    { id: "tutor-learner", name: "Tutor Learner", description: "Complete an AI tutoring session.", earned: count("tutor") >= 1 },\n    { id: "note-maker", name: "Note Maker", description: "Create an AI study summary.", earned: count("summarize") >= 1 },\n    { id: "planner", name: "Study Strategist", description: "Generate a personalised study plan.", earned: count("study-plan") >= 1 },\n    { id: "flashcard-builder", name: "Recall Builder", description: "Generate revision flashcards.", earned: count("flashcards") >= 1 },\n    { id: "study-session", name: "Focus Finisher", description: "Complete a planned study session.", earned: count("study") >= 1 },\n    { id: "memory-reviewer", name: "Memory Keeper", description: "Review a saved flashcard.", earned: count("flashcard") >= 1 },
     { id: "steady-learner", name: "Steady Learner", description: "Build a three-day learning streak.", earned: Number(profile.streakDays) >= 3 },
     { id: "century-club", name: "Century Club", description: "Earn 100 learning XP.", earned: Number(profile.totalXp) >= 100 }
   ];
@@ -93,7 +93,7 @@ async function getSnapshot(prisma, userId) {
     prisma.userDataRecord.findMany({ where: { userId, kind: "learning-xp-events" }, orderBy: { createdAt: "desc" }, take: 100, select: { recordId: true, data: true, createdAt: true } })
   ]);
   const profile = { ...defaultProfile(), ...(stored?.data && typeof stored.data === "object" ? stored.data : {}) };
-  return { ...levelForXp(profile.totalXp), dailyXp: Number(profile.dailyXp) || 0, dailyXpCap: DAILY_XP_CAP, streakDays: Number(profile.streakDays) || 0, badges: badgeList(events, profile), recentActivity: events.slice(0, 12).map(event => ({ id: event.recordId, ...event.data, createdAt: event.createdAt })) };
+  const today = dayKey();\n  const dailyXp = profile.dailyXpDate === today ? Number(profile.dailyXp) || 0 : 0;\n  return { ...levelForXp(profile.totalXp), dailyXp, dailyXpCap: DAILY_XP_CAP, streakDays: Number(profile.streakDays) || 0, badges: badgeList(events, profile), recentActivity: events.slice(0, 12).map(event => ({ id: event.recordId, ...event.data, createdAt: event.createdAt })) };
 }
 
 module.exports = { LEVEL_STEPS, DAILY_XP_CAP, levelForXp, awardXp, getSnapshot };
