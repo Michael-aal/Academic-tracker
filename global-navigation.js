@@ -16,6 +16,7 @@
     ["Focus Shield","dashboard.html?view=focus","focus"],
     ["Calculator","calculator.html","calculator"],
     ["AI Learning","ai-learning.html","learn"],
+    ["Premium & AI Credits","premium.html","more"],
     ["AI Tutor","ai-tutor.html","tutor"],
     ["AI Quiz","ai-quiz-setup.html","quiz"],
     ["Educational Videos","educational-videos.html","videos"],
