@@ -134,3 +134,10 @@ html[data-theme="light"] .quiz-options label{color:#35224f}
 html[data-theme="light"] .quiz-options select{background:#fff;color:#35224f;border-color:#d8c9eb}
 html[data-theme="light"] .quiz-time-help{color:#6c5a83}
 @media(max-width:560px){.quiz-options{display:grid;grid-template-columns:1fr 1fr;gap:9px}.quiz-options label{align-self:end}.quiz-options select{width:100%;min-width:0}.quiz-time-help{grid-column:1/-1}}
+
+
+/* Dark-mode contrast repair for AI Learning controls, including voice pickers. */
+html[data-theme="dark"] :is(body.ai-hub-page,body.ai-tool-page) :is(button,[role="button"],input[type="button"],input[type="submit"],input[type="reset"],a.button,a.btn){color:#f5f3ff!important;-webkit-text-fill-color:#f5f3ff!important}
+html[data-theme="dark"] :is(body.ai-hub-page,body.ai-tool-page) :is(.submit-row button,.quiz-submit,.quiz-finish,.primary-action,.voice-action){color:#fff!important;-webkit-text-fill-color:#fff!important;background:linear-gradient(135deg,#8b5cf6,#6d28d9)!important;border-color:#a78bfa!important}
+html[data-theme="dark"] :is(body.ai-hub-page,body.ai-tool-page) :is([class*="voice"] button,[class*="voice"] [role="button"],[class*="voice"] select,[class*="voice"] option){color:#f5f3ff!important;-webkit-text-fill-color:#f5f3ff!important;background:#211832!important;background-image:none!important;border-color:#49375f!important}
+html[data-theme="dark"] :is(body.ai-hub-page,body.ai-tool-page) :is(input,select,textarea){color:#f5f3ff!important;-webkit-text-fill-color:#f5f3ff!important;background:#110d1b!important;border-color:#49375f!important}
