@@ -135,8 +135,10 @@
   const setOpen = (target, trigger, open) => {
     target.hidden = !open;
     trigger.setAttribute("aria-expanded", String(open));
+    if (target === menu) document.body.classList.toggle("at-nav-menu-open", open);
   };
   const closeAll = () => {
+    document.body.classList.remove("at-nav-menu-open");
     setOpen(menu,menuToggle,false);
     setOpen(profileMenu,profileToggle,false);
     moreToggle.setAttribute("aria-expanded","false");
