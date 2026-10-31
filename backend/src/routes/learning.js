@@ -50,6 +50,18 @@ router.get("/recommendations",async(req,res,next)=>{
   res.json({recommendations:buildRecommendations(attempts)});
  }catch(error){next(error);}
 });
+router.get("/english/stories", async (req, res, next) => {
+  try {
+    const records = await prisma.userDataRecord.findMany({
+      where: { userId: req.userId, kind: "english-stories", deletedAt: null },
+      orderBy: { createdAt: "desc" }, take: 30,
+      select: { recordId: true, data: true, createdAt: true }
+    });
+    res.set("Cache-Control", "private, no-store");
+    res.json({ stories: records.map(record => ({ ...record.data, id: record.recordId, createdAt: record.createdAt, source: "ai" })) });
+  } catch (error) { next(error); }
+});
+
 router.get("/english/activities",(req,res)=>{const category=typeof req.query.category==="string"?req.query.category:"all";const activities=ENGLISH_ACTIVITIES.filter(x=>category==="all"||x.category===category).map(({answerIndex,...x})=>x);res.json({categories:ENGLISH_CATEGORIES,activities,lessons:ENGLISH_LESSONS});});
 router.post("/english/activities/:activityId/answer",async(req,res,next)=>{const item=getActivity(req.params.activityId),index=req.body&&req.body.optionIndex;if(!item)return res.status(404).json({error:"English activity not found."});if(!Number.isInteger(index)||index<0||index>=item.options.length)return res.status(400).json({error:"Choose an available answer."});try{const correct=index===item.answerIndex;let reward={xp:0};if(correct)reward=await prisma.$transaction(async tx=>{await lockUser(tx,req.userId);return addXp(tx,req.userId,{id:"english-correct:"+item.id,type:"english-correct",xp:3,label:"English: "+item.category.replace(/-/g," "),source:item.id});},{isolationLevel:"Serializable"});res.json({correct,correctIndex:item.answerIndex,explanation:item.explanation,xpAwarded:reward.xp||0,progress:reward.progress||null});}catch(e){next(e);}});
 module.exports={router,levelFromXp,levelInfo,publicProgress,addXp,buildRecommendations,ENGLISH_ACTIVITIES,ENGLISH_CATEGORIES,ENGLISH_LESSONS};

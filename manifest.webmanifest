@@ -54,5 +54,24 @@
         }
       ]
     }
+    ,
+    {
+      "name": "English Studio",
+      "short_name": "English",
+      "url": "./english-studio.html",
+      "icons": [{ "src": "assets/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Exam Simulator",
+      "short_name": "Exam",
+      "url": "./exam-simulator.html",
+      "icons": [{ "src": "assets/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "My learning level",
+      "short_name": "My level",
+      "url": "./level-up.html",
+      "icons": [{ "src": "assets/icon.svg", "sizes": "any" }]
+    }
   ]
 }

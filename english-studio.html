@@ -9,4 +9,19 @@
 <section class="english-lesson-panel"><div class="english-section-heading"><span id="topic-heading">Vocabulary practice</span><small id="topic-count">Activities</small></div><div id="lesson-list" class="english-lesson-list"></div></section>
 <section class="english-practice-panel"><div class="english-section-heading"><span>Practice arena</span><small id="activity-position">Choose a topic to begin</small></div><div id="activity-card" class="english-activity-card"><p class="english-empty">Select a topic on the left to start an activity.</p></div><p id="english-feedback" class="english-feedback" role="status" aria-live="polite"></p></section>
 <section class="english-ai-panel"><div><p class="english-eyebrow">PERSONALISED EXPLANATION</p><h2>Ask your English tutor</h2><p>Get a clearer explanation of grammar, vocabulary, pronunciation or literary devices.</p></div><form id="english-ai-form"><label for="english-ai-question">What would you like explained?</label><textarea id="english-ai-question" rows="3" maxlength="3000" placeholder="For example: Explain the difference between a metaphor and a simile..."></textarea><div class="english-ai-actions"><small id="english-ai-status">AI requests use your Academic Tracker credits.</small><button type="submit" class="english-primary">Ask English tutor</button></div></form><div id="english-ai-answer" class="english-ai-answer" hidden></div></section>
+<section class="stories-section" id="stories" aria-labelledby="stories-heading">
+  <div class="english-section-heading"><div><p class="english-eyebrow">READING ROOM</p><h2 id="stories-heading">Stories that grow your English</h2><p class="stories-subtitle">Read original stories, discover new words and check what you understood.</p></div><span class="free-tag">AI stories · 3 credits</span></div>
+  <div class="story-generator">
+    <div><p class="english-eyebrow">AI STORY CREATOR</p><h3>Create a story around your interests</h3><p>Choose a topic and genre. AI creates an original story with vocabulary and comprehension questions.</p></div>
+    <div class="story-generator-controls">
+      <label for="story-topic">Story topic</label><input id="story-topic" maxlength="160" placeholder="e.g. A student who builds a helpful invention">
+      <label for="story-genre">Genre</label><select id="story-genre"><option>Adventure</option><option>Mystery</option><option>Science fiction</option><option>School life</option><option>Folktale</option><option>Inspirational</option><option>Nature</option></select>
+      <button id="generate-story" type="button">✦ Generate my story · 3 credits</button><p id="story-status" role="status" aria-live="polite">Generated stories are saved to your account.</p>
+    </div>
+  </div>
+  <div class="story-library-heading"><h3>Story library</h3><span id="story-count">Loading stories…</span></div>
+  <div id="story-library" class="story-library" aria-live="polite"></div>
+  <article id="story-reader" class="story-reader" hidden></article>
+</section>
+
 </div></section></main><script src="focus-music.js" defer></script><script src="english-studio.js" defer></script><script src="global-navigation.js" defer></script></body></html>
