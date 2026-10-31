@@ -90,8 +90,8 @@
         localStorage.setItem('academic-tracker-user', JSON.stringify(promoteData.user));
         document.getElementById('password').value = '';
         document.getElementById('setup-secret').value = '';
-        message(successBox, 'Administrator verified. Opening the private admin inbox…');
-        window.location.replace('admin-support.html');
+        message(successBox, 'Administrator verified. Opening the admin dashboard…');
+        window.location.replace('admin-dashboard.html');
       } catch (error) {
         const text = error instanceof TypeError
           ? 'Could not reach the API. Check your connection and the Render CORS settings.'
