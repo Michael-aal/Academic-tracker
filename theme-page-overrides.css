@@ -269,3 +269,34 @@ html[data-theme="dark"] :is(button,input,select,textarea,[role="button"]):disabl
   border-color: #3a2d4d !important;
   opacity: 1 !important;
 }
+
+
+/* Preserve selected/active states after the shared control normalization. */
+html[data-theme="dark"] :is(
+  .nav-link.active,.dropdown-item.active,.pathway-tab.active,
+  .answer-option.selected,.quiz-answer-option[aria-pressed="true"],
+  .tool-choice.active,.planner-filters button.active,
+  .notes-list-item[aria-current="true"],.ev-video-card[aria-pressed="true"],
+  .at-mobile-nav .at-nav-active,.at-mobile-nav [aria-current="page"],
+  .at-mobile-nav button[aria-expanded="true"],
+  .at-nav-menu a[aria-current="page"]
+) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: rgba(139,92,246,.22) !important;
+  background-color: rgba(139,92,246,.22) !important;
+  border-color: #8b5cf6 !important;
+}
+html[data-theme="dark"] :is(
+  .nav-link.active,.dropdown-item.active,.pathway-tab.active,
+  .answer-option.selected,.quiz-answer-option[aria-pressed="true"],
+  .tool-choice.active,.planner-filters button.active,
+  .notes-list-item[aria-current="true"],.ev-video-card[aria-pressed="true"],
+  .at-mobile-nav .at-nav-active,.at-mobile-nav [aria-current="page"],
+  .at-mobile-nav button[aria-expanded="true"],
+  .at-nav-menu a[aria-current="page"]
+) :is(span,small,strong,svg,i) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  stroke: currentColor;
+}
