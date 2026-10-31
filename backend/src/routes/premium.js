@@ -21,7 +21,7 @@ function safeCatalog() {
     durationDays: Number(item.durationDays || 0), credits: Number(item.credits || 0),
     creditValidityDays: Number(item.creditValidityDays || 30), description: String(item.description || "")
   })).filter(x => Number.isSafeInteger(x.amountKobo) && x.amountKobo >= 10000 && Number.isSafeInteger(x.credits) && x.credits >= 0 && x.credits <= 1000000 && Number.isInteger(x.creditValidityDays) && x.creditValidityDays >= 1 && x.creditValidityDays <= 365 && (x.durationDays === 0 || (Number.isInteger(x.durationDays) && x.durationDays >= 1 && x.durationDays <= 365)));
-  return { currency: NGN, plans: clean(plans), bundles: clean(bundles) };
+  return { currency: NGN, plans: clean(plans).filter(item => item.durationDays >= 1), bundles: clean(bundles) };
 }
 function makeReference() { return "AT-" + crypto.randomBytes(16).toString("hex"); }
 function paystackSecret() { return process.env.PAYSTACK_SECRET_KEY || ""; }
@@ -57,7 +57,7 @@ async function grantPaidTransaction(reference, verified) {
       if (!plan) return { status: 409, error: "This plan is no longer available. Contact support." };
       const existing = await tx.premiumAccess.findUnique({ where: { userId: payment.userId } });
       const startsAt = existing && existing.expiresAt > now ? existing.expiresAt : now;
-      const days = Number(verified.metadata?.durationDays || plan.durationDays);
+      const days = Number(payment.durationDays || plan.durationDays);
       if (!Number.isInteger(days) || days < 1 || days > 365) return { status: 400, error: "Invalid plan duration." };
       const expiresAt = new Date(startsAt.getTime() + days * DAY);
       await tx.premiumAccess.upsert({
@@ -134,7 +134,7 @@ router.post("/initialize", async (req, res, next) => {
     const credits = type === "PLAN" && key === "daily" ? item.credits * days : item.credits;
     if (!Number.isSafeInteger(amountKobo) || amountKobo < 10000 || !Number.isSafeInteger(credits) || credits < 0) return res.status(400).json({ error: "Package configuration is invalid." });
     const reference = makeReference();
-    const payment = await prisma.paymentTransaction.create({ data: { userId: req.userId, reference, type, itemKey: key, amountKobo, credits } });
+    const payment = await prisma.paymentTransaction.create({ data: { userId: req.userId, reference, type, itemKey: key, amountKobo, credits, durationDays: type === "PLAN" ? (days || item.durationDays) : 0 } });
     const response = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST", headers: { Authorization: "Bearer " + paystackSecret(), "Content-Type": "application/json" },
       body: JSON.stringify({ email: (await prisma.user.findUnique({ where: { id: req.userId }, select: { email: true } })).email, amount: amountKobo, currency: NGN, reference, callback_url: (process.env.PAYSTACK_CALLBACK_URL || "https://academic-tracker-iota.vercel.app/premium.html"), metadata: { userId: req.userId, type, key, durationDays: days || item.durationDays || 0 } })
