@@ -35,7 +35,7 @@
     const pass = password.value;
     const higher = mode === 'register' && selectedTrack() === 'HIGHER';
     if (mode === 'register' && pass !== confirm.value) return showMessage(errorBox, 'Your passwords do not match.');
-    if (pass.length < 10) return showMessage(errorBox, 'Use at least 10 characters for your password.');
+    if (mode === 'register' && pass.length < 10) return showMessage(errorBox, 'Use at least 10 characters for your password.');
     if (higher && (!institutionName.value.trim() || !programme.value.trim() || !studyLevel.value)) return showMessage(errorBox, 'Enter your institution, programme, and current level.');
     const body = mode === 'register' ? { name, email, password: pass, educationTrack: selectedTrack(), institutionName: institutionName?.value.trim(), programme: programme?.value.trim(), studyLevel: studyLevel?.value } : { email, password: pass };
     submit.disabled = true; submit.textContent = mode === 'register' ? 'Creating your account…' : 'Signing you in…';
