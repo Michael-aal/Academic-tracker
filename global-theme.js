@@ -74,6 +74,8 @@
     sun: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>'
   };
   let toggle = document.getElementById("at-theme-toggle");
+  let themeWasManuallyChanged = false;
+  let preferenceSync = Promise.resolve();
 
   function ensureToggle() {
     if (toggle) return;
@@ -103,7 +105,10 @@
     }
     if (persist) {
       try { localStorage.setItem(storageKey, next); } catch (_) {}
-      if (token) fetch(apiBase + "/api/user-data/preferences/main", { method: "PUT", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ data: { theme: next, updatedAt: new Date().toISOString() } }) }).catch(error => console.warn("Could not sync theme preference", error));
+      if (token) {
+        const body = JSON.stringify({ data: { theme: next, updatedAt: new Date().toISOString() } });
+        preferenceSync = preferenceSync.catch(() => {}).then(() => fetch(apiBase + "/api/user-data/preferences/main", { method: "PUT", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body })).catch(error => console.warn("Could not sync theme preference", error));
+      }
     }
   }
 
@@ -116,6 +121,7 @@
   if (toggle && toggle.dataset.themeToggleBound !== "true") {
     toggle.dataset.themeToggleBound = "true";
     toggle.addEventListener("click", () => {
+      themeWasManuallyChanged = true;
       applyTheme(root.dataset.theme === "dark" ? "light" : "dark", true);
     });
   }
@@ -123,12 +129,13 @@
     fetch(apiBase + "/api/user-data/preferences", { headers: { Authorization: "Bearer " + token } })
       .then(response => response.ok ? response.json() : Promise.reject(new Error("Could not load account preferences.")))
       .then(result => {
+        if (themeWasManuallyChanged) return;
         const saved = result.records?.find(record => record.recordId === "main")?.data;
         if (saved?.theme === "light" || saved?.theme === "dark") {
           applyTheme(saved.theme);
           try { localStorage.setItem(storageKey, saved.theme); } catch (_) {}
         } else {
-          fetch(apiBase + "/api/user-data/preferences/main", { method: "PUT", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ data: { theme: preferredTheme } }) }).catch(error => console.warn("Could not initialize account theme", error));
+          fetch(apiBase + "/api/user-data/preferences/main", { method: "PUT", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ data: { theme: root.dataset.theme || preferredTheme } }) }).catch(error => console.warn("Could not initialize account theme", error));
         }
       })
       .catch(error => console.warn("Could not load account theme preference", error));
