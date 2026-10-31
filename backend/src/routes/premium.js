@@ -20,7 +20,7 @@ function safeCatalog() {
     key, name: String(item.name || key), amountKobo: Number(item.amountKobo),
     durationDays: Number(item.durationDays || 0), credits: Number(item.credits || 0),
     creditValidityDays: Number(item.creditValidityDays || 30), description: String(item.description || "")
-  })).filter(x => Number.isSafeInteger(x.amountKobo) && x.amountKobo > 0 && Number.isSafeInteger(x.credits) && x.credits >= 0);
+  })).filter(x => Number.isSafeInteger(x.amountKobo) && x.amountKobo >= 10000 && Number.isSafeInteger(x.credits) && x.credits >= 0 && x.credits <= 1000000 && Number.isInteger(x.creditValidityDays) && x.creditValidityDays >= 1 && x.creditValidityDays <= 365 && (x.durationDays === 0 || (Number.isInteger(x.durationDays) && x.durationDays >= 1 && x.durationDays <= 365)));
   return { currency: NGN, plans: clean(plans), bundles: clean(bundles) };
 }
 function makeReference() { return "AT-" + crypto.randomBytes(16).toString("hex"); }
@@ -89,6 +89,18 @@ router.get("/catalog", (_req, res) => {
   } catch { res.status(503).json({ error: "Premium packages are temporarily unavailable." }); }
 });
 
+router.post("/webhook", async (req, res) => {
+  const signature = req.get("x-paystack-signature") || "";
+  const expected = crypto.createHmac("sha512", paystackSecret()).update(req.rawBody || Buffer.from(JSON.stringify(req.body || {}))).digest("hex");
+  if (!paystackSecret() || !safeEqual(signature, expected)) return res.sendStatus(401);
+  if (req.body?.event !== "charge.success" || !req.body?.data?.reference) return res.sendStatus(200);
+  try {
+    const verified = await verifyWithPaystack(req.body.data.reference);
+    await grantPaidTransaction(req.body.data.reference, verified);
+    return res.sendStatus(200);
+  } catch { return res.sendStatus(500); }
+});
+
 router.use(requireAuth);
 router.get("/me", async (req, res, next) => {
   try {
@@ -148,16 +160,6 @@ router.post("/verify", async (req, res, next) => {
   } catch (error) { res.status(400).json({ error: error.message || "Payment verification failed." }); }
 });
 
-router.post("/webhook", async (req, res) => {
-  const signature = req.get("x-paystack-signature") || "";
-  const expected = crypto.createHmac("sha512", paystackSecret()).update(req.rawBody || Buffer.from(JSON.stringify(req.body || {}))).digest("hex");
-  if (!paystackSecret() || !safeEqual(signature, expected)) return res.sendStatus(401);
-  if (req.body?.event !== "charge.success" || !req.body?.data?.reference) return res.sendStatus(200);
-  try {
-    const verified = await verifyWithPaystack(req.body.data.reference);
-    await grantPaidTransaction(req.body.data.reference, verified);
-    return res.sendStatus(200);
-  } catch { return res.sendStatus(500); }
-});
+
 
 module.exports = router;
