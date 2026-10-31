@@ -57,6 +57,7 @@ CREATE TABLE "payment_transactions" (
   "item_key" VARCHAR(40) NOT NULL,
   "amount_kobo" INTEGER NOT NULL,
   "credits" INTEGER NOT NULL DEFAULT 0,
+  "duration_days" INTEGER NOT NULL DEFAULT 0,
   "status" VARCHAR(20) NOT NULL DEFAULT 'PENDING',
   "paid_at" TIMESTAMP(3),
   "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
