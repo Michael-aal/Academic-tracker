@@ -1,10 +1,12 @@
 "use strict";
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const { requireAuth } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/admin");
 const { prisma } = require("../prisma");
 
 const router = express.Router();
+const announcementLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 8, standardHeaders: "draft-7", legacyHeaders: false, message: { error: "Too many announcements. Please wait before publishing another." } });
 const CATEGORIES = new Set(["ANNOUNCEMENT", "UPDATE", "MAINTENANCE", "PAYMENT", "SUBSCRIPTION", "AI_CREDITS"]);
 
 router.use(requireAuth);
@@ -51,7 +53,7 @@ router.post("/read-all", async (req, res, next) => {
 });
 
 // Only the existing server-verified ADMIN role can publish announcements.
-router.post("/admin/send", requireAdmin, async (req, res, next) => {
+router.post("/admin/send", announcementLimiter, requireAdmin, async (req, res, next) => {
   try {
     const title = typeof req.body?.title === "string" ? req.body.title.trim() : "";
     const body = typeof req.body?.body === "string" ? req.body.body.trim() : "";
@@ -75,17 +77,22 @@ router.post("/admin/send", requireAdmin, async (req, res, next) => {
     }
     if (!recipients.length) return res.status(400).json({ error: "There are no eligible recipients for this announcement." });
 
-    const result = await prisma.notification.createMany({
-      data: recipients.map(user => ({
-        userId: user.id,
-        createdById: req.userId,
-        title,
-        body,
-        category,
-        metadata: { audience }
-      }))
-    });
-    res.status(201).json({ ok: true, sent: result.count, audience });
+    let sent = 0;
+    for (let index = 0; index < recipients.length; index += 500) {
+      const batch = recipients.slice(index, index + 500);
+      const result = await prisma.notification.createMany({
+        data: batch.map(user => ({
+          userId: user.id,
+          createdById: req.userId,
+          title,
+          body,
+          category,
+          metadata: { audience }
+        }))
+      });
+      sent += result.count;
+    }
+    res.status(201).json({ ok: true, sent, audience });
   } catch (error) { next(error); }
 });
 
