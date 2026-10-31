@@ -23,13 +23,14 @@ async function reserveCredits(userId, amount) {
     const expiredCredits = expired._sum.remainingCredits || 0;
     if (expiredCredits > 0) {
       await tx.creditLot.updateMany({ where: { userId, remainingCredits: { gt: 0 }, expiresAt: { lte: now } }, data: { remainingCredits: 0 } });
-      await tx.creditWallet.updateMany({ where: { userId }, data: { balance: { decrement: expiredCredits } } });
+      // The wallet cache is reconciled from active lots below; never decrement blindly.
     }
     const lots = await tx.creditLot.findMany({
       where: { userId, remainingCredits: { gt: 0 }, expiresAt: { gt: now } },
       orderBy: [{ expiresAt: "asc" }, { createdAt: "asc" }]
     });
     const available = lots.reduce((sum, lot) => sum + lot.remainingCredits, 0);
+    await tx.creditWallet.updateMany({ where: { userId }, data: { balance: available } });
     if (!premiumActive && available === 0) return { premium: false };
     if (available < amount) return { premium: true, insufficient: true, available };
     let remaining = amount;
@@ -41,7 +42,7 @@ async function reserveCredits(userId, amount) {
       allocations.push({ lotId: lot.id, credits: take });
       remaining -= take;
     }
-    await tx.creditWallet.updateMany({ where: { userId }, data: { balance: { decrement: amount } } });
+    await tx.creditWallet.updateMany({ where: { userId }, data: { balance: available - amount } });
     await tx.creditLedger.create({
       data: { userId, delta: -amount, kind: "AI_USAGE", reference: "ai:" + reservationId, description: "AI learning request (estimated usage)" }
     });
