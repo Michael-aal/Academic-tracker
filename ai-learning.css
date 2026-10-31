@@ -141,3 +141,8 @@ html[data-theme="dark"] :is(body.ai-hub-page,body.ai-tool-page) :is(button,[role
 html[data-theme="dark"] :is(body.ai-hub-page,body.ai-tool-page) :is(.submit-row button,.quiz-submit,.quiz-finish,.primary-action,.voice-action){color:#fff!important;-webkit-text-fill-color:#fff!important;background:linear-gradient(135deg,#8b5cf6,#6d28d9)!important;border-color:#a78bfa!important}
 html[data-theme="dark"] :is(body.ai-hub-page,body.ai-tool-page) :is([class*="voice"] button,[class*="voice"] [role="button"],[class*="voice"] select,[class*="voice"] option){color:#f5f3ff!important;-webkit-text-fill-color:#f5f3ff!important;background:#211832!important;background-image:none!important;border-color:#49375f!important}
 html[data-theme="dark"] :is(body.ai-hub-page,body.ai-tool-page) :is(input,select,textarea){color:#f5f3ff!important;-webkit-text-fill-color:#f5f3ff!important;background:#110d1b!important;border-color:#49375f!important}
+
+
+/* Secondary AI Learning controls must never inherit a light surface in dark mode. */
+html[data-theme="dark"] :is(body.ai-hub-page,body.ai-tool-page) :is(button,[role="button"],a.button,a.btn):not(.submit-row button):not(.quiz-submit):not(.quiz-finish):not(.primary-action):not(.voice-action){background:#211832!important;background-color:#211832!important;background-image:none!important;border-color:#49375f!important}
+html[data-theme="dark"] :is(body.ai-hub-page,body.ai-tool-page) :is(.answer-option.selected,.quiz-answer-option[aria-pressed="true"],.tool-choice.active){background:rgba(139,92,246,.24)!important;background-color:rgba(139,92,246,.24)!important;border-color:#8b5cf6!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
