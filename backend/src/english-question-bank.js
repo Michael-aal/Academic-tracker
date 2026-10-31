@@ -40,6 +40,24 @@ const BANK = {
     { id: "o2", question: "Which word has a different initial consonant sound?", options: ["City", "Cent", "Cycle", "Cat"], answer: 3, explanation: "Cat begins with /k/, while the c in the other words represents /s/." },
     { id: "o3", question: "A syllable is best described as:", options: ["A unit of spoken sound organised around a vowel", "A punctuation mark", "A complete paragraph", "A silent letter"], answer: 0, explanation: "A syllable is a beat or unit of pronunciation, usually centred on a vowel sound." },
     { id: "o4", question: "Word stress is:", options: ["The loudest letter", "The emphasis placed on a syllable", "A spelling error", "A pause between paragraphs"], answer: 1, explanation: "Word stress is the emphasis given to one syllable in a word." }
+  ],
+  writingSkills: [
+    { id: "w1", question: "Which is the strongest topic sentence for a paragraph about reading?", options: ["Books are there.", "Regular reading develops knowledge and communication skills.", "I saw a book yesterday.", "Reading is something."], answer: 1, explanation: "A topic sentence clearly states the central idea of the paragraph." },
+    { id: "w2", question: "A formal argumentative essay should mainly:", options: ["Use insults", "Present a clear position supported by reasons and evidence", "Avoid paragraphs", "Repeat the title"], answer: 1, explanation: "Argumentative writing uses a position, reasons and relevant evidence." },
+    { id: "w3", question: "Which transition best shows contrast?", options: ["Furthermore", "For example", "However", "Therefore"], answer: 2, explanation: "However introduces a contrasting idea." },
+    { id: "w4", question: "A good conclusion should:", options: ["Introduce unrelated arguments", "Summarise the main point and provide closure", "Copy the introduction word for word", "Add a new title"], answer: 1, explanation: "A conclusion brings the discussion to a clear close." }
+  ],
+  idiomsAndPhrases: [
+    { id: "i1", question: "What does 'once in a blue moon' mean?", options: ["Every day", "Very rarely", "At midnight", "Very quickly"], answer: 1, explanation: "The idiom means something happens very rarely." },
+    { id: "i2", question: "What does 'break the ice' mean?", options: ["Damage something", "Start a friendly conversation", "End a friendship", "Work in cold weather"], answer: 1, explanation: "It means to make people feel comfortable and begin interaction." },
+    { id: "i3", question: "What does 'under the weather' mean?", options: ["Feeling unwell", "Standing outside", "Feeling excited", "Being late"], answer: 0, explanation: "The idiom means feeling ill or not quite well." },
+    { id: "i4", question: "What does 'spill the beans' mean?", options: ["Cook a meal", "Reveal a secret", "Waste food", "Make a mess"], answer: 1, explanation: "The idiom means to reveal information that was meant to be secret." }
+  ],
+  sentenceCorrection: [
+    { id: "sc1", question: "Choose the corrected sentence: 'He don't know the answer.'", options: ["He doesn't know the answer.", "He don't knows the answer.", "He not know the answer.", "He didn't knows the answer."], answer: 0, explanation: "Use doesn't with the third-person singular subject he." },
+    { id: "sc2", question: "Choose the sentence with correct punctuation.", options: ["Where are you going.", "Where are you going?", "Where are you going!", "Where, are you going"], answer: 1, explanation: "A direct question ends with a question mark." },
+    { id: "sc3", question: "Choose the correct sentence.", options: ["The informations are useful.", "The information is useful.", "The information are useful.", "An information is useful."], answer: 1, explanation: "Information is an uncountable noun and normally takes a singular verb." },
+    { id: "sc4", question: "Choose the correct form: 'Neither of the answers ___ correct.'", options: ["are", "were", "is", "be"], answer: 2, explanation: "In formal standard English, neither is treated as singular here." }
   ]
 };
 
