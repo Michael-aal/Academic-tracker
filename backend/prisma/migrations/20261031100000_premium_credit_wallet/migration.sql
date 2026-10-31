@@ -67,3 +67,5 @@ CREATE UNIQUE INDEX "payment_transactions_reference_key" ON "payment_transaction
 CREATE INDEX "payment_transactions_user_id_created_at_idx" ON "payment_transactions"("user_id","created_at");
 CREATE INDEX "payment_transactions_status_created_at_idx" ON "payment_transactions"("status","created_at");
 ALTER TABLE "payment_transactions" ADD CONSTRAINT "payment_transactions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "payment_transactions" ADD COLUMN "credit_validity_days" INTEGER NOT NULL DEFAULT 30;
