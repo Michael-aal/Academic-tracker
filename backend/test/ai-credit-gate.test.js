@@ -1,7 +1,8 @@
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { estimateCredits } = require("../src/ai-credit-gate");
+const { estimateCredits, aiCreditGate } = require("../src/ai-credit-gate");
+const { prisma } = require("../src/prisma");
 
 test("AI reservations are positive and increase for larger generation workloads", () => {
   const previous = {
@@ -44,5 +45,37 @@ test("AI reservation estimates honor exact-model rate overrides", () => {
   } finally {
     if (previous === undefined) delete process.env.AI_CREDIT_RATES_JSON;
     else process.env.AI_CREDIT_RATES_JSON = previous;
+  }
+});
+
+test("zero-credit accounts are blocked at the API gate instead of falling back to free quota", async () => {
+  const originalTransaction = prisma.$transaction;
+  const fakeTx = {
+    $queryRaw: async () => [],
+    creditLot: {
+      findMany: async () => [],
+      updateMany: async () => ({ count: 0 })
+    },
+    creditWallet: {
+      upsert: async ({ create }) => create
+    }
+  };
+  prisma.$transaction = async callback => callback(fakeTx);
+  const req = { userId: "free-account-with-zero-wallet", body: { action: "tutor", content: "Explain gravity." } };
+  const res = {
+    statusCode: 200,
+    body: null,
+    status(code) { this.statusCode = code; return this; },
+    json(body) { this.body = body; return this; }
+  };
+  let nextCalled = false;
+  try {
+    await aiCreditGate(req, res, () => { nextCalled = true; });
+    assert.equal(res.statusCode, 402);
+    assert.equal(res.body.code, "INSUFFICIENT_AI_CREDITS");
+    assert.equal(res.body.balance, 0);
+    assert.equal(nextCalled, false);
+  } finally {
+    prisma.$transaction = originalTransaction;
   }
 });
