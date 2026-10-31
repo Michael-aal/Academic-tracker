@@ -32,6 +32,13 @@
     pageThemeOverrides.dataset.pageThemeOverrides = "true";
     document.head.appendChild(pageThemeOverrides);
   }
+  if (!document.querySelector('link[data-study-track-dark-overhaul]')) {
+    const overhaul = document.createElement("link");
+    overhaul.rel = "stylesheet";
+    overhaul.href = "study-track-dark-overhaul.css";
+    overhaul.dataset.studyTrackDarkOverhaul = "true";
+    document.head.appendChild(overhaul);
+  }
   const storageKey = "academic-tracker-theme";
   const apiBase = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
   // Capture the browser install event early, before the install UI script loads.
