@@ -37,7 +37,11 @@ function hasConfiguredProvider() {
 async function requestChatCompletion(payload, options = {}) {
   const { signal, onUsage } = options;
   const failures = [];
-  for (const providerId of providerOrder()) {
+  const ordered = providerOrder();
+  const candidates = options.preferredProvider && ordered.includes(options.preferredProvider)
+    ? [options.preferredProvider, ...ordered.filter(name => name !== options.preferredProvider)]
+    : ordered;
+  for (const providerId of candidates) {
     const config = PROVIDERS[providerId];
     const key = process.env[config.envKey];
     if (!key) {
@@ -62,8 +66,12 @@ async function requestChatCompletion(payload, options = {}) {
       });
       const data = await response.json().catch(() => ({}));
       if (data?.usage && typeof onUsage === "function") onUsage(data.usage, providerId);
-      if (response.ok) {
+      if (response.ok && typeof data?.choices?.[0]?.message?.content === "string" && data.choices[0].message.content.trim()) {
         return { data, provider: providerId, model };
+      }
+      if (response.ok) {
+        failures.push(providerId + ": empty or malformed completion response");
+        continue;
       }
       const message = typeof data?.error?.message === "string"
         ? data.error.message.slice(0, 180)
