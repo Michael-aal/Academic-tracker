@@ -5,10 +5,9 @@ function estimateCredits(body = {}) {
   const action = typeof body.action === "string" ? body.action : "";
   const chars = typeof body.content === "string" ? Math.min(body.content.length, 12000) : 0;
   const questionCount = Number.isInteger(body.questionCount) ? body.questionCount : 5;
-  const providerCount = Math.max(1, String(process.env.AI_PROVIDER_ORDER || "openrouter,xai").split(",").filter(Boolean).length);
   let rates = {};
   try { rates = JSON.parse(process.env.AI_CREDIT_RATES_JSON || "{}"); } catch { rates = {}; }
-  const configuredRates = Object.values(rates).filter(value => value && typeof value === "object");
+  const configuredRates = Object.values(rates).filter(value => value && typeof value === "object").flatMap(value => [value, ...Object.values(value.models || {}).filter(modelRate => modelRate && typeof modelRate === "object")]);
   const inputRate = Math.max(1, ...configuredRates.map(value => Number.isFinite(Number(value.inputPer1k)) ? Math.max(0, Number(value.inputPer1k)) : 1));
   const outputRate = Math.max(2, ...configuredRates.map(value => Number.isFinite(Number(value.outputPer1k)) ? Math.max(0, Number(value.outputPer1k)) : 2));
   const maxOutputTokens = action === "quiz" ? Math.min(10000, 1800 + Math.max(1, Math.min(10, questionCount)) * 820) : action === "flashcards" ? 5000 : 1800;
@@ -16,7 +15,7 @@ function estimateCredits(body = {}) {
   // Reserve against a conservative prompt size, the full configured output cap,
   // quiz regeneration, and provider fallback. Actual usage settles the reserve.
   const estimatedInputTokens = Math.ceil(chars / 3) + 6000;
-  const worstCase = providerCount * attempts * (estimatedInputTokens * inputRate + maxOutputTokens * outputRate) / 1000;
+  const worstCase = attempts * (estimatedInputTokens * inputRate + maxOutputTokens * outputRate) / 1000;
   return Math.max(1, Math.ceil(worstCase * 1.2));
 }
 
