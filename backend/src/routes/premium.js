@@ -136,7 +136,7 @@ router.post("/initialize", async (req, res, next) => {
     const payment = await prisma.paymentTransaction.create({ data: { userId: req.userId, reference, type, itemKey: key, amountKobo, credits, durationDays: type === "PLAN" ? (days || item.durationDays) : 0, creditValidityDays: item.creditValidityDays } });
     const response = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST", headers: { Authorization: "Bearer " + paystackSecret(), "Content-Type": "application/json" },
-      body: JSON.stringify({ email: (await prisma.user.findUnique({ where: { id: req.userId }, select: { email: true } })).email, amount: amountKobo, currency: NGN, reference, callback_url: (process.env.PAYSTACK_CALLBACK_URL || "https://academic-tracker-iota.vercel.app/premium.html"), metadata: { userId: req.userId, type, key, durationDays: days || item.durationDays || 0 } })
+      body: JSON.stringify({ email: (await prisma.user.findUnique({ where: { id: req.userId }, select: { email: true } })).email, amount: amountKobo, currency: NGN, reference, callback_url: (process.env.PAYSTACK_CALLBACK_URL || "https://study-track-lilac.vercel.app/premium.html"), metadata: { userId: req.userId, type, key, durationDays: days || item.durationDays || 0 } })
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.status || !data.data?.authorization_url) {
