@@ -135,6 +135,7 @@
   const profileMenu = header.querySelector("#at-nav-profile-menu");
   const moreToggle = bottom.querySelector("#at-nav-more-toggle");
   const notificationToggle = header.querySelector("#at-nav-notifications");
+  if (!localStorage.getItem("academic-tracker-token")) notificationToggle.hidden = true;
   notificationToggle.addEventListener("click", () => { window.location.href = "notifications.html"; });
   const installButton = menu.querySelector("#at-nav-install-app");
 
