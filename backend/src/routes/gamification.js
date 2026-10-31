@@ -24,7 +24,7 @@ const CATEGORY_LABELS = {
   partsOfSpeech: "Parts of speech",
   figuresOfSpeech: "Figures of speech",
   comprehension: "Reading comprehension",
-  oralEnglish: "Oral English"
+  oralEnglish: "Oral English",\n  writingSkills: "Writing skills",\n  idiomsAndPhrases: "Idioms and phrases",\n  sentenceCorrection: "Sentence correction"
 };
 
 router.get("/me", async (req, res, next) => {
