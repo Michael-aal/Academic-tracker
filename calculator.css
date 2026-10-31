@@ -53,3 +53,17 @@
 .calc-field input{background:#0B0812;border-color:#302641;color:#f5f1ff}
 .percent-result{background:#211a35}
 .percent-result strong,.history-item strong{color:#c4a8ff}
+
+
+/* Light theme for the scientific calculator. */
+html[data-theme="light"] .calculator-main .calculator-card,html[data-theme="light"] .calculator-main .calculator-side .card{background:linear-gradient(145deg,#fff,#f8f5ff)!important;border-color:#e5d9f2!important;color:#35224f}
+html[data-theme="light"] .calculator-main .calc-display{background:#f7f3ff!important;border-color:#e5d9f2!important;color:#241634}
+html[data-theme="light"] .calculator-main .calc-display :is(input,output,span,strong){color:#241634}
+html[data-theme="light"] .calculator-main .calc-key:not(.equals){background:#f1eaff!important;border-color:#dfd2ef!important;color:#4b2c78!important}
+html[data-theme="light"] .calculator-main .calc-key:not(.equals):hover{background:#e8dcfb!important}
+html[data-theme="light"] .calculator-main .calc-key.utility{background:#eee6fb!important;color:#5b35a0!important}
+html[data-theme="light"] .calculator-main .calc-key.operator{background:#e8ddfa!important;color:#5b35a0!important;border-color:#d7c5ef!important}
+html[data-theme="light"] .calculator-main .calc-key.equals{background:linear-gradient(135deg,#8b5cf6,#6d28d9)!important;border-color:#8b5cf6!important;color:#fff!important}
+html[data-theme="light"] .calculator-main .calc-field input{background:#fff!important;border-color:#dfd2ef!important;color:#35224f!important}
+html[data-theme="light"] .calculator-main .percent-result{background:#f1eaff!important;color:#5b4b70!important}
+html[data-theme="light"] .calculator-main .calc-icon{background:#eee6fb!important;color:#7545c8!important}
