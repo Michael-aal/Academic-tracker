@@ -78,6 +78,7 @@
     </a>
     <p class="at-nav-page-title" aria-current="page"></p>
     <div class="at-nav-actions">
+      <button class="at-nav-icon-button at-nav-notification-button" id="at-nav-notifications" type="button" aria-label="Notifications" title="Notifications"><span class="at-nav-notification-icon">${icon("notifications")}</span><span class="at-nav-notification-dot" id="at-nav-notification-dot" hidden></span></button>
       <button class="at-nav-icon-button" id="at-nav-menu-toggle" type="button" aria-label="Open page menu" aria-expanded="false" aria-controls="at-nav-menu">${icon("menu")}</button>
       <button class="at-nav-icon-button" id="at-nav-profile-toggle" type="button" aria-label="Open account menu" aria-expanded="false" aria-controls="at-nav-profile-menu">${icon("user")}</button>
     </div>
