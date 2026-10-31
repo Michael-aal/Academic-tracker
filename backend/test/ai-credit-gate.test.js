@@ -31,15 +31,16 @@ test("AI reservations are positive and increase for larger generation workloads"
 test("AI reservation estimates honor exact-model rate overrides", () => {
   const previous = process.env.AI_CREDIT_RATES_JSON;
   try {
+    process.env.AI_CREDIT_RATES_JSON = JSON.stringify({ openrouter: { inputPer1k: 1, outputPer1k: 2 } });
+    const normal = estimateCredits({ action: "tutor", content: "Explain energy." });
     process.env.AI_CREDIT_RATES_JSON = JSON.stringify({
       openrouter: {
         inputPer1k: 1, outputPer1k: 2,
         models: { "expensive-model": { inputPer1k: 100, outputPer1k: 200 } }
       }
     });
-    const normal = estimateCredits({ action: "tutor", content: "Explain energy." });
     const highRate = estimateCredits({ action: "tutor", content: "Explain energy." });
-    assert.equal(highRate, normal);
+    assert.ok(highRate > normal);
   } finally {
     if (previous === undefined) delete process.env.AI_CREDIT_RATES_JSON;
     else process.env.AI_CREDIT_RATES_JSON = previous;
