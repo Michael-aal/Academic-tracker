@@ -1,6 +1,8 @@
 /* Shared navigation for all Academic Tracker app routes. */
 (() => {
   "use strict";
+  // Apply the saved appearance before shared navigation and page widgets render.
+  try { document.documentElement.dataset.theme = localStorage.getItem("academic-tracker-theme") === "dark" ? "dark" : "light"; } catch (_) { document.documentElement.dataset.theme = "light"; }
   if (document.body.classList.contains("at-has-global-navigation")) return;
   const initialFile = location.pathname.split("/").pop() || "dashboard.html";
   if (initialFile === "login.html" || initialFile === "register.html") return;
@@ -220,7 +222,7 @@
     else signOut.addEventListener("click", () => existingSignOut.click());
   }
   // Ensure theme controller is available on all application pages.
-  if (!document.querySelector('script[data-global-theme]')) {
+  if (!document.querySelector('script[data-global-theme], script[src$="global-theme.js"]')) {
     const themeScript = document.createElement("script");
     themeScript.src = "global-theme.js";
     themeScript.defer = true;
