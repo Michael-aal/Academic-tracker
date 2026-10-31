@@ -6,7 +6,8 @@ const APP_SHELL = [
   "./notifications.html", "./notifications.css", "./notifications.js",
   "./english-studio.html", "./english-studio.css", "./english-studio.js", "./exam-simulator.html",
   "./level-up.html", "./level-up.css", "./level-up.js",
-  "./styles.css", "./ui-polish.css", "./focus.css", "./app.js", "./global-navigation.js", "./vibrant-refresh.css",\n  "./site-design-system.css", "./premium-theme.css", "./global-light-mode.css", "./dark-mode-guard.css", "./theme-page-overrides.css", "./global-theme.js",
+  "./styles.css", "./ui-polish.css", "./focus.css", "./app.js", "./global-navigation.js", "./vibrant-refresh.css",
+  "./site-design-system.css", "./premium-theme.css", "./global-light-mode.css", "./dark-mode-guard.css", "./theme-page-overrides.css", "./global-theme.js",
   "./manifest.webmanifest", "./assets/icon.svg", "./pwa-install.js", "./pwa-install.css"
 ];
 
