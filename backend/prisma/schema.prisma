@@ -33,6 +33,7 @@ model User {
   dataRecords           UserDataRecord[]
   subjectDeletions       SubjectDeletion[]
   aiUsageEvents         AiUsageEvent[]
+  aiUsageRecords        AiUsageRecord[]
   premiumAccess         PremiumAccess?
   creditWallet          CreditWallet?
   creditLots            CreditLot[]
@@ -280,4 +281,28 @@ model PaymentTransaction {
   @@index([userId, createdAt])
   @@index([status, createdAt])
   @@map("payment_transactions")
+}
+
+model AiUsageRecord {
+  id                String   @id @default(cuid())
+  userId            String   @map("user_id")
+  requestId         String   @map("request_id") @db.VarChar(64)
+  action            String   @db.VarChar(30)
+  provider          String   @db.VarChar(30)
+  model             String   @db.VarChar(120)
+  inputTokens       Int      @default(0) @map("input_tokens")
+  outputTokens      Int      @default(0) @map("output_tokens")
+  cachedInputTokens Int      @default(0) @map("cached_input_tokens")
+  reasoningTokens   Int      @default(0) @map("reasoning_tokens")
+  creditsCharged    Int      @default(0) @map("credits_charged")
+  usageKnown        Boolean  @default(false) @map("usage_known")
+  status            String   @db.VarChar(24)
+  providerStatus    Int      @default(0) @map("provider_status")
+  createdAt         DateTime @default(now()) @map("created_at")
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([provider, model, createdAt])
+  @@index([requestId])
+  @@map("ai_usage_records")
 }
