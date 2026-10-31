@@ -258,3 +258,65 @@ html[data-theme="dark"] :where(
   outline: 2px solid #a78bfa !important;
   outline-offset: 3px !important;
 }
+
+
+/* Cross-page hardening for legacy utility classes and inline light surfaces.
+   This intentionally affects dark mode only; light mode remains unchanged. */
+html[data-theme="dark"] :where(
+  [class*="bg-white"],[class*="bg-slate-50"],[class*="bg-gray-50"],
+  [class*="bg-zinc-50"],[class*="bg-neutral-50"],[class*="bg-stone-50"],
+  [class*="bg-slate-100"],[class*="bg-gray-100"],[class*="bg-zinc-100"],
+  [class*="bg-neutral-100"],[class*="bg-stone-100"],
+  [style*="background: white"],[style*="background-color: white"],
+  [style*="background:#fff"],[style*="background: #fff"],
+  [style*="background-color:#fff"],[style*="background-color: #fff"],
+  [style*="background: rgb(255, 255, 255)"],
+  [style*="background-color: rgb(255, 255, 255)"]
+) {
+  color: #f5f3ff !important;
+  -webkit-text-fill-color: #f5f3ff !important;
+  background: #171123 !important;
+  background-color: #171123 !important;
+  background-image: none !important;
+  border-color: #49375f !important;
+}
+html[data-theme="dark"] :where(
+  [class*="bg-white"],[class*="bg-slate-50"],[class*="bg-gray-50"],
+  [class*="bg-zinc-50"],[class*="bg-neutral-50"],[class*="bg-stone-50"],
+  [class*="bg-slate-100"],[class*="bg-gray-100"],[class*="bg-zinc-100"],
+  [class*="bg-neutral-100"],[class*="bg-stone-100"],
+  [style*="background: white"],[style*="background-color: white"],
+  [style*="background:#fff"],[style*="background: #fff"],
+  [style*="background-color:#fff"],[style*="background-color: #fff"],
+  [style*="background: rgb(255, 255, 255)"],
+  [style*="background-color: rgb(255, 255, 255)"]
+) :where(h1,h2,h3,h4,h5,h6,p,span,strong,em,small,label,li,a,svg) {
+  color: #f5f3ff !important;
+  -webkit-text-fill-color: #f5f3ff !important;
+}
+html[data-theme="dark"] :where(
+  .at-nav-popover,#at-nav-menu,#at-nav-profile-menu,
+  .dropdown-menu,.account-menu,.menu-dropdown,.ai-tools-menu,
+  .ai-more-menu,.ai-mobile-menu,[role="menu"],[role="listbox"]
+) {
+  color: #f5f3ff !important;
+  background: #171123 !important;
+  background-color: #171123 !important;
+  border-color: #49375f !important;
+  box-shadow: 0 20px 48px rgba(0,0,0,.48) !important;
+}
+html[data-theme="dark"] .at-notes-launcher {
+  z-index: 1040 !important;
+}
+html[data-theme="dark"] .at-global-header,
+html[data-theme="dark"] .at-mobile-nav {
+  isolation: isolate;
+}
+html[data-theme="dark"] .at-global-header .at-nav-popover {
+  z-index: 1301 !important;
+}
+/* JS-managed state is used as a fallback for browsers without :has(). */
+body.at-nav-menu-open .at-notes-launcher {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
