@@ -17,7 +17,7 @@ async function reserveCredits(userId, amount) {
     await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${userId} FOR UPDATE`;
     const now = new Date();
     const access = await tx.premiumAccess.findUnique({ where: { userId } });
-    if (!access || access.expiresAt <= now) return { premium: false };
+    const premiumActive = Boolean(access && access.expiresAt > now);
     const expired = await tx.creditLot.aggregate({ where: { userId, remainingCredits: { gt: 0 }, expiresAt: { lte: now } }, _sum: { remainingCredits: true } });
     const expiredCredits = expired._sum.remainingCredits || 0;
     if (expiredCredits > 0) {
@@ -29,6 +29,7 @@ async function reserveCredits(userId, amount) {
       orderBy: [{ expiresAt: "asc" }, { createdAt: "asc" }]
     });
     const available = lots.reduce((sum, lot) => sum + lot.remainingCredits, 0);
+    if (!premiumActive && available === 0) return { premium: false };
     if (available < amount) return { premium: true, insufficient: true, available };
     let remaining = amount;
     const allocations = [];
