@@ -62,6 +62,25 @@
 .at-install-instructions ol { margin: 0 0 9px; padding-left: 19px; }
 .at-install-instructions li + li { margin-top: 3px; }
 .at-install-help-close { min-height: 32px; }
+.at-install-help-panel,
+.at-install-help-panel * { box-sizing: border-box; }
+.at-install-help-panel {
+  position: fixed;
+  z-index: 1600;
+  right: 18px;
+  bottom: calc(90px + env(safe-area-inset-bottom));
+  width: min(360px, calc(100vw - 28px));
+  padding: 18px;
+  border: 1px solid #e3d8f3;
+  border-radius: 16px;
+  color: #35224f;
+  background: #ffffff;
+  box-shadow: 0 20px 55px rgba(47,28,82,.24);
+  font: 13px/1.5 inherit;
+}
+.at-install-help-panel > strong { display: block; margin-bottom: 8px; font-size: 14px; }
+.at-install-help-panel ol { margin: 0 0 14px; padding-left: 20px; }
+.at-install-help-panel li + li { margin-top: 5px; }
 html[data-theme="dark"] .at-install-banner {
   border-color: #302440;
   color: #f5f3ff;
@@ -76,6 +95,12 @@ html[data-theme="dark"] .at-install-instructions {
   border-color: #302440;
   color: #f5f3ff;
   background: #20172f;
+}
+html[data-theme="dark"] .at-install-help-panel {
+  border-color: #302440;
+  color: #f5f3ff;
+  background: #171123;
+  box-shadow: 0 20px 55px rgba(0,0,0,.5);
 }
 @media (max-width: 600px) {
   .at-install-banner {
@@ -98,7 +123,12 @@ html[data-theme="dark"] .at-install-instructions {
   body.at-has-global-navigation .at-install-banner {
     bottom: calc(91px + env(safe-area-inset-bottom));
   }
+  .at-install-help-panel {
+    right: 10px;
+    bottom: calc(88px + env(safe-area-inset-bottom));
+    width: calc(100vw - 20px);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .at-install-banner, .at-install-banner * { animation: none !important; transition: none !important; }
+  .at-install-banner, .at-install-banner *, .at-install-help-panel, .at-install-help-panel * { animation: none !important; transition: none !important; }
 }
