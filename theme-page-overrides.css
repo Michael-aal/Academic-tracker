@@ -304,3 +304,58 @@ html[data-theme="dark"] :is(
   -webkit-text-fill-color: #ffffff !important;
   stroke: currentColor;
 }
+
+
+/* Legacy dashboard bottom navigation is still present on older layouts. */
+html[data-theme="dark"] :is(.mobile-nav button,.mobile-nav .mobile-profile-link) {
+  color: #f5f3ff !important;
+  -webkit-text-fill-color: #f5f3ff !important;
+  background: #211832 !important;
+  border-color: #49375f !important;
+}
+html[data-theme="dark"] :is(
+  .mobile-nav button.active,.mobile-nav a.active,
+  .mobile-nav button[aria-current="page"],.mobile-nav a[aria-current="page"],
+  .mobile-nav .mobile-profile-link:focus-visible
+) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: linear-gradient(135deg,#6d28d9,#8b5cf6) !important;
+  border-color: #a78bfa !important;
+}
+
+/* University-specific surfaces are not named .card in their markup. */
+html[data-theme="dark"] :is(
+  .uni-hero,.uni-stat,.uni-course-row,.uni-result-card,.uni-add-form,
+  .uni-note,.uni-chart-card
+) {
+  color: #f5f3ff !important;
+  background-color: #171123 !important;
+  border-color: #49375f !important;
+}
+html[data-theme="dark"] :is(
+  .uni-hero h1,.uni-hero h2,.uni-stat strong,.uni-course-name strong,
+  .uni-result-head strong,.uni-note strong,.uni-chart-heading h3,
+  .uni-chart-course strong
+) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+html[data-theme="dark"] :is(
+  .uni-muted,.uni-section-heading p,.uni-hero p,.uni-stat span,.uni-stat small,
+  .uni-course-name small,.uni-result-head small,.uni-note p,.uni-chart-heading small,
+  .uni-chart-course small,.uni-chart-caption,.uni-chart-empty,.uni-target-hint
+) {
+  color: #c0bbd6 !important;
+  -webkit-text-fill-color: #c0bbd6 !important;
+}
+html[data-theme="dark"] .uni-nav :is(a,button) {
+  color: #c0bbd6 !important;
+  background: transparent !important;
+}
+html[data-theme="dark"] .uni-nav :is(a,button).uni-nav-active,
+html[data-theme="dark"] .uni-nav :is(a,button)[aria-current="page"] {
+  color: #ffffff !important;
+  background: rgba(139,92,246,.22) !important;
+  border: 1px solid #8b5cf6 !important;
+}
