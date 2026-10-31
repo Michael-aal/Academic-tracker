@@ -79,7 +79,7 @@
       <div class="at-nav-menu-heading">Your workspace</div>
       ${routes.map(([label,href,key]) => `<a href="${href}" data-at-route="${href}">${icon(key)}<span>${label}</span></a>`).join("")}
       <div class="at-nav-menu-separator"></div>
-      <a href="index.html">Website home</a>
+      <button type="button" id="at-install-app" class="at-install-menu-item">Install as app</button>\n      <a href="index.html">Website home</a>
       ${authPage ? '<a href="login.html">Log in</a><a href="register.html">Create account</a>' : ""}
     </div>
     <div class="at-nav-popover at-nav-menu" id="at-nav-profile-menu" hidden>
@@ -119,7 +119,7 @@
   notesScript.defer = true;
   document.body.appendChild(notesScript);
 
-  const menuToggle = header.querySelector("#at-nav-menu-toggle");
+  // Capture the browser install event early so the menu action can use it later.\n  window.addEventListener("beforeinstallprompt", event => {\n    event.preventDefault();\n    window.__AT_DEFERRED_INSTALL_PROMPT = event;\n  });\n  const menuToggle = header.querySelector("#at-nav-menu-toggle");
   const profileToggle = header.querySelector("#at-nav-profile-toggle");
   const menu = header.querySelector("#at-nav-menu");
   const profileMenu = header.querySelector("#at-nav-profile-menu");
@@ -168,7 +168,7 @@
       if (trigger && trigger.isConnected) trigger.focus();
     }
   });
-  menu.querySelectorAll("a").forEach(a => a.addEventListener("click", closeAll));
+  const installButton = menu.querySelector("#at-install-app");\n  if (installButton) {\n    installButton.addEventListener("click", async () => {\n      closeAll();\n      if (window.ATInstallApp) { await window.ATInstallApp(); return; }\n      const script = document.createElement("script");\n      script.src = "pwa-install.js";\n      script.onload = () => window.ATInstallApp?.();\n      script.onerror = () => window.alert("App installation help could not be loaded. Please use your browser menu to install Academic Tracker.");\n      document.body.appendChild(script);\n    });\n  }\n  menu.querySelectorAll("a").forEach(a => a.addEventListener("click", closeAll));
   profileMenu.querySelectorAll("a").forEach(a => a.addEventListener("click", closeAll));
 
   const currentView = new URLSearchParams(location.search).get("view");
