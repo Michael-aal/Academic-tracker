@@ -224,6 +224,7 @@
   document.querySelectorAll("[data-rating]").forEach(button => button.addEventListener("click", () => {
     if (!current || !answerRevealed) return;
     const rating = button.dataset.rating;
+    const reviewedCardId = current.id;
     current.lastReviewedAt = now();
     current.lastRating = rating;
     reviewStats.reviewed += 1;
@@ -244,7 +245,7 @@
       }
       current.dueAt = now() + current.intervalDays * 24 * 60 * 60 * 1000;
     }
-    persist().then(() => { if (rating !== "again") dataRequest("/api/learning/progress/award", { method: "POST", body: JSON.stringify({ action: "flashcard-reviewed", reference: current.id }) }).catch(() => {}); }); renderLibrary(); showNext();
+    persist().then(() => { if (rating !== "again") dataRequest("/api/learning/progress/award", { method: "POST", body: JSON.stringify({ action: "flashcard-reviewed", reference: reviewedCardId }) }).catch(() => {}); }); renderLibrary(); showNext();
   }));
   $("library-search").addEventListener("input", renderLibrary);
   $("library-list").addEventListener("click", event => {
