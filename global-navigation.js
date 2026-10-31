@@ -70,7 +70,7 @@
   header.className = "at-global-header";
   header.setAttribute("aria-label","Academic Tracker navigation");
   header.innerHTML = `
-    <a class="at-nav-brand" href="dashboard.html" aria-label="Academic Tracker home">
+    <a class="at-nav-brand" href="${isHigherTrack ? "university-dashboard.html" : "dashboard.html"}" aria-label="Academic Tracker home">
       <span class="at-nav-brand-mark" aria-hidden="true">A</span><span class="at-nav-brand-name">Academic <span>Tracker</span></span>
     </a>
     <p class="at-nav-page-title" aria-current="page"></p>
