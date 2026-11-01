@@ -20,3 +20,34 @@ html[data-theme="dark"]{--community-panel:#171321;--community-text:#f5f0ff;--com
 .story-panel{padding:15px;margin-bottom:2px}.story-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}.story-form input[type=text]{flex:1;min-width:140px}.story-form input[type=file]{max-width:190px;font-size:11px}.story-list{display:flex;gap:9px;overflow-x:auto;padding:5px 0}.story-card{flex:0 0 145px;min-width:0;border:1px solid var(--community-border);border-radius:12px;padding:10px;display:grid;gap:5px}.story-card a{display:grid;place-items:center;min-height:54px;border-radius:9px;background:rgba(128,85,220,.1);color:var(--community-accent);font-size:12px;font-weight:800;text-decoration:none}.story-card strong{font-size:12px}.story-card small{font-size:10px;color:var(--community-muted)}.group-card-actions{display:grid;gap:8px;margin-top:12px}.group-invite-form{display:flex;gap:6px}.group-invite-form input{min-width:0;flex:1;border:1px solid var(--community-border);border-radius:9px;padding:9px;background:transparent;color:var(--community-text)}.group-invitation{padding:12px 0;border-bottom:1px solid var(--community-border)}.group-invitation p{font-size:12px;color:var(--community-muted)}.video-card iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#08060e}#call-media[hidden]{display:none}
 
 .community-heading-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+
+
+/* Social Media product shell and persistent mobile navigation. */
+body.social-media-page{padding-bottom:0!important}
+body.social-media-page .at-mobile-nav{display:none!important}
+body.social-media-page .community-shell{width:min(1120px,calc(100% - 28px));margin:26px auto 110px}
+body.social-media-page .community-heading{padding:8px 2px 18px;border-bottom:1px solid var(--community-border)}
+body.social-media-page .community-heading h1{font-size:clamp(30px,4vw,40px)}
+body.social-media-page .community-tabs{border:0;border-bottom:1px solid var(--community-border);border-radius:0;background:transparent;padding:0 0 8px}
+body.social-media-page .community-tabs button{border-radius:10px}
+body.social-media-page .post-card{padding:20px;border-radius:18px}
+body.social-media-page .post-actions button{padding:8px 12px;border-radius:9px;font-weight:700}
+body.social-media-page .post-actions button:hover{background:rgba(128,85,220,.1);color:var(--community-accent)}
+.social-bottom-nav{display:none}
+@media(max-width:760px){
+ body.social-media-page{padding-bottom:calc(88px + env(safe-area-inset-bottom))!important}
+ body.social-media-page .community-shell{width:calc(100% - 18px);margin:14px auto 28px}
+ body.social-media-page .community-heading{gap:10px;margin-bottom:10px}
+ body.social-media-page .community-heading-actions{display:flex;gap:10px;flex-wrap:wrap}
+ body.social-media-page .community-tabs{display:none}
+ body.social-media-page .community-layout{gap:12px}
+ body.social-media-page .community-side-column{display:none}
+ body.social-media-page .composer{padding:14px}
+ body.social-media-page .post-card{padding:15px}
+ .social-bottom-nav{position:fixed;z-index:130;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;padding:6px;border:1px solid var(--community-border);border-radius:18px;background:var(--community-panel);box-shadow:0 12px 34px rgba(20,10,40,.22);backdrop-filter:blur(18px)}
+ .social-bottom-nav button{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;min-width:0;min-height:52px;padding:4px 2px;border:0;border-radius:12px;background:transparent;color:var(--community-muted);font:700 10px/1.1 system-ui,sans-serif;cursor:pointer}
+ .social-bottom-nav button.active{background:linear-gradient(135deg,#8055dc,#6840b7);color:#fff}
+ .social-bottom-nav .social-create{background:rgba(128,85,220,.12);color:var(--community-accent)}
+ .social-bottom-nav .social-create .social-nav-icon{display:grid;place-items:center;width:27px;height:27px;border-radius:9px;background:#8055dc;color:#fff;font-size:23px;line-height:1}
+ .social-nav-icon{font-size:21px;line-height:1}
+}
