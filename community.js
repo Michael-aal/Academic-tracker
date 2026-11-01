@@ -176,9 +176,25 @@
     if(!requireLogin()) return;
     try {
       const {groups=[]}=await api("/community/groups");
-      $("group-list").innerHTML=groups.length?groups.map(g=>'<article class="panel group-card"><strong>'+esc(g.title)+'</strong><p>'+esc(g.description)+'</p><small>'+esc(g.subject||"General learning")+' · '+(g.memberCount||0)+' members · '+esc(g.educationTrack||"Cross-level")+'</small><p><button class="outline-button" data-join-group="'+esc(g.id)+'" '+(g.joined?'disabled':'')+'>'+(g.joined?'Joined':'Join group')+'</button></p></article>').join(""):'<div class="empty-state">No groups yet. Create the first study group.</div>';
+      $("group-list").innerHTML=groups.length?groups.map(g=>'<article class="panel group-card"><strong>'+esc(g.title)+'</strong><p>'+esc(g.description)+'</p><small>'+esc(g.subject||"General learning")+' · '+(g.memberCount||0)+' members · '+esc(g.educationTrack||"Cross-level")+'</small><p>'+(g.joined?'<button class="outline-button" data-group-chat="'+esc(g.id)+'">Open group chat</button>':'<button class="outline-button" data-join-group="'+esc(g.id)+'">Join group</button>')+'</p></article>').join(""):'<div class="empty-state">No groups yet. Create the first study group.</div>';
+      loadGroupInvitations();
     } catch(e){status(e.message);}
   }
+  async function loadGroupInvitations(){
+    try{
+      const {invitations=[]}=await api("/community/group-invitations");
+      $("group-invitations").innerHTML=invitations.length?invitations.map(i=>'<div class="group-invitation"><strong>'+esc(i.group?.title||"Study group")+'</strong><p>'+esc(i.group?.description||"")+'</p><button class="primary-button" data-accept-invite="'+esc(i.id)+'">Accept</button><button class="quiet-button" data-decline-invite="'+esc(i.id)+'">Decline</button></div>').join(""):'<span class="muted-note">No pending group invitations.</span>';
+    }catch(e){$("group-invitations").textContent=e.message;}
+  }
+  $("group-invitations").addEventListener("click",async e=>{
+    const accept=e.target.closest("[data-accept-invite]"),decline=e.target.closest("[data-decline-invite]");
+    if(!accept&&!decline)return;
+    try{
+      const id=accept?.dataset.acceptInvite||decline.dataset.declineInvite;
+      await api("/community/group-invitations/"+encodeURIComponent(id)+(accept?"/accept":"/decline"),{method:"POST",body:"{}"});
+      status(accept?"You joined the study group.":"Invitation declined.");loadGroups();
+    }catch(err){status(err.message);}
+  });
   $("show-group-form").addEventListener("click",()=>{$("group-form").hidden=!$("group-form").hidden;});
   $("group-form").addEventListener("submit",async e=>{
     e.preventDefault(); if(!requireLogin())return;
@@ -188,6 +204,12 @@
     } catch(err){status(err.message);}
   });
   $("group-list").addEventListener("click",async e=>{
+    const chat=e.target.closest("[data-group-chat]");
+    if(chat){
+      try{const {conversation}=await api("/community/chat/group/"+encodeURIComponent(chat.dataset.groupChat),{method:"POST",body:"{}"});await loadChats();tab("messages");openChat(conversation.id);}
+      catch(err){status(err.message);}
+      return;
+    }
     const b=e.target.closest("[data-join-group]");if(!b)return;
     try{await api("/community/groups/"+encodeURIComponent(b.dataset.joinGroup)+"/join",{method:"POST",body:"{}"});status("You joined the study group.");loadGroups();}
     catch(err){status(err.message);}
