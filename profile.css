@@ -187,3 +187,61 @@
   .profile-page .profile-layout > .card { padding: 15px; }
   .profile-page .button-row { grid-template-columns: 1fr; }
 }
+
+
+/* Account deletion danger zone and confirmation dialog */
+.profile-page .account-danger-zone {
+  margin-top: 22px;
+  padding: 16px;
+  border: 1px solid rgba(239, 83, 80, .32);
+  border-radius: 14px;
+  background: rgba(239, 83, 80, .045);
+}
+.profile-page .account-danger-zone .eyebrow { color: #e58b8b; margin: 0 0 8px; }
+.profile-page .account-danger-zone h3 { margin: 0 0 8px; font-size: 16px; }
+.profile-page .account-danger-zone .notice { margin: 0 0 14px; line-height: 1.65; }
+.profile-page .danger-button {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #a83c45;
+  border-radius: 11px;
+  background: #8f2732;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.profile-page .danger-button:hover { background: #a8323e; }
+.profile-page .danger-button:disabled { opacity: .65; cursor: wait; }
+.profile-page .delete-account-dialog {
+  width: min(460px, calc(100vw - 28px));
+  max-width: none;
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--card, #110d1b);
+  color: var(--text, #f4f0ff);
+  box-shadow: 0 24px 90px rgba(0,0,0,.48);
+}
+.profile-page .delete-account-dialog::backdrop { background: rgba(5, 4, 10, .72); backdrop-filter: blur(5px); }
+.profile-page .delete-account-form { display: grid; gap: 16px; padding: clamp(20px, 5vw, 28px); }
+.profile-page .delete-dialog-heading { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; }
+.profile-page .delete-dialog-heading .eyebrow { margin: 0 0 7px; color: #e58b8b; }
+.profile-page .delete-dialog-heading h2 { margin: 0; font-size: 22px; }
+.profile-page .dialog-close {
+  flex: 0 0 36px; width: 36px; height: 36px; border: 1px solid var(--line);
+  border-radius: 10px; background: transparent; color: inherit; font-size: 23px; cursor: pointer;
+}
+.profile-page .delete-account-form > .notice { margin: 0; line-height: 1.7; }
+.profile-page .delete-account-form .field { display: grid; gap: 8px; font-size: 13px; }
+.profile-page .delete-account-form input {
+  width: 100%; min-height: 46px; box-sizing: border-box; padding: 11px 13px;
+  border: 1px solid var(--line); border-radius: 11px; background: var(--input-bg, transparent);
+  color: inherit; font: inherit;
+}
+.profile-page .delete-dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.profile-page .delete-dialog-actions .button { min-height: 44px; }
+@media (max-width: 420px) {
+  .profile-page .delete-dialog-actions { grid-template-columns: 1fr; }
+}
