@@ -503,7 +503,7 @@ router.get("/referrals", async (req, res, next) => {
       prisma.referral.findMany({ where: { inviterId: req.userId }, orderBy: { createdAt: "desc" }, take: 100 }),
       prisma.referralReward.aggregate({ where: { userId: req.userId, status: "APPROVED" }, _sum: { points: true } })
     ]);
-    res.json({ code: code.code, inviteUrl: (process.env.PUBLIC_APP_URL || "https://academic-tracker-iota.vercel.app") + "/register.html?ref=" + code.code, referrals, approvedPoints: rewards._sum.points || 0 });
+    res.json({ code: code.code, inviteUrl: (process.env.PUBLIC_APP_URL || req.get("origin") || "https://academic-tracker-iota.vercel.app").replace(/\\/$/, "") + "/register.html?ref=" + code.code, referrals, approvedPoints: rewards._sum.points || 0 });
   } catch (e) { next(e); }
 });
 
