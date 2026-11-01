@@ -30,7 +30,7 @@ app.use(cors({
     return callback(new Error("This website is not allowed to access the Academic Tracker API."));
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Bootstrap-Secret"]
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 // API responses can contain private academic and account information. Never let
 // browsers or intermediary caches reuse them across sessions.
