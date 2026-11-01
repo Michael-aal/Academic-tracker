@@ -225,9 +225,13 @@ router.get("/people", async (req, res, next) => {
       select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true },
       take: 20
     });
-    const profiles = await prisma.communityProfile.findMany({ where: { userId: { in: users.map(u => u.id) }, visibility: "PUBLIC" } });
+    const [profiles, blocks] = await Promise.all([
+      prisma.communityProfile.findMany({ where: { userId: { in: users.map(u => u.id) }, visibility: "PUBLIC" } }),
+      prisma.communityBlock.findMany({ where: { OR: [{ blockerId: req.userId }, { blockedId: req.userId }] } })
+    ]);
+    const blockedIds = new Set(blocks.map(b => b.blockerId === req.userId ? b.blockedId : b.blockerId));
     const map = new Map(profiles.map(p => [p.userId, p]));
-    res.json({ people: users.filter(u => map.has(u.id)).map(u => publicProfile(map.get(u.id), u)) });
+    res.json({ people: users.filter(u => map.has(u.id) && !blockedIds.has(u.id)).map(u => publicProfile(map.get(u.id), u)) });
   } catch (e) { next(e); }
 });
 
@@ -244,8 +248,13 @@ router.post("/follow/:userId", async (req, res, next) => {
   try {
     const target = await getUser(req.params.userId);
     if (!target || target.id === req.userId) return res.status(404).json({ error: "Student not found." });
-    const current = await prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: target.id, followingId: req.userId } } });
-    const status = current?.status === "PENDING" ? "ACCEPTED" : "PENDING";
+    if (await isBlocked(req.userId, target.id)) return res.status(403).json({ error: "This connection is blocked." });
+    const [outgoing, incoming] = await Promise.all([
+      prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: req.userId, followingId: target.id } } }),
+      prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: target.id, followingId: req.userId } } })
+    ]);
+    if (outgoing?.status === "ACCEPTED" && incoming?.status === "ACCEPTED") return res.json({ ok: true, status: "ACCEPTED" });
+    const status = incoming?.status === "PENDING" ? "ACCEPTED" : "PENDING";
     await prisma.communityFollow.upsert({
       where: { followerId_followingId: { followerId: req.userId, followingId: target.id } },
       create: { followerId: req.userId, followingId: target.id, status },
@@ -261,7 +270,7 @@ router.post("/follow/:userId", async (req, res, next) => {
 router.get("/groups", async (req, res, next) => {
   try {
     const groups = await prisma.studyGroup.findMany({
-      where: { visibility: "PUBLIC" },
+      where: { visibility: "PUBLIC", status: "ACTIVE" },
       orderBy: { createdAt: "desc" }, take: 50
     });
     const ids = groups.map(g => g.id);
@@ -296,6 +305,12 @@ router.post("/groups/:id/join", async (req, res, next) => {
       where: { groupId_userId: { groupId: group.id, userId: req.userId } },
       create: { groupId: group.id, userId: req.userId, status: "ACTIVE" },
       update: { status: "ACTIVE" }
+    });
+    const existingGroupChat = await prisma.chatConversation.findFirst({ where: { groupId: group.id, kind: "GROUP" } });
+    if (existingGroupChat) await prisma.chatMember.upsert({
+      where: { conversationId_userId: { conversationId: existingGroupChat.id, userId: req.userId } },
+      create: { conversationId: existingGroupChat.id, userId: req.userId },
+      update: {}
     });
     res.json({ ok: true });
   } catch (e) { next(e); }
