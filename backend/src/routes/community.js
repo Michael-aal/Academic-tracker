@@ -140,9 +140,10 @@ router.patch("/profile/me", async (req, res, next) => {
     if (!user) return res.status(404).json({ error: "Account not found." });
     const data = {};
     if (req.body?.username !== undefined) {
-      const username = slug(req.body.username);
-      if (username.length < 3 || username.length > 30) return res.status(400).json({ error: "Username must contain 3–30 letters, numbers or underscores." });
+      const username = clean(req.body.username, 30).toLowerCase();
+      if (!/^[a-z0-9_]{3,30}$/.test(username)) return res.status(400).json({ error: "Username must be 3–30 characters using letters, numbers or underscores." });
       data.username = username;
+      data.usernameSet = true;
     }
     if (req.body?.bio !== undefined) data.bio = clean(req.body.bio, 280) || null;
     if (req.body?.bestSubject !== undefined) data.bestSubject = clean(req.body.bestSubject, 100) || null;
