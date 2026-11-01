@@ -81,16 +81,6 @@ CREATE TABLE "group_memberships" (
 CREATE UNIQUE INDEX "group_memberships_group_id_user_id_key" ON "group_memberships"("group_id","user_id");
 CREATE INDEX "group_memberships_user_id_status_idx" ON "group_memberships"("user_id","status");
 
-CREATE TABLE "community_stories" (
-  "id" TEXT NOT NULL, "author_id" TEXT NOT NULL, "caption" VARCHAR(500),
-  "media_url" VARCHAR(1000) NOT NULL, "media_type" VARCHAR(16) NOT NULL DEFAULT 'IMAGE',
-  "expires_at" TIMESTAMP(3) NOT NULL, "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT "community_stories_pkey" PRIMARY KEY ("id"),
-  CONSTRAINT "community_stories_author_id_fkey" FOREIGN KEY ("author_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
-CREATE INDEX "community_stories_expires_at_created_at_idx" ON "community_stories"("expires_at","created_at");
-CREATE INDEX "community_stories_author_id_created_at_idx" ON "community_stories"("author_id","created_at");
-
 CREATE TABLE "video_engagements" (
   "id" TEXT NOT NULL, "user_id" TEXT NOT NULL, "video_id" VARCHAR(120) NOT NULL,
   "provider" VARCHAR(20) NOT NULL DEFAULT 'YOUTUBE', "action" VARCHAR(20) NOT NULL,
