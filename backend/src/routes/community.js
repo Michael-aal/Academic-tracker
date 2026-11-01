@@ -87,7 +87,7 @@ async function canReadPost(post, userId) {
 
 router.use(requireAuth);
 router.use(async (req, res, next) => {
-  if (req.path === "/profile/me" && ["GET", "PATCH"].includes(req.method)) return next();
+  if ((req.path === "/profile/me" && ["GET", "PATCH"].includes(req.method)) || (req.path === "/media-upload-signature" && req.method === "POST")) return next();
   try {
     const profile = await prisma.communityProfile.findUnique({ where: { userId: req.userId }, select: { usernameSet: true } });
     if (!profile?.usernameSet) return res.status(403).json({ error: "Choose your unique Social Media username before continuing.", code: "SOCIAL_USERNAME_REQUIRED" });
