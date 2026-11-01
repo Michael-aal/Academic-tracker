@@ -21,7 +21,7 @@
     document.querySelectorAll(".community-view").forEach(v => v.classList.toggle("active", v.id === "view-" + name));
     if (name === "feed") loadFeed();
     document.querySelectorAll("#social-bottom-nav [data-social-dest]").forEach(b => { const active = b.dataset.socialDest === name; b.classList.toggle("active", active); if (active) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
-    if (name === "people") $("people-query").focus();
+
     if (name === "groups") loadGroups();
     if (name === "videos") loadVideoPreferences();
     if (name === "messages") loadChats();
