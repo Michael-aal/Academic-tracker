@@ -1,4 +1,4 @@
-const CACHE_NAME = "academic-tracker-v16";
+const CACHE_NAME = "academic-tracker-v17";
 const APP_SHELL = [
   "./", "./index.html", "./landing.css", "./landing-menu-fix.css", "./landing.js",
   "./login.html", "./register.html", "./auth.css", "./auth.js",
@@ -8,6 +8,10 @@ const APP_SHELL = [
   "./manifest.webmanifest", "./assets/icon.svg", "./pwa-install.js", "./pwa-install.css",
   "./english-studio.html", "./english-studio.css", "./english-studio.js",
   "./level-up.html", "./level-up.css", "./level-up.js",
+  "./calculator.html", "./calculator.css", "./calculator.js", "./calculator-engine.js",
+  "./quiz.html", "./quiz-page.css", "./quiz-page.js",
+  "./notes.html", "./notes-workspace.css", "./notes-workspace.js",
+  "./notes-summary.html", "./notes-summary.js", "./universal-notes.css", "./universal-notes.js",
   "./exam-simulator.html", "./exam-simulator.js",
   "./focus-music.js", "./focus-music.css"
 ];
