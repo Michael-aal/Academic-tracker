@@ -215,6 +215,7 @@
       await api("/community/chat/"+encodeURIComponent(id)+"/read",{method:"PATCH",body:"{}"});
     }catch(e){status(e.message);}
   }
+  window.ATCommunityState.openChat = id => openChat(id);
   $("chat-list").addEventListener("click",e=>{const b=e.target.closest("[data-chat]");if(b)openChat(b.dataset.chat);});
   $("chat-send").addEventListener("submit",async e=>{
     e.preventDefault();if(!activeChat)return;
@@ -230,5 +231,6 @@
   } catch (_) {}
   loadFeed();
   if(token()) { loadProfile(); }
+  if(location.hash === "#messages") tab("messages");
   else { status("You can browse public posts. Log in to publish, connect, join groups or message."); }
 })();
