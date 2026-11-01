@@ -76,7 +76,7 @@
           (post.subject ? '<span class="post-subject">' + esc(post.subject) + '</span>' : '') +
           (post.videoUrl ? '<p><a target="_blank" rel="noopener noreferrer" href="' + esc(post.videoUrl) + '">Open shared learning video ↗</a></p>' : '') +
           '<div class="post-meta">' + new Date(post.createdAt).toLocaleString() + ' · ' + (post.reactionCount || 0) + ' reactions · ' + (post.commentCount || 0) + ' comments</div>' +
-          '<div class="post-actions"><button data-action="react" data-id="' + esc(post.id) + '">♡ Helpful</button><button data-action="comments" data-id="' + esc(post.id) + '">View comments</button></div><div class="post-comments" id="comments-' + esc(post.id) + '"></div></article>';
+          '<div class="post-actions"><button data-action="react" data-id="' + esc(post.id) + '">♡ Helpful</button><button data-action="comments" data-id="' + esc(post.id) + '">View comments</button><button data-action="report" data-id="' + esc(post.id) + '">Report</button></div><div class="post-comments" id="comments-' + esc(post.id) + '"></div></article>';
       }).join("");
     } catch (e) { $("feed-list").innerHTML = '<div class="empty-state">' + esc(e.message) + '</div>'; }
   }
@@ -130,6 +130,12 @@
     const id=b.dataset.id;
     try {
       if (b.dataset.action==="react") { await api("/community/posts/"+encodeURIComponent(id)+"/reaction",{method:"POST",body:JSON.stringify({reaction:"HELPFUL"})}); loadFeed(); }
+      if (b.dataset.action==="report") {
+        const details=window.prompt("Briefly explain why this post should be reviewed.");
+        if(details===null)return;
+        await api("/community/reports",{method:"POST",body:JSON.stringify({targetType:"POST",targetId:id,reason:"OTHER",details})});
+        status("Thanks. Your report has been sent for review.");
+      }
       if (b.dataset.action==="comments") {
         const data=await api("/community/posts/"+encodeURIComponent(id)+"/comments");
         const box=$("comments-"+id);
@@ -154,6 +160,13 @@
     } catch(err){status(err.message);}
   });
   $("people-list").addEventListener("click",async e=>{
+    const block=e.target.closest("[data-block]");
+    if(block){
+      if(!window.confirm("Block this student? They will no longer be able to connect or privately chat with you."))return;
+      try{await api("/community/blocks/"+encodeURIComponent(block.dataset.block),{method:"POST",body:"{}"});block.closest(".person-card")?.remove();status("Student blocked.");}
+      catch(err){status(err.message);}
+      return;
+    }
     const b=e.target.closest("[data-follow]"); if(!b)return;
     try { const r=await api("/community/follow/"+encodeURIComponent(b.dataset.follow),{method:"POST",body:"{}"}); b.textContent=r.status==="ACCEPTED"?"Connected":"Request sent"; b.disabled=true; }
     catch(err){status(err.message);}
