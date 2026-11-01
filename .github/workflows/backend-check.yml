@@ -38,6 +38,10 @@ on:
       - "notifications.html"
       - "notifications.css"
       - "notifications.js"
+      - "community.html"
+      - "community.css"
+      - "community.js"
+      - "community-chat-media.js"
       - "global-navigation.css"
       - "ai-learning.html"
       - "ai-tutor.html"
@@ -96,6 +100,10 @@ on:
       - "exam-simulator.html"
       - "exam-simulator.js"
       - "sw.js"
+      - "community.html"
+      - "community.css"
+      - "community.js"
+      - "community-chat-media.js"
       - ".github/workflows/backend-check.yml"
   workflow_dispatch:
 
