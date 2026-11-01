@@ -554,14 +554,16 @@ router.delete("/follow/:userId", async (req, res, next) => {
       return res.json({ ok: true, status: "REQUEST_CANCELLED" });
     }
     if (incoming?.status === "PENDING" && !outgoing) return res.status(409).json({ error: "This student sent you a request. Accept or decline it from Friend requests." });
-    await prisma.communityFollow.deleteMany({ where: { OR: [
-      { followerId: req.userId, followingId: targetId },
-      { followerId: targetId, followingId: req.userId }
-    ] } });
-    await prisma.callSession.updateMany({
-      where: { status: { in: ["RINGING", "ACTIVE"] }, OR: [{ callerId: req.userId, calleeId: targetId }, { callerId: targetId, calleeId: req.userId }] },
-      data: { status: "ENDED", endedAt: new Date() }
-    });
+    await prisma.$transaction([
+      prisma.communityFollow.deleteMany({ where: { OR: [
+        { followerId: req.userId, followingId: targetId },
+        { followerId: targetId, followingId: req.userId }
+      ] } }),
+      prisma.callSession.updateMany({
+        where: { status: { in: ["RINGING", "ACTIVE"] }, OR: [{ callerId: req.userId, calleeId: targetId }, { callerId: targetId, calleeId: req.userId }] },
+        data: { status: "ENDED", endedAt: new Date() }
+      })
+    ]);
     res.json({ ok: true, status: "REMOVED" });
   } catch (e) { next(e); }
 });
@@ -927,16 +929,18 @@ router.post("/blocks/:userId", async (req, res, next) => {
   try {
     const targetId = clean(req.params.userId, 100);
     if (!targetId || targetId === req.userId || !await prisma.user.findUnique({ where: { id: targetId }, select: { id: true } })) return res.status(404).json({ error: "Student not found." });
-    await prisma.communityBlock.upsert({
-      where: { blockerId_blockedId: { blockerId: req.userId, blockedId: targetId } },
-      create: { blockerId: req.userId, blockedId: targetId },
-      update: {}
-    });
-    await prisma.communityFollow.deleteMany({ where: { OR: [{ followerId: req.userId, followingId: targetId }, { followerId: targetId, followingId: req.userId }] } });
-    await prisma.callSession.updateMany({
-      where: { status: { in: ["RINGING", "ACTIVE"] }, OR: [{ callerId: req.userId, calleeId: targetId }, { callerId: targetId, calleeId: req.userId }] },
-      data: { status: "ENDED", endedAt: new Date() }
-    });
+    await prisma.$transaction([
+      prisma.communityBlock.upsert({
+        where: { blockerId_blockedId: { blockerId: req.userId, blockedId: targetId } },
+        create: { blockerId: req.userId, blockedId: targetId },
+        update: {}
+      }),
+      prisma.communityFollow.deleteMany({ where: { OR: [{ followerId: req.userId, followingId: targetId }, { followerId: targetId, followingId: req.userId }] } }),
+      prisma.callSession.updateMany({
+        where: { status: { in: ["RINGING", "ACTIVE"] }, OR: [{ callerId: req.userId, calleeId: targetId }, { callerId: targetId, calleeId: req.userId }] },
+        data: { status: "ENDED", endedAt: new Date() }
+      })
+    ]);
     res.json({ ok: true });
   } catch (e) { next(e); }
 });
