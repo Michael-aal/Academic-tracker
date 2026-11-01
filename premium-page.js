@@ -3,7 +3,7 @@
   const API = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "") + "/api";
   const token = localStorage.getItem("academic-tracker-token");
   const $ = id => document.getElementById(id);
-  let catalog = { plans: [], bundles: [], fxConfigured: false };
+  let catalog = { plans: [], fxConfigured: false };
   let billingPeriod = "monthly";
   const ngn = kobo => new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(kobo / 100);
   const headers = () => ({ "Content-Type": "application/json", Authorization: "Bearer " + token });
@@ -16,9 +16,8 @@
     if (!r.ok) throw new Error(data.error || "Something went wrong.");
     return data;
   }
-  function amountFor(item, multiplier = 1) {
-    return displayCurrency === "USD" ? usd(item.amountUsdCents * multiplier)
-      : item.amountNgnKobo != null ? ngn(item.amountNgnKobo * multiplier) : "NGN rate not configured";
+  function amountFor(item) {
+    return item.amountNgnKobo != null ? ngn(item.amountNgnKobo) : "Price unavailable";
   }
   function checkoutReady(item) { return Boolean(catalog.paymentsConfigured && catalog.fxConfigured && item?.amountNgnKobo != null); }
   function renderPlans() {
