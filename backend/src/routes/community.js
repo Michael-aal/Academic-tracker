@@ -87,7 +87,7 @@ async function canReadPost(post, userId) {
 
 router.use(requireAuth);
 router.use(async (req, res, next) => {
-  if (req.path === "/profile/me" && ["GET", "PATCH"].includes(req.method)) return next();
+  if ((req.path === "/profile/me" && ["GET", "PATCH"].includes(req.method)) || (req.path === "/media-upload-signature" && req.method === "POST")) return next();
   try {
     const profile = await prisma.communityProfile.findUnique({ where: { userId: req.userId }, select: { usernameSet: true } });
     if (!profile?.usernameSet) return res.status(403).json({ error: "Choose your unique Social Media username before continuing.", code: "SOCIAL_USERNAME_REQUIRED" });
@@ -388,9 +388,18 @@ router.get("/posts/:id/comments", async (req, res, next) => {
     const post = await prisma.communityPost.findUnique({ where: { id: req.params.id } });
     if (!post || !await canReadPost(post, req.userId)) return res.status(404).json({ error: "Post not found." });
     const comments = await prisma.communityComment.findMany({ where: { postId: post.id }, orderBy: { createdAt: "asc" }, take: 100 });
-    const users = await prisma.user.findMany({ where: { id: { in: [...new Set(comments.map(c => c.userId))] } }, select: { id: true, name: true } });
-    const map = new Map(users.map(u => [u.id, u.name]));
-    res.json({ comments: comments.map(c => ({ ...c, authorName: map.get(c.userId) || "Student" })) });
+    const userIds = [...new Set(comments.map(c => c.userId))];
+    const [users, profiles] = userIds.length ? await Promise.all([
+      prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true } }),
+      prisma.communityProfile.findMany({ where: { userId: { in: userIds } }, select: { userId: true, username: true, avatarUrl: true } })
+    ]) : [[], []];
+    const userMap = new Map(users.map(u => [u.id, u]));
+    const profileMap = new Map(profiles.map(p => [p.userId, p]));
+    res.json({ comments: comments.map(c => ({
+      ...c, authorName: userMap.get(c.userId)?.name || "Student",
+      authorUsername: profileMap.get(c.userId)?.username || "student",
+      avatarUrl: profileMap.get(c.userId)?.avatarUrl || null
+    })) });
   } catch (e) { next(e); }
 });
 

@@ -29,8 +29,19 @@
     currentUser = user;
     const name = user.name || "Student";
     const handle = handleFor(user.email);
-    $("profile-avatar").textContent = initials(name);
+    const avatar = $("profile-avatar");
+    avatar.replaceChildren();
+    if (user.socialProfile?.avatarUrl) {
+      const image = document.createElement("img");
+      image.src = user.socialProfile.avatarUrl;
+      image.alt = "Profile picture";
+      avatar.append(image);
+    } else {
+      avatar.textContent = initials(name);
+    }
     $("profile-heading").textContent = name;
+    $("profile-best-subject").textContent = user.socialProfile?.bestSubject || "Add your best subject in Social Media";
+    $("profile-bio").textContent = user.socialProfile?.bio || "Add a short bio in Social Media to introduce yourself.";
     $("profile-handle").textContent = handle;
     $("profile-email").textContent = user.email || "";
     $("profile-name").value = name;
@@ -40,6 +51,25 @@
     $("profile-handle-small").textContent = handle;
     localStorage.setItem("academic-tracker-user", JSON.stringify(user));
   }
+  async function loadSocialProfile() {
+    const response = await fetch(API_BASE + "/api/community/profile/me", { headers: { Authorization: "Bearer " + token }, cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json().catch(() => ({}));
+    if (!data.profile) return;
+    currentUser = { ...(currentUser || {}), socialProfile: data.profile };
+    const avatar = $("profile-avatar");
+    avatar.replaceChildren();
+    if (data.profile.avatarUrl) {
+      const image = document.createElement("img");
+      image.src = data.profile.avatarUrl;
+      image.alt = "Profile picture";
+      avatar.append(image);
+    } else {
+      avatar.textContent = initials(currentUser.name);
+    }
+    $("profile-best-subject").textContent = data.profile.bestSubject || "Add your best subject in Social Media";
+    $("profile-bio").textContent = data.profile.bio || "Add a short bio in Social Media to introduce yourself.";
+  }
   async function loadProfile() {
     try {
       const response = await fetch(API_BASE + "/api/auth/me", {headers:{Authorization:"Bearer " + token}});
@@ -47,6 +77,7 @@
       if (response.status === 401) { localStorage.removeItem("academic-tracker-token"); localStorage.removeItem("academic-tracker-user"); window.location.replace("login.html"); return; }
       if (!response.ok || !data.user) throw new Error(data.error || "Could not load your profile. Please try again.");
       paint(data.user);
+      await loadSocialProfile().catch(() => {});
     } catch (error) {
       message(errorBox, error instanceof TypeError ? "Could not connect to your account right now. Check your connection and try again." : error.message);
     }
@@ -68,6 +99,7 @@
       if (response.status === 401) { localStorage.removeItem("academic-tracker-token"); localStorage.removeItem("academic-tracker-user"); window.location.replace("login.html"); return; }
       if (!response.ok || !data.user) throw new Error(data.error || "Your profile could not be saved.");
       paint(data.user);
+      await loadSocialProfile().catch(() => {});
       message(successBox, "Your display name has been updated.", true);
     } catch (error) {
       message(errorBox, error instanceof TypeError ? "Could not connect to the API. Your changes have not been saved." : error.message);
@@ -75,6 +107,39 @@
       saveButton.disabled = false;
       saveButton.textContent = "Save changes";
     }
+  });
+  const avatarInput = $("profile-avatar-file");
+  avatarInput?.addEventListener("change", async () => {
+    const file = avatarInput.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { message(errorBox, "Choose an image file."); avatarInput.value = ""; return; }
+    if (file.size > 8 * 1024 * 1024) { message(errorBox, "Profile pictures must be 8 MB or smaller."); avatarInput.value = ""; return; }
+    const label = $("profile-avatar-upload");
+    if (label) label.textContent = "Uploading…";
+    try {
+      const signatureResponse = await fetch(API_BASE + "/api/community/media-upload-signature", {
+        method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ resourceType: "image" })
+      });
+      const signature = await signatureResponse.json().catch(() => ({}));
+      if (!signatureResponse.ok) throw new Error(signature.error || "Could not prepare image upload.");
+      const formData = new FormData();
+      formData.append("file", file); formData.append("api_key", signature.apiKey);
+      formData.append("timestamp", String(signature.timestamp)); formData.append("folder", signature.folder);
+      formData.append("signature", signature.signature);
+      const upload = await fetch("https://api.cloudinary.com/v1_1/" + encodeURIComponent(signature.cloudName) + "/image/upload", { method: "POST", body: formData });
+      const result = await upload.json().catch(() => ({}));
+      if (!upload.ok || !result.secure_url) throw new Error("Profile picture upload failed.");
+      const save = await fetch(API_BASE + "/api/community/profile/me", {
+        method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ avatarUrl: result.secure_url })
+      });
+      const saved = await save.json().catch(() => ({}));
+      if (!save.ok) throw new Error(saved.error || "Could not save your profile picture.");
+      await loadSocialProfile();
+      message(successBox, "Profile picture updated across your profile and Social Media.", true);
+    } catch (error) { message(errorBox, error.message || "Profile picture upload failed."); }
+    finally { avatarInput.value = ""; if (label) label.textContent = "Change photo"; }
   });
   $("profile-signout").addEventListener("click", () => {
     localStorage.removeItem("academic-tracker-token");
