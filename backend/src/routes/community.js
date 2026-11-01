@@ -298,7 +298,8 @@ router.get("/people", async (req, res, next) => {
       ...publicProfile(map.get(u.id), u),
       friendStatus: outMap.get(u.id) === "ACCEPTED" && inMap.get(u.id) === "ACCEPTED" ? "FRIENDS" :
         inMap.get(u.id) === "PENDING" ? "REQUEST_RECEIVED" :
-        outMap.get(u.id) === "PENDING" ? "REQUEST_SENT" : "NONE"
+        outMap.get(u.id) === "PENDING" ? "REQUEST_SENT" : "NONE",
+      friendRequestId: incoming.find(x => x.followerId === u.id && x.status === "PENDING")?.id || null
     })) });
   } catch (e) { next(e); }
 });
