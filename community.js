@@ -332,8 +332,8 @@
     const params=new URLSearchParams(location.search), ref=params.get("ref");
     if(ref) sessionStorage.setItem("academic-tracker-referral",ref.toUpperCase());
   } catch (_) {}
-  loadFeed();
-  if(token()) { loadProfile(); try { const u=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}"); if(u.isAdmin||["ADMIN","DEVELOPER","DEV"].includes(String(u.role||"").toUpperCase())) $("community-admin-link").hidden=false; } catch (_) {} }
+  if (!token()) { location.replace("login.html?next=social-media.html"); return; }
+  loadProfile();
+  try { const u=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}"); if(u.isAdmin||["ADMIN","DEVELOPER","DEV"].includes(String(u.role||"").toUpperCase())) $("community-admin-link").hidden=false; } catch (_) {}
   if(location.hash === "#messages") tab("messages");
-  else { status("You can browse public posts. Log in to publish, connect, join groups or message."); }
 })();
