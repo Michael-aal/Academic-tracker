@@ -20,7 +20,7 @@ const safeUrl = value => {
 };
 const slug = value => clean(value, 30).toLowerCase().replace(/[^a-z0-9_]/g, "").replace(/^_+|_+$/g, "");
 const publicProfile = (profile, user) => ({
-  id: profile.id, userId: user.id, username: profile.username, displayName: user.name,
+  id: profile.id, userId: user.id, username: profile.username, usernameSet: profile.usernameSet, displayName: user.name,
   educationTrack: user.educationTrack, institutionName: user.institutionName,
   programme: user.programme, studyLevel: user.studyLevel, bio: profile.bio,
   bestSubject: profile.bestSubject, interests: profile.interests || [],
@@ -171,7 +171,7 @@ router.patch("/profile/me", async (req, res, next) => {
   }
 });
 
-router.post("/media-upload-signature", async (req, res, next) => {
+router.use(async (req, res, next) => {\n  try { const p=await prisma.communityProfile.findUnique({where:{userId:req.userId},select:{usernameSet:true}}); if(!p?.usernameSet)return res.status(403).json({error:"Choose your unique Social Media username before continuing.",code:"SOCIAL_USERNAME_REQUIRED"}); next(); } catch(error){next(error);} });\n\nrouter.post("/media-upload-signature", async (req, res, next) => {
   try {
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
     const apiKey = process.env.CLOUDINARY_API_KEY;
