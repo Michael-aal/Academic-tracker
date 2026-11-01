@@ -56,7 +56,7 @@
 
   sendAdminPin?.addEventListener('click', async () => {
     const email = document.getElementById('email').value.trim().toLowerCase();
-    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return showMessage(errorBox, 'Enter the configured administrator email first.');
     }
     sendAdminPin.disabled = true;
@@ -91,7 +91,7 @@
     if (mode === 'register' && pass !== confirm.value) return showMessage(errorBox, 'Your passwords do not match.');
     if (mode === 'register' && pass.length < 10) return showMessage(errorBox, 'Use at least 10 characters for your password.');
     if (higher && (!institutionName.value.trim() || !programme.value.trim() || !studyLevel.value)) return showMessage(errorBox, 'Enter your institution, programme, and current level.');
-    if (adminSetup && (!adminPinSent || !/^\\d{6}$/.test(adminPin?.value.trim() || ''))) return showMessage(errorBox, 'Request a PIN and enter the 6-digit code sent to your administrator email.');
+    if (adminSetup && (!adminPinSent || !/^\d{6}$/.test(adminPin?.value.trim() || ''))) return showMessage(errorBox, 'Request a PIN and enter the 6-digit code sent to your administrator email.');
     const body = mode === 'register' ? { name, email, password: pass, educationTrack: selectedTrack(), institutionName: institutionName?.value.trim(), programme: programme?.value.trim(), studyLevel: studyLevel?.value } : { email, password: pass };
     submit.disabled = true; submit.textContent = adminSetup ? 'Verifying PIN and creating administrator…' : mode === 'register' ? 'Creating your account…' : 'Signing you in…';
     try {
