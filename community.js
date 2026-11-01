@@ -3,6 +3,7 @@
   const API = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "") + "/api";
   const token = () => localStorage.getItem("academic-tracker-token") || "";
   const $ = id => document.getElementById(id);
+  let showingSavedPosts = false;
   const status = message => { $("community-status").textContent = message || ""; };
   const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
   const headers = () => ({ "Content-Type":"application/json", ...(token() ? { Authorization:"Bearer " + token() } : {}) });
@@ -86,23 +87,32 @@
     } catch (e) { status(e.message); }
   });
 
-  async function loadFeed() {
+  async function loadFeed(savedOnly = showingSavedPosts) {
+    showingSavedPosts = savedOnly;
+    $("feed-heading").textContent = savedOnly ? "Saved posts" : "Recent posts";
+    $("show-saved-posts").textContent = savedOnly ? "Show all posts" : "Saved posts";
     try {
-      const { posts=[] } = await api("/community/feed?limit=25");
-      if (!posts.length) { $("feed-list").innerHTML = '<div class="empty-state">No posts yet. Be the first to start a useful discussion.</div>'; return; }
+      const endpoint = savedOnly ? "/community/saved-posts" : "/community/feed?limit=25";
+      const { posts=[] } = await api(endpoint);
+      if (!posts.length) { $("feed-list").innerHTML = '<div class="empty-state">'+(savedOnly?"You have not saved any posts yet.":"No posts yet. Be the first to start a useful discussion.")+'</div>'; return; }
       $("feed-list").innerHTML = posts.map(post => {
         const author = post.author || {};
         const avatar = author.avatarUrl ? '<img src="' + esc(author.avatarUrl) + '" alt="">' : esc((author.displayName || "S").slice(0,1).toUpperCase());
-        return '<article class="panel post-card" data-post="' + esc(post.id) + '"><div class="post-author"><div class="post-avatar">' + avatar + '</div><div><strong>' + esc(author.displayName || "Student") + '</strong><small>@' + esc(author.username || "student") + ' · ' + esc(author.educationTrack || "") + '</small></div></div>' +
+        const shared = post.sharedPost;
+        const sharedAuthor = shared?.author || {};
+        const sharedCard = shared ? '<div class="shared-post-card"><small>SHARED FROM @'+esc(sharedAuthor.username||"student")+'</small><strong>'+esc(sharedAuthor.displayName||"Student")+'</strong>'+(shared.body?'<p>'+esc(shared.body)+'</p>':'')+(shared.mediaUrl?'<img class="post-media" src="'+esc(shared.mediaUrl)+'" alt="Shared post media" loading="lazy">':'')+(shared.videoUrl?'<p><a target="_blank" rel="noopener noreferrer" href="'+esc(shared.videoUrl)+'">Open original video ↗</a></p>':'')+'</div>' : '';
+        return '<article class="panel post-card" data-post="' + esc(post.id) + '"><div class="post-author"><div class="post-avatar">' + avatar + '</div><div><strong>' + esc(author.displayName || "Student") + '</strong><small>@' + esc(author.username || "student") + ' · ' + esc(author.educationTrack || "") + (post.isFriendPost?' · Friend':'') + '</small></div></div>' +
           (post.body ? '<p class="post-body">' + esc(post.body) + '</p>' : '') +
+          sharedCard +
           (post.mediaUrl ? '<p><img class="post-media" src="' + esc(post.mediaUrl) + '" alt="Shared learning image" loading="lazy"></p>' : '') +
           (post.subject ? '<span class="post-subject">' + esc(post.subject) + '</span>' : '') +
           (post.videoUrl ? '<p><a target="_blank" rel="noopener noreferrer" href="' + esc(post.videoUrl) + '">Open shared learning video ↗</a></p>' : '') +
-          '<div class="post-meta">' + new Date(post.createdAt).toLocaleString() + ' · ' + (post.reactionCount || 0) + ' reactions · ' + (post.commentCount || 0) + ' comments</div>' +
-          '<div class="post-actions"><button data-action="react" data-id="' + esc(post.id) + '">♡ Helpful</button><button data-action="comments" data-id="' + esc(post.id) + '">View comments</button><button data-action="report" data-id="' + esc(post.id) + '">Report</button></div><div class="post-comments" id="comments-' + esc(post.id) + '"></div></article>';
+          '<div class="post-meta">' + new Date(post.createdAt).toLocaleString() + ' · ' + (post.reactionCount || 0) + ' reactions · ' + (post.commentCount || 0) + ' comments · ' + (post.shareCount || 0) + ' shares</div>' +
+          '<div class="post-actions"><button data-action="react" data-id="' + esc(post.id) + '">♡ Helpful</button><button data-action="comments" data-id="' + esc(post.id) + '">Comment</button><button data-action="share" data-id="' + esc(post.id) + '">Share</button><button data-action="save" data-id="' + esc(post.id) + '">' + (post.isSaved?'Saved ✓':'Save') + '</button><button data-action="report" data-id="' + esc(post.id) + '">Report</button></div><div class="post-comments" id="comments-' + esc(post.id) + '"></div></article>';
       }).join("");
     } catch (e) { $("feed-list").innerHTML = '<div class="empty-state">' + esc(e.message) + '</div>'; }
   }
+
   async function uploadCommunityMedia(file) {
     const isVideo=file.type.startsWith("video/");
     const isImage=file.type.startsWith("image/");
@@ -122,7 +132,8 @@
   $("post-form").addEventListener("submit",e=>{e.preventDefault();if(!requireLogin()||!socialReady)return;const body=$("post-body").value.trim(),f=$("post-media").files?.[0];if(!body&&!f)return status("Write something or attach media first.");$("post-review-body").textContent=body;$("post-review-body").hidden=!body;$("post-review-author").textContent=$("social-profile-handle").textContent;$("post-review-subject").textContent=$("post-subject").value.trim()||"No subject";$("post-review-visibility").textContent=$("post-visibility").value==="PUBLIC"?"Public":"Connections only";const box=$("post-review-media");box.replaceChildren();if(f)previewMedia(f,box);box.hidden=!f;$("post-review").hidden=false;});
   $("close-post-review").addEventListener("click",closeReview);$("cancel-post-review").addEventListener("click",closeReview);$("post-review").addEventListener("click",e=>{if(e.target===$("post-review"))closeReview();});
   $("confirm-publish-post").addEventListener("click",async()=>{if(!requireLogin()||!socialReady)return;const body=$("post-body").value.trim(),f=$("post-media").files?.[0],b=$("confirm-publish-post");b.disabled=true;b.textContent="Uploading and publishing…";try{const media=f?await uploadCommunityMedia(f):{};await api("/community/posts",{method:"POST",body:JSON.stringify({body,...media,subject:$("post-subject").value,visibility:$("post-visibility").value})});$("post-body").value="";$("post-subject").value="";$("post-media").value="";clearPendingMedia();closeReview();status("Published online. Your post is now live.");await Promise.all([loadFeed(),loadProfile()]);}catch(err){status(err.message);}finally{b.disabled=false;b.textContent="Publish post";}});
-  $("refresh-feed").addEventListener("click", loadFeed);
+  $("refresh-feed").addEventListener("click", () => loadFeed(showingSavedPosts));
+  $("show-saved-posts").addEventListener("click", () => loadFeed(!showingSavedPosts));
   const socialBottomNav = $("social-bottom-nav");
   socialBottomNav?.addEventListener("click", e => {
     const destination = e.target.closest("[data-social-dest]");
@@ -133,26 +144,45 @@
     }
   });
   $("feed-list").addEventListener("click", async e => {
-    const b=e.target.closest("[data-action]"); if(!b) return; if(!requireLogin()) return;
+    const replyButton=e.target.closest("[data-reply-to]");
+    if(replyButton){
+      if(!requireLogin())return;
+      const thread=replyButton.closest(".comment-thread");
+      const existing=thread.querySelector(".reply-form");
+      if(existing){existing.remove();return;}
+      thread.insertAdjacentHTML("beforeend",'<form class="comment-form reply-form" data-post="'+esc(thread.closest(".post-card")?.dataset.post||"")+'" data-parent="'+esc(replyButton.dataset.replyTo)+'"><input name="body" maxlength="2000" placeholder="Write a reply"><button class="quiet-button">Reply</button></form>');
+      thread.querySelector(".reply-form input")?.focus();
+      return;
+    }
+    const b=e.target.closest("[data-action]");
+    if(!b)return;
+    if(!requireLogin())return;
     const id=b.dataset.id;
-    try {
-      if (b.dataset.action==="react") { await api("/community/posts/"+encodeURIComponent(id)+"/reaction",{method:"POST",body:JSON.stringify({reaction:"HELPFUL"})}); loadFeed(); }
-      if (b.dataset.action==="report") {
+    try{
+      if(b.dataset.action==="react"){
+        await api("/community/posts/"+encodeURIComponent(id)+"/reaction",{method:"POST",body:JSON.stringify({reaction:"HELPFUL"})});
+        loadFeed(showingSavedPosts);
+      }
+      if(b.dataset.action==="save"){
+        const result=await api("/community/posts/"+encodeURIComponent(id)+"/save",{method:"POST",body:"{}"});
+        b.textContent=result.saved?"Saved ✓":"Save";
+        status(result.saved?"Post saved.":"Post removed from saved posts.");
+        if(showingSavedPosts&&!result.saved)b.closest(".post-card")?.remove();
+      }
+      if(b.dataset.action==="share"){
+        const note=window.prompt("Add a message to your share (optional):","");
+        if(note===null)return;
+        await api("/community/posts/"+encodeURIComponent(id)+"/share",{method:"POST",body:JSON.stringify({body:note})});
+        status("Post shared to your feed.");
+        loadFeed(false);
+      }
+      if(b.dataset.action==="report"){
         const details=window.prompt("Briefly explain why this post should be reviewed.");
         if(details===null)return;
         await api("/community/reports",{method:"POST",body:JSON.stringify({targetType:"POST",targetId:id,reason:"OTHER",details})});
         status("Thanks. Your report has been sent for review.");
       }
-      const replyButton=e.target.closest("[data-reply-to]");
-      if(replyButton){
-        const thread=replyButton.closest(".comment-thread");
-        const existing=thread.querySelector(".reply-form");
-        if(existing){existing.remove();return;}
-        thread.insertAdjacentHTML("beforeend",'<form class="comment-form reply-form" data-post="'+esc(thread.closest(".post-card")?.dataset.post||"")+'" data-parent="'+esc(replyButton.dataset.replyTo)+'"><input name="body" maxlength="2000" placeholder="Write a reply"><button class="quiet-button">Reply</button></form>');
-        thread.querySelector(".reply-form input")?.focus();
-        return;
-      }
-      if (b.dataset.action==="comments") {
+      if(b.dataset.action==="comments"){
         const data=await api("/community/posts/"+encodeURIComponent(id)+"/comments");
         const box=$("comments-"+id);
         const comments=data.comments||[];
@@ -164,8 +194,9 @@
         }).join("")+
           '<form class="comment-form" data-post="'+esc(id)+'"><input name="body" maxlength="2000" placeholder="Add a comment"><button class="quiet-button">Comment</button></form>';
       }
-    } catch(err) { status(err.message); }
+    }catch(err){status(err.message);}
   });
+
   $("feed-list").addEventListener("submit",async e=>{
     if(!e.target.matches(".comment-form")) return; e.preventDefault(); if(!requireLogin()) return;
     const id=e.target.dataset.post, body=new FormData(e.target).get("body"), parentId=e.target.dataset.parent||null;
