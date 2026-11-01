@@ -210,6 +210,30 @@ router.post("/posts/:id/comments", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.get("/people", async (req, res, next) => {
+  try {
+    const q = clean(req.query.q, 80);
+    if (q.length < 2) return res.json({ people: [] });
+    const users = await prisma.user.findMany({
+      where: { id: { not: req.userId }, OR: [{ name: { contains: q, mode: "insensitive" } }, { institutionName: { contains: q, mode: "insensitive" } }] },
+      select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true },
+      take: 20
+    });
+    const profiles = await prisma.communityProfile.findMany({ where: { userId: { in: users.map(u => u.id) }, visibility: "PUBLIC" } });
+    const map = new Map(profiles.map(p => [p.userId, p]));
+    res.json({ people: users.filter(u => map.has(u.id)).map(u => publicProfile(map.get(u.id), u)) });
+  } catch (e) { next(e); }
+});
+
+router.get("/follow-requests", async (req, res, next) => {
+  try {
+    const requests = await prisma.communityFollow.findMany({ where: { followingId: req.userId, status: "PENDING" }, orderBy: { createdAt: "desc" }, take: 50 });
+    const users = await prisma.user.findMany({ where: { id: { in: requests.map(r => r.followerId) } }, select: { id: true, name: true, educationTrack: true } });
+    const map = new Map(users.map(u => [u.id, u]));
+    res.json({ requests: requests.map(r => ({ ...r, requester: map.get(r.followerId) || null })) });
+  } catch (e) { next(e); }
+});
+
 router.post("/follow/:userId", async (req, res, next) => {
   try {
     const target = await getUser(req.params.userId);
@@ -231,9 +255,9 @@ router.post("/follow/:userId", async (req, res, next) => {
 router.get("/groups", async (req, res, next) => {
   try {
     const groups = await prisma.studyGroup.findMany({
-      where: { OR: [{ visibility: "PUBLIC" }, { memberships: { some: { userId: req.userId, status: "ACTIVE" } } }] },
+      where: { visibility: "PUBLIC" },
       orderBy: { createdAt: "desc" }, take: 50
-    }).catch(async () => prisma.studyGroup.findMany({ where: { visibility: "PUBLIC" }, orderBy: { createdAt: "desc" }, take: 50 }));
+    });
     const ids = groups.map(g => g.id);
     const counts = await prisma.groupMembership.groupBy({ by: ["groupId"], where: { groupId: { in: ids }, status: "ACTIVE" }, _count: { _all: true } });
     const countMap = new Map(counts.map(x => [x.groupId, x._count._all]));
