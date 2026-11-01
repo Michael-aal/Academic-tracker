@@ -5,7 +5,7 @@
   const $ = id => document.getElementById(id);
   let catalog = { plans: [], bundles: [], fxConfigured: false };
   let state = null;
-  let displayCurrency = "USD";
+  let displayCurrency = "NGN";
   let billingPeriod = "monthly";
   const usd = cents => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(cents / 100);
   const ngn = kobo => new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(kobo / 100);
