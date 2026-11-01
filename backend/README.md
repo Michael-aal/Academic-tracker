@@ -114,7 +114,7 @@ The static frontend entry point is `/community.html`. Public feed/profile discov
 Set the following server-side Render variables to enable voice-note uploads and improve calling reliability:
 
 - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — signed voice-note uploads. The API returns short-lived upload signatures only to conversation members.
-- `TURN_URL`, `TURN_USERNAME`, `TURN_CREDENTIAL` — TURN service credentials. STUN-only calling may fail on some mobile networks and restrictive NATs.
+- `TURN_URL`, `TURN_SHARED_SECRET` — TURN service URL and REST shared secret. The API derives one-hour per-user credentials; the permanent secret is never sent to browsers. STUN-only calling may fail on some mobile networks and restrictive NATs.
 - `PUBLIC_APP_URL` — canonical public frontend origin used in referral links. If omitted, the API uses the browser request origin.
 
 Cloudinary is not configured by this code change. Do not enable production voice notes until the media account, upload limits, retention policy and abuse handling are configured. WebRTC call signalling is persisted through authenticated API polling; a TURN service is strongly recommended before describing calling as reliable on all networks. Group video calls and media uploads for public posts/stories are not included in this initial implementation.
