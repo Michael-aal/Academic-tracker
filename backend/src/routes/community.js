@@ -4,6 +4,7 @@ const crypto = require("node:crypto");
 const rateLimit = require("express-rate-limit");
 const { prisma } = require("../prisma");
 const { requireAuth } = require("../middleware/auth");
+const { requireAdmin } = require("../middleware/admin");
 
 const router = express.Router();
 const writeLimit = rateLimit({
@@ -38,8 +39,12 @@ async function ensureProfile(user) {
   const username = (base.slice(0, 22) + "_" + user.id.slice(-6)).slice(0, 30);
   return prisma.communityProfile.create({ data: { userId: user.id, username } });
 }
+async function isBlocked(userA, userB) {
+  if (!userA || !userB) return false;
+  return Boolean(await prisma.communityBlock.findFirst({ where: { OR: [{ blockerId: userA, blockedId: userB }, { blockerId: userB, blockedId: userA }] } }));
+}
 async function acceptedFriend(userA, userB) {
-  if (!userA || !userB || userA.id === userB.id || userA.educationTrack !== userB.educationTrack) return false;
+  if (!userA || !userB || userA.id === userB.id || userA.educationTrack !== userB.educationTrack || await isBlocked(userA.id, userB.id)) return false;
   const [ab, ba] = await Promise.all([
     prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: userA.id, followingId: userB.id } } }),
     prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: userB.id, followingId: userA.id } } })
@@ -50,6 +55,7 @@ async function isMember(conversationId, userId) {
   return Boolean(await prisma.chatMember.findUnique({ where: { conversationId_userId: { conversationId, userId } } }));
 }
 async function canReadPost(post, userId) {
+  if (post.authorId !== userId && await isBlocked(post.authorId, userId)) return false;
   if (post.visibility === "PUBLIC" || post.authorId === userId) return true;
   if (post.visibility === "FOLLOWERS") return Boolean(await prisma.communityFollow.findFirst({
     where: { followerId: userId, followingId: post.authorId, status: "ACCEPTED" }
@@ -273,7 +279,8 @@ router.post("/groups", async (req, res, next) => {
     if (title.length < 3 || description.length < 10) return res.status(400).json({ error: "Enter a group name and a description of at least 10 characters." });
     const user = await getUser(req.userId);
     const visibility = ["PUBLIC", "PRIVATE", "INVITE"].includes(req.body?.visibility) ? req.body.visibility : "PUBLIC";
-    const group = await prisma.studyGroup.create({ data: { ownerId: req.userId, title, description, subject: clean(req.body?.subject, 100) || null, educationTrack: req.body?.crossLevel === true ? null : user.educationTrack, visibility } });
+    const crossLevel = req.body?.crossLevel === true;
+    const group = await prisma.studyGroup.create({ data: { ownerId: req.userId, title, description, subject: clean(req.body?.subject, 100) || null, educationTrack: crossLevel ? null : user.educationTrack, visibility, status: crossLevel ? "PENDING" : "ACTIVE" } });
     await prisma.groupMembership.create({ data: { groupId: group.id, userId: req.userId, role: "OWNER", status: "ACTIVE" } });
     res.status(201).json({ group });
   } catch (e) { next(e); }
@@ -282,7 +289,7 @@ router.post("/groups", async (req, res, next) => {
 router.post("/groups/:id/join", async (req, res, next) => {
   try {
     const group = await prisma.studyGroup.findUnique({ where: { id: req.params.id } });
-    if (!group || (group.visibility !== "PUBLIC" && group.ownerId !== req.userId)) return res.status(404).json({ error: "This group is private or unavailable." });
+    if (!group || group.status !== "ACTIVE" || (group.visibility !== "PUBLIC" && group.ownerId !== req.userId)) return res.status(404).json({ error: "This group is private, awaiting moderation or unavailable." });
     const user = await getUser(req.userId);
     if (group.educationTrack && group.educationTrack !== user.educationTrack) return res.status(403).json({ error: "This group is for a different academic environment." });
     await prisma.groupMembership.upsert({
@@ -487,6 +494,98 @@ router.patch("/calls/:id", async (req, res, next) => {
     if (!data) return res.status(400).json({ error: "Invalid call action." });
     const updated = await prisma.callSession.update({ where: { id: call.id }, data });
     res.json({ call: updated });
+  } catch (e) { next(e); }
+});
+
+router.post("/blocks/:userId", async (req, res, next) => {
+  try {
+    const targetId = clean(req.params.userId, 100);
+    if (!targetId || targetId === req.userId || !await prisma.user.findUnique({ where: { id: targetId }, select: { id: true } })) return res.status(404).json({ error: "Student not found." });
+    await prisma.communityBlock.upsert({
+      where: { blockerId_blockedId: { blockerId: req.userId, blockedId: targetId } },
+      create: { blockerId: req.userId, blockedId: targetId },
+      update: {}
+    });
+    await prisma.communityFollow.deleteMany({ where: { OR: [{ followerId: req.userId, followingId: targetId }, { followerId: targetId, followingId: req.userId }] } });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+router.delete("/blocks/:userId", async (req, res, next) => {
+  try {
+    await prisma.communityBlock.deleteMany({ where: { blockerId: req.userId, blockedId: req.params.userId } });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+router.get("/blocks", async (req, res, next) => {
+  try {
+    const blocks = await prisma.communityBlock.findMany({ where: { blockerId: req.userId }, orderBy: { createdAt: "desc" } });
+    res.json({ blocks });
+  } catch (e) { next(e); }
+});
+router.post("/reports", async (req, res, next) => {
+  try {
+    const targetType = clean(req.body?.targetType, 20).toUpperCase();
+    const targetId = clean(req.body?.targetId, 120);
+    const reason = clean(req.body?.reason, 40).toUpperCase();
+    const details = clean(req.body?.details, 1000) || null;
+    const types = new Set(["USER", "POST", "COMMENT", "GROUP", "VIDEO", "MESSAGE"]);
+    const reasons = new Set(["HARASSMENT", "SPAM", "INAPPROPRIATE", "MISINFORMATION", "COPYRIGHT", "OTHER"]);
+    if (!types.has(targetType) || !targetId || !reasons.has(reason)) return res.status(400).json({ error: "Choose a valid report type and reason." });
+    if (targetType === "USER" && !await prisma.user.findUnique({ where: { id: targetId }, select: { id: true } })) return res.status(404).json({ error: "Reported student not found." });
+    if (targetType === "POST" && !await prisma.communityPost.findUnique({ where: { id: targetId }, select: { id: true } })) return res.status(404).json({ error: "Post not found." });
+    if (targetType === "COMMENT" && !await prisma.communityComment.findUnique({ where: { id: targetId }, select: { id: true } })) return res.status(404).json({ error: "Comment not found." });
+    if (targetType === "GROUP" && !await prisma.studyGroup.findUnique({ where: { id: targetId }, select: { id: true } })) return res.status(404).json({ error: "Group not found." });
+    if (targetType === "MESSAGE") {
+      const message = await prisma.chatMessage.findUnique({ where: { id: targetId }, select: { conversationId: true } });
+      if (!message || !await isMember(message.conversationId, req.userId)) return res.status(404).json({ error: "Message not found." });
+    }
+    const report = await prisma.communityReport.create({ data: { reporterId: req.userId, targetType, targetId, reason, details } });
+    res.status(201).json({ ok: true, reportId: report.id });
+  } catch (e) { next(e); }
+});
+router.get("/admin/reports", requireAdmin, async (req, res, next) => {
+  try {
+    const statusFilter = ["OPEN", "RESOLVED", "DISMISSED"].includes(req.query.status) ? req.query.status : "OPEN";
+    const reports = await prisma.communityReport.findMany({ where: { status: statusFilter }, orderBy: { createdAt: "asc" }, take: 100 });
+    res.json({ reports });
+  } catch (e) { next(e); }
+});
+router.patch("/admin/reports/:id", requireAdmin, async (req, res, next) => {
+  try {
+    const status = ["RESOLVED", "DISMISSED"].includes(req.body?.status) ? req.body.status : "";
+    if (!status) return res.status(400).json({ error: "Choose RESOLVED or DISMISSED." });
+    const report = await prisma.communityReport.updateMany({ where: { id: req.params.id, status: "OPEN" }, data: { status, reviewedBy: req.userId, reviewedAt: new Date() } });
+    if (!report.count) return res.status(404).json({ error: "Open report not found." });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+router.get("/admin/groups/pending", requireAdmin, async (_req, res, next) => {
+  try { res.json({ groups: await prisma.studyGroup.findMany({ where: { status: "PENDING" }, orderBy: { createdAt: "asc" }, take: 100 }) }); }
+  catch (e) { next(e); }
+});
+router.patch("/admin/groups/:id/approve", requireAdmin, async (req, res, next) => {
+  try {
+    const result = await prisma.studyGroup.updateMany({ where: { id: req.params.id, status: "PENDING" }, data: { status: "ACTIVE" } });
+    if (!result.count) return res.status(404).json({ error: "Pending group not found." });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+router.get("/admin/referrals/pending", requireAdmin, async (_req, res, next) => {
+  try { res.json({ referrals: await prisma.referral.findMany({ where: { status: "PENDING" }, orderBy: { createdAt: "asc" }, take: 100 }) }); }
+  catch (e) { next(e); }
+});
+router.patch("/admin/referrals/:id/approve", requireAdmin, async (req, res, next) => {
+  try {
+    const points = Number.isInteger(req.body?.points) ? Math.max(1, Math.min(500, req.body.points)) : 20;
+    const result = await prisma.$transaction(async tx => {
+      const referral = await tx.referral.findFirst({ where: { id: req.params.id, status: "PENDING" } });
+      if (!referral) return null;
+      await tx.referral.update({ where: { id: referral.id }, data: { status: "QUALIFIED", qualifiedAt: new Date() } });
+      await tx.referralReward.create({ data: { userId: referral.inviterId, referralId: referral.id, points, rewardType: "POINTS", status: "APPROVED" } });
+      return referral;
+    });
+    if (!result) return res.status(404).json({ error: "Pending referral not found." });
+    res.json({ ok: true, points });
   } catch (e) { next(e); }
 });
 
