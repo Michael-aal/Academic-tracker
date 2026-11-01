@@ -176,7 +176,7 @@
     if(!requireLogin()) return;
     try {
       const {groups=[]}=await api("/community/groups");
-      $("group-list").innerHTML=groups.length?groups.map(g=>'<article class="panel group-card"><strong>'+esc(g.title)+'</strong><p>'+esc(g.description)+'</p><small>'+esc(g.subject||"General learning")+' · '+(g.memberCount||0)+' members · '+esc(g.educationTrack||"Cross-level")+'</small><p>'+(g.joined?'<button class="outline-button" data-group-chat="'+esc(g.id)+'">Open group chat</button><form class="group-invite-form" data-group-invite="'+esc(g.id)+'"><input name="username" maxlength="30" placeholder="Student username" required><button class="quiet-button">Invite</button></form>':'<button class="outline-button" data-join-group="'+esc(g.id)+'">Join group</button>')+'</p></article>').join(""):'<div class="empty-state">No groups yet. Create the first study group.</div>';
+      $("group-list").innerHTML=groups.length?groups.map(g=>'<article class="panel group-card"><strong>'+esc(g.title)+'</strong><p>'+esc(g.description)+'</p><small>'+esc(g.subject||"General learning")+' · '+(g.memberCount||0)+' members · '+esc(g.educationTrack||"Cross-level")+'</small><div class="group-card-actions">'+(g.joined?'<button class="outline-button" data-group-chat="'+esc(g.id)+'">Open group chat</button><form class="group-invite-form" data-group-invite="'+esc(g.id)+'"><input name="username" maxlength="30" placeholder="Student username" required><button class="quiet-button">Invite</button></form>':'<button class="outline-button" data-join-group="'+esc(g.id)+'">Join group</button>')+'</div></article>').join(""):'<div class="empty-state">No groups yet. Create the first study group.</div>';
       loadGroupInvitations();
     } catch(e){status(e.message);}
   }
