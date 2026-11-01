@@ -5,6 +5,8 @@
   const currentUserId = () => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}").id || ""; } catch (_) { return ""; } };
   const $ = id => document.getElementById(id);
   let showingSavedPosts = false;
+  // Social profile setup gates publishing until the account has a username.
+  let socialReady = false;
   const status = message => { $("community-status").textContent = message || ""; };
   const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
   const headers = () => ({ "Content-Type":"application/json", ...(token() ? { Authorization:"Bearer " + token() } : {}) });
