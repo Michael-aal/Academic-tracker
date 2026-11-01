@@ -394,27 +394,6 @@ router.post("/group-invitations/:id/decline", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.get("/stories", async (_req, res, next) => {
-  try {
-    const stories = await prisma.communityStory.findMany({ where: { expiresAt: { gt: new Date() } }, orderBy: { createdAt: "desc" }, take: 60 });
-    const ids = [...new Set(stories.map(s => s.authorId))];
-    const users = await prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } });
-    const map = new Map(users.map(u => [u.id, u.name]));
-    res.json({ stories: stories.map(s => ({ ...s, authorName: map.get(s.authorId) || "Student" })) });
-  } catch (e) { next(e); }
-});
-
-router.post("/stories", async (req, res, next) => {
-  try {
-    const mediaUrl = safeUrl(req.body?.mediaUrl);
-    if (!mediaUrl) return res.status(400).json({ error: "A valid HTTPS image or video URL is required." });
-    const mediaType = req.body?.mediaType === "VIDEO" ? "VIDEO" : "IMAGE";
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const story = await prisma.communityStory.create({ data: { authorId: req.userId, mediaUrl, mediaType, caption: clean(req.body?.caption, 500) || null, expiresAt } });
-    res.status(201).json({ story });
-  } catch (e) { next(e); }
-});
-
 router.post("/videos/engagement", async (req, res, next) => {
   try {
     const videoId = clean(req.body?.videoId, 120);
