@@ -57,9 +57,13 @@ async function isMember(conversationId, userId) {
 async function canReadPost(post, userId) {
   if (post.authorId !== userId && await isBlocked(post.authorId, userId)) return false;
   if (post.visibility === "PUBLIC" || post.authorId === userId) return true;
-  if (post.visibility === "FOLLOWERS") return Boolean(await prisma.communityFollow.findFirst({
-    where: { followerId: userId, followingId: post.authorId, status: "ACCEPTED" }
-  }));
+  if (post.visibility === "FOLLOWERS") {
+    const [outgoing, incoming] = await Promise.all([
+      prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: userId, followingId: post.authorId } } }),
+      prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: post.authorId, followingId: userId } } })
+    ]);
+    return outgoing?.status === "ACCEPTED" && incoming?.status === "ACCEPTED";
+  }
   return false;
 }
 
@@ -82,18 +86,15 @@ router.get("/feed", async (req, res, next) => {
     ]);
     const incomingIds = new Set(incomingFriends.map(x => x.followerId));
     const friendIds = outgoingFriends.map(x => x.followingId).filter(id => incomingIds.has(id));
-    const authorIds = [...new Set([req.userId, ...friendIds])];
-    const where = { OR: [
+    const where = { AND: [{ OR: [
       { visibility: "PUBLIC" },
       { authorId: req.userId },
       ...(friendIds.length ? [{ visibility: "FOLLOWERS", authorId: { in: friendIds } }] : [])
-    ] };
-    if (req.query.subject) where.subject = clean(req.query.subject, 100);
+    ] }] };
+    if (req.query.subject) where.AND.push({ subject: clean(req.query.subject, 100) });
     if (req.query.track === "SECONDARY" || req.query.track === "HIGHER") {
       const users = await prisma.user.findMany({ where: { educationTrack: req.query.track }, select: { id: true } });
-      const allowed = new Set(users.map(x => x.id));
-      where.OR = where.OR.map(rule => rule.authorId === req.userId ? rule : rule.authorId?.in ? { ...rule, authorId: { in: rule.authorId.in.filter(id => allowed.has(id)) } } : rule);
-      where.OR = where.OR.filter(rule => !rule.authorId || (Array.isArray(rule.authorId.in) && rule.authorId.in.length) || rule.authorId === req.userId);
+      where.AND.push({ authorId: { in: users.map(x => x.id) } });
     }
     const posts = await prisma.communityPost.findMany({
       where, orderBy: { createdAt: "desc" }, take: limit,
