@@ -20,7 +20,7 @@
 <main class="community-shell">
   <section class="community-heading">
     <div><p class="community-eyebrow">YOUR SOCIAL SPACE</p><h1>Social Media</h1><p>Connect with students, share posts and join conversations.</p></div>
-    <div class="community-heading-actions"><a class="community-profile-link" href="notifications.html">Notifications <span aria-hidden="true">↗</span></a><a class="community-profile-link" href="#profile" data-tab-link="profile">Your profile <span aria-hidden="true">↗</span></a><a class="community-profile-link" id="community-admin-link" href="community-admin.html" hidden>Moderation tools</a></div>
+    <div class="community-heading-actions"><a class="community-profile-link" href="notifications.html">Notifications</a><a class="community-profile-link" href="#profile" data-tab-link="profile">Your profile</a><a class="primary-button social-create-link" href="social-create.html">＋ Create post</a><a class="community-profile-link" id="community-admin-link" href="community-admin.html" hidden>Moderation tools</a></div>
   </section>
   <nav class="community-tabs" aria-label="Social Media sections">
     <button class="active" data-tab="feed">Feed</button>
@@ -35,30 +35,27 @@
   <section class="community-view active" id="view-feed">
     <div class="community-layout">
       <div class="community-main-column">
-        <form class="composer panel" id="post-form"><label for="post-body">What would you like to share?</label><textarea id="post-body" maxlength="5000" rows="4" placeholder="Write something for your friends…"></textarea><div id="post-media-preview" class="post-media-preview" hidden></div><div class="composer-row"><label class="media-picker-label" for="post-media">＋ Add photo or video</label><input id="post-media" type="file" accept="image/*,video/*" aria-label="Attach an image or video"><input id="post-subject" maxlength="100" placeholder="Subject (optional)"><select id="post-visibility" aria-label="Post visibility"><option value="PUBLIC">Everyone · Public</option><option value="FOLLOWERS">Connections</option></select><button class="primary-button" type="submit">Review post</button></div><p class="composer-hint">Your post is not shared until you review and publish it.</p></form>
+        <form class="composer panel" id="post-form" hidden><label for="post-body">What would you like to share?</label><textarea id="post-body" maxlength="5000" rows="4" placeholder="Write something for your friends…"></textarea><div id="post-media-preview" class="post-media-preview" hidden></div><div class="composer-row"><label class="media-picker-label" for="post-media">＋ Add photo or video</label><input id="post-media" type="file" accept="image/*,video/*" aria-label="Attach an image or video"><input id="post-subject" maxlength="100" placeholder="Subject (optional)"><select id="post-visibility" aria-label="Post visibility"><option value="PUBLIC">Everyone · Public</option><option value="FOLLOWERS">Connections</option></select><button class="primary-button" type="submit">Review post</button></div><p class="composer-hint">Your post is not shared until you review and publish it.</p></form>
         <section class="post-review-overlay" id="post-review" hidden role="dialog" aria-modal="true"><div class="post-review-card"><div class="post-review-heading"><h2>Preview your post</h2><button type="button" id="close-post-review" class="quiet-button">✕</button></div><div id="post-review-author" class="post-review-author"></div><p id="post-review-body" class="post-review-body"></p><div id="post-review-media" class="post-review-media"></div><div class="post-review-details"><span id="post-review-subject"></span><span id="post-review-visibility"></span></div><p class="post-review-note">Publishing saves this post online for authenticated students.</p><div class="post-review-actions"><button type="button" class="outline-button" id="cancel-post-review">Keep editing</button><button type="button" class="primary-button" id="confirm-publish-post">Publish post</button></div></div></section>
-        <section class="social-discover panel" aria-labelledby="social-discover-title">
-          <div class="social-discover-heading"><div><p class="community-eyebrow">GET STARTED</p><h2 id="social-discover-title">Ideas worth sharing</h2><p>Examples to help you start posting. These are prompts, not posts from real students.</p></div><button class="quiet-button" type="button" data-tab="videos">Explore videos ↗</button></div>
-          <div class="social-example-grid">
-            <article class="social-example-card"><span class="social-example-icon">Aa</span><small>STUDY TIP EXAMPLE</small><h3>One concept, explained simply</h3><p>Share a short explanation of something you understood today. Add a diagram or a photo of your notes.</p><button type="button" class="text-button" data-example="A concept I finally understand: [explain it in your own words].">Use this idea</button></article>
-            <article class="social-example-card"><span class="social-example-icon">?</span><small>DISCUSSION EXAMPLE</small><h3>Ask the learning community</h3><p>Post a thoughtful question about Mathematics, English, Science, programming or another subject.</p><button type="button" class="text-button" data-example="Can someone explain [topic]? Here is the part I understand so far:">Use this idea</button></article>
-            <article class="social-example-card social-video-example"><span class="social-example-icon">▶</span><small>VIDEO EXAMPLE</small><h3>Learn something new</h3><p>Browse educational videos, then share a useful takeaway with your own explanation.</p><button type="button" class="text-button" data-tab="videos">Browse learning videos ↗</button></article>
-          </div>
+        <section class="social-sample-video panel" aria-labelledby="sample-video-title">
+          <div class="social-discover-heading"><div><p class="community-eyebrow">SAMPLE LEARNING CLIP</p><h2 id="sample-video-title">A helicopter flying on Mars</h2><p>NASA footage · Science and engineering · Clearly labelled sample content</p></div><a class="quiet-button" href="https://images.nasa.gov/details/PIA24521" target="_blank" rel="noopener noreferrer">Source ↗</a></div>
+          <video controls playsinline preload="metadata" poster="https://images-assets.nasa.gov/video/PIA24521/PIA24521~thumb.jpg">
+            <source src="https://images-assets.nasa.gov/video/PIA24521/PIA24521~orig.mp4" type="video/mp4">
+            Your browser does not support embedded video. <a href="https://images.nasa.gov/details/PIA24521">Watch at NASA</a>.
+          </video>
+          <span class="sample-content-label">SAMPLE · Not a student upload</span>
         </section>
         <div class="feed-toolbar"><h2 id="feed-heading">Recent posts</h2><div class="feed-toolbar-actions"><button class="quiet-button" id="show-saved-posts" type="button">Saved posts</button><button class="quiet-button" id="refresh-feed" type="button">Refresh</button></div></div>
         <div id="feed-list" class="feed-list"><div class="empty-state">Loading posts…</div></div>
       </div>
-      <aside class="community-side-column">
-        <section class="panel side-card"><h3>Your learning identity</h3><div id="mini-profile">Loading profile…</div><button class="text-button" data-tab="profile">Edit profile</button></section>
-        <section class="panel side-card"><h3>Discover study groups</h3><p>Find people learning the same subjects.</p><button class="outline-button" data-tab="groups">Explore groups</button></section>
-        <section class="panel side-card"><h3>Invite your classmates</h3><p>Share Academic Tracker with people you study with.</p><button class="outline-button" data-tab="referrals">Open referral center</button></section>
-      </aside>
+
     </div>
   </section>
   <section class="community-view" id="view-people">
     <div class="friends-dashboard">
       <section class="panel section-panel"><div class="section-heading"><div><h2>Friend requests</h2><p>Review students who want to connect with you.</p></div><span id="friend-request-count" class="friend-count">0</span></div><div id="friend-requests-list" class="people-list"><div class="empty-state">Loading requests…</div></div></section>
       <section class="panel section-panel"><div class="section-heading"><div><h2>Your friends</h2><p>Students you have mutually connected with.</p></div><span id="friend-count" class="friend-count">0</span></div><div id="friends-list" class="people-list"><div class="empty-state">Loading friends…</div></div></section>
+      <section class="panel section-panel"><h2>Blocked students</h2><p>Unblock someone at any time. Blocking removes your existing connection.</p><div id="blocked-students-list" class="people-list"><div class="empty-state">Loading blocked students…</div></div></section>
       <section class="panel section-panel"><h2>Find students</h2><p>Find a classmate using their exact username, such as <strong>@michael_dev</strong>, or search by student name or institution. Friend connections are limited to your academic environment.</p><form id="people-search" class="search-row"><input id="people-query" minlength="2" autocomplete="off" placeholder="Enter @username, student name or institution"><button class="primary-button">Search</button></form><div id="people-list" class="people-list" aria-live="polite"></div></section>
     </div>
   </section>
@@ -90,7 +87,7 @@
         </div>
         <div class="social-profile-stats"><div><strong id="profile-post-count">0</strong><span>Posts</span></div><div><strong id="profile-friend-count">0</strong><span>Friends</span></div></div>
         <div class="social-profile-subject" id="social-profile-subject"></div>
-        <div class="social-profile-posts-heading"><h3>Your posts</h3><span>Latest first</span></div>
+        <div class="social-profile-posts-heading"><h3>Your posts</h3><a class="primary-button" href="social-create.html">＋ Create post</a></div>
         <div id="social-profile-posts" class="social-profile-post-grid"><div class="empty-state">Loading your posts…</div></div>
       </section>
       <section class="panel profile-editor" id="profile-settings">
