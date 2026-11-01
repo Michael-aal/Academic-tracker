@@ -51,7 +51,7 @@
       $("profile-visibility").value = profile.visibility || "PUBLIC";
       if(!profile.usernameSet){socialReady=false;$("social-onboarding").hidden=false;$("onboarding-username").value=profile.username||"";return;}
       socialReady=true;$("social-onboarding").hidden=true;loadFeed();
-      $("mini-profile").innerHTML = '<strong>@' + esc(profile.username) + '</strong><p>' + esc(profile.bestSubject || "Add your best subject") + '</p><small>' + esc(profile.educationTrack || "") + ' · ' + (profile.visibility === "PRIVATE" ? "Private" : "Public") + '</small>';
+      if ($("mini-profile")) $("mini-profile").innerHTML = '<strong>@' + esc(profile.username) + '</strong><p>' + esc(profile.bestSubject || "Add your best subject") + '</p><small>' + esc(profile.educationTrack || "") + ' · ' + (profile.visibility === "PRIVATE" ? "Private" : "Public") + '</small>';
       $("social-profile-name").textContent = profile.displayName || "Student";
       $("social-profile-handle").textContent = "@" + (profile.username || "student");
       $("social-profile-bio").textContent = profile.bio || "Add a short bio to introduce yourself.";
