@@ -81,5 +81,85 @@
     localStorage.removeItem("academic-tracker-user");
     window.location.replace("index.html");
   });
+
+  const deleteDialog = $("delete-account-dialog");
+  const deleteForm = $("delete-account-form");
+  const deleteSubmit = $("confirm-delete-account");
+  const deleteError = $("delete-account-error");
+
+  function clearLocalAccountData() {
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith("academic-tracker-") && key !== "academic-tracker-theme") {
+        localStorage.removeItem(key);
+      }
+    }
+    sessionStorage.clear();
+  }
+
+  function closeDeleteDialog() {
+    deleteDialog.close();
+    deleteForm.reset();
+    deleteError.textContent = "";
+    deleteError.classList.remove("show");
+  }
+
+  $("open-delete-account").addEventListener("click", () => {
+    deleteDialog.showModal();
+    $("delete-account-password").focus();
+  });
+  $("close-delete-account").addEventListener("click", closeDeleteDialog);
+  $("cancel-delete-account").addEventListener("click", closeDeleteDialog);
+  deleteDialog.addEventListener("click", event => {
+    if (event.target === deleteDialog) closeDeleteDialog();
+  });
+
+  deleteForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    const password = $("delete-account-password").value;
+    const confirmation = $("delete-account-confirmation").value.trim();
+    if (!password) {
+      deleteError.textContent = "Enter your current password.";
+      deleteError.classList.add("show");
+      return;
+    }
+    if (confirmation !== "DELETE") {
+      deleteError.textContent = "Type DELETE exactly to confirm.";
+      deleteError.classList.add("show");
+      return;
+    }
+
+    deleteSubmit.disabled = true;
+    deleteSubmit.textContent = "Deleting account…";
+    deleteError.classList.remove("show");
+    try {
+      const response = await fetch(API_BASE + "/api/account/me", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token
+        },
+        body: JSON.stringify({ password, confirmation })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401 && /session|log in|invalid/i.test(data.error || "")) {
+        clearLocalAccountData();
+        window.location.replace("login.html");
+        return;
+      }
+      if (!response.ok || data.deleted !== true) {
+        throw new Error(data.error || "Your account could not be deleted. Please try again.");
+      }
+      clearLocalAccountData();
+      window.location.replace("index.html?account=deleted");
+    } catch (error) {
+      deleteError.textContent = error instanceof TypeError
+        ? "Could not connect to the API. Your account has not been deleted."
+        : error.message;
+      deleteError.classList.add("show");
+    } finally {
+      deleteSubmit.disabled = false;
+      deleteSubmit.textContent = "Permanently delete";
+    }
+  });
   loadProfile();
 })();
