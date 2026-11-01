@@ -4,6 +4,7 @@
   const token = () => localStorage.getItem("academic-tracker-token") || "";
   const $ = id => document.getElementById(id);
   let showingSavedPosts = false;
+  let currentUserId = "";
   const status = message => { $("community-status").textContent = message || ""; };
   const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
   const headers = () => ({ "Content-Type":"application/json", ...(token() ? { Authorization:"Bearer " + token() } : {}) });
@@ -41,6 +42,7 @@
     if (!requireLogin()) return;
     try {
       const { profile, stats = {}, posts = [] } = await api("/community/profile/me");
+      currentUserId = profile.userId || "";
       $("profile-username").value = profile.username || "";
       $("profile-best-subject").value = profile.bestSubject || "";
       $("profile-bio").value = profile.bio || "";
@@ -107,7 +109,7 @@
           (post.subject ? '<span class="post-subject">' + esc(post.subject) + '</span>' : '') +
           (post.videoUrl ? '<p><a target="_blank" rel="noopener noreferrer" href="' + esc(post.videoUrl) + '">Open shared learning video ↗</a></p>' : '') +
           '<div class="post-meta">' + new Date(post.createdAt).toLocaleString() + ' · ' + (post.reactionCount || 0) + ' reactions · ' + (post.commentCount || 0) + ' comments · ' + (post.shareCount || 0) + ' shares</div>' +
-          '<div class="post-actions"><button data-action="react" data-id="' + esc(post.id) + '">♡ Helpful</button><button data-action="comments" data-id="' + esc(post.id) + '">Comment</button><button data-action="share" data-id="' + esc(post.id) + '">Share</button><button data-action="save" data-id="' + esc(post.id) + '">' + (post.isSaved?'Saved ✓':'Save') + '</button><button data-action="report" data-id="' + esc(post.id) + '">Report</button></div><div class="post-comments" id="comments-' + esc(post.id) + '"></div></article>';
+          '<div class="post-actions">' + (post.author?.userId === currentUserId ? '<button data-action="delete" data-id="' + esc(post.id) + '" class="post-delete-action">Delete</button>' : '') + '<button data-action="react" data-id="' + esc(post.id) + '">♡ Helpful</button><button data-action="comments" data-id="' + esc(post.id) + '">Comment</button><button data-action="share" data-id="' + esc(post.id) + '">Share</button><button data-action="save" data-id="' + esc(post.id) + '">' + (post.isSaved?'Saved ✓':'Save') + '</button><button data-action="report" data-id="' + esc(post.id) + '">Report</button></div><div class="post-comments" id="comments-' + esc(post.id) + '"></div></article>';
       }).join("");
     } catch (e) { $("feed-list").innerHTML = '<div class="empty-state">' + esc(e.message) + '</div>'; }
   }
@@ -138,8 +140,7 @@
     const destination = e.target.closest("[data-social-dest]");
     if (destination) { tab(destination.dataset.socialDest); return; }
     if (e.target.closest("[data-social-create]")) {
-      tab("feed"); $("post-body").focus({ preventScroll: true });
-      $("post-form").scrollIntoView({ behavior: "smooth", block: "center" });
+      location.href = "create-post.html";
     }
   });
   $("feed-list").addEventListener("click", async e => {
@@ -158,6 +159,14 @@
     if(!requireLogin())return;
     const id=b.dataset.id;
     try{
+      if(b.dataset.action==="delete"){
+        if(!window.confirm("Delete this post permanently? This cannot be undone."))return;
+        b.disabled=true;
+        await api("/community/posts/"+encodeURIComponent(id),{method:"DELETE"});
+        b.closest(".post-card")?.remove();
+        status("Your post has been deleted.");
+        await loadProfile();
+      }
       if(b.dataset.action==="react"){
         await api("/community/posts/"+encodeURIComponent(id)+"/reaction",{method:"POST",body:JSON.stringify({reaction:"HELPFUL"})});
         loadFeed(showingSavedPosts);
@@ -210,10 +219,10 @@
       const {people=[]}=await api("/community/people?q="+encodeURIComponent(q));
       $("people-list").innerHTML=people.length?people.map(p=>{
         const action=p.friendStatus==="FRIENDS"?'<button class="outline-button" disabled>Friends</button>':
-          p.friendStatus==="REQUEST_SENT"?'<button class="outline-button" disabled>Request sent</button>':
+          p.friendStatus==="REQUEST_SENT"?'<button class="outline-button" data-cancel-request="'+esc(p.userId)+'">Cancel request</button>':
           p.friendStatus==="REQUEST_RECEIVED"?'<button class="primary-button" data-friend-request="'+esc(p.friendRequestId||"")+'" data-request-action="accept">Accept request</button>':
           '<button class="outline-button" data-follow="'+esc(p.userId)+'">Add friend</button>';
-        return '<article class="person-card"><strong>'+esc(p.displayName)+'</strong><p>@'+esc(p.username)+' · '+esc(p.educationTrack)+'<br>'+esc(p.institutionName||p.programme||"")+'<br>Best subject: '+esc(p.bestSubject||"Not specified")+'</p>'+action+'</article>';
+        return '<article class="person-card"><strong>'+esc(p.displayName)+'</strong><p>@'+esc(p.username)+' · '+esc(p.educationTrack)+'<br>'+esc(p.institutionName||p.programme||"")+'<br>Best subject: '+esc(p.bestSubject||"Not specified")+'</p>'+action+'<button class="quiet-button" data-block="'+esc(p.userId)+'">Block</button></article>';
       }).join(""):'<div class="empty-state">No public profiles found.</div>';
     } catch(err){status(err.message);}
   });
@@ -240,16 +249,31 @@
   async function loadFriends(){
     if(!requireLogin()) return;
     try{
-      const [{friends=[]},{requests=[]}]=await Promise.all([
+      const [{friends=[]},{requests=[]},{blocks=[]}]=await Promise.all([
         api("/community/friends"),
-        api("/community/follow-requests")
+        api("/community/follow-requests"),
+        api("/community/blocks")
       ]);
       $("friend-count").textContent=String(friends.length);
       $("friend-request-count").textContent=String(requests.length);
-      $("friends-list").innerHTML=friends.length?friends.map(p=>'<article class="person-card"><strong>'+esc(p.displayName)+'</strong><p>@'+esc(p.username)+' · '+esc(p.educationTrack)+'<br>'+esc(p.institutionName||p.programme||"")+'<br>Best subject: '+esc(p.bestSubject||"Not specified")+'</p></article>').join(""):'<div class="empty-state">Your accepted connections will appear here.</div>';
+      $("friends-list").innerHTML=friends.length?friends.map(p=>'<article class="person-card"><strong>'+esc(p.displayName)+'</strong><p>@'+esc(p.username)+' · '+esc(p.educationTrack)+'<br>'+esc(p.institutionName||p.programme||"")+'<br>Best subject: '+esc(p.bestSubject||"Not specified")+'</p><div class="friend-request-actions"><button class="outline-button" data-remove-friend="'+esc(p.userId)+'">Remove friend</button><button class="quiet-button" data-block="'+esc(p.userId)+'">Block</button></div></article>').join(""):'<div class="empty-state">Your accepted connections will appear here.</div>';
+      $("blocked-list").innerHTML=blocks.length?blocks.map(p=>'<article class="person-card"><strong>'+esc(p.displayName||"Student")+'</strong><p>@'+esc(p.username||"student")+'</p><button class="outline-button" data-unblock="'+esc(p.userId)+'">Unblock</button></article>').join(""):'<div class="empty-state">You have not blocked anyone.</div>';
       $("friend-requests-list").innerHTML=requests.length?requests.map(r=>'<article class="person-card"><strong>'+esc(r.requester?.name||"Student")+'</strong><p>Wants to connect with you · '+esc(r.requester?.educationTrack||"")+'</p><div class="friend-request-actions"><button class="primary-button" data-friend-request="'+esc(r.id)+'" data-request-action="accept">Accept</button><button class="outline-button" data-friend-request="'+esc(r.id)+'" data-request-action="decline">Decline</button></div></article>').join(""):'<div class="empty-state">No pending friend requests.</div>';
     }catch(e){status(e.message);}
   }
+  $("friends-list").addEventListener("click",async e=>{
+    const remove=e.target.closest("[data-remove-friend]"), block=e.target.closest("[data-block]");
+    if(remove){if(!window.confirm("Remove this student from your friends?"))return;try{await api("/community/friends/"+encodeURIComponent(remove.dataset.removeFriend),{method:"DELETE"});status("Friend removed.");loadFriends();loadFeed();}catch(err){status(err.message);}return;}
+    if(block){if(!window.confirm("Block this student? This also removes the friendship."))return;try{await api("/community/blocks/"+encodeURIComponent(block.dataset.block),{method:"POST",body:"{}"});status("Student blocked.");loadFriends();loadFeed();}catch(err){status(err.message);}return;}
+  });
+  $("blocked-list").addEventListener("click",async e=>{
+    const b=e.target.closest("[data-unblock]");if(!b)return;
+    try{await api("/community/blocks/"+encodeURIComponent(b.dataset.unblock),{method:"DELETE"});status("Student unblocked. You can send a new friend request if both of you choose.");loadFriends();}
+    catch(err){status(err.message);}
+  });
+  $("people-list").addEventListener("click",async e=>{
+    const cancel=e.target.closest("[data-cancel-request]");if(cancel){try{await api("/community/follow/"+encodeURIComponent(cancel.dataset.cancelRequest),{method:"DELETE"});status("Friend request cancelled.");$("people-search").requestSubmit();}catch(err){status(err.message);}return;}
+  });
   $("friend-requests-list").addEventListener("click",async e=>{
     const button=e.target.closest("[data-friend-request]");
     if(!button)return;
