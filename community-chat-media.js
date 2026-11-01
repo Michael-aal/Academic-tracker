@@ -62,7 +62,7 @@
   async function pollSignals(isCaller){
     if(!currentCall||!pc)return;
     const data=await api("/community/calls/"+encodeURIComponent(currentCall.id)+"/signals"+(lastSignal?"?after="+encodeURIComponent(lastSignal):""));
-    if(["ENDED","DECLINED"].includes(data.call?.status)){cleanup();setStatus("Call ended.");return}
+    if(["ENDED","DECLINED","MISSED"].includes(data.call?.status)){cleanup();setStatus("Call ended.");return}
     for(const item of data.signals||[]){
       lastSignal=item.id;
       if(item.kind==="OFFER"&&!isCaller&&!pc.remoteDescription){
