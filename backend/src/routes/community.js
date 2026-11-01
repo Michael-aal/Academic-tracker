@@ -482,6 +482,28 @@ router.post("/friend-requests/:id", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.delete("/friends/:userId", async (req, res, next) => {
+  try {
+    const targetId = clean(req.params.userId, 100);
+    if (!targetId || targetId === req.userId) return res.status(400).json({ error: "Invalid friend." });
+    const [outgoing, incoming] = await Promise.all([
+      prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: req.userId, followingId: targetId } } }),
+      prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: targetId, followingId: req.userId } } })
+    ]);
+    if (outgoing?.status !== "ACCEPTED" || incoming?.status !== "ACCEPTED") return res.status(404).json({ error: "Friendship not found." });
+    await prisma.communityFollow.deleteMany({ where: { OR: [{ followerId: req.userId, followingId: targetId }, { followerId: targetId, followingId: req.userId }] } });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+router.delete("/follow/:userId", async (req, res, next) => {
+  try {
+    const result = await prisma.communityFollow.deleteMany({ where: { followerId: req.userId, followingId: req.params.userId, status: "PENDING" } });
+    if (!result.count) return res.status(404).json({ error: "Pending friend request not found." });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
 router.post("/follow/:userId", async (req, res, next) => {
   try {
     const [target, currentUser] = await Promise.all([getUser(req.params.userId), getUser(req.userId)]);
@@ -864,7 +886,15 @@ router.delete("/blocks/:userId", async (req, res, next) => {
 });
 router.get("/blocks", async (req, res, next) => {
   try {
-    const blocks = await prisma.communityBlock.findMany({ where: { blockerId: req.userId }, orderBy: { createdAt: "desc" } });
+    const rows = await prisma.communityBlock.findMany({ where: { blockerId: req.userId }, orderBy: { createdAt: "desc" } });
+    const ids = rows.map(row => row.blockedId);
+    const [users, profiles] = await Promise.all([
+      prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } }),
+      prisma.communityProfile.findMany({ where: { userId: { in: ids } } })
+    ]);
+    const userMap = new Map(users.map(user => [user.id, user]));
+    const profileMap = new Map(profiles.map(profile => [profile.userId, profile]));
+    const blocks = ids.map(id => userMap.get(id) && profileMap.get(id) ? publicProfile(profileMap.get(id), userMap.get(id)) : null).filter(Boolean);
     res.json({ blocks });
   } catch (e) { next(e); }
 });
