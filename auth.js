@@ -28,26 +28,58 @@
     if (confirm) confirm.type = visible ? 'text' : 'password';
     toggle.textContent = visible ? 'Hide' : 'Show';
   });
+  const adminToggle = document.getElementById('admin-setup-toggle');
+  const adminFields = document.getElementById('admin-setup-fields');
+  const adminSecret = document.getElementById('admin-setup-secret');
+  adminToggle?.addEventListener('change', () => {
+    if (adminFields) adminFields.hidden = !adminToggle.checked;
+    if (adminSecret) adminSecret.required = adminToggle.checked;
+  });
   form.addEventListener('submit', async event => {
     event.preventDefault(); errorBox.classList.remove('show'); successBox.classList.remove('show');
     const name = document.getElementById('name')?.value.trim();
     const email = document.getElementById('email').value.trim().toLowerCase();
     const pass = password.value;
+    const adminSetup = mode === 'register' && adminToggle?.checked === true;
     const higher = mode === 'register' && selectedTrack() === 'HIGHER';
     if (mode === 'register' && pass !== confirm.value) return showMessage(errorBox, 'Your passwords do not match.');
     if (mode === 'register' && pass.length < 10) return showMessage(errorBox, 'Use at least 10 characters for your password.');
     if (higher && (!institutionName.value.trim() || !programme.value.trim() || !studyLevel.value)) return showMessage(errorBox, 'Enter your institution, programme, and current level.');
+    if (adminSetup && (!adminSecret?.value || adminSecret.value.length < 32)) return showMessage(errorBox, 'Enter the administrator setup secret configured on the API server.');
     const body = mode === 'register' ? { name, email, password: pass, educationTrack: selectedTrack(), institutionName: institutionName?.value.trim(), programme: programme?.value.trim(), studyLevel: studyLevel?.value } : { email, password: pass };
-    submit.disabled = true; submit.textContent = mode === 'register' ? 'Creating your account…' : 'Signing you in…';
+    submit.disabled = true; submit.textContent = adminSetup ? 'Verifying one-time setup…' : mode === 'register' ? 'Creating your account…' : 'Signing you in…';
     try {
-      const response = await fetch(API_BASE + '/api/auth/' + (mode === 'register' ? 'register' : 'login'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || 'We could not complete that request. Please try again.');
+      let response;
+      let data;
+      if (adminSetup) {
+        response = await fetch(API_BASE + '/api/auth/admin/bootstrap', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Bootstrap-Secret': adminSecret.value },
+          body: JSON.stringify({ email, password: pass })
+        });
+        data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.ok || !data.user) throw new Error(data.error || 'Administrator setup could not be completed.');
+        // Exchange the one-time setup for an ordinary signed-in session.
+        response = await fetch(API_BASE + '/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password: pass })
+        });
+        data = await response.json().catch(() => ({}));
+      } else {
+        response = await fetch(API_BASE + '/api/auth/' + (mode === 'register' ? 'register' : 'login'), {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+        });
+        data = await response.json().catch(() => ({}));
+      }
+      if (!response.ok) throw new Error(data.error || (adminSetup ? 'Administrator was set up, but sign-in could not be completed.' : 'We could not complete that request. Please try again.'));
       if (!data.token || !data.user) throw new Error('The server response was incomplete. Please try again.');
       localStorage.setItem('academic-tracker-token', data.token);
       localStorage.setItem('academic-tracker-user', JSON.stringify(data.user));
-      showMessage(successBox, mode === 'register' ? 'Account created. Opening your study space…' : 'Welcome back. Opening your study space…');
-      // Route from the server-issued account role, never from a user-selected role.
+      password.value = '';
+      if (confirm) confirm.value = '';
+      if (adminSecret) adminSecret.value = '';
+      showMessage(successBox, adminSetup ? 'Administrator created. Opening the admin dashboard…' : mode === 'register' ? 'Account created. Opening your study space…' : 'Welcome back. Opening your study space…');
       const role = String(data.user.role || '').trim().toUpperCase();
       const isAdmin = ['ADMIN', 'DEVELOPER', 'DEV'].includes(role) || data.user.isAdmin === true;
       const destination = isAdmin
@@ -59,6 +91,9 @@
     } catch (error) {
       const message = error instanceof TypeError ? 'Could not reach the API. Check your connection and confirm the Render API allows this website in its CORS settings.' : error.message;
       showMessage(errorBox, message);
-    } finally { submit.disabled = false; submit.textContent = mode === 'register' ? 'Create my account →' : 'Log in to my tracker →'; }
+    } finally {
+      submit.disabled = false;
+      submit.textContent = mode === 'register' ? 'Create my account →' : 'Log in to my tracker →';
+    }
   });
 })();
