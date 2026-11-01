@@ -155,6 +155,27 @@ const bootstrapLimiter = rateLimit({
   message: { error: "Too many administrator setup attempts. Try again later." }
 });
 
+router.get("/admin/bootstrap-status", async (req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  try {
+    const configuredEmail = (process.env.ADMIN_EMAIL || "").trim();
+    const configuredPassword = process.env.ADMIN_PASSWORD || "";
+    const expectedSecret = process.env.ADMIN_BOOTSTRAP_SECRET || "";
+    const configured = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(configuredEmail) &&
+      configuredPassword.length >= 10 && Buffer.byteLength(configuredPassword, "utf8") <= 72 &&
+      expectedSecret.length >= 32;
+    if (!configured) return res.json({ available: false });
+
+    const existingAdmin = await prisma.user.findFirst({
+      where: { role: { in: ["ADMIN", "DEVELOPER", "DEV"] } },
+      select: { id: true }
+    });
+    return res.json({ available: !existingAdmin });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.post("/admin/bootstrap", bootstrapLimiter, async (req, res, next) => {
   try {
     const configuredEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
