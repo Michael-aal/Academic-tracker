@@ -1,0 +1,466 @@
+"use strict";
+const express = require("express");
+const crypto = require("node:crypto");
+const rateLimit = require("express-rate-limit");
+const { prisma } = require("../prisma");
+const { requireAuth } = require("../middleware/auth");
+
+const router = express.Router();
+const writeLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, limit: 80, standardHeaders: "draft-7", legacyHeaders: false,
+  keyGenerator: req => req.userId,
+  message: { error: "Too many community actions. Please slow down." }
+});
+const clean = (v, max) => typeof v === "string" ? v.trim().slice(0, max) : "";
+const safeUrl = value => {
+  const raw = clean(value, 1000);
+  if (!raw) return null;
+  try { const u = new URL(raw); return u.protocol === "https:" ? raw : null; } catch { return null; }
+};
+const slug = value => clean(value, 30).toLowerCase().replace(/[^a-z0-9_]/g, "").replace(/^_+|_+$/g, "");
+const publicProfile = (profile, user) => ({
+  id: profile.id, userId: user.id, username: profile.username, displayName: user.name,
+  educationTrack: user.educationTrack, institutionName: user.institutionName,
+  programme: user.programme, studyLevel: user.studyLevel, bio: profile.bio,
+  bestSubject: profile.bestSubject, interests: profile.interests || [],
+  avatarUrl: profile.avatarUrl, coverUrl: profile.coverUrl, visibility: profile.visibility
+});
+async function getUser(userId) {
+  return prisma.user.findUnique({ where: { id: userId }, select: {
+    id: true, name: true, educationTrack: true, institutionName: true, programme: true,
+    studyLevel: true, role: true
+  }});
+}
+async function ensureProfile(user) {
+  let profile = await prisma.communityProfile.findUnique({ where: { userId: user.id } });
+  if (profile) return profile;
+  const base = slug(user.name) || "student";
+  const username = (base.slice(0, 22) + "_" + user.id.slice(-6)).slice(0, 30);
+  return prisma.communityProfile.create({ data: { userId: user.id, username } });
+}
+async function acceptedFriend(userA, userB) {
+  if (!userA || !userB || userA.id === userB.id || userA.educationTrack !== userB.educationTrack) return false;
+  const [ab, ba] = await Promise.all([
+    prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: userA.id, followingId: userB.id } } }),
+    prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: userB.id, followingId: userA.id } } })
+  ]);
+  return ab?.status === "ACCEPTED" && ba?.status === "ACCEPTED";
+}
+async function isMember(conversationId, userId) {
+  return Boolean(await prisma.chatMember.findUnique({ where: { conversationId_userId: { conversationId, userId } } }));
+}
+async function canReadPost(post, userId) {
+  if (post.visibility === "PUBLIC" || post.authorId === userId) return true;
+  if (post.visibility === "FOLLOWERS") return Boolean(await prisma.communityFollow.findFirst({
+    where: { followerId: userId, followingId: post.authorId, status: "ACCEPTED" }
+  }));
+  return false;
+}
+
+// Public discovery is read-only. Authentication is required for participation.
+router.get("/feed", async (req, res, next) => {
+  try {
+    const limit = Math.min(30, Math.max(1, Number.parseInt(req.query.limit, 10) || 20));
+    const where = { visibility: "PUBLIC" };
+    if (req.query.subject) where.subject = clean(req.query.subject, 100);
+    if (req.query.track === "SECONDARY" || req.query.track === "HIGHER") {
+      const users = await prisma.user.findMany({ where: { educationTrack: req.query.track }, select: { id: true } });
+      where.authorId = { in: users.map(x => x.id) };
+    }
+    const posts = await prisma.communityPost.findMany({
+      where, orderBy: { createdAt: "desc" }, take: limit,
+      ...(typeof req.query.before === "string" && req.query.before ? { cursor: { id: req.query.before }, skip: 1 } : {})
+    });
+    const ids = [...new Set(posts.map(p => p.authorId))];
+    const [users, profiles, reactions, comments] = await Promise.all([
+      prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } }),
+      prisma.communityProfile.findMany({ where: { userId: { in: ids } } }),
+      prisma.communityReaction.groupBy({ by: ["postId"], where: { postId: { in: posts.map(p => p.id) } }, _count: { _all: true } }),
+      prisma.communityComment.groupBy({ by: ["postId"], where: { postId: { in: posts.map(p => p.id) } }, _count: { _all: true } })
+    ]);
+    const userMap = new Map(users.map(u => [u.id, u]));
+    const profileMap = new Map(profiles.map(p => [p.userId, p]));
+    const reactionMap = new Map(reactions.map(x => [x.postId, x._count._all]));
+    const commentMap = new Map(comments.map(x => [x.postId, x._count._all]));
+    res.json({ posts: posts.map(p => ({
+      ...p, author: userMap.get(p.authorId) ? publicProfile(profileMap.get(p.authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, userMap.get(p.authorId)) : null,
+      reactionCount: reactionMap.get(p.id) || 0, commentCount: commentMap.get(p.id) || 0
+    }))});
+  } catch (e) { next(e); }
+});
+
+router.get("/profiles/:username", async (req, res, next) => {
+  try {
+    const profile = await prisma.communityProfile.findUnique({ where: { username: slug(req.params.username) } });
+    if (!profile || profile.visibility === "PRIVATE") return res.status(404).json({ error: "Student profile not found." });
+    const user = await getUser(profile.userId);
+    if (!user) return res.status(404).json({ error: "Student profile not found." });
+    const posts = await prisma.communityPost.findMany({ where: { authorId: user.id, visibility: "PUBLIC" }, orderBy: { createdAt: "desc" }, take: 20 });
+    res.json({ profile: publicProfile(profile, user), posts });
+  } catch (e) { next(e); }
+});
+
+router.use(requireAuth);
+router.use(writeLimit);
+
+router.get("/profile/me", async (req, res, next) => {
+  try {
+    const user = await getUser(req.userId);
+    if (!user) return res.status(404).json({ error: "Account not found." });
+    const profile = await ensureProfile(user);
+    res.json({ profile: publicProfile(profile, user) });
+  } catch (e) { next(e); }
+});
+
+router.patch("/profile/me", async (req, res, next) => {
+  try {
+    const user = await getUser(req.userId);
+    if (!user) return res.status(404).json({ error: "Account not found." });
+    const data = {};
+    if (req.body?.username !== undefined) {
+      const username = slug(req.body.username);
+      if (username.length < 3 || username.length > 30) return res.status(400).json({ error: "Username must contain 3–30 letters, numbers or underscores." });
+      data.username = username;
+    }
+    if (req.body?.bio !== undefined) data.bio = clean(req.body.bio, 280) || null;
+    if (req.body?.bestSubject !== undefined) data.bestSubject = clean(req.body.bestSubject, 100) || null;
+    if (req.body?.avatarUrl !== undefined) {
+      const url = safeUrl(req.body.avatarUrl); if (req.body.avatarUrl && !url) return res.status(400).json({ error: "Profile image must use a valid HTTPS URL." });
+      data.avatarUrl = url;
+    }
+    if (req.body?.coverUrl !== undefined) {
+      const url = safeUrl(req.body.coverUrl); if (req.body.coverUrl && !url) return res.status(400).json({ error: "Cover image must use a valid HTTPS URL." });
+      data.coverUrl = url;
+    }
+    if (req.body?.visibility !== undefined) {
+      if (!["PUBLIC", "PRIVATE"].includes(req.body.visibility)) return res.status(400).json({ error: "Choose public or private profile visibility." });
+      data.visibility = req.body.visibility;
+    }
+    if (req.body?.interests !== undefined) {
+      if (!Array.isArray(req.body.interests) || req.body.interests.length > 12 || req.body.interests.some(x => typeof x !== "string" || !x.trim() || x.length > 40)) return res.status(400).json({ error: "Choose up to 12 valid interests." });
+      data.interests = [...new Set(req.body.interests.map(x => x.trim()))];
+    }
+    const current = await ensureProfile(user);
+    const profile = Object.keys(data).length ? await prisma.communityProfile.update({ where: { id: current.id }, data }) : current;
+    res.json({ profile: publicProfile(profile, user) });
+  } catch (e) {
+    if (e.code === "P2002") return res.status(409).json({ error: "That username is already taken." });
+    next(e);
+  }
+});
+
+router.post("/posts", async (req, res, next) => {
+  try {
+    const body = clean(req.body?.body, 5000);
+    const mediaUrl = req.body?.mediaUrl ? safeUrl(req.body.mediaUrl) : null;
+    const videoUrl = req.body?.videoUrl ? safeUrl(req.body.videoUrl) : null;
+    const subject = clean(req.body?.subject, 100) || null;
+    const visibility = ["PUBLIC", "FOLLOWERS"].includes(req.body?.visibility) ? req.body.visibility : "PUBLIC";
+    if (!body && !mediaUrl && !videoUrl) return res.status(400).json({ error: "Write something or attach a valid HTTPS media link." });
+    if (req.body?.mediaUrl && !mediaUrl || req.body?.videoUrl && !videoUrl) return res.status(400).json({ error: "Media links must use HTTPS." });
+    const post = await prisma.communityPost.create({ data: { authorId: req.userId, body, mediaUrl, videoUrl, subject, visibility } });
+    res.status(201).json({ post });
+  } catch (e) { next(e); }
+});
+
+router.delete("/posts/:id", async (req, res, next) => {
+  try {
+    const result = await prisma.communityPost.deleteMany({ where: { id: req.params.id, authorId: req.userId } });
+    if (!result.count) return res.status(404).json({ error: "Post not found or you cannot delete it." });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+router.post("/posts/:id/reaction", async (req, res, next) => {
+  try {
+    const post = await prisma.communityPost.findUnique({ where: { id: req.params.id } });
+    if (!post || !await canReadPost(post, req.userId)) return res.status(404).json({ error: "Post not found." });
+    const reaction = ["LIKE", "LOVE", "HELPFUL", "INSIGHTFUL"].includes(req.body?.reaction) ? req.body.reaction : "LIKE";
+    const existing = await prisma.communityReaction.findUnique({ where: { postId_userId: { postId: post.id, userId: req.userId } } });
+    if (existing?.reaction === reaction) await prisma.communityReaction.delete({ where: { id: existing.id } });
+    else await prisma.communityReaction.upsert({
+      where: { postId_userId: { postId: post.id, userId: req.userId } },
+      create: { postId: post.id, userId: req.userId, reaction },
+      update: { reaction }
+    });
+    const count = await prisma.communityReaction.count({ where: { postId: post.id } });
+    res.json({ ok: true, reaction: existing?.reaction === reaction ? null : reaction, count });
+  } catch (e) { next(e); }
+});
+
+router.get("/posts/:id/comments", async (req, res, next) => {
+  try {
+    const post = await prisma.communityPost.findUnique({ where: { id: req.params.id } });
+    if (!post || !await canReadPost(post, req.userId)) return res.status(404).json({ error: "Post not found." });
+    const comments = await prisma.communityComment.findMany({ where: { postId: post.id }, orderBy: { createdAt: "asc" }, take: 100 });
+    const users = await prisma.user.findMany({ where: { id: { in: [...new Set(comments.map(c => c.userId))] } }, select: { id: true, name: true } });
+    const map = new Map(users.map(u => [u.id, u.name]));
+    res.json({ comments: comments.map(c => ({ ...c, authorName: map.get(c.userId) || "Student" })) });
+  } catch (e) { next(e); }
+});
+
+router.post("/posts/:id/comments", async (req, res, next) => {
+  try {
+    const post = await prisma.communityPost.findUnique({ where: { id: req.params.id } });
+    if (!post || !await canReadPost(post, req.userId)) return res.status(404).json({ error: "Post not found." });
+    const body = clean(req.body?.body, 2000);
+    if (!body) return res.status(400).json({ error: "Write a comment first." });
+    const comment = await prisma.communityComment.create({ data: { postId: post.id, userId: req.userId, body } });
+    res.status(201).json({ comment });
+  } catch (e) { next(e); }
+});
+
+router.post("/follow/:userId", async (req, res, next) => {
+  try {
+    const target = await getUser(req.params.userId);
+    if (!target || target.id === req.userId) return res.status(404).json({ error: "Student not found." });
+    const current = await prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: target.id, followingId: req.userId } } });
+    const status = current?.status === "PENDING" ? "ACCEPTED" : "PENDING";
+    await prisma.communityFollow.upsert({
+      where: { followerId_followingId: { followerId: req.userId, followingId: target.id } },
+      create: { followerId: req.userId, followingId: target.id, status },
+      update: { status }
+    });
+    if (status === "ACCEPTED") await prisma.communityFollow.update({
+      where: { followerId_followingId: { followerId: target.id, followingId: req.userId } }, data: { status: "ACCEPTED" }
+    });
+    res.json({ ok: true, status });
+  } catch (e) { next(e); }
+});
+
+router.get("/groups", async (req, res, next) => {
+  try {
+    const groups = await prisma.studyGroup.findMany({
+      where: { OR: [{ visibility: "PUBLIC" }, { memberships: { some: { userId: req.userId, status: "ACTIVE" } } }] },
+      orderBy: { createdAt: "desc" }, take: 50
+    }).catch(async () => prisma.studyGroup.findMany({ where: { visibility: "PUBLIC" }, orderBy: { createdAt: "desc" }, take: 50 }));
+    const ids = groups.map(g => g.id);
+    const counts = await prisma.groupMembership.groupBy({ by: ["groupId"], where: { groupId: { in: ids }, status: "ACTIVE" }, _count: { _all: true } });
+    const countMap = new Map(counts.map(x => [x.groupId, x._count._all]));
+    const mine = await prisma.groupMembership.findMany({ where: { userId: req.userId, groupId: { in: ids }, status: "ACTIVE" } });
+    const mineSet = new Set(mine.map(x => x.groupId));
+    res.json({ groups: groups.map(g => ({ ...g, memberCount: countMap.get(g.id) || 0, joined: mineSet.has(g.id) })) });
+  } catch (e) { next(e); }
+});
+
+router.post("/groups", async (req, res, next) => {
+  try {
+    const title = clean(req.body?.title, 100), description = clean(req.body?.description, 1000);
+    if (title.length < 3 || description.length < 10) return res.status(400).json({ error: "Enter a group name and a description of at least 10 characters." });
+    const user = await getUser(req.userId);
+    const visibility = ["PUBLIC", "PRIVATE", "INVITE"].includes(req.body?.visibility) ? req.body.visibility : "PUBLIC";
+    const group = await prisma.studyGroup.create({ data: { ownerId: req.userId, title, description, subject: clean(req.body?.subject, 100) || null, educationTrack: req.body?.crossLevel === true ? null : user.educationTrack, visibility } });
+    await prisma.groupMembership.create({ data: { groupId: group.id, userId: req.userId, role: "OWNER", status: "ACTIVE" } });
+    res.status(201).json({ group });
+  } catch (e) { next(e); }
+});
+
+router.post("/groups/:id/join", async (req, res, next) => {
+  try {
+    const group = await prisma.studyGroup.findUnique({ where: { id: req.params.id } });
+    if (!group || (group.visibility !== "PUBLIC" && group.ownerId !== req.userId)) return res.status(404).json({ error: "This group is private or unavailable." });
+    const user = await getUser(req.userId);
+    if (group.educationTrack && group.educationTrack !== user.educationTrack) return res.status(403).json({ error: "This group is for a different academic environment." });
+    await prisma.groupMembership.upsert({
+      where: { groupId_userId: { groupId: group.id, userId: req.userId } },
+      create: { groupId: group.id, userId: req.userId, status: "ACTIVE" },
+      update: { status: "ACTIVE" }
+    });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+router.get("/stories", async (_req, res, next) => {
+  try {
+    const stories = await prisma.communityStory.findMany({ where: { expiresAt: { gt: new Date() } }, orderBy: { createdAt: "desc" }, take: 60 });
+    const ids = [...new Set(stories.map(s => s.authorId))];
+    const users = await prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } });
+    const map = new Map(users.map(u => [u.id, u.name]));
+    res.json({ stories: stories.map(s => ({ ...s, authorName: map.get(s.authorId) || "Student" })) });
+  } catch (e) { next(e); }
+});
+
+router.post("/stories", async (req, res, next) => {
+  try {
+    const mediaUrl = safeUrl(req.body?.mediaUrl);
+    if (!mediaUrl) return res.status(400).json({ error: "A valid HTTPS image or video URL is required." });
+    const mediaType = req.body?.mediaType === "VIDEO" ? "VIDEO" : "IMAGE";
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const story = await prisma.communityStory.create({ data: { authorId: req.userId, mediaUrl, mediaType, caption: clean(req.body?.caption, 500) || null, expiresAt } });
+    res.status(201).json({ story });
+  } catch (e) { next(e); }
+});
+
+router.post("/videos/engagement", async (req, res, next) => {
+  try {
+    const videoId = clean(req.body?.videoId, 120);
+    const action = clean(req.body?.action, 20).toUpperCase();
+    const allowed = ["WATCH", "LIKE", "SAVE", "SKIP", "NOT_INTERESTED", "SHARE"];
+    if (!videoId || !allowed.includes(action)) return res.status(400).json({ error: "Invalid video engagement." });
+    const watchSeconds = Math.min(3600, Math.max(0, Number(req.body?.watchSeconds) || 0));
+    const event = await prisma.videoEngagement.create({ data: {
+      userId: req.userId, videoId, action, watchSeconds,
+      subject: clean(req.body?.subject, 100) || null,
+      provider: clean(req.body?.provider, 20).toUpperCase() || "YOUTUBE"
+    }});
+    res.status(201).json({ ok: true, id: event.id });
+  } catch (e) { next(e); }
+});
+
+router.get("/videos/preferences", async (req, res, next) => {
+  try {
+    const profile = await prisma.communityProfile.findUnique({ where: { userId: req.userId } });
+    const events = await prisma.videoEngagement.findMany({ where: { userId: req.userId, createdAt: { gte: new Date(Date.now() - 90 * 86400000) } }, orderBy: { createdAt: "desc" }, take: 300 });
+    const scores = new Map();
+    if (profile?.bestSubject) scores.set(profile.bestSubject, 8);
+    for (const interest of Array.isArray(profile?.interests) ? profile.interests : []) scores.set(interest, (scores.get(interest) || 0) + 4);
+    for (const event of events) {
+      if (!event.subject) continue;
+      const weight = event.action === "NOT_INTERESTED" ? -8 : event.action === "SKIP" ? -2 : event.action === "SAVE" ? 7 : event.action === "LIKE" ? 5 : event.action === "WATCH" ? Math.min(5, event.watchSeconds / 30) : 1;
+      scores.set(event.subject, (scores.get(event.subject) || 0) + weight);
+    }
+    const subjects = [...scores.entries()].filter(([, score]) => score > 0).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([subject, score]) => ({ subject, score: Math.round(score * 10) / 10 }));
+    res.json({ subjects, educationTrack: (await getUser(req.userId))?.educationTrack || "SECONDARY", algorithm: "hybrid-profile-and-feedback-v1" });
+  } catch (e) { next(e); }
+});
+
+async function canChat(userId, otherId) {
+  const [a, b] = await Promise.all([getUser(userId), getUser(otherId)]);
+  if (!a || !b || a.educationTrack !== b.educationTrack) return false;
+  return acceptedFriend(a, b);
+}
+router.get("/chat", async (req, res, next) => {
+  try {
+    const memberships = await prisma.chatMember.findMany({ where: { userId: req.userId }, orderBy: { joinedAt: "desc" }, take: 80 });
+    const ids = memberships.map(m => m.conversationId);
+    const conversations = await prisma.chatConversation.findMany({ where: { id: { in: ids } }, orderBy: { updatedAt: "desc" } });
+    const messages = await prisma.chatMessage.findMany({ where: { conversationId: { in: ids }, deletedAt: null }, orderBy: { createdAt: "desc" }, take: 160 });
+    res.json({ conversations: conversations.map(c => ({ ...c, lastMessage: messages.find(m => m.conversationId === c.id) || null })) });
+  } catch (e) { next(e); }
+});
+router.post("/chat/direct/:userId", async (req, res, next) => {
+  try {
+    if (!await canChat(req.userId, req.params.userId)) return res.status(403).json({ error: "Private chats are available between accepted connections in the same academic environment." });
+    const conversation = await prisma.chatConversation.create({ data: { createdById: req.userId, kind: "DIRECT" } });
+    await prisma.chatMember.createMany({ data: [{ conversationId: conversation.id, userId: req.userId }, { conversationId: conversation.id, userId: req.params.userId }] });
+    res.status(201).json({ conversation });
+  } catch (e) { next(e); }
+});
+router.post("/chat/group/:groupId", async (req, res, next) => {
+  try {
+    const group = await prisma.studyGroup.findUnique({ where: { id: req.params.groupId } });
+    const member = group && await prisma.groupMembership.findUnique({ where: { groupId_userId: { groupId: group.id, userId: req.userId } } });
+    if (!member || member.status !== "ACTIVE") return res.status(403).json({ error: "Join the study group before opening its chat." });
+    let conversation = await prisma.chatConversation.findFirst({ where: { groupId: group.id, kind: "GROUP" } });
+    if (!conversation) {
+      conversation = await prisma.chatConversation.create({ data: { createdById: group.ownerId, groupId: group.id, kind: "GROUP" } });
+      const members = await prisma.groupMembership.findMany({ where: { groupId: group.id, status: "ACTIVE" }, select: { userId: true } });
+      if (members.length) await prisma.chatMember.createMany({ data: members.map(m => ({ conversationId: conversation.id, userId: m.userId })), skipDuplicates: true });
+    }
+    res.status(201).json({ conversation });
+  } catch (e) { next(e); }
+});
+router.get("/chat/:id/messages", async (req, res, next) => {
+  try {
+    if (!await isMember(req.params.id, req.userId)) return res.status(404).json({ error: "Conversation not found." });
+    const messages = await prisma.chatMessage.findMany({ where: { conversationId: req.params.id, deletedAt: null }, orderBy: { createdAt: "asc" }, take: 100 });
+    res.json({ messages });
+  } catch (e) { next(e); }
+});
+router.post("/chat/:id/messages", async (req, res, next) => {
+  try {
+    if (!await isMember(req.params.id, req.userId)) return res.status(404).json({ error: "Conversation not found." });
+    const body = clean(req.body?.body, 5000);
+    if (!body) return res.status(400).json({ error: "Message cannot be empty." });
+    const message = await prisma.chatMessage.create({ data: { conversationId: req.params.id, senderId: req.userId, body, messageType: "TEXT" } });
+    await prisma.chatConversation.update({ where: { id: req.params.id }, data: { updatedAt: new Date() } });
+    res.status(201).json({ message });
+  } catch (e) { next(e); }
+});
+router.patch("/chat/:id/read", async (req, res, next) => {
+  try {
+    const member = await prisma.chatMember.findUnique({ where: { conversationId_userId: { conversationId: req.params.id, userId: req.userId } } });
+    if (!member) return res.status(404).json({ error: "Conversation not found." });
+    await prisma.chatMember.update({ where: { id: member.id }, data: { lastReadAt: new Date() } });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+// WebRTC signalling is persisted and polled through the API. Configure TURN_URL,
+// TURN_USERNAME and TURN_CREDENTIAL in production for reliable mobile networks.
+router.get("/calls/ice", (_req, res) => {
+  const iceServers = [{ urls: ["stun:stun.l.google.com:19302"] }];
+  if (process.env.TURN_URL && process.env.TURN_USERNAME && process.env.TURN_CREDENTIAL) {
+    iceServers.push({ urls: process.env.TURN_URL.split(",").map(x => x.trim()), username: process.env.TURN_USERNAME, credential: process.env.TURN_CREDENTIAL });
+  }
+  res.json({ iceServers, turnConfigured: iceServers.length > 1 });
+});
+router.post("/calls", async (req, res, next) => {
+  try {
+    const calleeId = clean(req.body?.calleeId, 100);
+    if (!await canChat(req.userId, calleeId)) return res.status(403).json({ error: "Calls are available only between accepted connections in the same academic environment." });
+    const active = await prisma.callSession.findFirst({ where: { OR: [{ callerId: req.userId, status: "RINGING" }, { calleeId: req.userId, status: "RINGING" }] } });
+    if (active) return res.status(409).json({ error: "You already have an incoming or outgoing call." });
+    const callType = req.body?.callType === "VIDEO" ? "VIDEO" : "AUDIO";
+    const call = await prisma.callSession.create({ data: { callerId: req.userId, calleeId, callType } });
+    res.status(201).json({ call });
+  } catch (e) { next(e); }
+});
+router.get("/calls/incoming", async (req, res, next) => {
+  try {
+    const calls = await prisma.callSession.findMany({ where: { calleeId: req.userId, status: "RINGING" }, orderBy: { startedAt: "desc" }, take: 10 });
+    res.json({ calls });
+  } catch (e) { next(e); }
+});
+router.post("/calls/:id/signals", async (req, res, next) => {
+  try {
+    const call = await prisma.callSession.findUnique({ where: { id: req.params.id } });
+    if (!call || ![call.callerId, call.calleeId].includes(req.userId) || call.status === "ENDED" || call.status === "DECLINED") return res.status(404).json({ error: "Call not found." });
+    const kind = ["OFFER", "ANSWER", "ICE"].includes(req.body?.kind) ? req.body.kind : "";
+    const payload = req.body?.payload;
+    if (!kind || !payload || typeof payload !== "object" || JSON.stringify(payload).length > 12000) return res.status(400).json({ error: "Invalid call signal." });
+    const signal = await prisma.callSignal.create({ data: { callId: call.id, senderId: req.userId, kind, payload } });
+    res.status(201).json({ signalId: signal.id });
+  } catch (e) { next(e); }
+});
+router.get("/calls/:id/signals", async (req, res, next) => {
+  try {
+    const call = await prisma.callSession.findUnique({ where: { id: req.params.id } });
+    if (!call || ![call.callerId, call.calleeId].includes(req.userId)) return res.status(404).json({ error: "Call not found." });
+    const after = typeof req.query.after === "string" ? req.query.after : "";
+    const signals = await prisma.callSignal.findMany({ where: { callId: call.id, senderId: { not: req.userId }, ...(after ? { id: { gt: after } } : {}) }, orderBy: { createdAt: "asc" }, take: 50 });
+    res.json({ call, signals });
+  } catch (e) { next(e); }
+});
+router.patch("/calls/:id", async (req, res, next) => {
+  try {
+    const call = await prisma.callSession.findUnique({ where: { id: req.params.id } });
+    if (!call || ![call.callerId, call.calleeId].includes(req.userId)) return res.status(404).json({ error: "Call not found." });
+    const action = req.body?.action;
+    const data = action === "ACCEPT" && call.calleeId === req.userId ? { status: "ACTIVE", answeredAt: new Date() }
+      : action === "DECLINE" && call.calleeId === req.userId ? { status: "DECLINED", endedAt: new Date() }
+      : action === "END" ? { status: "ENDED", endedAt: new Date() } : null;
+    if (!data) return res.status(400).json({ error: "Invalid call action." });
+    const updated = await prisma.callSession.update({ where: { id: call.id }, data });
+    res.json({ call: updated });
+  } catch (e) { next(e); }
+});
+
+// Referral codes and attribution. Rewards deliberately remain pending until an
+// eligibility/verification process approves them; registration alone earns nothing.
+router.get("/referrals", async (req, res, next) => {
+  try {
+    let code = await prisma.referralCode.findUnique({ where: { userId: req.userId } });
+    if (!code) {
+      const generated = "AT" + crypto.randomBytes(6).toString("hex").toUpperCase();
+      code = await prisma.referralCode.create({ data: { userId: req.userId, code: generated } });
+    }
+    const [referrals, rewards] = await Promise.all([
+      prisma.referral.findMany({ where: { inviterId: req.userId }, orderBy: { createdAt: "desc" }, take: 100 }),
+      prisma.referralReward.aggregate({ where: { userId: req.userId, status: "APPROVED" }, _sum: { points: true } })
+    ]);
+    res.json({ code: code.code, inviteUrl: (process.env.PUBLIC_APP_URL || "https://academic-tracker-iota.vercel.app") + "/register.html?ref=" + code.code, referrals, approvedPoints: rewards._sum.points || 0 });
+  } catch (e) { next(e); }
+});
+
+module.exports = router;
