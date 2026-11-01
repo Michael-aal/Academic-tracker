@@ -43,6 +43,14 @@
             <button class="primary-button" type="submit">Publish post</button>
           </div>
         </form>
+        <section class="social-discover panel" aria-labelledby="social-discover-title">
+          <div class="social-discover-heading"><div><p class="community-eyebrow">GET STARTED</p><h2 id="social-discover-title">Ideas worth sharing</h2><p>Examples to help you start posting. These are prompts, not posts from real students.</p></div><button class="quiet-button" type="button" data-tab="videos">Explore videos ↗</button></div>
+          <div class="social-example-grid">
+            <article class="social-example-card"><span class="social-example-icon">Aa</span><small>STUDY TIP EXAMPLE</small><h3>One concept, explained simply</h3><p>Share a short explanation of something you understood today. Add a diagram or a photo of your notes.</p><button type="button" class="text-button" data-example="A concept I finally understand: [explain it in your own words].">Use this idea</button></article>
+            <article class="social-example-card"><span class="social-example-icon">?</span><small>DISCUSSION EXAMPLE</small><h3>Ask the learning community</h3><p>Post a thoughtful question about Mathematics, English, Science, programming or another subject.</p><button type="button" class="text-button" data-example="Can someone explain [topic]? Here is the part I understand so far:">Use this idea</button></article>
+            <article class="social-example-card social-video-example"><span class="social-example-icon">▶</span><small>VIDEO EXAMPLE</small><h3>Learn something new</h3><p>Browse educational videos, then share a useful takeaway with your own explanation.</p><button type="button" class="text-button" data-tab="videos">Browse learning videos ↗</button></article>
+          </div>
+        </section>
         <div class="feed-toolbar"><h2>Recent posts</h2><button class="quiet-button" id="refresh-feed" type="button">Refresh</button></div>
         <div id="feed-list" class="feed-list"><div class="empty-state">Loading posts…</div></div>
       </div>
@@ -74,7 +82,32 @@
     <div class="referral-grid"><section class="panel section-panel"><p class="community-eyebrow">INVITE YOUR FRIENDS</p><h2>Invite friends</h2><p>Share your unique invitation link. Referral credit stays pending until eligibility checks are completed.</p><div id="referral-card" class="referral-card">Loading your referral link…</div></section><section class="panel section-panel"><h2>Your referral activity</h2><div id="referral-stats"></div></section></div>
   </section>
   <section class="community-view" id="view-profile">
-    <section class="panel profile-editor"><div class="section-heading"><div><h2>Your social profile</h2><p>Choose how other students discover you.</p></div></div><form id="profile-form"><div class="profile-form-grid"><label>Username<input id="profile-username" maxlength="30" required></label><label>Best Subject<input id="profile-best-subject" maxlength="100" placeholder="e.g. Mathematics"></label><label class="full-field">Short bio<textarea id="profile-bio" rows="3" maxlength="280" placeholder="What are you learning or interested in?"></textarea></label><label>Profile image URL<input id="profile-avatar" type="url" placeholder="https://…"></label><label>Cover image URL<input id="profile-cover" type="url" placeholder="https://…"></label><label>Interests (comma separated)<input id="profile-interests" placeholder="Programming, Physics, English"></label><label>Profile visibility<select id="profile-visibility"><option value="PUBLIC">Public</option><option value="PRIVATE">Private</option></select></label></div><button class="primary-button">Save profile</button></form><div id="profile-summary" class="profile-summary"></div></section>
+    <section class="social-profile-page">
+      <section class="panel social-profile-card">
+        <div class="social-profile-cover" id="social-profile-cover"><span>YOUR SPACE</span></div>
+        <div class="social-profile-main">
+          <div class="social-profile-avatar" id="social-profile-avatar">S</div>
+          <div class="social-profile-identity"><h2 id="social-profile-name">Your profile</h2><p id="social-profile-handle">@username</p><p id="social-profile-bio">Add a short bio to introduce yourself.</p></div>
+          <button type="button" class="outline-button" id="edit-social-profile">Edit profile</button>
+        </div>
+        <div class="social-profile-stats"><div><strong id="profile-post-count">0</strong><span>Posts</span></div><div><strong id="profile-follower-count">0</strong><span>Followers</span></div><div><strong id="profile-following-count">0</strong><span>Following</span></div></div>
+        <div class="social-profile-subject" id="social-profile-subject"></div>
+        <div class="social-profile-posts-heading"><h3>Your posts</h3><span>Latest first</span></div>
+        <div id="social-profile-posts" class="social-profile-post-grid"><div class="empty-state">Loading your posts…</div></div>
+      </section>
+      <section class="panel profile-editor" id="profile-settings">
+        <div class="section-heading"><div><h2>Profile settings</h2><p>Customise how your social profile appears to other students.</p></div></div>
+        <form id="profile-form"><div class="profile-form-grid">
+          <label>Username<input id="profile-username" maxlength="30" required></label>
+          <label>Best Subject<input id="profile-best-subject" maxlength="100" placeholder="e.g. Mathematics"></label>
+          <label class="full-field">Short bio<textarea id="profile-bio" rows="3" maxlength="280" placeholder="What are you learning or interested in?"></textarea></label>
+          <label>Profile image URL<input id="profile-avatar" type="url" placeholder="https://…"></label>
+          <label>Cover image URL<input id="profile-cover" type="url" placeholder="https://…"></label>
+          <label>Interests (comma separated)<input id="profile-interests" placeholder="Programming, Physics, English"></label>
+          <label>Profile visibility<select id="profile-visibility"><option value="PUBLIC">Public</option><option value="PRIVATE">Private</option></select></label>
+        </div><p class="muted-note">Private profiles are hidden from public profile discovery. You can update these settings whenever you like.</p><button class="primary-button">Save profile settings</button></form>
+      </section>
+    </section>
   </section>
   <nav class="social-bottom-nav" id="social-bottom-nav" aria-label="Social Media navigation">
   <button type="button" data-social-dest="feed" class="active" aria-current="page"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/></svg><span>Home</span></button>
