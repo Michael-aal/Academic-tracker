@@ -24,7 +24,7 @@ html[data-theme=dark] .music-launcher{background:linear-gradient(135deg,#9569ed,
  z-index:1249;display:grid;place-items:center;width:42px;height:42px;
  padding:0;border:1px solid #8b5cf6;border-radius:50%;
  background:linear-gradient(145deg,#9569ed,#6735bd);color:#fff;
- font:700 19px/1 inherit;box-shadow:0 6px 18px rgba(65,35,105,.22);cursor:pointer
+ font:inherit;font-size:19px;font-weight:700;line-height:1;box-shadow:0 6px 18px rgba(65,35,105,.22);cursor:pointer
 }
 .music-sound-toggle.is-playing{background:#211832;border-color:#a78bfa;box-shadow:0 0 0 3px rgba(139,92,246,.16)}
 .music-sound-toggle:focus-visible{outline:2px solid #c4b5fd;outline-offset:3px}
