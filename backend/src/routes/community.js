@@ -64,6 +64,14 @@ async function canReadPost(post, userId) {
 }
 
 router.use(requireAuth);
+router.use(async (req, res, next) => {
+  if (req.path === "/profile/me" && ["GET", "PATCH"].includes(req.method)) return next();
+  try {
+    const profile = await prisma.communityProfile.findUnique({ where: { userId: req.userId }, select: { usernameSet: true } });
+    if (!profile?.usernameSet) return res.status(403).json({ error: "Choose your unique Social Media username before continuing.", code: "SOCIAL_USERNAME_REQUIRED" });
+    next();
+  } catch (error) { next(error); }
+});
 // Public discovery is read-only. Authentication is required for participation.
 router.get("/feed", async (req, res, next) => {
   try {
@@ -172,13 +180,6 @@ router.patch("/profile/me", async (req, res, next) => {
   }
 });
 
-router.use(async (req, res, next) => {
-  try {
-    const profile = await prisma.communityProfile.findUnique({ where: { userId: req.userId }, select: { usernameSet: true } });
-    if (!profile?.usernameSet) return res.status(403).json({ error: "Choose your unique Social Media username before continuing.", code: "SOCIAL_USERNAME_REQUIRED" });
-    next();
-  } catch (error) { next(error); }
-});
 
 router.post("/media-upload-signature", async (req, res, next) => {
   try {
