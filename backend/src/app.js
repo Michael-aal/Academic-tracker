@@ -113,8 +113,19 @@ app.use((error, _req, res, _next) => {
     return res.status(413).json({ error: "Request body is too large." });
   }
   // Do not log request bodies, SQL details, provider payloads, or raw error messages.
-  console.error("API error:", { name: error?.name || "Error", code: error?.code || error?.type || "INTERNAL_ERROR" });
-  res.status(500).json({ error: "An unexpected server error occurred." });
+  console.error("API error:", {
+    method: _req.method,
+    path: _req.originalUrl?.split("?")[0] || _req.path,
+    name: error?.name || "Error",
+    code: error?.code || error?.type || "INTERNAL_ERROR"
+  });
+  if (error?.code === "P2021" || error?.code === "P2022") {
+    return res.status(503).json({ error: "The database schema is not up to date. The API is applying its migrations; please try again shortly.", code: "DATABASE_SCHEMA_NOT_READY" });
+  }
+  if (error?.code === "P1001" || error?.code === "P1002" || error?.code === "P1017") {
+    return res.status(503).json({ error: "The database is temporarily unavailable. Please try again shortly.", code: "DATABASE_UNAVAILABLE" });
+  }
+  res.status(500).json({ error: "An unexpected server error occurred. Please retry, and contact support if it continues.", code: "INTERNAL_ERROR" });
 });
 
 async function closeDatabase() {
