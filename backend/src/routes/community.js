@@ -558,6 +558,10 @@ router.delete("/follow/:userId", async (req, res, next) => {
       { followerId: req.userId, followingId: targetId },
       { followerId: targetId, followingId: req.userId }
     ] } });
+    await prisma.callSession.updateMany({
+      where: { status: { in: ["RINGING", "ACTIVE"] }, OR: [{ callerId: req.userId, calleeId: targetId }, { callerId: targetId, calleeId: req.userId }] },
+      data: { status: "ENDED", endedAt: new Date() }
+    });
     res.json({ ok: true, status: "REMOVED" });
   } catch (e) { next(e); }
 });
@@ -752,6 +756,11 @@ async function canChat(userId, otherId) {
   if (!a || !b || a.educationTrack !== b.educationTrack) return false;
   return acceptedFriend(a, b);
 }
+async function canAccessCall(call, userId) {
+  if (!call || ![call.callerId, call.calleeId].includes(userId)) return false;
+  const otherId = call.callerId === userId ? call.calleeId : call.callerId;
+  return canChat(userId, otherId);
+}
 async function canAccessConversation(conversationId, userId) {
   const [conversation, member] = await Promise.all([
     prisma.chatConversation.findUnique({ where: { id: conversationId } }),
@@ -883,7 +892,7 @@ router.get("/calls/incoming", async (req, res, next) => {
 router.post("/calls/:id/signals", async (req, res, next) => {
   try {
     const call = await prisma.callSession.findUnique({ where: { id: req.params.id } });
-    if (!call || ![call.callerId, call.calleeId].includes(req.userId) || call.status === "ENDED" || call.status === "DECLINED") return res.status(404).json({ error: "Call not found." });
+    if (!await canAccessCall(call, req.userId) || call.status === "ENDED" || call.status === "DECLINED") return res.status(404).json({ error: "Call not found or connection no longer available." });
     const kind = ["OFFER", "ANSWER", "ICE"].includes(req.body?.kind) ? req.body.kind : "";
     const payload = req.body?.payload;
     if (!kind || !payload || typeof payload !== "object" || JSON.stringify(payload).length > 12000) return res.status(400).json({ error: "Invalid call signal." });
@@ -894,7 +903,7 @@ router.post("/calls/:id/signals", async (req, res, next) => {
 router.get("/calls/:id/signals", async (req, res, next) => {
   try {
     const call = await prisma.callSession.findUnique({ where: { id: req.params.id } });
-    if (!call || ![call.callerId, call.calleeId].includes(req.userId)) return res.status(404).json({ error: "Call not found." });
+    if (!await canAccessCall(call, req.userId)) return res.status(404).json({ error: "Call not found or connection no longer available." });
     const after = typeof req.query.after === "string" ? req.query.after : "";
     const signals = await prisma.callSignal.findMany({ where: { callId: call.id, senderId: { not: req.userId }, ...(after ? { id: { gt: after } } : {}) }, orderBy: { createdAt: "asc" }, take: 50 });
     res.json({ call, signals });
@@ -903,7 +912,7 @@ router.get("/calls/:id/signals", async (req, res, next) => {
 router.patch("/calls/:id", async (req, res, next) => {
   try {
     const call = await prisma.callSession.findUnique({ where: { id: req.params.id } });
-    if (!call || ![call.callerId, call.calleeId].includes(req.userId)) return res.status(404).json({ error: "Call not found." });
+    if (!await canAccessCall(call, req.userId)) return res.status(404).json({ error: "Call not found or connection no longer available." });
     const action = req.body?.action;
     const data = action === "ACCEPT" && call.calleeId === req.userId ? { status: "ACTIVE", answeredAt: new Date() }
       : action === "DECLINE" && call.calleeId === req.userId ? { status: "DECLINED", endedAt: new Date() }
@@ -924,6 +933,10 @@ router.post("/blocks/:userId", async (req, res, next) => {
       update: {}
     });
     await prisma.communityFollow.deleteMany({ where: { OR: [{ followerId: req.userId, followingId: targetId }, { followerId: targetId, followingId: req.userId }] } });
+    await prisma.callSession.updateMany({
+      where: { status: { in: ["RINGING", "ACTIVE"] }, OR: [{ callerId: req.userId, calleeId: targetId }, { callerId: targetId, calleeId: req.userId }] },
+      data: { status: "ENDED", endedAt: new Date() }
+    });
     res.json({ ok: true });
   } catch (e) { next(e); }
 });
