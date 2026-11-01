@@ -413,12 +413,13 @@ router.get("/people", async (req, res, next) => {
 
     // Username lookup accepts both "student_name" and "@student_name".
     // Search results are limited to public, active profiles in the same education track.
+    const exactUsernameSearch = q.startsWith("@");
     const usernameQuery = slug(q.replace(/^@/, ""));
     const usernameProfiles = usernameQuery.length >= 2
       ? await prisma.communityProfile.findMany({
-          where: { username: { contains: usernameQuery }, visibility: "PUBLIC", status: "ACTIVE" },
+          where: { username: exactUsernameSearch ? usernameQuery : { contains: usernameQuery }, visibility: "PUBLIC", status: "ACTIVE" },
           select: { userId: true },
-          take: 30
+          take: exactUsernameSearch ? 1 : 30
         })
       : [];
     const usernameUserIds = usernameProfiles.map(profile => profile.userId);
@@ -426,11 +427,13 @@ router.get("/people", async (req, res, next) => {
       where: {
         id: { not: req.userId },
         educationTrack: currentUser.educationTrack,
-        OR: [
-          { name: { contains: q.replace(/^@/, ""), mode: "insensitive" } },
-          { institutionName: { contains: q, mode: "insensitive" } },
-          ...(usernameUserIds.length ? [{ id: { in: usernameUserIds } }] : [])
-        ]
+        OR: exactUsernameSearch
+          ? [{ id: { in: usernameUserIds } }]
+          : [
+              { name: { contains: q, mode: "insensitive" } },
+              { institutionName: { contains: q, mode: "insensitive" } },
+              ...(usernameUserIds.length ? [{ id: { in: usernameUserIds } }] : [])
+            ]
       },
       select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true },
       take: 20
