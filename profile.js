@@ -77,7 +77,7 @@
       if (response.status === 401) { localStorage.removeItem("academic-tracker-token"); localStorage.removeItem("academic-tracker-user"); window.location.replace("login.html"); return; }
       if (!response.ok || !data.user) throw new Error(data.error || "Could not load your profile. Please try again.");
       paint(data.user);
-      await loadSocialProfile();
+      await loadSocialProfile().catch(() => {});
     } catch (error) {
       message(errorBox, error instanceof TypeError ? "Could not connect to your account right now. Check your connection and try again." : error.message);
     }
@@ -99,7 +99,7 @@
       if (response.status === 401) { localStorage.removeItem("academic-tracker-token"); localStorage.removeItem("academic-tracker-user"); window.location.replace("login.html"); return; }
       if (!response.ok || !data.user) throw new Error(data.error || "Your profile could not be saved.");
       paint(data.user);
-      await loadSocialProfile();
+      await loadSocialProfile().catch(() => {});
       message(successBox, "Your display name has been updated.", true);
     } catch (error) {
       message(errorBox, error instanceof TypeError ? "Could not connect to the API. Your changes have not been saved." : error.message);
