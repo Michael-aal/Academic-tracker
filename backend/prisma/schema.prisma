@@ -397,9 +397,11 @@ model CommunityComment {
   id        String   @id @default(cuid())
   postId    String   @map("post_id")
   userId    String   @map("user_id")
+  parentId  String?  @map("parent_id")
   body      String   @db.VarChar(2000)
   createdAt DateTime @default(now()) @map("created_at")
   @@index([postId, createdAt])
+  @@index([parentId, createdAt])
   @@map("community_comments")
 }
 
