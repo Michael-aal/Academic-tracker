@@ -592,3 +592,17 @@ model CommunityReport {
   @@index([targetType, targetId])
   @@map("community_reports")
 }
+
+
+model GroupInvitation {
+  id             String   @id @default(cuid())
+  groupId        String   @map("group_id")
+  invitedUserId  String   @map("invited_user_id")
+  invitedById    String   @map("invited_by_id")
+  status         String   @default("PENDING") @db.VarChar(16)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  @@unique([groupId, invitedUserId])
+  @@index([invitedUserId, status, createdAt])
+  @@map("group_invitations")
+}
