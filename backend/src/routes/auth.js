@@ -144,101 +144,165 @@ router.patch("/me", requireAuth, async (req, res, next) => {
     res.json({ user: publicUser(user) });
   } catch (error) { next(error); }
 });
-// One-time administrator bootstrap. This endpoint is available only until the
-// first administrator is created. The database transaction and serializable
-// isolation prevent two simultaneous setup requests from creating competing admins.
-const bootstrapLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  limit: 5,
-  standardHeaders: "draft-7",
-  legacyHeaders: false,
-  message: { error: "Too many administrator setup attempts. Try again later." }
-});
 
-router.get("/admin/bootstrap-status", async (req, res, next) => {
+const crypto = require("node:crypto");
+const bootstrapSendLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, limit: 5, standardHeaders: "draft-7", legacyHeaders: false,
+  message: { error: "Too many PIN requests. Try again later." }
+});
+const bootstrapVerifyLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, limit: 10, standardHeaders: "draft-7", legacyHeaders: false,
+  message: { error: "Too many PIN verification attempts. Try again later." }
+});
+const adminEmailConfigured = () => {
+  const email = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+  return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) ? email : "";
+};
+const adminSetupConfigured = () => Boolean(adminEmailConfigured() && process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
+
+router.get("/admin/bootstrap-status", async (_req, res, next) => {
   res.set("Cache-Control", "no-store");
   try {
-    const configuredEmail = (process.env.ADMIN_EMAIL || "").trim();
-    const configuredPassword = process.env.ADMIN_PASSWORD || "";
-    const expectedSecret = process.env.ADMIN_BOOTSTRAP_SECRET || "";
-    const configured = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(configuredEmail) &&
-      configuredPassword.length >= 10 && Buffer.byteLength(configuredPassword, "utf8") <= 72 &&
-      expectedSecret.length >= 32;
-    if (!configured) return res.json({ available: false });
-
+    if (!adminSetupConfigured()) return res.json({ available: false });
     const existingAdmin = await prisma.user.findFirst({
-      where: { role: { in: ["ADMIN", "DEVELOPER", "DEV"] } },
-      select: { id: true }
+      where: { role: { in: ["ADMIN", "DEVELOPER", "DEV"] } }, select: { id: true }
     });
     return res.json({ available: !existingAdmin });
-  } catch (error) {
-    next(error);
-  }
+  } catch (error) { next(error); }
 });
 
-router.post("/admin/bootstrap", bootstrapLimiter, async (req, res, next) => {
+router.post("/admin/send-pin", bootstrapSendLimiter, async (req, res, next) => {
+  res.set("Cache-Control", "no-store");
   try {
-    const configuredEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
-    const configuredPassword = process.env.ADMIN_PASSWORD || "";
-    const expectedSecret = process.env.ADMIN_BOOTSTRAP_SECRET || "";
+    const configuredEmail = adminEmailConfigured();
     const suppliedEmail = cleanString(req.body?.email, 254).toLowerCase();
-    const suppliedPassword = req.body?.password;
-    const suppliedSecret = req.get("x-admin-bootstrap-secret") || "";
+    if (!adminSetupConfigured()) return res.status(503).json({ error: "Administrator email delivery is not configured on the API server." });
+    if (!suppliedEmail || suppliedEmail !== configuredEmail) return res.status(403).json({ error: "PIN delivery is available only for the configured administrator email." });
+    const existingAdmin = await prisma.user.findFirst({
+      where: { role: { in: ["ADMIN", "DEVELOPER", "DEV"] } }, select: { id: true }
+    });
+    if (existingAdmin) return res.status(409).json({ error: "Administrator setup has already been completed. Sign in instead." });
 
-    if (!configuredEmail || configuredPassword.length < 10 || expectedSecret.length < 32) {
-      return res.status(503).json({ error: "Administrator bootstrap is not fully configured on the server." });
+    const now = new Date();
+    const existingOtp = await prisma.adminBootstrapOtp.findUnique({ where: { email: configuredEmail } });
+    if (existingOtp && now.getTime() - existingOtp.lastSentAt.getTime() < 60_000) {
+      return res.status(429).json({ error: "Please wait 60 seconds before requesting another PIN." });
     }
-    if (!suppliedEmail || typeof suppliedPassword !== "string" || !suppliedPassword) {
-      return res.status(400).json({ error: "Enter the configured administrator email and password." });
-    }
+    const sameWindow = existingOtp && now.getTime() - existingOtp.sendWindowStartedAt.getTime() < 60 * 60 * 1000;
+    if (sameWindow && existingOtp.sendsInWindow >= 5) return res.status(429).json({ error: "The hourly PIN request limit has been reached. Try again later." });
 
-    const crypto = require("node:crypto");
-    const safeEqual = (left, right) => {
-      const a = Buffer.from(left, "utf8");
-      const b = Buffer.from(right, "utf8");
-      return a.length === b.length && crypto.timingSafeEqual(a, b);
-    };
-    if (!safeEqual(suppliedSecret, expectedSecret)) {
-      return res.status(403).json({ error: "Administrator setup authorization failed." });
-    }
-    if (suppliedEmail !== configuredEmail || !safeEqual(suppliedPassword, configuredPassword)) {
-      return res.status(401).json({ error: "Administrator setup credentials are incorrect." });
-    }
+    const pin = String(crypto.randomInt(100000, 1000000));
+    const pinHash = await bcrypt.hash(pin, 10);
+    await prisma.adminBootstrapOtp.upsert({
+      where: { email: configuredEmail },
+      create: {
+        email: configuredEmail, pinHash,
+        expiresAt: new Date(now.getTime() + 5 * 60 * 1000),
+        attempts: 0, lastSentAt: now, sendWindowStartedAt: now, sendsInWindow: 1
+      },
+      update: {
+        pinHash, expiresAt: new Date(now.getTime() + 5 * 60 * 1000),
+        attempts: 0, lastSentAt: now,
+        sendWindowStartedAt: sameWindow ? existingOtp.sendWindowStartedAt : now,
+        sendsInWindow: sameWindow ? { increment: 1 } : 1
+      }
+    });
 
-    const passwordHash = await bcrypt.hash(configuredPassword, 12);
-    const user = await prisma.$transaction(async (tx) => {
+    let mailResponse;
+    try {
+      mailResponse = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + process.env.RESEND_API_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: process.env.EMAIL_FROM,
+          to: [configuredEmail],
+          subject: "Your Academic Tracker administrator PIN",
+          text: "Your Academic Tracker administrator setup PIN is " + pin + ". It expires in 5 minutes and can be used only once. If you did not request this PIN, ignore this email.",
+          html: "<div style=\"font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#201a30\"><h2>Administrator setup</h2><p>Use this one-time PIN to finish setting up Academic Tracker:</p><div style=\"font-size:32px;font-weight:700;letter-spacing:9px;padding:18px;background:#f3efff;border-radius:12px;text-align:center\">" + pin + "</div><p>This PIN expires in <strong>5 minutes</strong> and can be used only once.</p><p>If you did not request it, ignore this email.</p></div>"
+        })
+      });
+    } catch (_error) {
+      await prisma.adminBootstrapOtp.deleteMany({ where: { email: configuredEmail, pinHash } });
+      return res.status(502).json({ error: "We could not send the PIN email. Please try again later." });
+    }
+    if (!mailResponse.ok) {
+      await prisma.adminBootstrapOtp.deleteMany({ where: { email: configuredEmail, pinHash } });
+      return res.status(502).json({ error: "The email provider could not deliver the PIN. Check the server email configuration." });
+    }
+    return res.json({ ok: true, message: "A one-time PIN has been sent to the configured administrator email. It expires in 5 minutes." });
+  } catch (error) { next(error); }
+});
+
+router.post("/admin/bootstrap", bootstrapVerifyLimiter, async (req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  try {
+    const configuredEmail = adminEmailConfigured();
+    const email = cleanString(req.body?.email, 254).toLowerCase();
+    const name = cleanString(req.body?.name, 80);
+    const password = req.body?.password;
+    const pin = typeof req.body?.pin === "string" ? req.body.pin.trim() : "";
+    if (!adminSetupConfigured()) return res.status(503).json({ error: "Administrator email delivery is not configured on the API server." });
+    if (email !== configuredEmail) return res.status(403).json({ error: "Administrator setup is available only for the configured email address." });
+    if (name.length < 2) return res.status(400).json({ error: "Enter your name." });
+    if (typeof password !== "string" || password.length < 10 || Buffer.byteLength(password, "utf8") > 72) {
+      return res.status(400).json({ error: "Password must be at least 10 characters and no more than 72 UTF-8 bytes." });
+    }
+    if (!/^\\d{6}$/.test(pin)) return res.status(400).json({ error: "Enter the 6-digit PIN sent to your email." });
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    const result = await prisma.$transaction(async tx => {
+      await tx.$queryRawUnsafe('SELECT "email" FROM "admin_bootstrap_otps" WHERE "email" = $1 FOR UPDATE', configuredEmail);
+      const otp = await tx.adminBootstrapOtp.findUnique({ where: { email: configuredEmail } });
+      if (!otp) return { status: "missing" };
+      if (otp.expiresAt.getTime() <= Date.now()) {
+        await tx.adminBootstrapOtp.delete({ where: { email: configuredEmail } });
+        return { status: "expired" };
+      }
+      if (otp.attempts >= 5) {
+        await tx.adminBootstrapOtp.delete({ where: { email: configuredEmail } });
+        return { status: "locked" };
+      }
+      const matches = await bcrypt.compare(pin, otp.pinHash);
+      if (!matches) {
+        const attempts = otp.attempts + 1;
+        if (attempts >= 5) await tx.adminBootstrapOtp.delete({ where: { email: configuredEmail } });
+        else await tx.adminBootstrapOtp.update({ where: { email: configuredEmail }, data: { attempts } });
+        return { status: attempts >= 5 ? "locked" : "invalid", attemptsRemaining: Math.max(0, 5 - attempts) };
+      }
       const existingAdmin = await tx.user.findFirst({
-        where: { role: { in: ["ADMIN", "DEVELOPER", "DEV"] } },
-        select: { id: true }
+        where: { role: { in: ["ADMIN", "DEVELOPER", "DEV"] } }, select: { id: true }
       });
       if (existingAdmin) {
-        const error = new Error("Administrator setup has already been completed. Sign in with the existing administrator account.");
-        error.status = 409;
-        throw error;
+        await tx.adminBootstrapOtp.delete({ where: { email: configuredEmail } });
+        return { status: "already-completed" };
       }
-
       const existingAccount = await tx.user.findUnique({ where: { email: configuredEmail } });
-      if (existingAccount) {
-        return tx.user.update({
-          where: { id: existingAccount.id },
-          data: { passwordHash, role: "ADMIN" },
-          select: { id: true, name: true, email: true, role: true }
-        });
-      }
-      return tx.user.create({
-        data: { name: "Administrator", email: configuredEmail, passwordHash, role: "ADMIN" },
-        select: { id: true, name: true, email: true, role: true }
-      });
+      const user = existingAccount
+        ? await tx.user.update({
+            where: { id: existingAccount.id },
+            data: { name, passwordHash, role: "ADMIN", sessionVersion: { increment: 1 } }
+          })
+        : await tx.user.create({ data: { name, email: configuredEmail, passwordHash, role: "ADMIN" } });
+      await tx.adminBootstrapOtp.delete({ where: { email: configuredEmail } });
+      return { status: "created", user };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
-    res.set("Cache-Control", "no-store");
-    return res.status(201).json({ ok: true, created: true, user: { ...user, isAdmin: true } });
+    if (result.status === "missing") return res.status(400).json({ error: "Request a PIN before completing administrator setup." });
+    if (result.status === "expired") return res.status(400).json({ error: "That PIN has expired. Request a new one." });
+    if (result.status === "locked") return res.status(429).json({ error: "Too many incorrect PIN attempts. Request a new PIN." });
+    if (result.status === "invalid") return res.status(401).json({ error: "That PIN is incorrect. " + result.attemptsRemaining + " attempts remaining." });
+    if (result.status === "already-completed") return res.status(409).json({ error: "Administrator setup has already been completed. Sign in instead." });
+    return res.status(201).json({
+      ok: true, created: true,
+      token: issueToken(result.user.id, result.user.sessionVersion),
+      user: publicUser(result.user)
+    });
   } catch (error) {
-    if (error.status === 409) return res.status(409).json({ error: error.message });
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034") {
-      return res.status(409).json({ error: "Administrator setup is being completed by another request. Please sign in and try again." });
+      return res.status(409).json({ error: "Administrator setup is being completed by another request. Please try again." });
     }
     next(error);
   }
 });
+
 module.exports = router;
