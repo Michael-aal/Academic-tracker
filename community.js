@@ -144,11 +144,18 @@
     catch(err){status(err.message);}
   });
 
+  function renderVideoCards(items, fallbackSubject="") {
+    $("video-results").innerHTML=(items||[]).map(v=>'<article class="video-card"><a href="https://www.youtube.com/watch?v='+encodeURIComponent(v.id)+'" target="_blank" rel="noopener noreferrer"><img src="'+esc(v.thumbnail)+'" alt=""></a><strong>'+esc(v.title)+'</strong><p>'+esc(v.channelTitle)+' · '+esc(v.recommendedSubject||fallbackSubject)+'</p><button class="quiet-button" data-video-action="SAVE" data-video-id="'+esc(v.id)+'" data-subject="'+esc(v.recommendedSubject||fallbackSubject)+'">Save</button><button class="quiet-button" data-video-action="NOT_INTERESTED" data-video-id="'+esc(v.id)+'" data-subject="'+esc(v.recommendedSubject||fallbackSubject)+'">Not interested</button></article>').join("")||'<div class="empty-state">No videos found. Try another subject.</div>';
+  }
   async function loadVideoPreferences(){
     if(!requireLogin())return;
     try{
       const {subjects=[]}=await api("/community/videos/preferences");
       $("video-preferences").innerHTML=subjects.length?subjects.map(x=>'<span>'+esc(x.subject)+'</span>').join(""):'<span>Set your Best Subject to personalize recommendations</span>';
+      try {
+        const recommendations=await api("/community/videos/recommendations");
+        renderVideoCards(recommendations.items||"");
+      } catch (e) { $("video-results").innerHTML='<div class="empty-state">'+esc(e.message)+'</div>'; }
     }catch(e){status(e.message);}
   }
   $("video-search").addEventListener("submit",async e=>{
@@ -156,12 +163,12 @@
     const q=$("video-query").value.trim();if(q.length<2)return status("Enter a topic to search.");
     try{
       const result=await api("/videos/search?q="+encodeURIComponent(q));
-      $("video-results").innerHTML=(result.items||[]).map(v=>'<article class="video-card"><a href="https://www.youtube.com/watch?v='+encodeURIComponent(v.id)+'" target="_blank" rel="noopener noreferrer"><img src="'+esc(v.thumbnail)+'" alt=""></a><strong>'+esc(v.title)+'</strong><p>'+esc(v.channelTitle)+'</p><button class="quiet-button" data-video-save="'+esc(v.id)+'" data-subject="'+esc(q)+'">Save interest</button></article>').join("")||'<div class="empty-state">No videos found.</div>';
+      renderVideoCards(result.items||[], q);
     }catch(err){status(err.message);}
   });
   $("video-results").addEventListener("click",async e=>{
-    const b=e.target.closest("[data-video-save]");if(!b)return;
-    try{await api("/community/videos/engagement",{method:"POST",body:JSON.stringify({videoId:b.dataset.videoSave,action:"SAVE",subject:b.dataset.subject})});b.textContent="Saved";b.disabled=true;}
+    const b=e.target.closest("[data-video-action]");if(!b)return;
+    try{await api("/community/videos/engagement",{method:"POST",body:JSON.stringify({videoId:b.dataset.videoId,action:b.dataset.videoAction,subject:b.dataset.subject})});b.textContent=b.dataset.videoAction==="SAVE"?"Saved":"Hidden";b.disabled=true;}
     catch(err){status(err.message);}
   });
 
