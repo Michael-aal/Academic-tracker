@@ -101,3 +101,25 @@ The `/api/ai` endpoint accepts `tutor`, `quiz`, `summarize`, `study-plan`, and `
 ## Proxy and rate-limit configuration
 
 In production, Express trusts exactly one reverse-proxy hop because the API is deployed behind Render's ingress. This allows IP-based rate limits to use the originating client address rather than grouping every visitor under the proxy address. Forwarded headers are not trusted in local development. The coarse IP limiter uses the built-in in-memory store and is intended as a single-instance safeguard; use a shared rate-limit store before horizontally scaling general API traffic. AI spend limits are PostgreSQL-backed and shared across instances.
+
+
+## Social Media, chat and referrals
+
+The Social Media feature is mounted internally at `/api/community` for backwards-compatible API routing. It stores social profiles separately from academic records and supports posts, likes/reactions, comments, student discovery, connection requests, study groups, video-interest signals, referral attribution, direct/group chat records, and one-to-one WebRTC call signalling. Stories are intentionally not part of this product.
+
+The static frontend entry point is `/social-media.html` (legacy `/community.html` remains available). Public feed/profile discovery is read-only; posting, connecting, joining groups, messaging and referrals require authentication. Private direct chats and calls require accepted connections in the same education track. Cross-level study groups can be created explicitly and remain subject to moderation. Referral attribution is recorded as PENDING; account registration alone does not grant rewards.
+
+### Optional media and call configuration
+
+Set the following server-side Render variables to enable voice-note uploads and improve calling reliability:
+
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — signed voice-note uploads. The API returns short-lived upload signatures only to conversation members.
+- `TURN_URL`, `TURN_SHARED_SECRET` — TURN service URL and REST shared secret. The API derives one-hour per-user credentials; the permanent secret is never sent to browsers. STUN-only calling may fail on some mobile networks and restrictive NATs.
+- `PUBLIC_APP_URL` — canonical public frontend origin used in referral links. If omitted, the API uses the browser request origin.
+
+Cloudinary is not configured by this code change. Do not enable production voice notes until the media account, upload limits, retention policy and abuse handling are configured. WebRTC call signalling is persisted through authenticated API polling; a TURN service is strongly recommended before describing calling as reliable on all networks. One-to-one calls are implemented; group voice/video calls are not included yet. Social notification delivery, message reactions/edit/delete, full read receipts/typing presence, AI chat assistance, and a dedicated ML model are also follow-up work. The current video recommender is a deterministic hybrid ranking service using Best Subject, interests, saves and negative feedback; it is not a trained machine-learning model.
+
+Run `npx prisma migrate deploy` on the backend after reviewing the new migration. Validate the Prisma schema and run backend tests before deployment. No production migration or external media/calling credentials are applied by a Git branch.
+
+
+The administrator review interface is available at `/community-admin.html` for authorized ADMIN/DEVELOPER accounts. It supports report resolution, cross-level group approval and manual referral-point approval. Group invitations are handled from the Community Groups tab.

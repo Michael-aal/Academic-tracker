@@ -92,7 +92,7 @@
     if (mode === 'register' && pass.length < 10) return showMessage(errorBox, 'Use at least 10 characters for your password.');
     if (higher && (!institutionName.value.trim() || !programme.value.trim() || !studyLevel.value)) return showMessage(errorBox, 'Enter your institution, programme, and current level.');
     if (adminSetup && (!adminPinSent || !/^\d{6}$/.test(adminPin?.value.trim() || ''))) return showMessage(errorBox, 'Request a PIN and enter the 6-digit code sent to your administrator email.');
-    const body = mode === 'register' ? { name, email, password: pass, educationTrack: selectedTrack(), institutionName: institutionName?.value.trim(), programme: programme?.value.trim(), studyLevel: studyLevel?.value } : { email, password: pass };
+    const body = mode === 'register' ? { name, email, password: pass, educationTrack: selectedTrack(), institutionName: institutionName?.value.trim(), programme: programme?.value.trim(), studyLevel: studyLevel?.value, referralCode: (() => { try { return sessionStorage.getItem("academic-tracker-referral") || new URLSearchParams(location.search).get("ref") || ""; } catch (_) { return ""; } })() } : { email, password: pass };
     submit.disabled = true; submit.textContent = adminSetup ? 'Verifying PIN and creating administrator…' : mode === 'register' ? 'Creating your account…' : 'Signing you in…';
     try {
       let response;
@@ -115,6 +115,7 @@
       if (!data.token || !data.user) throw new Error('The server response was incomplete. Please try again.');
       localStorage.setItem('academic-tracker-token', data.token);
       localStorage.setItem('academic-tracker-user', JSON.stringify(data.user));
+      try { sessionStorage.removeItem('academic-tracker-referral'); } catch (_) {}
       password.value = '';
       if (confirm) confirm.value = '';
       if (adminPin) adminPin.value = '';
