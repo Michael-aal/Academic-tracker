@@ -98,17 +98,19 @@ router.use(async (req, res, next) => {
 router.get("/feed", async (req, res, next) => {
   try {
     const limit = Math.min(30, Math.max(1, Number.parseInt(req.query.limit, 10) || 20));
-    const [outgoingFriends, incomingFriends] = await Promise.all([
+    const [outgoingFriends, incomingFriends, blockRows] = await Promise.all([
       prisma.communityFollow.findMany({ where: { followerId: req.userId, status: "ACCEPTED" }, select: { followingId: true } }),
-      prisma.communityFollow.findMany({ where: { followingId: req.userId, status: "ACCEPTED" }, select: { followerId: true } })
+      prisma.communityFollow.findMany({ where: { followingId: req.userId, status: "ACCEPTED" }, select: { followerId: true } }),
+      prisma.communityBlock.findMany({ where: { OR: [{ blockerId: req.userId }, { blockedId: req.userId }] }, select: { blockerId: true, blockedId: true } })
     ]);
     const incomingIds = new Set(incomingFriends.map(x => x.followerId));
     const friendIds = outgoingFriends.map(x => x.followingId).filter(id => incomingIds.has(id));
+    const blockedIds = [...new Set(blockRows.map(row => row.blockerId === req.userId ? row.blockedId : row.blockerId))];
     const where = { AND: [{ OR: [
       { visibility: "PUBLIC" },
       { authorId: req.userId },
       ...(friendIds.length ? [{ visibility: "FOLLOWERS", authorId: { in: friendIds } }] : [])
-    ] }] };
+    ] }, { authorId: { notIn: blockedIds } }] };
     if (req.query.subject) where.AND.push({ subject: clean(req.query.subject, 100) });
     if (req.query.track === "SECONDARY" || req.query.track === "HIGHER") {
       const users = await prisma.user.findMany({ where: { educationTrack: req.query.track }, select: { id: true } });
@@ -166,7 +168,7 @@ router.get("/feed", async (req, res, next) => {
 router.get("/profiles/:username", async (req, res, next) => {
   try {
     const profile = await prisma.communityProfile.findUnique({ where: { username: slug(req.params.username) } });
-    if (!profile || profile.visibility === "PRIVATE") return res.status(404).json({ error: "Student profile not found." });
+    if (!profile || profile.visibility === "PRIVATE" || await isBlocked(profile.userId, req.userId)) return res.status(404).json({ error: "Student profile not found." });
     const user = await getUser(profile.userId);
     if (!user) return res.status(404).json({ error: "Student profile not found." });
     const posts = await prisma.communityPost.findMany({ where: { authorId: user.id, visibility: "PUBLIC" }, orderBy: { createdAt: "desc" }, take: 20 });
