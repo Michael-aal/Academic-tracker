@@ -127,14 +127,15 @@ router.get("/feed", async (req, res, next) => {
     });
     const ids = [...new Set(posts.map(p => p.authorId))];
     const postIds = posts.map(p => p.id);
-    const [users, profiles, reactions, comments, shares, savedRows, sharedOriginals] = await Promise.all([
+    const [users, profiles, reactions, comments, shares, savedRows, sharedOriginals, myReactions] = await Promise.all([
       prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } }),
       prisma.communityProfile.findMany({ where: { userId: { in: ids } } }),
       prisma.communityReaction.groupBy({ by: ["postId"], where: { postId: { in: postIds } }, _count: { _all: true } }),
       prisma.communityComment.groupBy({ by: ["postId"], where: { postId: { in: postIds } }, _count: { _all: true } }),
       prisma.communityPost.groupBy({ by: ["sharedPostId"], where: { sharedPostId: { in: postIds } }, _count: { _all: true } }),
       prisma.communitySavedPost.findMany({ where: { userId: req.userId, postId: { in: postIds } }, select: { postId: true } }),
-      prisma.communityPost.findMany({ where: { id: { in: posts.map(p => p.sharedPostId).filter(Boolean) } } })
+      prisma.communityPost.findMany({ where: { id: { in: posts.map(p => p.sharedPostId).filter(Boolean) } } }),
+      prisma.communityReaction.findMany({ where: { postId: { in: postIds }, userId: req.userId }, select: { postId: true } })
     ]);
     const readableSharedOriginals = [];
     for (const original of sharedOriginals) if (await canReadPost(original, req.userId)) readableSharedOriginals.push(original);
@@ -149,6 +150,7 @@ router.get("/feed", async (req, res, next) => {
     const commentMap = new Map(comments.map(x => [x.postId, x._count._all]));
     const shareMap = new Map(shares.map(x => [x.sharedPostId, x._count._all]));
     const savedSet = new Set(savedRows.map(x => x.postId));
+    const likedSet = new Set(myReactions.map(x => x.postId));
     const sharedUserMap = new Map(sharedUsers.map(u => [u.id, u]));
     const sharedProfileMap = new Map(sharedProfiles.map(p => [p.userId, p]));
     const sharedMap = new Map(readableSharedOriginals.map(p => [p.id, {
@@ -158,7 +160,7 @@ router.get("/feed", async (req, res, next) => {
     res.json({ posts: posts.map(p => ({
       ...p, author: userMap.get(p.authorId) ? publicProfile(profileMap.get(p.authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, userMap.get(p.authorId)) : null,
       sharedPost: p.sharedPostId ? sharedMap.get(p.sharedPostId) || null : null,
-      isSaved: savedSet.has(p.id), shareCount: shareMap.get(p.id) || 0,
+      isSaved: savedSet.has(p.id), isLiked: likedSet.has(p.id), shareCount: shareMap.get(p.id) || 0,
       isFriendPost: p.authorId === req.userId || friendIds.includes(p.authorId),
       reactionCount: reactionMap.get(p.id) || 0, commentCount: commentMap.get(p.id) || 0
     }))});

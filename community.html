@@ -19,14 +19,14 @@
 <body class="social-media-page">
 <main class="community-shell">
   <section class="community-heading">
-    <div><p class="community-eyebrow">YOUR SOCIAL SPACE</p><h1>Social Media</h1><p>Connect with students, share posts and join conversations.</p></div>
+    <div><p class="community-eyebrow">YOUR SOCIAL SPACE</p><h1>Social Media</h1><p>Share what you are learning, discover useful lessons and connect with students.</p></div>
     <div class="community-heading-actions"><a class="community-profile-link" href="notifications.html">Notifications</a><a class="community-profile-link" href="#profile" data-tab-link="profile">Your profile</a><a class="primary-button social-create-link" href="social-create.html">＋ Create post</a><a class="community-profile-link" id="community-admin-link" href="community-admin.html" hidden>Moderation tools</a></div>
   </section>
   <nav class="community-tabs" aria-label="Social Media sections">
     <button class="active" data-tab="feed">Feed</button>
     <button data-tab="people">Friends</button>
     <button data-tab="groups">Groups</button>
-    <button data-tab="videos">Watch</button>
+    <button data-tab="videos">Watch &amp; Reels</button>
     <button data-tab="messages">Messages</button>
     <button data-tab="referrals">Referrals</button>
     <button data-tab="profile">Profile</button>
@@ -39,10 +39,9 @@
         <section class="post-review-overlay" id="post-review" hidden role="dialog" aria-modal="true"><div class="post-review-card"><div class="post-review-heading"><h2>Preview your post</h2><button type="button" id="close-post-review" class="quiet-button">✕</button></div><div id="post-review-author" class="post-review-author"></div><p id="post-review-body" class="post-review-body"></p><div id="post-review-media" class="post-review-media"></div><div class="post-review-details"><span id="post-review-subject"></span><span id="post-review-visibility"></span></div><p class="post-review-note">Publishing saves this post online for authenticated students.</p><div class="post-review-actions"><button type="button" class="outline-button" id="cancel-post-review">Keep editing</button><button type="button" class="primary-button" id="confirm-publish-post">Publish post</button></div></div></section>
         <section class="social-sample-video panel" aria-labelledby="sample-video-title">
           <div class="social-discover-heading"><div><p class="community-eyebrow">SAMPLE LEARNING CLIP</p><h2 id="sample-video-title">A helicopter flying on Mars</h2><p>NASA footage · Science and engineering · Clearly labelled sample content</p></div><a class="quiet-button" href="https://images.nasa.gov/details/PIA24521" target="_blank" rel="noopener noreferrer">Source ↗</a></div>
-          <video controls playsinline preload="metadata" poster="https://images-assets.nasa.gov/video/PIA24521/PIA24521~thumb.jpg">
-            <source src="https://images-assets.nasa.gov/video/PIA24521/PIA24521~orig.mp4" type="video/mp4">
-            Your browser does not support embedded video. <a href="https://images.nasa.gov/details/PIA24521">Watch at NASA</a>.
-          </video>
+          <div class="sample-video-frame">
+            <iframe title="NASA Ingenuity helicopter's first flight on Mars" src="https://www.youtube-nocookie.com/embed/GNgrXCmhSak?rel=0" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          </div>
           <span class="sample-content-label">SAMPLE · Not a student upload</span>
         </section>
         <div class="feed-toolbar"><h2 id="feed-heading">Recent posts</h2><div class="feed-toolbar-actions"><button class="quiet-button" id="show-saved-posts" type="button">Saved posts</button><button class="quiet-button" id="refresh-feed" type="button">Refresh</button></div></div>
