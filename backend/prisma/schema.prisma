@@ -374,12 +374,23 @@ model CommunityPost {
   videoUrl    String?  @map("video_url") @db.VarChar(1000)
   subject     String?  @db.VarChar(100)
   visibility  String   @default("PUBLIC") @db.VarChar(16)
+  sharedPostId String? @map("shared_post_id")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   @@index([createdAt])
   @@index([authorId, createdAt])
   @@index([subject, createdAt])
   @@map("community_posts")
+}
+
+model CommunitySavedPost {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  postId    String   @map("post_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@unique([userId, postId])
+  @@index([userId, createdAt])
+  @@map("community_saved_posts")
 }
 
 model CommunityReaction {
