@@ -103,11 +103,11 @@ The `/api/ai` endpoint accepts `tutor`, `quiz`, `summarize`, `study-plan`, and `
 In production, Express trusts exactly one reverse-proxy hop because the API is deployed behind Render's ingress. This allows IP-based rate limits to use the originating client address rather than grouping every visitor under the proxy address. Forwarded headers are not trusted in local development. The coarse IP limiter uses the built-in in-memory store and is intended as a single-instance safeguard; use a shared rate-limit store before horizontally scaling general API traffic. AI spend limits are PostgreSQL-backed and shared across instances.
 
 
-## Student community, chat and referrals
+## Social Media, chat and referrals
 
-The community feature is mounted at `/api/community`. It stores social profiles separately from academic records and supports public posts, reactions, comments, student discovery, connection requests, study groups, expiring stories, video-interest signals, referral attribution, direct/group chat records, and one-to-one WebRTC call signalling.
+The Social Media feature is mounted internally at `/api/community` for backwards-compatible API routing. It stores social profiles separately from academic records and supports posts, likes/reactions, comments, student discovery, connection requests, study groups, video-interest signals, referral attribution, direct/group chat records, and one-to-one WebRTC call signalling. Stories are intentionally not part of this product.
 
-The static frontend entry point is `/community.html`. Public feed/profile discovery is read-only; posting, connecting, joining groups, messaging and referrals require authentication. Private direct chats and calls require accepted connections in the same education track. Cross-level study groups can be created explicitly and remain subject to moderation. Referral attribution is recorded as PENDING; account registration alone does not grant rewards.
+The static frontend entry point is `/social-media.html` (legacy `/community.html` remains available). Public feed/profile discovery is read-only; posting, connecting, joining groups, messaging and referrals require authentication. Private direct chats and calls require accepted connections in the same education track. Cross-level study groups can be created explicitly and remain subject to moderation. Referral attribution is recorded as PENDING; account registration alone does not grant rewards.
 
 ### Optional media and call configuration
 
