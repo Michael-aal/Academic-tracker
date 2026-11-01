@@ -51,6 +51,17 @@ async function acceptedFriend(userA, userB) {
   ]);
   return ab?.status === "ACCEPTED" && ba?.status === "ACCEPTED";
 }
+async function notifySocial(userId, actorId, title, body, metadata) {
+  if (!userId || userId === actorId) return;
+  try {
+    await prisma.notification.create({ data: {
+      userId, createdById: actorId, title: clean(title, 120), body: clean(body, 4000),
+      category: "SOCIAL", metadata: metadata || {}
+    }});
+  } catch (_) {
+    // A notification failure must not roll back the social action itself.
+  }
+}
 async function isMember(conversationId, userId) {
   return Boolean(await prisma.chatMember.findUnique({ where: { conversationId_userId: { conversationId, userId } } }));
 }
@@ -250,6 +261,7 @@ router.post("/posts/:id/reaction", async (req, res, next) => {
       update: { reaction }
     });
     const count = await prisma.communityReaction.count({ where: { postId: post.id } });
+    if (existing?.reaction !== reaction) await notifySocial(post.authorId, req.userId, "Someone reacted to your post", "A student reacted to one of your posts.", { type: "POST_REACTION", postId: post.id });
     res.json({ ok: true, reaction: existing?.reaction === reaction ? null : reaction, count });
   } catch (e) { next(e); }
 });
@@ -277,6 +289,7 @@ router.post("/posts/:id/comments", async (req, res, next) => {
       if (!parent) return res.status(400).json({ error: "Reply to a valid top-level comment." });
     }
     const comment = await prisma.communityComment.create({ data: { postId: post.id, userId: req.userId, parentId, body } });
+    await notifySocial(post.authorId, req.userId, parentId ? "New reply on your post" : "New comment on your post", "A student commented on your post.", { type: "POST_COMMENT", postId: post.id, commentId: comment.id });
     res.status(201).json({ comment });
   } catch (e) { next(e); }
 });
@@ -353,6 +366,7 @@ router.post("/friend-requests/:id", async (req, res, next) => {
         update: { status: "ACCEPTED" }
       })
     ]);
+    await notifySocial(request.followerId, req.userId, "Friend request accepted", "Your friend request was accepted.", { type: "FRIEND_ACCEPTED", userId: req.userId });
     res.json({ ok: true, status: "ACCEPTED" });
   } catch (e) { next(e); }
 });
@@ -376,6 +390,8 @@ router.post("/follow/:userId", async (req, res, next) => {
     if (status === "ACCEPTED") await prisma.communityFollow.update({
       where: { followerId_followingId: { followerId: target.id, followingId: req.userId } }, data: { status: "ACCEPTED" }
     });
+    if (status === "PENDING") await notifySocial(target.id, req.userId, "New friend request", "A student sent you a friend request.", { type: "FRIEND_REQUEST", requesterId: req.userId });
+    else await notifySocial(target.id, req.userId, "Friend request accepted", "Your friend request was accepted.", { type: "FRIEND_ACCEPTED", userId: req.userId });
     res.json({ ok: true, status });
   } catch (e) { next(e); }
 });
