@@ -330,3 +330,17 @@ model Notification {
   @@index([createdById])
   @@map("notifications")
 }
+
+
+model AdminBootstrapOtp {
+  email               String   @id @db.VarChar(254)
+  pinHash             String   @map("pin_hash") @db.VarChar(100)
+  expiresAt           DateTime @map("expires_at")
+  attempts            Int      @default(0)
+  lastSentAt          DateTime @map("last_sent_at")
+  sendWindowStartedAt DateTime @map("send_window_started_at")
+  sendsInWindow       Int      @default(1) @map("sends_in_window")
+  createdAt           DateTime @default(now()) @map("created_at")
+  @@index([expiresAt])
+  @@map("admin_bootstrap_otps")
+}
