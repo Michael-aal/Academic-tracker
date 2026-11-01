@@ -752,13 +752,32 @@ async function canChat(userId, otherId) {
   if (!a || !b || a.educationTrack !== b.educationTrack) return false;
   return acceptedFriend(a, b);
 }
+async function canAccessConversation(conversationId, userId) {
+  const [conversation, member] = await Promise.all([
+    prisma.chatConversation.findUnique({ where: { id: conversationId } }),
+    prisma.chatMember.findUnique({ where: { conversationId_userId: { conversationId, userId } } })
+  ]);
+  if (!conversation || !member) return false;
+  if (conversation.kind === "DIRECT") {
+    const other = await prisma.chatMember.findFirst({ where: { conversationId, userId: { not: userId } }, select: { userId: true } });
+    return Boolean(other && await canChat(userId, other.userId));
+  }
+  if (conversation.kind === "GROUP" && conversation.groupId) {
+    const membership = await prisma.groupMembership.findUnique({ where: { groupId_userId: { groupId: conversation.groupId, userId } } });
+    return membership?.status === "ACTIVE";
+  }
+  return false;
+}
 router.get("/chat", async (req, res, next) => {
   try {
     const memberships = await prisma.chatMember.findMany({ where: { userId: req.userId }, orderBy: { joinedAt: "desc" }, take: 80 });
     const ids = memberships.map(m => m.conversationId);
-    const conversations = await prisma.chatConversation.findMany({ where: { id: { in: ids } }, orderBy: { updatedAt: "desc" } });
-    const messages = await prisma.chatMessage.findMany({ where: { conversationId: { in: ids }, deletedAt: null }, orderBy: { createdAt: "desc" }, take: 160 });
-    const allMembers = await prisma.chatMember.findMany({ where: { conversationId: { in: ids } } });
+    const allConversations = await prisma.chatConversation.findMany({ where: { id: { in: ids } }, orderBy: { updatedAt: "desc" } });
+    const conversations = [];
+    for (const conversation of allConversations) if (await canAccessConversation(conversation.id, req.userId)) conversations.push(conversation);
+    const visibleIds = conversations.map(conversation => conversation.id);
+    const messages = await prisma.chatMessage.findMany({ where: { conversationId: { in: visibleIds }, deletedAt: null }, orderBy: { createdAt: "desc" }, take: 160 });
+    const allMembers = await prisma.chatMember.findMany({ where: { conversationId: { in: visibleIds } } });
     const memberIds = [...new Set(allMembers.map(m => m.userId))];
     const memberUsers = await prisma.user.findMany({ where: { id: { in: memberIds } }, select: { id: true, name: true, educationTrack: true } });
     const memberMap = new Map(memberUsers.map(u => [u.id, u]));
@@ -789,14 +808,14 @@ router.post("/chat/group/:groupId", async (req, res, next) => {
 });
 router.get("/chat/:id/messages", async (req, res, next) => {
   try {
-    if (!await isMember(req.params.id, req.userId)) return res.status(404).json({ error: "Conversation not found." });
+    if (!await canAccessConversation(req.params.id, req.userId)) return res.status(404).json({ error: "Conversation not found or connection no longer available." });
     const messages = await prisma.chatMessage.findMany({ where: { conversationId: req.params.id, deletedAt: null }, orderBy: { createdAt: "asc" }, take: 100 });
     res.json({ messages });
   } catch (e) { next(e); }
 });
 router.post("/chat/:id/voice-upload-signature", async (req, res, next) => {
   try {
-    if (!await isMember(req.params.id, req.userId)) return res.status(404).json({ error: "Conversation not found." });
+    if (!await canAccessConversation(req.params.id, req.userId)) return res.status(404).json({ error: "Conversation not found or connection no longer available." });
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
     const apiKey = process.env.CLOUDINARY_API_KEY;
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
@@ -809,7 +828,7 @@ router.post("/chat/:id/voice-upload-signature", async (req, res, next) => {
 });
 router.post("/chat/:id/messages", async (req, res, next) => {
   try {
-    if (!await isMember(req.params.id, req.userId)) return res.status(404).json({ error: "Conversation not found." });
+    if (!await canAccessConversation(req.params.id, req.userId)) return res.status(404).json({ error: "Conversation not found or connection no longer available." });
     const messageType = req.body?.messageType === "VOICE_NOTE" ? "VOICE_NOTE" : "TEXT";
     const body = clean(req.body?.body, 5000);
     const mediaUrl = messageType === "VOICE_NOTE" ? safeUrl(req.body?.mediaUrl) : null;
@@ -822,8 +841,8 @@ router.post("/chat/:id/messages", async (req, res, next) => {
 });
 router.patch("/chat/:id/read", async (req, res, next) => {
   try {
+    if (!await canAccessConversation(req.params.id, req.userId)) return res.status(404).json({ error: "Conversation not found or connection no longer available." });
     const member = await prisma.chatMember.findUnique({ where: { conversationId_userId: { conversationId: req.params.id, userId: req.userId } } });
-    if (!member) return res.status(404).json({ error: "Conversation not found." });
     await prisma.chatMember.update({ where: { id: member.id }, data: { lastReadAt: new Date() } });
     res.json({ ok: true });
   } catch (e) { next(e); }
