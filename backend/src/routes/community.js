@@ -155,6 +155,20 @@ router.patch("/profile/me", async (req, res, next) => {
   }
 });
 
+router.post("/media-upload-signature", async (req, res, next) => {
+  try {
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    if (!cloudName || !apiKey || !apiSecret) return res.status(503).json({ error: "Community media storage is not configured. Ask the administrator to configure Cloudinary." });
+    const resourceType = req.body?.resourceType === "video" ? "video" : "image";
+    const timestamp = Math.floor(Date.now() / 1000);
+    const folder = "academic-tracker/community/" + req.userId;
+    const signature = crypto.createHash("sha1").update("folder=" + folder + "&timestamp=" + timestamp + apiSecret).digest("hex");
+    res.json({ cloudName, apiKey, timestamp, folder, signature, resourceType });
+  } catch (e) { next(e); }
+});
+
 router.post("/posts", async (req, res, next) => {
   try {
     const body = clean(req.body?.body, 5000);
