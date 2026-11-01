@@ -104,11 +104,21 @@
     const submitButton=e.target.querySelector('button[type="submit"],button:not([type])');
     if(submitButton){submitButton.disabled=true;submitButton.dataset.originalText=submitButton.textContent;submitButton.textContent="Saving profile…";}
     try {
+      const avatarFile=$("profile-avatar-file").files?.[0];
+      let avatarUrl=$("profile-avatar").value.trim();
+      if(avatarFile){
+        if(!avatarFile.type.startsWith("image/"))throw new Error("Choose an image file for your profile picture.");
+        if(avatarFile.size>8*1024*1024)throw new Error("Profile pictures must be 8 MB or smaller.");
+        const uploaded=await uploadCommunityMedia(avatarFile);
+        avatarUrl=uploaded.mediaUrl;
+      }
       const result=await api("/community/profile/me", { method:"PATCH", body:JSON.stringify({
         username:$("profile-username").value.trim(), bestSubject:$("profile-best-subject").value.trim(),
-        bio:$("profile-bio").value, avatarUrl:$("profile-avatar").value.trim(),
+        bio:$("profile-bio").value, avatarUrl,
         coverUrl:$("profile-cover").value.trim(), interests, visibility:$("profile-visibility").value
       })});
+      $("profile-avatar").value=avatarUrl;
+      $("profile-avatar-file").value="";
       status("Your social profile settings have been saved.");
       if(result.profile)$("profile-username").value=result.profile.username||"";
       await loadProfile();
@@ -180,8 +190,9 @@
     const roots=comments.filter(comment=>!comment.parentId);
     box.innerHTML=(roots.length?roots.map(root=>{
       const replies=comments.filter(comment=>comment.parentId===root.id);
-      return '<div class="comment-thread" data-comment="'+esc(root.id)+'"><p><strong>'+esc(root.authorName)+'</strong><span>'+esc(root.body)+'</span></p><button type="button" class="comment-reply-button" data-reply-to="'+esc(root.id)+'">Reply</button>'+
-        replies.map(reply=>'<div class="comment-reply"><p><strong>'+esc(reply.authorName)+'</strong><span>'+esc(reply.body)+'</span></p></div>').join("")+'</div>';
+      const avatarFor=comment=>comment.avatarUrl?'<img class="comment-avatar" src="'+esc(comment.avatarUrl)+'" alt="">':'<span class="comment-avatar comment-avatar-fallback">'+esc((comment.authorName||"S").slice(0,1).toUpperCase())+'</span>';
+      return '<div class="comment-thread" data-comment="'+esc(root.id)+'"><div class="comment-author">'+avatarFor(root)+'<p><strong>'+esc(root.authorName)+'</strong><span>'+esc(root.body)+'</span></p></div><button type="button" class="comment-reply-button" data-reply-to="'+esc(root.id)+'">Reply</button>'+
+        replies.map(reply=>'<div class="comment-reply"><div class="comment-author">'+avatarFor(reply)+'<p><strong>'+esc(reply.authorName)+'</strong><span>'+esc(reply.body)+'</span></p></div></div>').join("")+'</div>';
     }).join(""):'<p class="no-comments">No comments yet. Start a helpful conversation.</p>')+
       '<form class="comment-form" data-post="'+esc(postId)+'"><input name="body" maxlength="2000" placeholder="Add a thoughtful comment…" required><button type="submit" class="quiet-button">Comment</button></form>';
   }
