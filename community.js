@@ -63,6 +63,7 @@
   });
 
   async function loadFeed() {
+    loadStories();
     try {
       const { posts=[] } = await api("/community/feed?limit=25");
       if (!posts.length) { $("feed-list").innerHTML = '<div class="empty-state">No posts yet. Be the first to start a useful discussion.</div>'; return; }
@@ -91,6 +92,25 @@
     if(!response.ok||!result.secure_url)throw new Error("Media upload failed. Check Cloudinary configuration.");
     return isVideo?{videoUrl:result.secure_url}:{mediaUrl:result.secure_url};
   }
+  async function loadStories() {
+    try {
+      const {stories=[]}=await api("/community/stories");
+      $("story-list").innerHTML=stories.length?stories.map(story=>'<article class="story-card"><a href="'+esc(story.mediaUrl)+'" target="_blank" rel="noopener noreferrer">'+(story.mediaType==="VIDEO"?'▶ Video story':'▧ Photo story')+'</a><strong>'+esc(story.authorName)+'</strong><small>'+esc(story.caption||"")+'</small></article>').join(""):'<span class="muted-note">No stories yet. Share a learning moment.</span>';
+    } catch(e) { $("story-list").innerHTML='<span class="muted-note">'+esc(e.message)+'</span>'; }
+  }
+  $("story-form").addEventListener("submit",async e=>{
+    e.preventDefault();if(!requireLogin())return;
+    const file=$("story-media").files?.[0];if(!file)return status("Choose an image or video for your story.");
+    const button=e.target.querySelector("button");button.disabled=true;button.textContent="Uploading…";
+    try{
+      const uploaded=await uploadCommunityMedia(file);
+      const mediaUrl=uploaded.mediaUrl||uploaded.videoUrl;
+      await api("/community/stories",{method:"POST",body:JSON.stringify({mediaUrl,mediaType:uploaded.videoUrl?"VIDEO":"IMAGE",caption:$("story-caption").value})});
+      $("story-caption").value="";$("story-media").value="";status("Your story is live.");loadStories();
+    }catch(err){status(err.message);}
+    finally{button.disabled=false;button.textContent="Share story";}
+  });
+
   $("post-form").addEventListener("submit", async e => {
     e.preventDefault(); if (!requireLogin()) return;
     const body = $("post-body").value.trim(), file=$("post-media").files?.[0];
