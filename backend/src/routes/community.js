@@ -359,7 +359,11 @@ router.get("/chat", async (req, res, next) => {
     const ids = memberships.map(m => m.conversationId);
     const conversations = await prisma.chatConversation.findMany({ where: { id: { in: ids } }, orderBy: { updatedAt: "desc" } });
     const messages = await prisma.chatMessage.findMany({ where: { conversationId: { in: ids }, deletedAt: null }, orderBy: { createdAt: "desc" }, take: 160 });
-    res.json({ conversations: conversations.map(c => ({ ...c, lastMessage: messages.find(m => m.conversationId === c.id) || null })) });
+    const allMembers = await prisma.chatMember.findMany({ where: { conversationId: { in: ids } } });
+    const memberIds = [...new Set(allMembers.map(m => m.userId))];
+    const memberUsers = await prisma.user.findMany({ where: { id: { in: memberIds } }, select: { id: true, name: true, educationTrack: true } });
+    const memberMap = new Map(memberUsers.map(u => [u.id, u]));
+    res.json({ conversations: conversations.map(c => ({ ...c, members: allMembers.filter(m => m.conversationId === c.id).map(m => ({ ...m, user: memberMap.get(m.userId) || null })), lastMessage: messages.find(m => m.conversationId === c.id) || null })) });
   } catch (e) { next(e); }
 });
 router.post("/chat/direct/:userId", async (req, res, next) => {
@@ -391,12 +395,28 @@ router.get("/chat/:id/messages", async (req, res, next) => {
     res.json({ messages });
   } catch (e) { next(e); }
 });
+router.post("/chat/:id/voice-upload-signature", async (req, res, next) => {
+  try {
+    if (!await isMember(req.params.id, req.userId)) return res.status(404).json({ error: "Conversation not found." });
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    if (!cloudName || !apiKey || !apiSecret) return res.status(503).json({ error: "Voice-note storage is not configured. Ask the administrator to configure Cloudinary." });
+    const timestamp = Math.floor(Date.now() / 1000);
+    const folder = "academic-tracker/chat/" + req.params.id;
+    const signature = crypto.createHash("sha1").update("folder=" + folder + "&timestamp=" + timestamp + apiSecret).digest("hex");
+    res.json({ cloudName, apiKey, timestamp, folder, signature, resourceType: "auto" });
+  } catch (e) { next(e); }
+});
 router.post("/chat/:id/messages", async (req, res, next) => {
   try {
     if (!await isMember(req.params.id, req.userId)) return res.status(404).json({ error: "Conversation not found." });
+    const messageType = req.body?.messageType === "VOICE_NOTE" ? "VOICE_NOTE" : "TEXT";
     const body = clean(req.body?.body, 5000);
-    if (!body) return res.status(400).json({ error: "Message cannot be empty." });
-    const message = await prisma.chatMessage.create({ data: { conversationId: req.params.id, senderId: req.userId, body, messageType: "TEXT" } });
+    const mediaUrl = messageType === "VOICE_NOTE" ? safeUrl(req.body?.mediaUrl) : null;
+    if (messageType === "TEXT" && !body) return res.status(400).json({ error: "Message cannot be empty." });
+    if (messageType === "VOICE_NOTE" && (!mediaUrl || !new URL(mediaUrl).hostname.endsWith("cloudinary.com"))) return res.status(400).json({ error: "Voice notes must be uploaded to the configured Cloudinary media storage." });
+    const message = await prisma.chatMessage.create({ data: { conversationId: req.params.id, senderId: req.userId, body: messageType === "TEXT" ? body : null, mediaUrl, messageType } });
     await prisma.chatConversation.update({ where: { id: req.params.id }, data: { updatedAt: new Date() } });
     res.status(201).json({ message });
   } catch (e) { next(e); }
