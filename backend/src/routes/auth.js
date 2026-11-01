@@ -247,7 +247,7 @@ router.post("/admin/bootstrap", bootstrapVerifyLimiter, async (req, res, next) =
     if (typeof password !== "string" || password.length < 10 || Buffer.byteLength(password, "utf8") > 72) {
       return res.status(400).json({ error: "Password must be at least 10 characters and no more than 72 UTF-8 bytes." });
     }
-    if (!/^\\d{6}$/.test(pin)) return res.status(400).json({ error: "Enter the 6-digit PIN sent to your email." });
+    if (!/^\d{6}$/.test(pin)) return res.status(400).json({ error: "Enter the 6-digit PIN sent to your email." });
 
     const passwordHash = await bcrypt.hash(password, 12);
     const result = await prisma.$transaction(async tx => {
