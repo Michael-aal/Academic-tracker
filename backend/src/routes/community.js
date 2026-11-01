@@ -586,7 +586,7 @@ router.post("/calls", async (req, res, next) => {
   try {
     const calleeId = clean(req.body?.calleeId, 100);
     if (!await canChat(req.userId, calleeId)) return res.status(403).json({ error: "Calls are available only between accepted connections in the same academic environment." });
-    const active = await prisma.callSession.findFirst({ where: { OR: [{ callerId: req.userId, status: "RINGING" }, { calleeId: req.userId, status: "RINGING" }] } });
+    const active = await prisma.callSession.findFirst({ where: { status: { in: ["RINGING", "ACTIVE"] }, OR: [{ callerId: req.userId }, { calleeId: req.userId }] } });
     if (active) return res.status(409).json({ error: "You already have an incoming or outgoing call." });
     const callType = req.body?.callType === "VIDEO" ? "VIDEO" : "AUDIO";
     const call = await prisma.callSession.create({ data: { callerId: req.userId, calleeId, callType } });
@@ -595,7 +595,9 @@ router.post("/calls", async (req, res, next) => {
 });
 router.get("/calls/incoming", async (req, res, next) => {
   try {
-    const calls = await prisma.callSession.findMany({ where: { calleeId: req.userId, status: "RINGING" }, orderBy: { startedAt: "desc" }, take: 10 });
+    const expiredBefore = new Date(Date.now() - 90 * 1000);
+    await prisma.callSession.updateMany({ where: { calleeId: req.userId, status: "RINGING", startedAt: { lt: expiredBefore } }, data: { status: "MISSED", endedAt: new Date() } });
+    const calls = await prisma.callSession.findMany({ where: { calleeId: req.userId, status: "RINGING", startedAt: { gte: expiredBefore } }, orderBy: { startedAt: "desc" }, take: 10 });
     res.json({ calls });
   } catch (e) { next(e); }
 });
