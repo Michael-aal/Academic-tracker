@@ -71,23 +71,33 @@
       if (secret.length < 32) return message(errorBox, 'The setup secret must be at least 32 characters.');
       button.disabled = true; button.textContent = 'Verifying account…';
       try {
+        const bootstrapResponse = await fetch(API_BASE + '/api/auth/admin/bootstrap', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Bootstrap-Secret': secret
+          },
+          body: JSON.stringify({ email, password })
+        });
+        const bootstrapData = await bootstrapResponse.json().catch(() => ({}));
+        if (!bootstrapResponse.ok || !bootstrapData.ok || !bootstrapData.user) {
+          throw new Error(bootstrapData.error || 'Administrator setup could not be completed.');
+        }
+
+        // Bootstrap returns a server-issued administrator profile, then obtain
+        // a normal session through the standard login endpoint.
         const loginResponse = await fetch(API_BASE + '/api/auth/login', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password })
         });
         const loginData = await loginResponse.json().catch(() => ({}));
-        if (!loginResponse.ok || !loginData.token) throw new Error(loginData.error || 'Could not sign in with those credentials.');
-        const promoteResponse = await fetch(API_BASE + '/api/auth/admin/bootstrap', {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + loginData.token,
-            'X-Admin-Bootstrap-Secret': secret
-          }
-        });
-        const promoteData = await promoteResponse.json().catch(() => ({}));
-        if (!promoteResponse.ok || !promoteData.ok) throw new Error(promoteData.error || 'Admin setup failed.');
+        if (!loginResponse.ok || !loginData.token || !loginData.user) {
+          throw new Error(loginData.error || 'Administrator was created, but sign-in could not be completed. Please sign in normally.');
+        }
+
         localStorage.setItem('academic-tracker-token', loginData.token);
-        localStorage.setItem('academic-tracker-user', JSON.stringify(promoteData.user));
+        localStorage.setItem('academic-tracker-user', JSON.stringify(loginData.user));
         document.getElementById('password').value = '';
         document.getElementById('setup-secret').value = '';
         message(successBox, 'Administrator verified. Opening the admin dashboard…');
