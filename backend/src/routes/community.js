@@ -117,18 +117,37 @@ router.get("/feed", async (req, res, next) => {
       return aRank - bRank || new Date(b.createdAt) - new Date(a.createdAt);
     });
     const ids = [...new Set(posts.map(p => p.authorId))];
-    const [users, profiles, reactions, comments] = await Promise.all([
+    const postIds = posts.map(p => p.id);
+    const [users, profiles, reactions, comments, shares, savedRows, sharedOriginals] = await Promise.all([
       prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } }),
       prisma.communityProfile.findMany({ where: { userId: { in: ids } } }),
-      prisma.communityReaction.groupBy({ by: ["postId"], where: { postId: { in: posts.map(p => p.id) } }, _count: { _all: true } }),
-      prisma.communityComment.groupBy({ by: ["postId"], where: { postId: { in: posts.map(p => p.id) } }, _count: { _all: true } })
+      prisma.communityReaction.groupBy({ by: ["postId"], where: { postId: { in: postIds } }, _count: { _all: true } }),
+      prisma.communityComment.groupBy({ by: ["postId"], where: { postId: { in: postIds } }, _count: { _all: true } }),
+      prisma.communityPost.groupBy({ by: ["sharedPostId"], where: { sharedPostId: { in: postIds } }, _count: { _all: true } }),
+      prisma.communitySavedPost.findMany({ where: { userId: req.userId, postId: { in: postIds } }, select: { postId: true } }),
+      prisma.communityPost.findMany({ where: { id: { in: posts.map(p => p.sharedPostId).filter(Boolean) } } })
     ]);
+    const sharedAuthorIds = [...new Set(sharedOriginals.map(p => p.authorId))];
+    const [sharedUsers, sharedProfiles] = sharedOriginals.length ? await Promise.all([
+      prisma.user.findMany({ where: { id: { in: sharedAuthorIds } }, select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } }),
+      prisma.communityProfile.findMany({ where: { userId: { in: sharedAuthorIds } } })
+    ]) : [[], []];
     const userMap = new Map(users.map(u => [u.id, u]));
     const profileMap = new Map(profiles.map(p => [p.userId, p]));
     const reactionMap = new Map(reactions.map(x => [x.postId, x._count._all]));
     const commentMap = new Map(comments.map(x => [x.postId, x._count._all]));
+    const shareMap = new Map(shares.map(x => [x.sharedPostId, x._count._all]));
+    const savedSet = new Set(savedRows.map(x => x.postId));
+    const sharedUserMap = new Map(sharedUsers.map(u => [u.id, u]));
+    const sharedProfileMap = new Map(sharedProfiles.map(p => [p.userId, p]));
+    const sharedMap = new Map(sharedOriginals.map(p => [p.id, {
+      ...p,
+      author: sharedUserMap.get(p.authorId) ? publicProfile(sharedProfileMap.get(p.authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, sharedUserMap.get(p.authorId)) : null
+    }]));
     res.json({ posts: posts.map(p => ({
       ...p, author: userMap.get(p.authorId) ? publicProfile(profileMap.get(p.authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, userMap.get(p.authorId)) : null,
+      sharedPost: p.sharedPostId ? sharedMap.get(p.sharedPostId) || null : null,
+      isSaved: savedSet.has(p.id), shareCount: shareMap.get(p.id) || 0,
       isFriendPost: p.authorId === req.userId || friendIds.includes(p.authorId),
       reactionCount: reactionMap.get(p.id) || 0, commentCount: commentMap.get(p.id) || 0
     }))});
@@ -237,6 +256,60 @@ router.post("/posts", async (req, res, next) => {
     if (req.body?.mediaUrl && !mediaUrl || req.body?.videoUrl && !videoUrl) return res.status(400).json({ error: "Media links must use HTTPS." });
     const post = await prisma.communityPost.create({ data: { authorId: req.userId, body, mediaUrl, videoUrl, subject, visibility } });
     res.status(201).json({ post });
+  } catch (e) { next(e); }
+});
+
+router.post("/posts/:id/share", async (req, res, next) => {
+  try {
+    const original = await prisma.communityPost.findUnique({ where: { id: req.params.id } });
+    if (!original || !await canReadPost(original, req.userId)) return res.status(404).json({ error: "Post not found." });
+    const body = clean(req.body?.body, 5000);
+    const visibility = ["PUBLIC", "FOLLOWERS"].includes(req.body?.visibility) ? req.body.visibility : "PUBLIC";
+    const post = await prisma.communityPost.create({ data: {
+      authorId: req.userId, body, sharedPostId: original.id, subject: original.subject, visibility
+    }});
+    await notifySocial(original.authorId, req.userId, "Your post was shared", "A student shared one of your posts.", { type: "POST_SHARED", postId: original.id });
+    res.status(201).json({ post });
+  } catch (e) { next(e); }
+});
+
+router.post("/posts/:id/save", async (req, res, next) => {
+  try {
+    const post = await prisma.communityPost.findUnique({ where: { id: req.params.id } });
+    if (!post || !await canReadPost(post, req.userId)) return res.status(404).json({ error: "Post not found." });
+    const existing = await prisma.communitySavedPost.findUnique({ where: { userId_postId: { userId: req.userId, postId: post.id } } });
+    if (existing) {
+      await prisma.communitySavedPost.delete({ where: { id: existing.id } });
+      return res.json({ ok: true, saved: false });
+    }
+    await prisma.communitySavedPost.create({ data: { userId: req.userId, postId: post.id } });
+    res.json({ ok: true, saved: true });
+  } catch (e) { next(e); }
+});
+
+router.get("/saved-posts", async (req, res, next) => {
+  try {
+    const saved = await prisma.communitySavedPost.findMany({ where: { userId: req.userId }, orderBy: { createdAt: "desc" }, take: 100 });
+    const ids = saved.map(x => x.postId);
+    const posts = ids.length ? await prisma.communityPost.findMany({ where: { id: { in: ids } } }) : [];
+    const readable = [];
+    for (const post of posts) if (await canReadPost(post, req.userId)) readable.push(post);
+    const authorIds = [...new Set(readable.map(p => p.authorId))];
+    const [users, profiles, reactions, comments] = readable.length ? await Promise.all([
+      prisma.user.findMany({ where: { id: { in: authorIds } }, select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } }),
+      prisma.communityProfile.findMany({ where: { userId: { in: authorIds } } }),
+      prisma.communityReaction.groupBy({ by: ["postId"], where: { postId: { in: readable.map(p => p.id) } }, _count: { _all: true } }),
+      prisma.communityComment.groupBy({ by: ["postId"], where: { postId: { in: readable.map(p => p.id) } }, _count: { _all: true } })
+    ]) : [[], [], [], []];
+    const userMap = new Map(users.map(u => [u.id, u]));
+    const profileMap = new Map(profiles.map(p => [p.userId, p]));
+    const reactionMap = new Map(reactions.map(x => [x.postId, x._count._all]));
+    const commentMap = new Map(comments.map(x => [x.postId, x._count._all]));
+    readable.sort((a,b) => ids.indexOf(a.id) - ids.indexOf(b.id));
+    res.json({ posts: readable.map(p => ({
+      ...p, author: userMap.get(p.authorId) ? publicProfile(profileMap.get(p.authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, userMap.get(p.authorId)) : null,
+      isSaved: true, reactionCount: reactionMap.get(p.id) || 0, commentCount: commentMap.get(p.id) || 0
+    })) });
   } catch (e) { next(e); }
 });
 
