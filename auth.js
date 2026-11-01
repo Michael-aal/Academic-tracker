@@ -31,6 +31,22 @@
   const adminToggle = document.getElementById('admin-setup-toggle');
   const adminFields = document.getElementById('admin-setup-fields');
   const adminSecret = document.getElementById('admin-setup-secret');
+  const adminSetupSection = document.querySelector('.admin-setup-option');
+  if (mode === 'register' && adminSetupSection) {
+    // Keep the privileged option hidden unless the API confirms setup is open.
+    adminSetupSection.hidden = true;
+    fetch(API_BASE + '/api/auth/admin/bootstrap-status', {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      cache: 'no-store'
+    }).then(async response => {
+      if (!response.ok) return;
+      const status = await response.json().catch(() => ({}));
+      if (status.available === true) adminSetupSection.hidden = false;
+    }).catch(() => {
+      // Fail closed: normal registration remains available if status cannot be checked.
+    });
+  }
   adminToggle?.addEventListener('change', () => {
     if (adminFields) adminFields.hidden = !adminToggle.checked;
     if (adminSecret) adminSecret.required = adminToggle.checked;
