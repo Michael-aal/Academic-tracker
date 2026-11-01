@@ -38,7 +38,7 @@
   async function loadProfile() {
     if (!requireLogin()) return;
     try {
-      const { profile } = await api("/community/profile/me");
+      const { profile, stats = {}, posts = [] } = await api("/community/profile/me");
       $("profile-username").value = profile.username || "";
       $("profile-best-subject").value = profile.bestSubject || "";
       $("profile-bio").value = profile.bio || "";
@@ -46,10 +46,29 @@
       $("profile-cover").value = profile.coverUrl || "";
       $("profile-interests").value = (profile.interests || []).join(", ");
       $("profile-visibility").value = profile.visibility || "PUBLIC";
-      $("mini-profile").innerHTML = '<strong>@' + esc(profile.username) + '</strong><p>' + esc(profile.bestSubject || "Add your best subject") + '</p><small>' + esc(profile.educationTrack) + '</small>';
-      $("profile-summary").innerHTML = '<strong>' + esc(profile.displayName) + '</strong><p>Best subject: ' + esc(profile.bestSubject || "Not set") + '</p><p>' + esc(profile.bio || "Add a short introduction.") + '</p>';
+      $("mini-profile").innerHTML = '<strong>@' + esc(profile.username) + '</strong><p>' + esc(profile.bestSubject || "Add your best subject") + '</p><small>' + esc(profile.educationTrack || "") + ' · ' + (profile.visibility === "PRIVATE" ? "Private" : "Public") + '</small>';
+      $("social-profile-name").textContent = profile.displayName || "Student";
+      $("social-profile-handle").textContent = "@" + (profile.username || "student");
+      $("social-profile-bio").textContent = profile.bio || "Add a short bio to introduce yourself.";
+      $("social-profile-avatar").innerHTML = profile.avatarUrl ? '<img src="' + esc(profile.avatarUrl) + '" alt="Profile photo">' : esc((profile.displayName || "S").slice(0,1).toUpperCase());
+      $("social-profile-cover").innerHTML = profile.coverUrl ? '<img src="' + esc(profile.coverUrl) + '" alt="Profile cover">' : '<span>YOUR SPACE</span>';
+      $("profile-post-count").textContent = String(stats.posts || 0);
+      $("profile-follower-count").textContent = String(stats.followers || 0);
+      $("profile-following-count").textContent = String(stats.following || 0);
+      $("social-profile-subject").textContent = [profile.bestSubject, profile.educationTrack, profile.programme].filter(Boolean).join(" · ");
+      $("social-profile-posts").innerHTML = posts.length ? posts.map(post => '<article class="social-profile-post">' + (post.mediaUrl ? '<img src="' + esc(post.mediaUrl) + '" alt="Your post" loading="lazy">' : post.videoUrl ? '<div class="social-profile-video">▶ Video post</div>' : '<div class="social-profile-text-post">' + esc((post.body || "").slice(0,180)) + '</div>') + '<div class="social-profile-post-meta">' + esc(post.subject || "Post") + '<span>' + (post.reactionCount || 0) + ' likes</span></div></article>').join("") : '<div class="empty-state social-profile-empty">Your posts will appear here after you publish your first post.</div>';
     } catch (e) { status(e.message); }
   }
+  $("edit-social-profile").addEventListener("click", () => $("profile-settings").scrollIntoView({behavior:"smooth",block:"start"}));
+  document.addEventListener("click", e => {
+    const example = e.target.closest("[data-example]");
+    if (example) {
+      tab("feed");
+      $("post-body").value = example.dataset.example;
+      $("post-body").focus({preventScroll:true});
+      $("post-form").scrollIntoView({behavior:"smooth",block:"center"});
+    }
+  });
   $("profile-form").addEventListener("submit", async e => {
     e.preventDefault(); if (!requireLogin()) return;
     const interests = $("profile-interests").value.split(",").map(x => x.trim()).filter(Boolean).slice(0,12);
@@ -59,7 +78,7 @@
         bio:$("profile-bio").value, avatarUrl:$("profile-avatar").value,
         coverUrl:$("profile-cover").value, interests, visibility:$("profile-visibility").value
       })});
-      status("Your social profile has been saved."); loadProfile();
+      status("Your social profile settings have been saved."); loadProfile();
     } catch (e) { status(e.message); }
   });
 
