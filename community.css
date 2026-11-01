@@ -198,3 +198,7 @@ body.social-media-page #view-feed .community-side-column{display:none}
     stroke:#fff!important;border-radius:9px;
   }
 }
+
+.social-profile-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+.social-profile-post-meta{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.social-profile-post-meta span{font-size:10px}
