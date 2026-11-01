@@ -283,8 +283,9 @@ router.post("/follow/:userId", async (req, res, next) => {
 
 router.get("/groups", async (req, res, next) => {
   try {
+    const myMemberships = await prisma.groupMembership.findMany({ where: { userId: req.userId, status: "ACTIVE" }, select: { groupId: true } });
     const groups = await prisma.studyGroup.findMany({
-      where: { visibility: "PUBLIC", status: "ACTIVE" },
+      where: { status: "ACTIVE", OR: [{ visibility: "PUBLIC" }, { id: { in: myMemberships.map(m => m.groupId) } }] },
       orderBy: { createdAt: "desc" }, take: 50
     });
     const ids = groups.map(g => g.id);
@@ -326,6 +327,67 @@ router.post("/groups/:id/join", async (req, res, next) => {
       create: { conversationId: existingGroupChat.id, userId: req.userId },
       update: {}
     });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+router.post("/groups/:id/invitations", async (req, res, next) => {
+  try {
+    const group = await prisma.studyGroup.findUnique({ where: { id: req.params.id } });
+    if (!group || group.status !== "ACTIVE") return res.status(404).json({ error: "Study group not found." });
+    const membership = await prisma.groupMembership.findUnique({ where: { groupId_userId: { groupId: group.id, userId: req.userId } } });
+    if (group.ownerId !== req.userId && !["OWNER", "ADMIN", "MODERATOR"].includes(membership?.role || "")) return res.status(403).json({ error: "Only group owners and moderators can invite students." });
+    const invitedUserId = clean(req.body?.userId, 100);
+    const invited = await getUser(invitedUserId);
+    if (!invited || invited.id === req.userId) return res.status(404).json({ error: "Student not found." });
+    if (group.educationTrack && group.educationTrack !== invited.educationTrack) return res.status(403).json({ error: "This group is restricted to another academic environment." });
+    if (await isBlocked(req.userId, invited.id)) return res.status(403).json({ error: "This invitation cannot be sent." });
+    const invitation = await prisma.groupInvitation.upsert({
+      where: { groupId_invitedUserId: { groupId: group.id, invitedUserId: invited.id } },
+      create: { groupId: group.id, invitedUserId: invited.id, invitedById: req.userId },
+      update: { invitedById: req.userId, status: "PENDING", updatedAt: new Date() }
+    });
+    res.status(201).json({ invitation });
+  } catch (e) { next(e); }
+});
+router.get("/group-invitations", async (req, res, next) => {
+  try {
+    const invitations = await prisma.groupInvitation.findMany({ where: { invitedUserId: req.userId, status: "PENDING" }, orderBy: { createdAt: "desc" }, take: 50 });
+    const groupIds = [...new Set(invitations.map(i => i.groupId))];
+    const groups = await prisma.studyGroup.findMany({ where: { id: { in: groupIds }, status: "ACTIVE" } });
+    const map = new Map(groups.map(g => [g.id, g]));
+    res.json({ invitations: invitations.filter(i => map.has(i.groupId)).map(i => ({ ...i, group: map.get(i.groupId) })) });
+  } catch (e) { next(e); }
+});
+router.post("/group-invitations/:id/accept", async (req, res, next) => {
+  try {
+    const invitation = await prisma.groupInvitation.findFirst({ where: { id: req.params.id, invitedUserId: req.userId, status: "PENDING" } });
+    if (!invitation) return res.status(404).json({ error: "Pending group invitation not found." });
+    const group = await prisma.studyGroup.findUnique({ where: { id: invitation.groupId } });
+    const user = await getUser(req.userId);
+    if (!group || group.status !== "ACTIVE") return res.status(404).json({ error: "This group is no longer available." });
+    if (group.educationTrack && group.educationTrack !== user.educationTrack) return res.status(403).json({ error: "This group is for another academic environment." });
+    await prisma.$transaction(async tx => {
+      await tx.groupMembership.upsert({
+        where: { groupId_userId: { groupId: group.id, userId: req.userId } },
+        create: { groupId: group.id, userId: req.userId, status: "ACTIVE" },
+        update: { status: "ACTIVE" }
+      });
+      await tx.groupInvitation.update({ where: { id: invitation.id }, data: { status: "ACCEPTED" } });
+      const groupChat = await tx.chatConversation.findFirst({ where: { groupId: group.id, kind: "GROUP" } });
+      if (groupChat) await tx.chatMember.upsert({
+        where: { conversationId_userId: { conversationId: groupChat.id, userId: req.userId } },
+        create: { conversationId: groupChat.id, userId: req.userId },
+        update: {}
+      });
+    });
+    res.json({ ok: true, groupId: group.id });
+  } catch (e) { next(e); }
+});
+router.post("/group-invitations/:id/decline", async (req, res, next) => {
+  try {
+    const result = await prisma.groupInvitation.updateMany({ where: { id: req.params.id, invitedUserId: req.userId, status: "PENDING" }, data: { status: "DECLINED" } });
+    if (!result.count) return res.status(404).json({ error: "Pending group invitation not found." });
     res.json({ ok: true });
   } catch (e) { next(e); }
 });
