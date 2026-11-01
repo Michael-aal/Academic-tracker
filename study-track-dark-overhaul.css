@@ -118,3 +118,71 @@ html[data-theme="dark"] body :is(
   button.bg-white,button.bg-slate-50,button.bg-gray-50,
   button.bg-zinc-50,button.bg-neutral-50
 ){color:#fff!important;background:#211832!important;border-color:#49375F!important}
+
+/* -------------------------------------------------------------------------
+   Final cross-page dark-mode audit patch.
+   premium-theme.css contains a legacy global light palette that styles generic
+   surfaces and buttons white. Normalize those remaining unscoped components
+   after page styles, while keeping explicit branded primary actions purple.
+   ------------------------------------------------------------------------- */
+html[data-theme="dark"] body :is(
+  .surface,.section-card,.form-card,.dialog,.calculator-shell,.tutor-shell,
+  .chat-workspace,.content-card,.settings-card,.settings-panel,.form-panel,
+  .empty-panel,.history-panel,.table-card,.list-card,.popup-card,.popover-card
+) {
+  color: #f5f3ff !important;
+  background: #171123 !important;
+  background-color: #171123 !important;
+  background-image: none !important;
+  border-color: #49375f !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.22) !important;
+}
+html[data-theme="dark"] body :is(
+  .surface,.section-card,.form-card,.dialog,.calculator-shell,.tutor-shell,
+  .chat-workspace,.content-card,.settings-card,.settings-panel,.form-panel,
+  .empty-panel,.history-panel,.table-card,.list-card,.popup-card,.popover-card
+) :is(h1,h2,h3,h4,h5,h6,p,span,strong,em,small,label,legend,li,dt,dd,summary,a,th,td) {
+  color: #f5f3ff !important;
+  -webkit-text-fill-color: #f5f3ff !important;
+}
+html[data-theme="dark"] body :is(
+  .surface,.section-card,.form-card,.dialog,.calculator-shell,.tutor-shell,
+  .chat-workspace,.content-card,.settings-card,.settings-panel,.form-panel,
+  .empty-panel,.history-panel,.table-card,.list-card,.popup-card,.popover-card
+) :is(.muted,.caption,.meta,.timestamp,.description,.helper-text,.hint,.notice,.field-hint) {
+  color: #c0bbd6 !important;
+  -webkit-text-fill-color: #c0bbd6 !important;
+}
+
+/* Neutral dark surfaces for generic buttons that inherited premium-theme's
+   blanket white button background. Branded/submit actions are styled below. */
+html[data-theme="dark"] body button:not(.button):not(.btn):not(.button-primary):not(.btn-primary):not(.primary):not(.primary-button):not(.submit-button):not(.cta-button):not(.button-small):not(.premium-buy):not(.mm-primary):not(.quiz-submit):not(.quiz-finish-button):not(.quiz-next-button):not([type="submit"]) {
+  color: #f5f3ff !important;
+  -webkit-text-fill-color: #f5f3ff !important;
+  background: #211832 !important;
+  background-color: #211832 !important;
+  background-image: none !important;
+  border-color: #49375f !important;
+}
+html[data-theme="dark"] body :is(.button-small,.premium-buy,.primary-button,.cta-button,.mm-primary,.quiz-submit,.quiz-finish-button,.quiz-next-button) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: linear-gradient(135deg,#8b5cf6,#6d28d9) !important;
+  background-color: #6d28d9 !important;
+  border-color: #8b5cf6 !important;
+}
+html[data-theme="dark"] body :is(.button-small,.premium-buy,.primary-button,.cta-button,.mm-primary,.quiz-submit,.quiz-finish-button,.quiz-next-button) :is(span,small,strong,svg,i) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+html[data-theme="dark"] body button:disabled {
+  color: #9b91ad !important;
+  -webkit-text-fill-color: #9b91ad !important;
+  background: #171123 !important;
+  border-color: #3a2d4d !important;
+  opacity: .72 !important;
+}
+html[data-theme="dark"] body :is(select,option) {
+  color: #f5f3ff !important;
+  background-color: #171123 !important;
+}

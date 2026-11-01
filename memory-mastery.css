@@ -2,3 +2,127 @@
 
 /* AI-generated cards are a full-width workflow above daily review and manual card creation. */
 .mm-ai-generate{margin-bottom:18px}.mm-ai-generate form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.mm-ai-generate form label{display:grid;gap:6px}.mm-ai-generate form label:nth-of-type(3){grid-column:1/-1}.mm-ai-generate form button,.mm-ai-generate form p{grid-column:1/-1}.mm-ai-generate textarea{width:100%;resize:vertical}@media(max-width:640px){.mm-ai-generate form{grid-template-columns:minmax(0,1fr)}}
+
+
+/* Memory Mastery: respect the app-wide theme instead of forcing the legacy navy palette. */
+html[data-theme="dark"] body {
+  color-scheme: dark;
+  --bg: #0b0812;
+  --panel: #110d1b;
+  --line: #3a2d4d;
+  --text: #f5f3ff;
+  --muted: #b8aec9;
+  --accent: #a78bfa;
+  background: #0b0812;
+  background-image: radial-gradient(ellipse at 75% 0%, rgba(109,40,217,.16), transparent 42rem);
+  color: #f5f3ff;
+}
+html[data-theme="dark"] .mm-topbar { border-bottom-color: #302440; }
+html[data-theme="dark"] .mm-brand>span:last-child>span,
+html[data-theme="dark"] .mm-hero>p,
+html[data-theme="dark"] .mm-stat span,
+html[data-theme="dark"] .mm-stat small,
+html[data-theme="dark"] .mm-panel-heading p:not(.section-kicker),
+html[data-theme="dark"] .mm-empty p,
+html[data-theme="dark"] .mm-face-label,
+html[data-theme="dark"] .mm-flashcard>p,
+html[data-theme="dark"] .mm-rating-title,
+html[data-theme="dark"] .mm-ratings small,
+html[data-theme="dark"] .mm-review-tip,
+html[data-theme="dark"] .mm-form-note,
+html[data-theme="dark"] .mm-library-card p,
+html[data-theme="dark"] .mm-library-meta,
+html[data-theme="dark"] footer { color: #b8aec9; }
+html[data-theme="dark"] .mm-principles span,
+html[data-theme="dark"] .mm-stat,
+html[data-theme="dark"] .mm-panel,
+html[data-theme="dark"] .mm-empty,
+html[data-theme="dark"] .mm-count,
+html[data-theme="dark"] .mm-flashcard,
+html[data-theme="dark"] .mm-ratings button,
+html[data-theme="dark"] .mm-add input,
+html[data-theme="dark"] .mm-add textarea,
+html[data-theme="dark"] .mm-library-actions input,
+html[data-theme="dark"] .mm-library-card,
+html[data-theme="dark"] .mm-library-meta span {
+  background: #171123;
+  border-color: #3a2d4d;
+  color: #f5f3ff;
+}
+html[data-theme="dark"] .mm-principles span,
+html[data-theme="dark"] .mm-count,
+html[data-theme="dark"] .mm-empty,
+html[data-theme="dark"] .mm-flashcard,
+html[data-theme="dark"] .mm-ratings button,
+html[data-theme="dark"] .mm-library-card { background: #110d1b; }
+html[data-theme="dark"] .mm-secondary { background: #211832; border-color: #49375f; color: #e9ddff; }
+html[data-theme="dark"] .mm-primary { background: linear-gradient(135deg,#8b5cf6,#6d28d9); color: #fff; }
+html[data-theme="dark"] .mm-add form label { color: #e9ddff; }
+html[data-theme="dark"] .mm-add input::placeholder,
+html[data-theme="dark"] .mm-add textarea::placeholder,
+html[data-theme="dark"] .mm-library-actions input::placeholder { color: #988ba9; }
+html[data-theme="dark"] .mm-add input:focus,
+html[data-theme="dark"] .mm-add textarea:focus,
+html[data-theme="dark"] .mm-library-actions input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,.18); }
+html[data-theme="dark"] .mm-answer-divider { background: #3a2d4d; }
+
+html[data-theme="light"] body {
+  color-scheme: light;
+  --bg: #faf8fc;
+  --panel: #fff;
+  --line: #e5d9f1;
+  --text: #261638;
+  --muted: #6f627d;
+  --accent: #7545c8;
+  background: #faf8fc;
+  background-image: radial-gradient(ellipse at 75% 0%, rgba(139,92,246,.08), transparent 42rem);
+  color: #261638;
+}
+html[data-theme="light"] .mm-topbar { border-bottom-color: #e5d9f1; }
+html[data-theme="light"] .mm-brand>span:last-child>span,
+html[data-theme="light"] .mm-hero>p,
+html[data-theme="light"] .mm-stat span,
+html[data-theme="light"] .mm-stat small,
+html[data-theme="light"] .mm-panel-heading p:not(.section-kicker),
+html[data-theme="light"] .mm-empty p,
+html[data-theme="light"] .mm-face-label,
+html[data-theme="light"] .mm-flashcard>p,
+html[data-theme="light"] .mm-rating-title,
+html[data-theme="light"] .mm-ratings small,
+html[data-theme="light"] .mm-review-tip,
+html[data-theme="light"] .mm-form-note,
+html[data-theme="light"] .mm-library-card p,
+html[data-theme="light"] .mm-library-meta,
+html[data-theme="light"] footer { color: #6f627d; }
+html[data-theme="light"] .mm-principles span,
+html[data-theme="light"] .mm-stat,
+html[data-theme="light"] .mm-panel,
+html[data-theme="light"] .mm-empty,
+html[data-theme="light"] .mm-count,
+html[data-theme="light"] .mm-flashcard,
+html[data-theme="light"] .mm-ratings button,
+html[data-theme="light"] .mm-add input,
+html[data-theme="light"] .mm-add textarea,
+html[data-theme="light"] .mm-library-actions input,
+html[data-theme="light"] .mm-library-card,
+html[data-theme="light"] .mm-library-meta span {
+  background: #fff;
+  border-color: #e5d9f1;
+  color: #35224f;
+}
+html[data-theme="light"] .mm-principles span,
+html[data-theme="light"] .mm-count,
+html[data-theme="light"] .mm-empty,
+html[data-theme="light"] .mm-flashcard,
+html[data-theme="light"] .mm-ratings button,
+html[data-theme="light"] .mm-library-card { background: #faf7ff; }
+html[data-theme="light"] .mm-secondary { background: #f0e7ff; border-color: #d8c9eb; color: #5b2ba8; }
+html[data-theme="light"] .mm-primary { background: linear-gradient(135deg,#8b5cf6,#6d28d9); color: #fff; }
+html[data-theme="light"] .mm-add form label { color: #35224f; }
+html[data-theme="light"] .mm-add input::placeholder,
+html[data-theme="light"] .mm-add textarea::placeholder,
+html[data-theme="light"] .mm-library-actions input::placeholder { color: #8a7b98; }
+html[data-theme="light"] .mm-add input:focus,
+html[data-theme="light"] .mm-add textarea:focus,
+html[data-theme="light"] .mm-library-actions input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,.14); }
+html[data-theme="light"] .mm-answer-divider { background: #e5d9f1; }
