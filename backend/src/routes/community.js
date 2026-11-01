@@ -63,6 +63,7 @@ async function canReadPost(post, userId) {
   return false;
 }
 
+router.use(requireAuth);
 // Public discovery is read-only. Authentication is required for participation.
 router.get("/feed", async (req, res, next) => {
   try {
@@ -106,7 +107,6 @@ router.get("/profiles/:username", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.use(requireAuth);
 router.use(writeLimit);
 
 router.get("/profile/me", async (req, res, next) => {
@@ -172,7 +172,15 @@ router.patch("/profile/me", async (req, res, next) => {
   }
 });
 
-router.use(async (req, res, next) => {\n  try { const p=await prisma.communityProfile.findUnique({where:{userId:req.userId},select:{usernameSet:true}}); if(!p?.usernameSet)return res.status(403).json({error:"Choose your unique Social Media username before continuing.",code:"SOCIAL_USERNAME_REQUIRED"}); next(); } catch(error){next(error);} });\n\nrouter.post("/media-upload-signature", async (req, res, next) => {
+router.use(async (req, res, next) => {
+  try {
+    const profile = await prisma.communityProfile.findUnique({ where: { userId: req.userId }, select: { usernameSet: true } });
+    if (!profile?.usernameSet) return res.status(403).json({ error: "Choose your unique Social Media username before continuing.", code: "SOCIAL_USERNAME_REQUIRED" });
+    next();
+  } catch (error) { next(error); }
+});
+
+router.post("/media-upload-signature", async (req, res, next) => {
   try {
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
     const apiKey = process.env.CLOUDINARY_API_KEY;
