@@ -507,10 +507,14 @@ router.patch("/chat/:id/read", async (req, res, next) => {
 
 // WebRTC signalling is persisted and polled through the API. Configure TURN_URL,
 // TURN_USERNAME and TURN_CREDENTIAL in production for reliable mobile networks.
-router.get("/calls/ice", (_req, res) => {
+router.get("/calls/ice", (req, res) => {
   const iceServers = [{ urls: ["stun:stun.l.google.com:19302"] }];
-  if (process.env.TURN_URL && process.env.TURN_USERNAME && process.env.TURN_CREDENTIAL) {
-    iceServers.push({ urls: process.env.TURN_URL.split(",").map(x => x.trim()), username: process.env.TURN_USERNAME, credential: process.env.TURN_CREDENTIAL });
+  // Use time-limited TURN REST credentials; never expose a permanent TURN secret to browsers.
+  if (process.env.TURN_URL && process.env.TURN_SHARED_SECRET) {
+    const expires = Math.floor(Date.now() / 1000) + 3600;
+    const username = expires + ":" + req.userId;
+    const credential = crypto.createHmac("sha1", process.env.TURN_SHARED_SECRET).update(username).digest("base64");
+    iceServers.push({ urls: process.env.TURN_URL.split(",").map(x => x.trim()), username, credential });
   }
   res.json({ iceServers, turnConfigured: iceServers.length > 1 });
 });
