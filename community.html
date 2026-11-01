@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <script>try{document.documentElement.dataset.theme=localStorage.getItem("academic-tracker-theme")==="dark"?"dark":"light"}catch(_){document.documentElement.dataset.theme="light"}</script>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Connect with students, share learning, join study groups and discover educational videos.">
-  <title>Community · Academic Tracker</title>
+  <meta name="description" content="Connect with students, publish posts, like and comment, discover friends and learn together.">
+  <title>Social Media · Academic Tracker</title>
   <link rel="stylesheet" href="global-light-mode.css" data-global-light-mode>
   <link rel="stylesheet" href="premium-theme.css">
   <link rel="stylesheet" href="global-navigation.css">
@@ -15,37 +15,36 @@
   <script src="icon-system.js" defer></script>
   <script src="global-theme.js" data-global-theme defer></script>
 </head>
-<body>
+<body class="social-media-page">
 <main class="community-shell">
   <section class="community-heading">
-    <div><p class="community-eyebrow">LEARN TOGETHER</p><h1>Student community</h1><p>Connect, share ideas and find your next learning opportunity.</p></div>
+    <div><p class="community-eyebrow">YOUR SOCIAL SPACE</p><h1>Social Media</h1><p>Connect with students, share posts and join conversations.</p></div>
     <div class="community-heading-actions"><a class="community-profile-link" href="#profile" data-tab-link="profile">Your profile <span aria-hidden="true">↗</span></a><a class="community-profile-link" id="community-admin-link" href="community-admin.html" hidden>Moderation tools</a></div>
   </section>
-  <nav class="community-tabs" aria-label="Community sections">
+  <nav class="community-tabs" aria-label="Social Media sections">
     <button class="active" data-tab="feed">Feed</button>
-    <button data-tab="people">Discover</button>
+    <button data-tab="people">Friends</button>
     <button data-tab="groups">Groups</button>
-    <button data-tab="videos">Videos</button>
+    <button data-tab="videos">Watch</button>
     <button data-tab="messages">Messages</button>
-    <button data-tab="referrals">Invite friends</button>
+    <button data-tab="referrals">Referrals</button>
     <button data-tab="profile">Profile</button>
   </nav>
   <div id="community-status" class="community-status" role="status" aria-live="polite"></div>
   <section class="community-view active" id="view-feed">
     <div class="community-layout">
       <div class="community-main-column">
-        <section class="panel story-panel"><div class="feed-toolbar"><h2>Stories</h2><span class="muted-note">Expire after 24 hours</span></div><form id="story-form" class="story-form"><input id="story-caption" maxlength="500" placeholder="Add a short story caption"><input id="story-media" type="file" accept="image/*,video/*" aria-label="Choose story image or video"><button class="outline-button">Share story</button></form><div id="story-list" class="story-list"><span class="muted-note">Loading stories…</span></div></section>
         <form class="composer panel" id="post-form">
-          <label for="post-body">Share something with your learning community</label>
-          <textarea id="post-body" maxlength="5000" rows="3" placeholder="Ask a question, share an idea or celebrate a learning milestone…"></textarea>
+          <label for="post-body">What would you like to share?</label>
+          <textarea id="post-body" maxlength="5000" rows="3" placeholder="Write something for your friends…"></textarea>
           <div class="composer-row">
             <input id="post-subject" maxlength="100" placeholder="Subject (optional)"><input id="post-media" type="file" accept="image/*,video/*" aria-label="Attach an image or video">
             <select id="post-visibility" aria-label="Post visibility"><option value="PUBLIC">Public</option><option value="FOLLOWERS">Connections</option></select>
             <button class="primary-button" type="submit">Publish post</button>
           </div>
         </form>
-        <div class="feed-toolbar"><h2>Latest discussions</h2><button class="quiet-button" id="refresh-feed" type="button">Refresh</button></div>
-        <div id="feed-list" class="feed-list"><div class="empty-state">Loading community posts…</div></div>
+        <div class="feed-toolbar"><h2>Recent posts</h2><button class="quiet-button" id="refresh-feed" type="button">Refresh</button></div>
+        <div id="feed-list" class="feed-list"><div class="empty-state">Loading posts…</div></div>
       </div>
       <aside class="community-side-column">
         <section class="panel side-card"><h3>Your learning identity</h3><div id="mini-profile">Loading profile…</div><button class="text-button" data-tab="profile">Edit profile</button></section>
@@ -55,7 +54,7 @@
     </div>
   </section>
   <section class="community-view" id="view-people">
-    <section class="panel section-panel"><h2>Find students</h2><p>Search by student name or institution. Private profiles are not listed.</p><form id="people-search" class="search-row"><input id="people-query" minlength="2" placeholder="Search students or institutions"><button class="primary-button">Search</button></form><div id="people-list" class="people-list"></div></section>
+    <section class="panel section-panel"><h2>Find friends</h2><p>Search by student name or institution. Private profiles are not listed.</p><form id="people-search" class="search-row"><input id="people-query" minlength="2" placeholder="Search students or institutions"><button class="primary-button">Search</button></form><div id="people-list" class="people-list"></div></section>
   </section>
   <section class="community-view" id="view-groups">
     <div class="section-heading"><div><h2>Study groups</h2><p>Learn with people who share your interests.</p></div><button class="primary-button" id="show-group-form">Create group</button></div>
@@ -77,7 +76,14 @@
   <section class="community-view" id="view-profile">
     <section class="panel profile-editor"><div class="section-heading"><div><h2>Your social profile</h2><p>Choose how other students discover you.</p></div></div><form id="profile-form"><div class="profile-form-grid"><label>Username<input id="profile-username" maxlength="30" required></label><label>Best Subject<input id="profile-best-subject" maxlength="100" placeholder="e.g. Mathematics"></label><label class="full-field">Short bio<textarea id="profile-bio" rows="3" maxlength="280" placeholder="What are you learning or interested in?"></textarea></label><label>Profile image URL<input id="profile-avatar" type="url" placeholder="https://…"></label><label>Cover image URL<input id="profile-cover" type="url" placeholder="https://…"></label><label>Interests (comma separated)<input id="profile-interests" placeholder="Programming, Physics, English"></label><label>Profile visibility<select id="profile-visibility"><option value="PUBLIC">Public</option><option value="PRIVATE">Private</option></select></label></div><button class="primary-button">Save profile</button></form><div id="profile-summary" class="profile-summary"></div></section>
   </section>
-  <footer class="community-footer">Academic Tracker Community · Keep learning, keep it respectful.</footer>
+  <nav class="social-bottom-nav" id="social-bottom-nav" aria-label="Social Media navigation">
+  <button type="button" data-social-dest="feed" class="active" aria-current="page"><span class="social-nav-icon">⌂</span><span>Home</span></button>
+  <button type="button" data-social-dest="people"><span class="social-nav-icon">♧</span><span>Friends</span></button>
+  <button type="button" data-social-create class="social-create"><span class="social-nav-icon">＋</span><span>Create</span></button>
+  <button type="button" data-social-dest="messages"><span class="social-nav-icon">▤</span><span>Messages</span></button>
+  <button type="button" data-social-dest="profile"><span class="social-nav-icon">◉</span><span>Profile</span></button>
+</nav>
+<footer class="community-footer">Social Media · Connect, share and keep it respectful.</footer>
 </main>
 <script src="community.js" defer></script>
 <script src="community-chat-media.js" defer></script>
