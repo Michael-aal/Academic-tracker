@@ -237,7 +237,7 @@
         return;
       }
       if(b.dataset.action==="react"){
-        await api("/community/posts/"+encodeURIComponent(id)+"/reaction",{method:"POST",body:JSON.stringify({reaction:"HELPFUL"})});
+        await api("/community/posts/"+encodeURIComponent(id)+"/reaction",{method:"POST",body:JSON.stringify({reaction:"LIKE"})});
         loadFeed(showingSavedPosts);
       }
       if(b.dataset.action==="save"){
