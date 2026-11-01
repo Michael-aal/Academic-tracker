@@ -91,7 +91,7 @@
     if(!localStorage.getItem("academic-tracker-token")||currentCall||incomingCall)return;
     try{
       const {calls=[]}=await api("/community/calls/incoming");
-      if(calls.length){incomingCall=calls[0];setStatus("Incoming "+(incomingCall.callType==="VIDEO"?"video":"audio")+" call");$("accept-call").hidden=false;$("decline-call").hidden=false}
+      if(calls.length){incomingCall=calls[0];document.querySelector('.community-tabs [data-tab="messages"]')?.click();$("chat-placeholder").hidden=true;$("chat-active").hidden=false;setStatus("Incoming "+(incomingCall.callType==="VIDEO"?"video":"audio")+" call");$("accept-call").hidden=false;$("decline-call").hidden=false}
     }catch(_){}
   }
   async function acceptCall(){
