@@ -13,13 +13,14 @@
     return data;
   }
   function requireLogin() {
-    if (!token()) { location.href = "login.html?next=community.html"; return false; }
+    if (!token()) { location.href = "login.html?next=social-media.html"; return false; }
     return true;
   }
   function tab(name) {
     document.querySelectorAll(".community-tabs [data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
     document.querySelectorAll(".community-view").forEach(v => v.classList.toggle("active", v.id === "view-" + name));
     if (name === "feed") loadFeed();
+    document.querySelectorAll("#social-bottom-nav [data-social-dest]").forEach(b => { const active = b.dataset.socialDest === name; b.classList.toggle("active", active); if (active) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
     if (name === "people") $("people-query").focus();
     if (name === "groups") loadGroups();
     if (name === "videos") loadVideoPreferences();
@@ -63,7 +64,6 @@
   });
 
   async function loadFeed() {
-    loadStories();
     try {
       const { posts=[] } = await api("/community/feed?limit=25");
       if (!posts.length) { $("feed-list").innerHTML = '<div class="empty-state">No posts yet. Be the first to start a useful discussion.</div>'; return; }
@@ -92,25 +92,6 @@
     if(!response.ok||!result.secure_url)throw new Error("Media upload failed. Check Cloudinary configuration.");
     return isVideo?{videoUrl:result.secure_url}:{mediaUrl:result.secure_url};
   }
-  async function loadStories() {
-    try {
-      const {stories=[]}=await api("/community/stories");
-      $("story-list").innerHTML=stories.length?stories.map(story=>'<article class="story-card"><a href="'+esc(story.mediaUrl)+'" target="_blank" rel="noopener noreferrer">'+(story.mediaType==="VIDEO"?'▶ Video story':'▧ Photo story')+'</a><strong>'+esc(story.authorName)+'</strong><small>'+esc(story.caption||"")+'</small></article>').join(""):'<span class="muted-note">No stories yet. Share a learning moment.</span>';
-    } catch(e) { $("story-list").innerHTML='<span class="muted-note">'+esc(e.message)+'</span>'; }
-  }
-  $("story-form").addEventListener("submit",async e=>{
-    e.preventDefault();if(!requireLogin())return;
-    const file=$("story-media").files?.[0];if(!file)return status("Choose an image or video for your story.");
-    const button=e.target.querySelector("button");button.disabled=true;button.textContent="Uploading…";
-    try{
-      const uploaded=await uploadCommunityMedia(file);
-      const mediaUrl=uploaded.mediaUrl||uploaded.videoUrl;
-      await api("/community/stories",{method:"POST",body:JSON.stringify({mediaUrl,mediaType:uploaded.videoUrl?"VIDEO":"IMAGE",caption:$("story-caption").value})});
-      $("story-caption").value="";$("story-media").value="";status("Your story is live.");loadStories();
-    }catch(err){status(err.message);}
-    finally{button.disabled=false;button.textContent="Share story";}
-  });
-
   $("post-form").addEventListener("submit", async e => {
     e.preventDefault(); if (!requireLogin()) return;
     const body = $("post-body").value.trim(), file=$("post-media").files?.[0];
@@ -125,6 +106,15 @@
     finally { submit.disabled=false;submit.textContent="Publish post"; }
   });
   $("refresh-feed").addEventListener("click", loadFeed);
+  const socialBottomNav = $("social-bottom-nav");
+  socialBottomNav?.addEventListener("click", e => {
+    const destination = e.target.closest("[data-social-dest]");
+    if (destination) { tab(destination.dataset.socialDest); return; }
+    if (e.target.closest("[data-social-create]")) {
+      tab("feed"); $("post-body").focus({ preventScroll: true });
+      $("post-form").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  });
   $("feed-list").addEventListener("click", async e => {
     const b=e.target.closest("[data-action]"); if(!b) return; if(!requireLogin()) return;
     const id=b.dataset.id;
