@@ -183,3 +183,18 @@ body.social-media-page #view-feed .community-side-column{display:none}
  .post-actions{grid-template-columns:repeat(4,minmax(0,1fr));gap:2px}
  .post-actions button{font-size:10px;padding:7px 2px;min-height:40px}
 }
+
+/* Keep the bottom navigation's SVG icons visible across global theme styles. */
+@media(max-width:760px){
+  body.social-media-page .social-bottom-nav button .social-nav-icon{
+    display:block!important;visibility:visible!important;opacity:1!important;
+    width:22px!important;height:22px!important;min-width:22px;flex:0 0 22px;
+    fill:none!important;stroke:currentColor!important;stroke-width:2!important;
+    stroke-linecap:round;stroke-linejoin:round;overflow:visible;
+  }
+  body.social-media-page .social-bottom-nav button.social-create .social-nav-icon{
+    width:28px!important;height:28px!important;min-width:28px;flex-basis:28px;
+    padding:4px;box-sizing:border-box;background:#8055dc;color:#fff;
+    stroke:#fff!important;border-radius:9px;
+  }
+}
