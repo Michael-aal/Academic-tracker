@@ -6,7 +6,7 @@
   let catalog = { plans: [], bundles: [], fxConfigured: false };
   let state = null;
   let displayCurrency = "USD";
-  let dailyDays = 1;
+  let billingPeriod = "monthly";
   const usd = cents => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(cents / 100);
   const ngn = kobo => new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(kobo / 100);
   const headers = () => ({ "Content-Type": "application/json", Authorization: "Bearer " + token });
@@ -34,38 +34,35 @@
     $("currency-ngn").setAttribute("aria-pressed", String(displayCurrency === "NGN"));
     renderPlans(); renderBundles();
   }
-  function dailyCard(p) {
-    const options = Array.from({ length: 6 }, (_, i) => i + 1)
-      .map(days => '<option value="' + days + '"' + (days === dailyDays ? ' selected' : '') + '>' + days + (days === 1 ? ' day' : ' days') + '</option>').join("");
-    return '<article class="plan-card daily-plan-card">' +
-      '<p class="plan-kicker">FLEXIBLE ACCESS</p><h3>' + escapeHtml(p.name) + '</h3>' +
-      '<div class="price" id="daily-price">' + amountFor(p) + '</div>' +
-      '<div class="price-secondary" id="daily-price-secondary">' + alternateAmount(p) + '</div>' +
-      '<div class="period">Choose exactly how many days you need</div>' +
-      '<label class="daily-select-label" for="daily-days">Access duration</label>' +
-      '<select class="daily-days-select" id="daily-days">' + options + '</select>' +
-      '<p class="daily-total" id="daily-total" aria-live="polite"></p>' +
-      '<p class="credit-note" id="daily-credit-note"></p>' +
-      '<button class="premium-buy" data-plan="daily" type="button"' + (checkoutReady(p) ? "" : " disabled") + '>' + (checkoutReady(p) ? "Continue to checkout" : "Checkout unavailable") + '</button>' +
-      '<p class="daily-hint">Need 4–7 days? The Weekly plan is the better-value option.</p></article>';
-  }
   function renderPlans() {
     const plans = catalog.plans || [];
-    $("plan-grid").innerHTML = plans.length ? plans.map(p => {
-      if (p.key === "daily") return dailyCard(p);
-      return '<article class="plan-card ' + (p.key === "yearly" ? "featured" : "") + '">' +
-        '<h3>' + escapeHtml(p.name) + '</h3><div class="price">' + amountFor(p) + '</div>' +
-        '<div class="price-secondary">' + alternateAmount(p) + '</div>' +
-        '<div class="period">' + p.durationDays + ' days of Premium access</div>' +
-        '<p class="credit-note">' + (p.credits ? p.credits.toLocaleString() + " credits included" : "AI credits can be purchased separately") + '</p>' +
-        '<button class="premium-buy" data-plan="' + escapeHtml(p.key) + '" type="button"' + (checkoutReady(p) ? "" : " disabled") + '>' + (checkoutReady(p) ? "Continue · Pay " + ngn(p.amountNgnKobo) : "Checkout unavailable") + '</button></article>';
-    }).join("") : '<div class="loading-card">Premium plans are being configured. Please check back soon.</div>';
+    const monthly = plans.find(p => p.key === "monthly");
+    const yearly = plans.find(p => p.key === "yearly");
+    const selected = billingPeriod === "yearly" ? yearly : monthly;
+    const freeCredits = state?.credits?.freeAllowance;
+    const freeCreditText = freeCredits
+      ? Number(freeCredits.amount || 0).toLocaleString() + " free AI credits refreshed every " + (freeCredits.refreshHours / 24) + " days"
+      : "Free AI credits with periodic refreshes";
+    const freeCard = '<article class="plan-card free-plan-card">' +
+      '<p class="plan-kicker">GET STARTED</p><h3>Free</h3>' +
+      '<div class="price">₦0</div><div class="price-secondary">Forever free · No payment required</div>' +
+      '<ul class="plan-features"><li>Core academic tracking tools</li><li>Access to essential study features</li><li>' + escapeHtml(freeCreditText) + '</li></ul>' +
+      '<button class="premium-buy free-plan-button" type="button" disabled>Free plan</button></article>';
+    const premiumCard = selected
+      ? '<article class="plan-card featured premium-plan-card">' +
+        '<p class="plan-kicker">UNLOCK MORE</p><h3>Premium</h3>' +
+        '<div class="price">' + amountFor(selected) + '</div>' +
+        '<div class="price-secondary">' + alternateAmount(selected) + '</div>' +
+        '<div class="period">One-time payment for ' + selected.durationDays + ' days. Pay the full amount upfront.</div>' +
+        '<ul class="plan-features"><li>Premium access for the full selected period</li><li>' + (selected.credits ? selected.credits.toLocaleString() + ' AI credits included' : 'AI credit bundles available separately') + '</li><li>Use Premium learning tools during your active period</li></ul>' +
+        '<button class="premium-buy" data-plan="' + escapeHtml(selected.key) + '" type="button"' + (checkoutReady(selected) ? '' : ' disabled') + '>' +
+        (checkoutReady(selected) ? 'Pay ' + amountFor(selected) + ' · Continue' : 'Checkout unavailable') + '</button>' +
+        '</article>'
+      : '<div class="loading-card">The ' + billingPeriod + ' Premium option is not configured yet.</div>';
+    $("plan-grid").innerHTML = freeCard + premiumCard;
+    $("billing-monthly").setAttribute("aria-pressed", String(billingPeriod === "monthly"));
+    $("billing-yearly").setAttribute("aria-pressed", String(billingPeriod === "yearly"));
     document.querySelectorAll("[data-plan]").forEach(b => b.addEventListener("click", () => startPurchase("PLAN", b.dataset.plan)));
-    const daily = plans.find(p => p.key === "daily");
-    if (daily) {
-      $("daily-days").addEventListener("change", updateDailyTotal);
-      updateDailyTotal();
-    }
   }
   function renderBundles() {
     const bundles = catalog.bundles || [];
@@ -97,7 +94,7 @@
     if (!token) { location.href = "login.html"; return; }
     if (!catalog.paymentsConfigured || !catalog.fxConfigured) { alertUser("Paystack checkout is not configured yet. Please contact support."); return; }
     const body = { type, key };
-    if (type === "PLAN" && key === "daily") body.days = Number($("daily-days").value || 1);
+
     try {
       document.querySelectorAll(".premium-buy").forEach(b => b.disabled = true);
       const result = await request("/premium/initialize", { method: "POST", body: JSON.stringify(body) });
@@ -154,6 +151,8 @@
     if (!token) { location.href = "login.html"; return; }
     $("currency-usd").addEventListener("click", () => { displayCurrency = "USD"; currencySwitch(); });
     $("currency-ngn").addEventListener("click", () => { displayCurrency = "NGN"; currencySwitch(); });
+    $("billing-monthly").addEventListener("click", () => { billingPeriod = "monthly"; renderPlans(); });
+    $("billing-yearly").addEventListener("click", () => { billingPeriod = "yearly"; renderPlans(); });
     $("manage-plan-button").addEventListener("click", () => $("plan-grid").scrollIntoView({ behavior: "smooth", block: "start" }));
     try {
       await verifyReturn();
