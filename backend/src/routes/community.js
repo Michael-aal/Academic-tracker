@@ -193,16 +193,19 @@ router.get("/profile/me", async (req, res, next) => {
     const incomingFriendIds = new Set(incoming.map(x => x.followerId));
     const friends = outgoing.filter(x => incomingFriendIds.has(x.followingId)).length;
     const postIds = posts.map(post => post.id);
-    const [reactions, comments] = postIds.length ? await Promise.all([
+    const [reactions, comments, shares] = postIds.length ? await Promise.all([
       prisma.communityReaction.groupBy({ by: ["postId"], where: { postId: { in: postIds } }, _count: { _all: true } }),
-      prisma.communityComment.groupBy({ by: ["postId"], where: { postId: { in: postIds } }, _count: { _all: true } })
-    ]) : [[], []];
+      prisma.communityComment.groupBy({ by: ["postId"], where: { postId: { in: postIds } }, _count: { _all: true } }),
+      prisma.communityPost.groupBy({ by: ["sharedPostId"], where: { sharedPostId: { in: postIds } }, _count: { _all: true } })
+    ]) : [[], [], []];
     const reactionCounts = new Map(reactions.map(item => [item.postId, item._count._all]));
     const commentCounts = new Map(comments.map(item => [item.postId, item._count._all]));
+    const shareCounts = new Map(shares.map(item => [item.sharedPostId, item._count._all]));
+    const totalLikes = reactions.reduce((sum, item) => sum + item._count._all, 0);
     res.json({
       profile: publicProfile(profile, user),
-      stats: { posts: posts.length, friends },
-      posts: posts.map(post => ({ ...post, reactionCount: reactionCounts.get(post.id) || 0, commentCount: commentCounts.get(post.id) || 0 }))
+      stats: { posts: posts.length, friends, likes: totalLikes },
+      posts: posts.map(post => ({ ...post, reactionCount: reactionCounts.get(post.id) || 0, commentCount: commentCounts.get(post.id) || 0, shareCount: shareCounts.get(post.id) || 0 }))
     });
   } catch (e) { next(e); }
 });
