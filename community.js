@@ -60,7 +60,7 @@
       $("profile-post-count").textContent = String(stats.posts || 0);
       $("profile-friend-count").textContent = String(stats.friends || 0);
       $("social-profile-subject").textContent = [profile.bestSubject, profile.educationTrack, profile.programme].filter(Boolean).join(" · ");
-      $("social-profile-posts").innerHTML = posts.length ? posts.map(post => '<article class="social-profile-post">' + (post.mediaUrl ? '<img src="' + esc(post.mediaUrl) + '" alt="Your post" loading="lazy">' : post.videoUrl ? '<div class="social-profile-video">▶ Video post</div>' : '<div class="social-profile-text-post">' + esc((post.body || "").slice(0,180)) + '</div>') + '<div class="social-profile-post-meta">' + esc(post.subject || "Post") + '<span>' + (post.reactionCount || 0) + ' likes</span></div></article>').join("") : '<div class="empty-state social-profile-empty">Your posts will appear here after you publish your first post.</div>';
+      $("social-profile-posts").innerHTML = posts.length ? posts.map(post => '<article class="social-profile-post" data-profile-post="' + esc(post.id) + '">' + (post.mediaUrl ? '<img src="' + esc(post.mediaUrl) + '" alt="Your post" loading="lazy">' : post.videoUrl ? '<div class="social-profile-video">▶ Video post</div>' : '<div class="social-profile-text-post">' + esc((post.body || "").slice(0,180)) + '</div>') + '<div class="social-profile-post-meta">' + esc(post.subject || "Post") + '<span>' + (post.reactionCount || 0) + ' likes</span></div><div class="social-profile-post-controls"><button type="button" data-profile-edit="' + esc(post.id) + '" data-body="' + esc(post.body || "") + '" data-subject="' + esc(post.subject || "") + '" data-visibility="' + esc(post.visibility || "PUBLIC") + '">Edit</button><button type="button" data-profile-delete="' + esc(post.id) + '">Delete</button></div></article>').join("") : '<div class="empty-state social-profile-empty">Your posts will appear here after you publish your first post.</div>';
     } catch (e) { status(e.message); }
   }
   $("social-onboarding-form").addEventListener("submit",async e=>{e.preventDefault();const username=$("onboarding-username").value.trim().toLowerCase(),err=$("onboarding-error");err.textContent="";if(!/^[a-z0-9_]{3,30}$/.test(username)){err.textContent="Use 3–30 letters, numbers or underscores.";return;}const b=e.target.querySelector("button");b.disabled=true;try{await api("/community/profile/me",{method:"PATCH",body:JSON.stringify({username})});await loadProfile();}catch(x){err.textContent=x.message;}finally{b.disabled=false;}});
@@ -72,6 +72,27 @@
       $("post-body").value = example.dataset.example;
       $("post-body").focus({preventScroll:true});
       $("post-form").scrollIntoView({behavior:"smooth",block:"center"});
+    }
+  });
+  $("social-profile-posts").addEventListener("click",async e=>{
+    const edit=e.target.closest("[data-profile-edit]");
+    const remove=e.target.closest("[data-profile-delete]");
+    if(edit){
+      const body=window.prompt("Edit your post",edit.dataset.body||"");
+      if(body===null)return;
+      const subject=window.prompt("Update the subject (leave blank if none)",edit.dataset.subject||"");
+      if(subject===null)return;
+      const visibility=window.prompt("Post visibility: type PUBLIC or FOLLOWERS",(edit.dataset.visibility||"PUBLIC"));
+      if(visibility===null)return;
+      const safeVisibility=["PUBLIC","FOLLOWERS"].includes(visibility.trim().toUpperCase())?visibility.trim().toUpperCase():"PUBLIC";
+      try{await api("/community/posts/"+encodeURIComponent(edit.dataset.profileEdit),{method:"PATCH",body:JSON.stringify({body,subject,visibility:safeVisibility})});status("Your post has been updated.");await Promise.all([loadProfile(),loadFeed()]);}
+      catch(err){status(err.message);}
+      return;
+    }
+    if(remove){
+      if(!window.confirm("Delete this post? This cannot be undone."))return;
+      try{await api("/community/posts/"+encodeURIComponent(remove.dataset.profileDelete),{method:"DELETE"});status("Your post has been deleted.");await Promise.all([loadProfile(),loadFeed()]);}
+      catch(err){status(err.message);}
     }
   });
   $("profile-form").addEventListener("submit", async e => {
