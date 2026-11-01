@@ -337,8 +337,10 @@ router.post("/groups/:id/invitations", async (req, res, next) => {
     if (!group || group.status !== "ACTIVE") return res.status(404).json({ error: "Study group not found." });
     const membership = await prisma.groupMembership.findUnique({ where: { groupId_userId: { groupId: group.id, userId: req.userId } } });
     if (group.ownerId !== req.userId && !["OWNER", "ADMIN", "MODERATOR"].includes(membership?.role || "")) return res.status(403).json({ error: "Only group owners and moderators can invite students." });
-    const invitedUserId = clean(req.body?.userId, 100);
-    const invited = await getUser(invitedUserId);
+    const suppliedUserId = clean(req.body?.userId, 100);
+    const username = slug(req.body?.username);
+    const profile = !suppliedUserId && username ? await prisma.communityProfile.findUnique({ where: { username }, select: { userId: true } }) : null;
+    const invited = await getUser(suppliedUserId || profile?.userId || "");
     if (!invited || invited.id === req.userId) return res.status(404).json({ error: "Student not found." });
     if (group.educationTrack && group.educationTrack !== invited.educationTrack) return res.status(403).json({ error: "This group is restricted to another academic environment." });
     if (await isBlocked(req.userId, invited.id)) return res.status(403).json({ error: "This invitation cannot be sent." });
