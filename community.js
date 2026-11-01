@@ -177,10 +177,13 @@
   }
 
   let activeChat="";
+  let conversationCache=[];
+  window.ATCommunityState={getActiveChat:()=>activeChat,getConversations:()=>conversationCache,api};
   async function loadChats(){
     if(!requireLogin())return;
     try{
       const {conversations=[]}=await api("/community/chat");
+      conversationCache=conversations;
       $("chat-list").innerHTML=conversations.map(c=>'<button class="chat-item" data-chat="'+esc(c.id)+'">'+(c.kind==="GROUP"?"Study group conversation":"Direct conversation")+'<small class="post-meta">'+esc(c.lastMessage?.body||"No messages yet")+'</small></button>').join("")||'<div class="empty-state">No conversations yet. Search for a connection above.</div>';
     }catch(e){status(e.message);}
   }
@@ -200,8 +203,14 @@
     activeChat=id;
     try{
       const {messages=[]}=await api("/community/chat/"+encodeURIComponent(id)+"/messages");
-      $("chat-placeholder").hidden=true;$("chat-active").hidden=false;$("chat-title").textContent="Conversation";
-      $("chat-messages").innerHTML=messages.map(m=>'<div class="chat-bubble '+(m.senderId===JSON.parse(localStorage.getItem("academic-tracker-user")||"{}").id?"mine":"")+'">'+esc(m.body||"")+'</div>').join("");
+      $("chat-placeholder").hidden=true;$("chat-active").hidden=false;
+      const currentUser=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}").id;
+      const conversation=conversationCache.find(item=>item.id===id);
+      const other=conversation?.members?.find(member=>member.userId!==currentUser);
+      $("chat-title").textContent=other?.user?.name||(conversation?.kind==="GROUP"?"Study group":"Conversation");
+      const callAllowed=conversation?.kind==="DIRECT"&&Boolean(other);
+      $("audio-call").hidden=!callAllowed;$("video-call").hidden=!callAllowed;
+      $("chat-messages").innerHTML=messages.map(m=>'<div class="chat-bubble '+(m.senderId===currentUser?"mine":"")+'">'+(m.messageType==="VOICE_NOTE"&&m.mediaUrl?'<audio controls preload="metadata" src="'+esc(m.mediaUrl)+'"></audio>':esc(m.body||""))+'</div>').join("");
       $("chat-messages").scrollTop=$("chat-messages").scrollHeight;
       await api("/community/chat/"+encodeURIComponent(id)+"/read",{method:"PATCH",body:"{}"});
     }catch(e){status(e.message);}
