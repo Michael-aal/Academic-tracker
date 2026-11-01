@@ -1,5 +1,7 @@
 const express = require("express");
 const rateLimit = require("express-rate-limit");
+const bcrypt = require("bcryptjs");
+const { Prisma } = require("@prisma/client");
 const { prisma } = require("../prisma");
 const { requireAuth } = require("../middleware/auth");
 
@@ -18,6 +20,73 @@ async function fetchAllPages(delegate, args, pageSize = 500) {
   }
 }
 router.use(rateLimit({ windowMs: 60 * 1000, limit: 3, standardHeaders: "draft-7", legacyHeaders: false, keyGenerator: req => req.userId }));
+
+
+const accountDeletionLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 3,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  keyGenerator: req => req.userId,
+  message: { error: "Too many account deletion attempts. Please try again later." }
+});
+
+// Permanently delete the authenticated account and all rows owned by it.
+// The current password and explicit confirmation are required; the final
+// administrator is protected so the application cannot lose its only owner.
+router.delete("/me", accountDeletionLimiter, async (req, res, next) => {
+  try {
+    const password = req.body?.password;
+    const confirmation = req.body?.confirmation;
+    if (typeof password !== "string" || !password || Buffer.byteLength(password, "utf8") > 72) {
+      return res.status(400).json({ error: "Enter your current password to continue." });
+    }
+    if (confirmation !== "DELETE") {
+      return res.status(400).json({ error: 'Type DELETE exactly to confirm account removal.' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { id: true, role: true, passwordHash: true }
+    });
+    if (!user) return res.status(404).json({ error: "Account not found." });
+    const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+    if (!passwordMatches) return res.status(401).json({ error: "Your current password is incorrect." });
+
+    const result = await prisma.$transaction(async tx => {
+      await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${req.userId} FOR UPDATE`;
+      const current = await tx.user.findUnique({
+        where: { id: req.userId },
+        select: { id: true, role: true }
+      });
+      if (!current) return "missing";
+
+      if (["ADMIN", "DEVELOPER", "DEV"].includes(current.role)) {
+        const adminCount = await tx.user.count({
+          where: { role: { in: ["ADMIN", "DEVELOPER", "DEV"] } }
+        });
+        if (adminCount <= 1) return "last-admin";
+      }
+
+      // All user-owned academic, AI, support, subscription, credit, payment,
+      // and notification records use database cascade deletion.
+      await tx.user.delete({ where: { id: req.userId } });
+      return "deleted";
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+
+    if (result === "missing") return res.status(404).json({ error: "Account not found." });
+    if (result === "last-admin") {
+      return res.status(409).json({ error: "This is the only administrator account. Create another administrator before deleting it." });
+    }
+    res.set("Cache-Control", "no-store");
+    return res.json({ ok: true, deleted: true });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034") {
+      return res.status(409).json({ error: "Account deletion conflicted with another account change. Please try again." });
+    }
+    next(error);
+  }
+});
 
 router.get("/export", async (req, res, next) => {
   try {
