@@ -42,6 +42,8 @@ on:
       - "community.css"
       - "community.js"
       - "community-chat-media.js"
+      - "social-create.html"
+      - "social-create.js"
       - "community-admin.html"
       - "community-admin.css"
       - "community-admin.js"
@@ -107,6 +109,8 @@ on:
       - "community.css"
       - "community.js"
       - "community-chat-media.js"
+      - "social-create.html"
+      - "social-create.js"
       - "community-admin.html"
       - "community-admin.css"
       - "community-admin.js"
@@ -192,4 +196,4 @@ jobs:
           print("All local script and link assets referenced by root HTML pages exist.")
           PY
       - name: Check calculator and AI learning JavaScript syntax
-        run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../app.js && node --check ../ai-learning.js && node --check ../quiz-page.js && node --check ../ai-navigation.js && node --check ../educational-videos.js && node --check ../study-planner.js && node --check ../memory-mastery.js && node --check ../notes-summary.js && node --check ../global-theme.js && node --check ../global-navigation.js && node --check ../premium-page.js && node --check ../notifications.js && node --check ../english-studio.js && node --check ../level-up.js && node --check ../exam-simulator.js && node --check ../sw.js && node --check ../focus-music.js && node --check ../notes-workspace.js && node --check ../universal-notes.js && node --check ../account-data.js && node --check ../profile.js && node --check ../community.js && node --check ../community-chat-media.js && node --check ../community-admin.js
+        run: node --check ../calculator-engine.js && node --check ../calculator.js && node --check ../app.js && node --check ../ai-learning.js && node --check ../quiz-page.js && node --check ../ai-navigation.js && node --check ../educational-videos.js && node --check ../study-planner.js && node --check ../memory-mastery.js && node --check ../notes-summary.js && node --check ../global-theme.js && node --check ../global-navigation.js && node --check ../premium-page.js && node --check ../notifications.js && node --check ../english-studio.js && node --check ../level-up.js && node --check ../exam-simulator.js && node --check ../sw.js && node --check ../focus-music.js && node --check ../notes-workspace.js && node --check ../universal-notes.js && node --check ../account-data.js && node --check ../profile.js && node --check ../community.js && node --check ../community-chat-media.js && node --check ../social-create.js && node --check ../community-admin.js
