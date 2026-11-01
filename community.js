@@ -60,7 +60,7 @@
       $("profile-post-count").textContent = String(stats.posts || 0);
       $("profile-friend-count").textContent = String(stats.friends || 0);
       $("social-profile-subject").textContent = [profile.bestSubject, profile.educationTrack, profile.programme].filter(Boolean).join(" · ");
-      $("social-profile-posts").innerHTML = posts.length ? posts.map(post => '<article class="social-profile-post" data-profile-post="' + esc(post.id) + '">' + (post.mediaUrl ? '<img src="' + esc(post.mediaUrl) + '" alt="Your post" loading="lazy">' : post.videoUrl ? '<div class="social-profile-video">▶ Video post</div>' : '<div class="social-profile-text-post">' + esc((post.body || "").slice(0,180)) + '</div>') + '<div class="social-profile-post-meta">' + esc(post.subject || "Post") + '<span>' + (post.reactionCount || 0) + ' likes</span></div><div class="social-profile-post-controls"><button type="button" data-profile-edit="' + esc(post.id) + '" data-body="' + esc(post.body || "") + '" data-subject="' + esc(post.subject || "") + '" data-visibility="' + esc(post.visibility || "PUBLIC") + '">Edit</button><button type="button" data-profile-delete="' + esc(post.id) + '">Delete</button></div></article>').join("") : '<div class="empty-state social-profile-empty">Your posts will appear here after you publish your first post.</div>';
+      $("social-profile-posts").innerHTML = posts.length ? posts.map(post => '<article class="social-profile-post" data-profile-post="' + esc(post.id) + '">' + (post.mediaUrl ? '<img src="' + esc(post.mediaUrl) + '" alt="Your post" loading="lazy">' : post.videoUrl ? '<video class="social-profile-video-player" controls playsinline preload="metadata"><source src="' + esc(post.videoUrl) + '" type="video/mp4">Video unavailable.</video>' : '<div class="social-profile-text-post">' + esc((post.body || "").slice(0,180)) + '</div>') + '<div class="social-profile-post-meta">' + esc(post.subject || "Post") + '<span>' + (post.reactionCount || 0) + ' likes</span></div><div class="social-profile-post-controls"><button type="button" data-profile-edit="' + esc(post.id) + '" data-body="' + esc(post.body || "") + '" data-subject="' + esc(post.subject || "") + '" data-visibility="' + esc(post.visibility || "PUBLIC") + '">Edit</button><button type="button" data-profile-delete="' + esc(post.id) + '">Delete</button></div></article>').join("") : '<div class="empty-state social-profile-empty">Your posts will appear here after you publish your first post.</div>';
     } catch (e) { status(e.message); }
   }
   $("social-onboarding-form").addEventListener("submit",async e=>{e.preventDefault();const username=$("onboarding-username").value.trim().toLowerCase(),err=$("onboarding-error");err.textContent="";if(!/^[a-z0-9_]{3,30}$/.test(username)){err.textContent="Use 3–30 letters, numbers or underscores.";return;}const b=e.target.querySelector("button");b.disabled=true;try{await api("/community/profile/me",{method:"PATCH",body:JSON.stringify({username})});await loadProfile();}catch(x){err.textContent=x.message;}finally{b.disabled=false;}});
@@ -98,14 +98,19 @@
   $("profile-form").addEventListener("submit", async e => {
     e.preventDefault(); if (!requireLogin()) return;
     const interests = $("profile-interests").value.split(",").map(x => x.trim()).filter(Boolean).slice(0,12);
+    const submitButton=e.target.querySelector('button[type="submit"],button:not([type])');
+    if(submitButton){submitButton.disabled=true;submitButton.dataset.originalText=submitButton.textContent;submitButton.textContent="Saving profile…";}
     try {
-      await api("/community/profile/me", { method:"PATCH", body:JSON.stringify({
-        username:$("profile-username").value, bestSubject:$("profile-best-subject").value,
-        bio:$("profile-bio").value, avatarUrl:$("profile-avatar").value,
-        coverUrl:$("profile-cover").value, interests, visibility:$("profile-visibility").value
+      const result=await api("/community/profile/me", { method:"PATCH", body:JSON.stringify({
+        username:$("profile-username").value.trim(), bestSubject:$("profile-best-subject").value.trim(),
+        bio:$("profile-bio").value, avatarUrl:$("profile-avatar").value.trim(),
+        coverUrl:$("profile-cover").value.trim(), interests, visibility:$("profile-visibility").value
       })});
-      status("Your social profile settings have been saved."); loadProfile();
-    } catch (e) { status(e.message); }
+      status("Your social profile settings have been saved.");
+      if(result.profile)$("profile-username").value=result.profile.username||"";
+      await loadProfile();
+    } catch (e) { status("Profile could not be saved: "+e.message); }
+    finally{if(submitButton){submitButton.disabled=false;submitButton.textContent=submitButton.dataset.originalText||"Save profile settings";}}
   });
 
   async function loadFeed(savedOnly = showingSavedPosts) {
@@ -121,16 +126,16 @@
         const avatar = author.avatarUrl ? '<img src="' + esc(author.avatarUrl) + '" alt="">' : esc((author.displayName || "S").slice(0,1).toUpperCase());
         const shared = post.sharedPost;
         const sharedAuthor = shared?.author || {};
-        const sharedCard = shared ? '<div class="shared-post-card"><small>SHARED FROM @'+esc(sharedAuthor.username||"student")+'</small><strong>'+esc(sharedAuthor.displayName||"Student")+'</strong>'+(shared.body?'<p>'+esc(shared.body)+'</p>':'')+(shared.mediaUrl?'<img class="post-media" src="'+esc(shared.mediaUrl)+'" alt="Shared post media" loading="lazy">':'')+(shared.videoUrl?'<p><a target="_blank" rel="noopener noreferrer" href="'+esc(shared.videoUrl)+'">Open original video ↗</a></p>':'')+'</div>' : '';
+        const sharedCard = shared ? '<div class="shared-post-card"><small>SHARED FROM @'+esc(sharedAuthor.username||"student")+'</small><strong>'+esc(sharedAuthor.displayName||"Student")+'</strong>'+(shared.body?'<p>'+esc(shared.body)+'</p>':'')+(shared.mediaUrl?'<img class="post-media" src="'+esc(shared.mediaUrl)+'" alt="Shared post media" loading="lazy">':'')+(shared.videoUrl?'<video class="post-video" controls playsinline preload="metadata"><source src="'+esc(shared.videoUrl)+'" type="video/mp4">Your browser cannot play this video.</video>':'')+'</div>' : '';
         const ownerActions = post.authorId === currentUserId() ? '<div class="post-owner-actions"><button type="button" data-action="edit" data-id="'+esc(post.id)+'">Edit post</button><button type="button" data-action="delete" data-id="'+esc(post.id)+'">Delete post</button></div>' : '';
         return '<article class="panel post-card" data-post="' + esc(post.id) + '"><div class="post-author"><div class="post-avatar">' + avatar + '</div><div><strong>' + esc(author.displayName || "Student") + '</strong><small>@' + esc(author.username || "student") + ' · ' + esc(author.educationTrack || "") + (post.isFriendPost?' · Friend':'') + '</small></div></div>' +
           (post.body ? '<p class="post-body">' + esc(post.body) + '</p>' : '') +
           sharedCard +
-          (post.mediaUrl ? '<p><img class="post-media" src="' + esc(post.mediaUrl) + '" alt="Shared learning image" loading="lazy"></p>' : '') +
+          (post.mediaUrl ? '<img class="post-media" src="' + esc(post.mediaUrl) + '" alt="Shared learning image" loading="lazy">' : '') +
           (post.subject ? '<span class="post-subject">' + esc(post.subject) + '</span>' : '') +
-          (post.videoUrl ? '<p><a target="_blank" rel="noopener noreferrer" href="' + esc(post.videoUrl) + '">Open shared learning video ↗</a></p>' : '') +
-          '<div class="post-meta">' + new Date(post.createdAt).toLocaleString() + ' · ' + (post.reactionCount || 0) + ' reactions · ' + (post.commentCount || 0) + ' comments · ' + (post.shareCount || 0) + ' shares</div>' +
-          ownerActions + '<div class="post-actions"><button data-action="react" data-id="' + esc(post.id) + '">♡ Helpful</button><button data-action="comments" data-id="' + esc(post.id) + '">Comment</button><button data-action="share" data-id="' + esc(post.id) + '">Share</button><button data-action="save" data-id="' + esc(post.id) + '">' + (post.isSaved?'Saved ✓':'Save') + '</button>' + (post.authorId === currentUserId() ? '' : '<button data-action="report" data-id="' + esc(post.id) + '">Report</button>') + '</div><div class="post-comments" id="comments-' + esc(post.id) + '"></div></article>';
+          (post.videoUrl ? '<video class="post-video" controls playsinline preload="metadata"><source src="' + esc(post.videoUrl) + '" type="video/mp4">Your browser cannot play this video.</video>' : '') +
+          '<div class="post-meta">' + new Date(post.createdAt).toLocaleString() + ' · ' + (post.reactionCount || 0) + ' likes · ' + (post.commentCount || 0) + ' comments · ' + (post.shareCount || 0) + ' shares</div>' +
+          ownerActions + '<div class="post-actions" aria-label="Post actions"><button type="button" class="post-action-like' + (post.isLiked?' is-liked':'') + '" data-action="react" data-id="' + esc(post.id) + '">' + (post.isLiked?'♥ Liked':'♡ Like') + '</button><button type="button" data-action="comments" data-id="' + esc(post.id) + '">▢ Comment (' + (post.commentCount || 0) + ')</button><button type="button" data-action="share" data-id="' + esc(post.id) + '">↗ Share</button><button type="button" data-action="save" data-id="' + esc(post.id) + '">' + (post.isSaved?'Saved ✓':'☆ Save') + '</button>' + (post.authorId === currentUserId() ? '' : '<button type="button" data-action="report" data-id="' + esc(post.id) + '">Report</button>') + '</div><div class="post-comments" id="comments-' + esc(post.id) + '" hidden></div></article>';
       }).join("");
     } catch (e) { $("feed-list").innerHTML = '<div class="empty-state">' + esc(e.message) + '</div>'; }
   }
@@ -162,6 +167,22 @@
     if (destination) { tab(destination.dataset.socialDest); return; }
     if (e.target.closest("[data-social-create]")) location.href = "social-create.html";
   });
+  async function renderPostComments(postId){
+    const box=$("comments-"+postId);
+    if(!box)return;
+    box.hidden=false;
+    box.innerHTML='<p class="comments-loading">Loading comments…</p>';
+    const data=await api("/community/posts/"+encodeURIComponent(postId)+"/comments");
+    const comments=data.comments||[];
+    const roots=comments.filter(comment=>!comment.parentId);
+    box.innerHTML=(roots.length?roots.map(root=>{
+      const replies=comments.filter(comment=>comment.parentId===root.id);
+      return '<div class="comment-thread" data-comment="'+esc(root.id)+'"><p><strong>'+esc(root.authorName)+'</strong><span>'+esc(root.body)+'</span></p><button type="button" class="comment-reply-button" data-reply-to="'+esc(root.id)+'">Reply</button>'+
+        replies.map(reply=>'<div class="comment-reply"><p><strong>'+esc(reply.authorName)+'</strong><span>'+esc(reply.body)+'</span></p></div>').join("")+'</div>';
+    }).join(""):'<p class="no-comments">No comments yet. Start a helpful conversation.</p>')+
+      '<form class="comment-form" data-post="'+esc(postId)+'"><input name="body" maxlength="2000" placeholder="Add a thoughtful comment…" required><button type="submit" class="quiet-button">Comment</button></form>';
+  }
+
   $("feed-list").addEventListener("click", async e => {
     const replyButton=e.target.closest("[data-reply-to]");
     if(replyButton){
@@ -225,16 +246,9 @@
         status("Thanks. Your report has been sent for review.");
       }
       if(b.dataset.action==="comments"){
-        const data=await api("/community/posts/"+encodeURIComponent(id)+"/comments");
         const box=$("comments-"+id);
-        const comments=data.comments||[];
-        const roots=comments.filter(comment=>!comment.parentId);
-        box.innerHTML=roots.map(root=>{
-          const replies=comments.filter(comment=>comment.parentId===root.id);
-          return '<div class="comment-thread" data-comment="'+esc(root.id)+'"><p><strong>'+esc(root.authorName)+'</strong>: '+esc(root.body)+'</p><button type="button" class="comment-reply-button" data-reply-to="'+esc(root.id)+'">Reply</button>'+
-            replies.map(reply=>'<div class="comment-reply"><p><strong>'+esc(reply.authorName)+'</strong>: '+esc(reply.body)+'</p></div>').join("")+'</div>';
-        }).join("")+
-          '<form class="comment-form" data-post="'+esc(id)+'"><input name="body" maxlength="2000" placeholder="Add a comment"><button class="quiet-button">Comment</button></form>';
+        if(!box.hidden){box.hidden=true;return;}
+        await renderPostComments(id);
       }
     }catch(err){status(err.message);}
   });
@@ -242,8 +256,12 @@
   $("feed-list").addEventListener("submit",async e=>{
     if(!e.target.matches(".comment-form")) return; e.preventDefault(); if(!requireLogin()) return;
     const id=e.target.dataset.post, body=new FormData(e.target).get("body"), parentId=e.target.dataset.parent||null;
-    try { await api("/community/posts/"+encodeURIComponent(id)+"/comments",{method:"POST",body:JSON.stringify({body,parentId})}); loadFeed(); }
-    catch(err){status(err.message);}
+    try {
+      await api("/community/posts/"+encodeURIComponent(id)+"/comments",{method:"POST",body:JSON.stringify({body,parentId})});
+      await loadFeed(showingSavedPosts);
+      if(!parentId)await renderPostComments(id);
+      status("Comment added.");
+    } catch(err){status(err.message);}
   });
 
   $("people-search").addEventListener("submit",async e=>{
