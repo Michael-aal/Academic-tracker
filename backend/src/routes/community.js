@@ -127,7 +127,9 @@ router.get("/feed", async (req, res, next) => {
       prisma.communitySavedPost.findMany({ where: { userId: req.userId, postId: { in: postIds } }, select: { postId: true } }),
       prisma.communityPost.findMany({ where: { id: { in: posts.map(p => p.sharedPostId).filter(Boolean) } } })
     ]);
-    const sharedAuthorIds = [...new Set(sharedOriginals.map(p => p.authorId))];
+    const readableSharedOriginals = [];
+    for (const original of sharedOriginals) if (await canReadPost(original, req.userId)) readableSharedOriginals.push(original);
+    const sharedAuthorIds = [...new Set(readableSharedOriginals.map(p => p.authorId))];
     const [sharedUsers, sharedProfiles] = sharedOriginals.length ? await Promise.all([
       prisma.user.findMany({ where: { id: { in: sharedAuthorIds } }, select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } }),
       prisma.communityProfile.findMany({ where: { userId: { in: sharedAuthorIds } } })
@@ -140,7 +142,7 @@ router.get("/feed", async (req, res, next) => {
     const savedSet = new Set(savedRows.map(x => x.postId));
     const sharedUserMap = new Map(sharedUsers.map(u => [u.id, u]));
     const sharedProfileMap = new Map(sharedProfiles.map(p => [p.userId, p]));
-    const sharedMap = new Map(sharedOriginals.map(p => [p.id, {
+    const sharedMap = new Map(readableSharedOriginals.map(p => [p.id, {
       ...p,
       author: sharedUserMap.get(p.authorId) ? publicProfile(sharedProfileMap.get(p.authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, sharedUserMap.get(p.authorId)) : null
     }]));
