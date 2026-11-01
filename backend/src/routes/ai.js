@@ -88,7 +88,7 @@ async function persistAiUsage(req) {
   });
 }
 
-const ACTIONS = new Set(["tutor", "quiz", "summarize", "study-plan", "flashcards", "english", "story"]);
+const ACTIONS = new Set(["tutor", "quiz", "summarize", "study-plan", "flashcards", "english", "story", "word-spotlight"]);
 // Quiz attempts do not call the AI provider, but answer/submit endpoints still
 // perform database reads and writes. Keep those operations bounded per account.
 const quizAttemptLimiter = rateLimit({
@@ -118,6 +118,7 @@ function buildPrompt({ action, subject, topic, content, level, questionCount, ca
     quiz: "Return only one complete valid JSON object with top-level keys title and questions; do not include Markdown or surrounding text. Generate exactly " + questionCount + " unique, complete, academically accurate multiple-choice questions for the specified subject, topic, academic level, and " + difficulty + " difficulty. Each question object must contain these exact keys: id (unique string), question (complete string), options (array of exactly four objects), correctAnswer (one option ID), explanation (accurate string), and hint (non-empty clue that does not reveal the answer). Each option object must contain exactly id and text; option IDs must be A, B, C, D exactly once. correctAnswer must exactly match one of those IDs. Do not use alternate property names such as label/value, omit fields, duplicate questions/options, or stop before closing the JSON. Use supplied notes as the primary source when present and do not invent facts. Verify the question count and answer keys before returning JSON.",
     summarize: "Summarize the supplied study material for revision. Start with a short overview, then organize the main ideas under clear headings with important facts, definitions, steps, and formulas where relevant. Keep the summary focused on the supplied topic and subject, preserve the meaning, and do not add unsupported claims. Do not generate quiz questions, tests, flashcards, or self-test questions. If no notes were supplied, ask the student to paste notes.",
     flashcards: "Return only a JSON object with a cards array. Generate exactly " + cardCount + " accurate study flashcards for the specified subject and topic, using the supplied notes as the primary source when present. Each card must contain a concise question field and an accurate answer field. Make cards useful for active recall: definitions, processes, causes, formulas, distinctions, and key facts. Do not write multiple-choice options, quiz scores, or a test. Do not invent details absent from the notes when notes are provided. Keep each question under 700 characters and each answer under 1800 characters.",
+    "word-spotlight": "Return ONLY one valid JSON object with keys word, partOfSpeech, pronunciation, definition, example, and usageTip. Generate exactly one fresh, useful English vocabulary word appropriate for the signed-in student education track. Prefer an interesting, practical word rather than an obscure word. Do not choose any word listed in the excluded words supplied by the student. Include a clear part of speech, readable IPA pronunciation (prefer standard British English; do not invent uncertain IPA), a concise accurate definition, one natural original example sentence, and a short usage tip or common distinction. Keep explanations age-appropriate and easy to understand. Do not add Markdown or text outside the JSON object.",
     english: "Act as a patient English-language tutor. Adapt to the student education track. Explain vocabulary, spelling, pronunciation, parts of speech, grammar, sentence structure, punctuation, comprehension, writing and figures of speech. Define terms plainly, provide original examples, contrast common mistakes and include a short practice suggestion when useful. For pronunciation, provide syllable breakdown and IPA only when confident; distinguish British and American variants where relevant. Do not claim audio playback occurred. Keep explanations accurate and encouraging.",
     story: "Create one original, engaging English-learning short story suitable for a secondary-school learner. Return ONLY valid JSON with keys title, genre, readingLevel, estimatedMinutes, story, vocabulary, and questions. story must be 3–7 short paragraphs of clear, natural English. vocabulary must contain 4–6 objects with word, partOfSpeech, meaning, and example. questions must contain exactly 3 comprehension questions, each with question and answer. Make the plot coherent, age-appropriate, culturally inclusive, and genuinely original. Do not copy or imitate a known story. Use the requested topic and genre. Avoid graphic content, romantic themes, and unsafe challenges.",
     "study-plan": "Create a realistic, encouraging 7-day study plan for the supplied subject/topic, considering the student's programme, registered courses and target grades when relevant. Use short sessions, active recall, practice questions and review days. Include a clear daily task and a simple way to check understanding. Do not assume the student's available hours; suggest flexible 20–30 minute blocks."
@@ -297,8 +298,8 @@ router.post("/", validateAiRequest, aiCreditGate, aiUsageAudit, async (req, res)
     const completion = await requestChatCompletion({
       messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) }],
       temperature: action === "quiz" ? 0.2 : 0.4,
-      ...(action === "quiz" ? { response_format: { type: "json_object" } } : {}),
-      max_tokens: action === "quiz" ? Math.min(10000, 1800 + questionCount * 820) : action === "flashcards" ? 5000 : action === "story" ? 3200 : 1800
+      ...(["quiz", "word-spotlight"].includes(action) ? { response_format: { type: "json_object" } } : {}),
+      max_tokens: action === "quiz" ? Math.min(10000, 1800 + questionCount * 820) : action === "flashcards" ? 5000 : action === "story" ? 3200 : action === "word-spotlight" ? 650 : 1800
     }, { signal: controller.signal, onUsage: (usage, providerId, usedModel, providerStatus, providerOk) => recordAiUsage(req, usage, providerId, usedModel, providerStatus, providerOk) });
     const data = completion.data;
     provider = completion.provider;
@@ -336,6 +337,41 @@ router.post("/", validateAiRequest, aiCreditGate, aiUsageAudit, async (req, res)
       } catch (validationError) {
         console.error("AI flashcard validation failed:", validationError.message);
         return res.status(502).json({ error: "The AI returned incomplete or invalid memory cards. No cards were added; please try again." });
+      }
+    }
+
+    if (action === "word-spotlight") {
+      try {
+        const cleaned = answer.trim().replace(/^\x60{3}(?:json)?\s*/i, "").replace(/\s*\x60{3}$/i, "").trim();
+        let parsed;
+        try { parsed = JSON.parse(cleaned); }
+        catch (parseError) {
+          const firstBrace = cleaned.indexOf("{"), lastBrace = cleaned.lastIndexOf("}");
+          if (firstBrace < 0 || lastBrace <= firstBrace) throw parseError;
+          parsed = JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+        }
+        const word = typeof parsed.word === "string" ? parsed.word.trim() : "";
+        const partOfSpeech = typeof parsed.partOfSpeech === "string" ? parsed.partOfSpeech.trim() : "";
+        const pronunciation = typeof parsed.pronunciation === "string" ? parsed.pronunciation.trim() : "";
+        const definition = typeof parsed.definition === "string" ? parsed.definition.trim() : "";
+        const example = typeof parsed.example === "string" ? parsed.example.trim() : "";
+        const usageTip = typeof parsed.usageTip === "string" ? parsed.usageTip.trim() : "";
+        if (data?.choices?.[0]?.finish_reason === "length" ||
+            !/^[A-Za-z][A-Za-z'’-]{1,39}$/.test(word) ||
+            !partOfSpeech || partOfSpeech.length > 50 ||
+            !pronunciation || pronunciation.length > 100 ||
+            definition.length < 12 || definition.length > 350 ||
+            example.length < 12 || example.length > 350 ||
+            usageTip.length < 5 || usageTip.length > 250) {
+          throw new Error("Word spotlight response did not meet the required structure.");
+        }
+        return res.json({
+          wordSpotlight: { word, partOfSpeech, pronunciation, definition, example, usageTip },
+          action, model, provider
+        });
+      } catch (validationError) {
+        console.error("AI word spotlight validation failed:", validationError.message);
+        return res.status(502).json({ error: "The AI returned an incomplete word spotlight. No credits were charged; please try again." });
       }
     }
     if (action === "story") {
