@@ -51,12 +51,12 @@
     const body = { type, key };
 
     try {
-      document.querySelectorAll(".premium-buy").forEach(b => b.disabled = true);
+      document.querySelectorAll(".premium-buy:not(.free-plan-button)").forEach(b => b.disabled = true);
       const result = await request("/premium/initialize", { method: "POST", body: JSON.stringify(body) });
       if (!result.authorizationUrl) throw new Error("Paystack did not return a checkout link.");
       location.assign(result.authorizationUrl);
     } catch (e) { alertUser(e.message); }
-    finally { document.querySelectorAll(".premium-buy").forEach(b => b.disabled = false); }
+    finally { document.querySelectorAll(".premium-buy:not(.free-plan-button)").forEach(b => b.disabled = false); }
   }
   function escapeHtml(v) {
     return String(v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
