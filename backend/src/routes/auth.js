@@ -58,6 +58,20 @@ router.post("/register", registrationLimiter, async (req, res, next) => {
     if (educationTrack === "HIGHER" && (!institutionName || !programme || !studyLevel)) return res.status(400).json({ error: "Enter your institution, programme, and study level." });
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({ data: { name, email, passwordHash, role: "USER", educationTrack, institutionName: educationTrack === "HIGHER" ? institutionName : null, programme: educationTrack === "HIGHER" ? programme : null, studyLevel: educationTrack === "HIGHER" ? studyLevel : null } });
+    // Record referral attribution at registration. A referral stays PENDING;
+    // rewards are not issued until a separate eligibility review approves it.
+    const referralCode = cleanString(req.body?.referralCode, 24).toUpperCase();
+    if (referralCode) {
+      try {
+        const referral = await prisma.referralCode.findFirst({ where: { code: referralCode, active: true }, select: { userId: true, code: true } });
+        if (referral && referral.userId !== user.id) {
+          await prisma.referral.create({ data: { inviterId: referral.userId, referredUserId: user.id, code: referral.code, status: "PENDING" } });
+        }
+      } catch (referralError) {
+        // Referral tracking must never prevent a valid student account from being created.
+        console.error("Referral attribution unavailable:", referralError?.code || "REFERRAL_ERROR");
+      }
+    }
     return res.status(201).json({ token: issueToken(user.id, user.sessionVersion), user: publicUser(user) });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return res.status(409).json({ error: "An account with that email already exists." });
