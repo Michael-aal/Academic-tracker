@@ -165,7 +165,10 @@
         if(body===null)return;
         const subject=window.prompt("Update the subject (leave blank if none)",currentSubject);
         if(subject===null)return;
-        await api("/community/posts/"+encodeURIComponent(id),{method:"PATCH",body:JSON.stringify({body,subject})});
+        const visibilityChoice=window.prompt("Post visibility: type PUBLIC or FOLLOWERS", "PUBLIC");
+        if(visibilityChoice===null)return;
+        const visibility=["PUBLIC","FOLLOWERS"].includes(visibilityChoice.trim().toUpperCase())?visibilityChoice.trim().toUpperCase():"PUBLIC";
+        await api("/community/posts/"+encodeURIComponent(id),{method:"PATCH",body:JSON.stringify({body,subject,visibility})});
         status("Your post has been updated.");
         await Promise.all([loadFeed(showingSavedPosts),loadProfile()]);
         return;
@@ -254,7 +257,7 @@
     const accept=e.target.closest("[data-friend-request]");
     if(accept){
       accept.disabled=true;
-      try{await api("/community/friend-requests/"+encodeURIComponent(accept.dataset.friendRequest),{method:"POST",body:JSON.stringify({action:accept.dataset.requestAction||"accept"})});status("Friend request accepted.");loadFriends();}
+      try{const action=accept.dataset.requestAction||"accept";await api("/community/friend-requests/"+encodeURIComponent(accept.dataset.friendRequest),{method:"POST",body:JSON.stringify({action})});status(action==="accept"?"Friend request accepted.":"Friend request declined.");loadFriends();}
       catch(err){status(err.message);accept.disabled=false;}
       return;
     }
@@ -266,7 +269,7 @@
       return;
     }
     const b=e.target.closest("[data-follow]"); if(!b)return;
-    try { await api("/community/follow/"+encodeURIComponent(b.dataset.follow),{method:"POST",body:"{}"}); b.textContent="Request sent"; b.disabled=true; status("Friend request sent."); }
+    try { await api("/community/follow/"+encodeURIComponent(b.dataset.follow),{method:"POST",body:"{}"}); b.dataset.cancelFriend=b.dataset.follow; delete b.dataset.follow; b.textContent="Request sent · Cancel"; status("Friend request sent. You can cancel it until it is accepted."); }
     catch(err){status(err.message);}
   });
 
