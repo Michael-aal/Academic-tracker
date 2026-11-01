@@ -10,11 +10,7 @@ test("Social Media moderation status columns are present and queryable", {
   const { PrismaClient } = require("@prisma/client");
   const prisma = new PrismaClient();
   try {
-    const columns = await prisma.$queryRaw\`SELECT table_name, column_name
-      FROM information_schema.columns
-      WHERE table_schema = 'public'
-        AND ((table_name = 'community_profiles' AND column_name = 'status')
-          OR (table_name = 'study_groups' AND column_name = 'status'))\`;
+    const columns = await prisma.$queryRawUnsafe("SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public' AND ((table_name = 'community_profiles' AND column_name = 'status') OR (table_name = 'study_groups' AND column_name = 'status'))");
     const present = new Set(columns.map(row => row.table_name + "." + row.column_name));
     assert.ok(present.has("community_profiles.status"), "community_profiles.status migration is missing");
     assert.ok(present.has("study_groups.status"), "study_groups.status migration is missing");
