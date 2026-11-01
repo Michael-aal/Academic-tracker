@@ -34,15 +34,8 @@
   <section class="community-view active" id="view-feed">
     <div class="community-layout">
       <div class="community-main-column">
-        <form class="composer panel" id="post-form">
-          <label for="post-body">What would you like to share?</label>
-          <textarea id="post-body" maxlength="5000" rows="3" placeholder="Write something for your friends…"></textarea>
-          <div class="composer-row">
-            <input id="post-subject" maxlength="100" placeholder="Subject (optional)"><input id="post-media" type="file" accept="image/*,video/*" aria-label="Attach an image or video">
-            <select id="post-visibility" aria-label="Post visibility"><option value="PUBLIC">Public</option><option value="FOLLOWERS">Connections</option></select>
-            <button class="primary-button" type="submit">Publish post</button>
-          </div>
-        </form>
+        <form class="composer panel" id="post-form"><label for="post-body">What would you like to share?</label><textarea id="post-body" maxlength="5000" rows="4" placeholder="Write something for your friends…"></textarea><div id="post-media-preview" class="post-media-preview" hidden></div><div class="composer-row"><label class="media-picker-label" for="post-media">＋ Add photo or video</label><input id="post-media" type="file" accept="image/*,video/*" aria-label="Attach an image or video"><input id="post-subject" maxlength="100" placeholder="Subject (optional)"><select id="post-visibility" aria-label="Post visibility"><option value="PUBLIC">Everyone · Public</option><option value="FOLLOWERS">Connections</option></select><button class="primary-button" type="submit">Review post</button></div><p class="composer-hint">Your post is not shared until you review and publish it.</p></form>
+        <section class="post-review-overlay" id="post-review" hidden role="dialog" aria-modal="true"><div class="post-review-card"><div class="post-review-heading"><h2>Preview your post</h2><button type="button" id="close-post-review" class="quiet-button">✕</button></div><div id="post-review-author" class="post-review-author"></div><p id="post-review-body" class="post-review-body"></p><div id="post-review-media" class="post-review-media"></div><div class="post-review-details"><span id="post-review-subject"></span><span id="post-review-visibility"></span></div><p class="post-review-note">Publishing saves this post online for authenticated students.</p><div class="post-review-actions"><button type="button" class="outline-button" id="cancel-post-review">Keep editing</button><button type="button" class="primary-button" id="confirm-publish-post">Publish post</button></div></div></section>
         <section class="social-discover panel" aria-labelledby="social-discover-title">
           <div class="social-discover-heading"><div><p class="community-eyebrow">GET STARTED</p><h2 id="social-discover-title">Ideas worth sharing</h2><p>Examples to help you start posting. These are prompts, not posts from real students.</p></div><button class="quiet-button" type="button" data-tab="videos">Explore videos ↗</button></div>
           <div class="social-example-grid">
@@ -109,6 +102,7 @@
       </section>
     </section>
   </section>
+  <section class="social-onboarding-overlay" id="social-onboarding" hidden role="dialog" aria-modal="true"><form class="social-onboarding-card" id="social-onboarding-form"><h1>Choose your Social Media username</h1><p>Your username must be unique.</p><label for="onboarding-username">Username</label><div class="username-input-wrap"><span>@</span><input id="onboarding-username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}" placeholder="your_username" required></div><small>3–30 characters. Letters, numbers and underscores only.</small><div id="onboarding-error" role="alert"></div><button class="primary-button" type="submit">Create my Social Media profile</button></form></section>
   <nav class="social-bottom-nav" id="social-bottom-nav" aria-label="Social Media navigation">
   <button type="button" data-social-dest="feed" class="active" aria-current="page"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/></svg><span>Home</span></button>
   <button type="button" data-social-dest="people"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 5.5a3.5 3.5 0 0 1 0 7M17 14a5.5 5.5 0 0 1 4.5 5.5"/></svg><span>Friends</span></button>
