@@ -144,19 +144,47 @@ router.patch("/me", requireAuth, async (req, res, next) => {
     res.json({ user: publicUser(user) });
   } catch (error) { next(error); }
 });
-router.post("/admin/bootstrap", requireAuth, async (req, res, next) => {
+// One-time administrator bootstrap. This endpoint deliberately does not require
+// an existing account/session: registration reserves ADMIN_EMAIL, so requiring
+// a prior login would make first-time setup impossible.
+router.post("/admin/bootstrap", async (req, res, next) => {
   try {
     const configuredEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+    const configuredPassword = process.env.ADMIN_PASSWORD || "";
     const expectedSecret = process.env.ADMIN_BOOTSTRAP_SECRET || "";
+    const suppliedEmail = cleanString(req.body?.email, 254).toLowerCase();
+    const suppliedPassword = req.body?.password;
     const suppliedSecret = req.get("x-admin-bootstrap-secret") || "";
-    if (!configuredEmail || expectedSecret.length < 32) return res.status(503).json({ error: "Administrator bootstrap is not configured on the server." });
-    const suppliedBytes = Buffer.from(suppliedSecret);
-    const expectedBytes = Buffer.from(expectedSecret);
-    if (suppliedBytes.length !== expectedBytes.length || !require("crypto").timingSafeEqual(suppliedBytes, expectedBytes)) return res.status(403).json({ error: "Administrator setup secret is invalid." });
-    const account = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (!account || account.email.toLowerCase() !== configuredEmail) return res.status(403).json({ error: "Only the signed-in account matching the configured administrator email can be promoted." });
-    const user = await prisma.user.update({ where: { id: account.id }, data: { role: "ADMIN" }, select: { id: true, name: true, email: true, role: true } });
-    res.json({ ok: true, user: { ...user, isAdmin: true } });
+
+    if (!configuredEmail || configuredPassword.length < 10 || expectedSecret.length < 32) {
+      return res.status(503).json({ error: "Administrator bootstrap is not fully configured on the server." });
+    }
+    if (!suppliedEmail || typeof suppliedPassword !== "string" || !suppliedPassword) {
+      return res.status(400).json({ error: "Enter the configured administrator email and password." });
+    }
+
+    const crypto = require("node:crypto");
+    const safeEqual = (left, right) => {
+      const a = Buffer.from(left, "utf8");
+      const b = Buffer.from(right, "utf8");
+      return a.length === b.length && crypto.timingSafeEqual(a, b);
+    };
+    if (!safeEqual(suppliedSecret, expectedSecret)) {
+      return res.status(403).json({ error: "Administrator setup authorization failed." });
+    }
+    if (suppliedEmail !== configuredEmail || !safeEqual(suppliedPassword, configuredPassword)) {
+      return res.status(401).json({ error: "Administrator setup credentials are incorrect." });
+    }
+
+    const passwordHash = await bcrypt.hash(configuredPassword, 12);
+    const user = await prisma.user.upsert({
+      where: { email: configuredEmail },
+      create: { name: "Administrator", email: configuredEmail, passwordHash, role: "ADMIN" },
+      update: { passwordHash, role: "ADMIN" },
+      select: { id: true, name: true, email: true, role: true }
+    });
+    res.set("Cache-Control", "no-store");
+    return res.json({ ok: true, user: { ...user, isAdmin: true } });
   } catch (error) { next(error); }
 });
 module.exports = router;
