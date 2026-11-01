@@ -66,3 +66,9 @@ html[data-theme="light"] button.at-notes-launcher:focus-visible {
 .at-notes-launcher:focus-visible{outline:3px solid #c4b5fd;outline-offset:4px}
 .at-notes-launcher svg,.at-notes-launcher span{pointer-events:none}
 @media(prefers-reduced-motion:reduce){.at-notes-launcher,.at-notes-drawer,.at-notes-backdrop{transition:none!important}}
+
+/* Popup close control: keep the × legible and the surface theme-aware. */
+html[data-theme="dark"] .at-notes-drawer button.at-notes-close{background:#211832!important;background-color:#211832!important;background-image:none!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border:1px solid rgba(167,139,250,.48)!important;box-shadow:none!important}
+html[data-theme="light"] .at-notes-drawer button.at-notes-close{background:#f4effb!important;background-color:#f4effb!important;background-image:none!important;color:#35224f!important;-webkit-text-fill-color:#35224f!important;border:1px solid #dfd2ef!important;box-shadow:none!important}
+html[data-theme="dark"] .at-notes-drawer button.at-notes-close:hover,html[data-theme="dark"] .at-notes-drawer button.at-notes-close:focus-visible{background:#302044!important;border-color:#c4b5fd!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+html[data-theme="light"] .at-notes-drawer button.at-notes-close:hover,html[data-theme="light"] .at-notes-drawer button.at-notes-close:focus-visible{background:#ebe2fa!important;border-color:#a78bfa!important;color:#35224f!important;-webkit-text-fill-color:#35224f!important}
