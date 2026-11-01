@@ -358,6 +358,7 @@ model CommunityProfile {
   avatarUrl      String?  @map("avatar_url") @db.VarChar(500)
   coverUrl       String?  @map("cover_url") @db.VarChar(500)
   visibility     String   @default("PUBLIC") @db.VarChar(16)
+  status         String   @default("ACTIVE") @db.VarChar(16)
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
   @@index([bestSubject])
