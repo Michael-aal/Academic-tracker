@@ -143,18 +143,33 @@
         await api("/community/reports",{method:"POST",body:JSON.stringify({targetType:"POST",targetId:id,reason:"OTHER",details})});
         status("Thanks. Your report has been sent for review.");
       }
+      const replyButton=e.target.closest("[data-reply-to]");
+      if(replyButton){
+        const thread=replyButton.closest(".comment-thread");
+        const existing=thread.querySelector(".reply-form");
+        if(existing){existing.remove();return;}
+        thread.insertAdjacentHTML("beforeend",'<form class="comment-form reply-form" data-post="'+esc(thread.closest(".post-card")?.dataset.post||"")+'" data-parent="'+esc(replyButton.dataset.replyTo)+'"><input name="body" maxlength="2000" placeholder="Write a reply"><button class="quiet-button">Reply</button></form>');
+        thread.querySelector(".reply-form input")?.focus();
+        return;
+      }
       if (b.dataset.action==="comments") {
         const data=await api("/community/posts/"+encodeURIComponent(id)+"/comments");
         const box=$("comments-"+id);
-        box.innerHTML=(data.comments||[]).map(c=>'<p><strong>'+esc(c.authorName)+'</strong>: '+esc(c.body)+'</p>').join("")+
-          '<form class="comment-form" data-post="'+esc(id)+'"><input name="body" maxlength="2000" placeholder="Add a comment"><button class="quiet-button">Send</button></form>';
+        const comments=data.comments||[];
+        const roots=comments.filter(comment=>!comment.parentId);
+        box.innerHTML=roots.map(root=>{
+          const replies=comments.filter(comment=>comment.parentId===root.id);
+          return '<div class="comment-thread" data-comment="'+esc(root.id)+'"><p><strong>'+esc(root.authorName)+'</strong>: '+esc(root.body)+'</p><button type="button" class="comment-reply-button" data-reply-to="'+esc(root.id)+'">Reply</button>'+
+            replies.map(reply=>'<div class="comment-reply"><p><strong>'+esc(reply.authorName)+'</strong>: '+esc(reply.body)+'</p></div>').join("")+'</div>';
+        }).join("")+
+          '<form class="comment-form" data-post="'+esc(id)+'"><input name="body" maxlength="2000" placeholder="Add a comment"><button class="quiet-button">Comment</button></form>';
       }
     } catch(err) { status(err.message); }
   });
   $("feed-list").addEventListener("submit",async e=>{
     if(!e.target.matches(".comment-form")) return; e.preventDefault(); if(!requireLogin()) return;
-    const id=e.target.dataset.post, body=new FormData(e.target).get("body");
-    try { await api("/community/posts/"+encodeURIComponent(id)+"/comments",{method:"POST",body:JSON.stringify({body})}); loadFeed(); }
+    const id=e.target.dataset.post, body=new FormData(e.target).get("body"), parentId=e.target.dataset.parent||null;
+    try { await api("/community/posts/"+encodeURIComponent(id)+"/comments",{method:"POST",body:JSON.stringify({body,parentId})}); loadFeed(); }
     catch(err){status(err.message);}
   });
 
