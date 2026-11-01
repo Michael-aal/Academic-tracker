@@ -415,7 +415,7 @@ router.post("/chat/:id/messages", async (req, res, next) => {
     const body = clean(req.body?.body, 5000);
     const mediaUrl = messageType === "VOICE_NOTE" ? safeUrl(req.body?.mediaUrl) : null;
     if (messageType === "TEXT" && !body) return res.status(400).json({ error: "Message cannot be empty." });
-    if (messageType === "VOICE_NOTE" && (!mediaUrl || !new URL(mediaUrl).hostname.endsWith("cloudinary.com"))) return res.status(400).json({ error: "Voice notes must be uploaded to the configured Cloudinary media storage." });
+    if (messageType === "VOICE_NOTE" && (!mediaUrl || new URL(mediaUrl).hostname !== "res.cloudinary.com")) return res.status(400).json({ error: "Voice notes must be uploaded to the configured Cloudinary media storage." });
     const message = await prisma.chatMessage.create({ data: { conversationId: req.params.id, senderId: req.userId, body: messageType === "TEXT" ? body : null, mediaUrl, messageType } });
     await prisma.chatConversation.update({ where: { id: req.params.id }, data: { updatedAt: new Date() } });
     res.status(201).json({ message });
