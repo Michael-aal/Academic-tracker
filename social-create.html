@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="/">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Create an educational post for the Academic Tracker student community.">
+  <title>Create post · Academic Tracker</title>
+  <link rel="stylesheet" href="global-light-mode.css" data-global-light-mode>
+  <link rel="stylesheet" href="premium-theme.css">
+  <link rel="stylesheet" href="dark-mode-guard.css" data-dark-mode-guard>
+  <link rel="stylesheet" href="community.css">
+  <script src="global-theme.js" data-global-theme defer></script>
+</head>
+<body class="social-media-page social-create-page">
+  <main class="social-create-shell">
+    <header class="social-create-header">
+      <a href="social-media.html" class="community-profile-link">← Back to Social Media</a>
+      <p class="community-eyebrow">STUDENT COMMUNITY</p>
+      <h1>Create a post</h1>
+      <p>Share something useful, ask a thoughtful question or explain what you are learning.</p>
+    </header>
+    <p id="create-status" class="community-status" role="status" aria-live="polite"></p>
+    <form id="social-create-form" class="panel social-create-form">
+      <div class="social-create-author"><div id="create-avatar" class="post-avatar">S</div><div><strong id="create-name">Your profile</strong><small id="create-handle">@student</small></div></div>
+      <label for="create-body">What would you like to share?</label>
+      <textarea id="create-body" maxlength="5000" rows="7" placeholder="Share a study tip, explain a concept, ask a question or tell students what you are working on…" ></textarea>
+      <label for="create-subject">Subject or topic</label>
+      <input id="create-subject" maxlength="100" placeholder="e.g. Mathematics, Physics, English, Programming">
+      <label for="create-visibility">Who can see this post?</label>
+      <select id="create-visibility"><option value="PUBLIC">Everyone · Public</option><option value="FOLLOWERS">Friends only</option></select>
+      <label class="media-picker-label" for="create-media">＋ Add photo or video</label>
+      <input id="create-media" type="file" accept="image/*,video/*" aria-label="Attach an image or video">
+      <div id="create-preview" class="post-media-preview" hidden></div>
+      <p class="composer-hint">Images up to 8 MB. Videos up to 50 MB. Keep posts educational and respectful.</p>
+      <div class="social-create-actions"><a class="outline-button" href="social-media.html">Cancel</a><button id="publish-social-post" class="primary-button" type="submit">Publish post</button></div>
+    </form>
+  </main>
+  <script src="social-create.js" defer></script>
+</body>
+</html>
