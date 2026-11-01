@@ -111,3 +111,10 @@ body.social-media-page .post-actions button:hover{background:rgba(128,85,220,.1)
 .comment-form{display:flex;gap:7px;margin-top:10px}
 .comment-form input{min-width:0;flex:1;border:1px solid var(--community-border);border-radius:9px;padding:9px;background:transparent;color:var(--community-text)}
 .reply-form{margin:8px 0 0 18px}
+
+.feed-toolbar-actions{display:flex;gap:7px;align-items:center}
+.shared-post-card{margin:12px 0;padding:13px;border:1px solid var(--community-border);border-radius:13px;background:rgba(128,85,220,.045)}
+.shared-post-card small{display:block;color:var(--community-accent);font-size:9px;font-weight:850;letter-spacing:.1em;margin-bottom:7px}
+.shared-post-card strong{font-size:12px}
+.shared-post-card p{font-size:13px;line-height:1.55;white-space:pre-wrap}
+@media(max-width:560px){.feed-toolbar{align-items:flex-start}.feed-toolbar-actions{flex-wrap:wrap;justify-content:flex-end}.feed-toolbar-actions button{padding:8px 10px;font-size:11px}}
