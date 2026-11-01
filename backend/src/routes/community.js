@@ -324,10 +324,36 @@ router.get("/saved-posts", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.patch("/posts/:id", async (req, res, next) => {
+  try {
+    const existing = await prisma.communityPost.findFirst({ where: { id: req.params.id, authorId: req.userId } });
+    if (!existing) return res.status(404).json({ error: "Post not found or you cannot edit it." });
+    const data = {};
+    if (Object.prototype.hasOwnProperty.call(req.body || {}, "body")) data.body = clean(req.body.body, 5000);
+    if (Object.prototype.hasOwnProperty.call(req.body || {}, "subject")) data.subject = clean(req.body.subject, 100) || null;
+    if (Object.prototype.hasOwnProperty.call(req.body || {}, "visibility")) {
+      if (!["PUBLIC", "FOLLOWERS"].includes(req.body.visibility)) return res.status(400).json({ error: "Choose a valid post visibility." });
+      data.visibility = req.body.visibility;
+    }
+    const nextBody = Object.prototype.hasOwnProperty.call(data, "body") ? data.body : existing.body;
+    if (!nextBody && !existing.mediaUrl && !existing.videoUrl) return res.status(400).json({ error: "A post must contain text or media." });
+    if (!Object.keys(data).length) return res.status(400).json({ error: "There are no changes to save." });
+    const post = await prisma.communityPost.update({ where: { id: existing.id }, data });
+    res.json({ post });
+  } catch (e) { next(e); }
+});
+
 router.delete("/posts/:id", async (req, res, next) => {
   try {
-    const result = await prisma.communityPost.deleteMany({ where: { id: req.params.id, authorId: req.userId } });
-    if (!result.count) return res.status(404).json({ error: "Post not found or you cannot delete it." });
+    const post = await prisma.communityPost.findFirst({ where: { id: req.params.id, authorId: req.userId } });
+    if (!post) return res.status(404).json({ error: "Post not found or you cannot delete it." });
+    await prisma.$transaction([
+      prisma.communityComment.deleteMany({ where: { postId: post.id } }),
+      prisma.communityReaction.deleteMany({ where: { postId: post.id } }),
+      prisma.communitySavedPost.deleteMany({ where: { postId: post.id } }),
+      prisma.communityPost.updateMany({ where: { sharedPostId: post.id }, data: { sharedPostId: null } }),
+      prisma.communityPost.delete({ where: { id: post.id } })
+    ]);
     res.json({ ok: true });
   } catch (e) { next(e); }
 });
@@ -507,6 +533,27 @@ router.post("/follow/:userId", async (req, res, next) => {
     if (status === "PENDING") await notifySocial(target.id, req.userId, "New friend request", "A student sent you a friend request.", { type: "FRIEND_REQUEST", requesterId: req.userId });
     else await notifySocial(target.id, req.userId, "Friend request accepted", "Your friend request was accepted.", { type: "FRIEND_ACCEPTED", userId: req.userId });
     res.json({ ok: true, status });
+  } catch (e) { next(e); }
+});
+
+router.delete("/follow/:userId", async (req, res, next) => {
+  try {
+    const targetId = clean(req.params.userId, 100);
+    if (!targetId || targetId === req.userId) return res.status(400).json({ error: "Invalid student." });
+    const [outgoing, incoming] = await Promise.all([
+      prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: req.userId, followingId: targetId } } }),
+      prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: targetId, followingId: req.userId } } })
+    ]);
+    if (outgoing?.status === "PENDING") {
+      await prisma.communityFollow.delete({ where: { id: outgoing.id } });
+      return res.json({ ok: true, status: "REQUEST_CANCELLED" });
+    }
+    if (incoming?.status === "PENDING" && !outgoing) return res.status(409).json({ error: "This student sent you a request. Accept or decline it from Friend requests." });
+    await prisma.communityFollow.deleteMany({ where: { OR: [
+      { followerId: req.userId, followingId: targetId },
+      { followerId: targetId, followingId: req.userId }
+    ] } });
+    res.json({ ok: true, status: "REMOVED" });
   } catch (e) { next(e); }
 });
 
