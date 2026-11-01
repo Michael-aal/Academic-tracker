@@ -76,15 +76,33 @@ router.use(async (req, res, next) => {
 router.get("/feed", async (req, res, next) => {
   try {
     const limit = Math.min(30, Math.max(1, Number.parseInt(req.query.limit, 10) || 20));
-    const where = { visibility: "PUBLIC" };
+    const [outgoingFriends, incomingFriends] = await Promise.all([
+      prisma.communityFollow.findMany({ where: { followerId: req.userId, status: "ACCEPTED" }, select: { followingId: true } }),
+      prisma.communityFollow.findMany({ where: { followingId: req.userId, status: "ACCEPTED" }, select: { followerId: true } })
+    ]);
+    const incomingIds = new Set(incomingFriends.map(x => x.followerId));
+    const friendIds = outgoingFriends.map(x => x.followingId).filter(id => incomingIds.has(id));
+    const authorIds = [...new Set([req.userId, ...friendIds])];
+    const where = { OR: [
+      { visibility: "PUBLIC" },
+      { authorId: req.userId },
+      ...(friendIds.length ? [{ visibility: "FOLLOWERS", authorId: { in: friendIds } }] : [])
+    ] };
     if (req.query.subject) where.subject = clean(req.query.subject, 100);
     if (req.query.track === "SECONDARY" || req.query.track === "HIGHER") {
       const users = await prisma.user.findMany({ where: { educationTrack: req.query.track }, select: { id: true } });
-      where.authorId = { in: users.map(x => x.id) };
+      const allowed = new Set(users.map(x => x.id));
+      where.OR = where.OR.map(rule => rule.authorId === req.userId ? rule : rule.authorId?.in ? { ...rule, authorId: { in: rule.authorId.in.filter(id => allowed.has(id)) } } : rule);
+      where.OR = where.OR.filter(rule => !rule.authorId || (Array.isArray(rule.authorId.in) && rule.authorId.in.length) || rule.authorId === req.userId);
     }
     const posts = await prisma.communityPost.findMany({
       where, orderBy: { createdAt: "desc" }, take: limit,
       ...(typeof req.query.before === "string" && req.query.before ? { cursor: { id: req.query.before }, skip: 1 } : {})
+    });
+    posts.sort((a,b) => {
+      const aRank = a.authorId === req.userId || friendIds.includes(a.authorId) ? 0 : 1;
+      const bRank = b.authorId === req.userId || friendIds.includes(b.authorId) ? 0 : 1;
+      return aRank - bRank || new Date(b.createdAt) - new Date(a.createdAt);
     });
     const ids = [...new Set(posts.map(p => p.authorId))];
     const [users, profiles, reactions, comments] = await Promise.all([
@@ -99,6 +117,7 @@ router.get("/feed", async (req, res, next) => {
     const commentMap = new Map(comments.map(x => [x.postId, x._count._all]));
     res.json({ posts: posts.map(p => ({
       ...p, author: userMap.get(p.authorId) ? publicProfile(profileMap.get(p.authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, userMap.get(p.authorId)) : null,
+      isFriendPost: p.authorId === req.userId || friendIds.includes(p.authorId),
       reactionCount: reactionMap.get(p.id) || 0, commentCount: commentMap.get(p.id) || 0
     }))});
   } catch (e) { next(e); }
@@ -265,13 +284,22 @@ router.get("/people", async (req, res, next) => {
       select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true },
       take: 20
     });
-    const [profiles, blocks] = await Promise.all([
+    const [profiles, blocks, outgoing, incoming] = await Promise.all([
       prisma.communityProfile.findMany({ where: { userId: { in: users.map(u => u.id) }, visibility: "PUBLIC" } }),
-      prisma.communityBlock.findMany({ where: { OR: [{ blockerId: req.userId }, { blockedId: req.userId }] } })
+      prisma.communityBlock.findMany({ where: { OR: [{ blockerId: req.userId }, { blockedId: req.userId }] } }),
+      prisma.communityFollow.findMany({ where: { followerId: req.userId, followingId: { in: users.map(u => u.id) } } }),
+      prisma.communityFollow.findMany({ where: { followingId: req.userId, followerId: { in: users.map(u => u.id) } } })
     ]);
     const blockedIds = new Set(blocks.map(b => b.blockerId === req.userId ? b.blockedId : b.blockerId));
+    const outMap = new Map(outgoing.map(x => [x.followingId, x.status]));
+    const inMap = new Map(incoming.map(x => [x.followerId, x.status]));
     const map = new Map(profiles.map(p => [p.userId, p]));
-    res.json({ people: users.filter(u => map.has(u.id) && !blockedIds.has(u.id)).map(u => publicProfile(map.get(u.id), u)) });
+    res.json({ people: users.filter(u => map.has(u.id) && !blockedIds.has(u.id)).map(u => ({
+      ...publicProfile(map.get(u.id), u),
+      friendStatus: outMap.get(u.id) === "ACCEPTED" && inMap.get(u.id) === "ACCEPTED" ? "FRIENDS" :
+        inMap.get(u.id) === "PENDING" ? "REQUEST_RECEIVED" :
+        outMap.get(u.id) === "PENDING" ? "REQUEST_SENT" : "NONE"
+    })) });
   } catch (e) { next(e); }
 });
 
@@ -281,6 +309,44 @@ router.get("/follow-requests", async (req, res, next) => {
     const users = await prisma.user.findMany({ where: { id: { in: requests.map(r => r.followerId) } }, select: { id: true, name: true, educationTrack: true } });
     const map = new Map(users.map(u => [u.id, u]));
     res.json({ requests: requests.map(r => ({ ...r, requester: map.get(r.followerId) || null })) });
+  } catch (e) { next(e); }
+});
+
+router.get("/friends", async (req, res, next) => {
+  try {
+    const [outgoing, incoming] = await Promise.all([
+      prisma.communityFollow.findMany({ where: { followerId: req.userId, status: "ACCEPTED" }, select: { followingId: true } }),
+      prisma.communityFollow.findMany({ where: { followingId: req.userId, status: "ACCEPTED" }, select: { followerId: true } })
+    ]);
+    const incomingIds = new Set(incoming.map(x => x.followerId));
+    const ids = outgoing.map(x => x.followingId).filter(id => incomingIds.has(id));
+    const users = await prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } });
+    const profiles = await prisma.communityProfile.findMany({ where: { userId: { in: ids }, visibility: "PUBLIC" } });
+    const profileMap = new Map(profiles.map(p => [p.userId, p]));
+    res.json({ friends: users.filter(u => profileMap.has(u.id)).map(u => publicProfile(profileMap.get(u.id), u)) });
+  } catch (e) { next(e); }
+});
+
+router.post("/friend-requests/:id", async (req, res, next) => {
+  try {
+    const action = req.body?.action;
+    if (!["accept", "decline"].includes(action)) return res.status(400).json({ error: "Choose accept or decline." });
+    const request = await prisma.communityFollow.findFirst({ where: { id: req.params.id, followingId: req.userId, status: "PENDING" } });
+    if (!request) return res.status(404).json({ error: "Friend request not found or already handled." });
+    if (await isBlocked(req.userId, request.followerId)) return res.status(403).json({ error: "This connection is blocked." });
+    if (action === "decline") {
+      await prisma.communityFollow.delete({ where: { id: request.id } });
+      return res.json({ ok: true, status: "DECLINED" });
+    }
+    await prisma.$transaction([
+      prisma.communityFollow.update({ where: { id: request.id }, data: { status: "ACCEPTED" } }),
+      prisma.communityFollow.upsert({
+        where: { followerId_followingId: { followerId: req.userId, followingId: request.followerId } },
+        create: { followerId: req.userId, followingId: request.followerId, status: "ACCEPTED" },
+        update: { status: "ACCEPTED" }
+      })
+    ]);
+    res.json({ ok: true, status: "ACCEPTED" });
   } catch (e) { next(e); }
 });
 
