@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><base href="/">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("academic-tracker-theme")==="dark"?"dark":"light"}catch(_){document.documentElement.dataset.theme="light"}</script>
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Create an educational post for your Academic Tracker community.">
+<title>Create post · Academic Tracker</title>
+<link rel="stylesheet" href="global-light-mode.css" data-global-light-mode><link rel="stylesheet" href="premium-theme.css"><link rel="stylesheet" href="global-navigation.css"><link rel="stylesheet" href="dark-mode-guard.css" data-dark-mode-guard><link rel="stylesheet" href="theme-page-overrides.css" data-page-theme-overrides><link rel="stylesheet" href="community.css"><script src="global-theme.js" data-global-theme defer></script></head>
+<body class="social-media-page"><main class="community-shell create-post-shell">
+<header class="community-heading"><div><p class="community-eyebrow">SHARE WHAT YOU'RE LEARNING</p><h1>Create a post</h1><p>Share a useful explanation, question, study tip, photo or learning video.</p></div><a class="outline-button" href="social-media.html">← Back to Social Media</a></header>
+<div id="create-post-status" class="community-status" role="status" aria-live="polite"></div>
+<form id="create-post-form" class="panel create-post-form"><label for="create-post-body">Your post</label><textarea id="create-post-body" maxlength="5000" rows="7" placeholder="What have you learned, discovered or would like help understanding?"></textarea>
+<label class="media-picker-label" for="create-post-media">＋ Add photo or video</label><input id="create-post-media" type="file" accept="image/*,video/*"><div id="create-post-preview" class="post-media-preview" hidden></div>
+<div class="create-post-fields"><label>Subject<input id="create-post-subject" maxlength="100" placeholder="e.g. Mathematics, Physics, English, Programming"></label><label>Who can see this?<select id="create-post-visibility"><option value="PUBLIC">Everyone · Public</option><option value="FOLLOWERS">Friends only</option></select></label></div>
+<p class="muted-note">Keep posts educational, respectful and safe. Do not share private information about yourself or another student.</p><div class="create-post-actions"><a class="outline-button" href="social-media.html">Cancel</a><button class="primary-button" id="create-post-submit" type="submit">Publish post</button></div></form>
+</main><script src="create-post.js" defer></script><script src="global-navigation.js" defer></script></body></html>
