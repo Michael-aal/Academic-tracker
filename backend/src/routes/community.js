@@ -460,6 +460,10 @@ router.post("/friend-requests/:id", async (req, res, next) => {
     if (!["accept", "decline"].includes(action)) return res.status(400).json({ error: "Choose accept or decline." });
     const request = await prisma.communityFollow.findFirst({ where: { id: req.params.id, followingId: req.userId, status: "PENDING" } });
     if (!request) return res.status(404).json({ error: "Friend request not found or already handled." });
+    const [requester, recipient] = await Promise.all([getUser(request.followerId), getUser(req.userId)]);
+    if (!requester || !recipient || requester.educationTrack !== recipient.educationTrack) {
+      return res.status(403).json({ error: "Friend connections are limited to students in the same academic environment." });
+    }
     if (await isBlocked(req.userId, request.followerId)) return res.status(403).json({ error: "This connection is blocked." });
     if (action === "decline") {
       await prisma.communityFollow.delete({ where: { id: request.id } });
