@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem("academic-tracker-theme")==="dark"?"dark":"light"}catch(_){document.documentElement.dataset.theme="light"}</script>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Connect with students, share learning, join study groups and discover educational videos.">
+  <title>Community · Academic Tracker</title>
+  <link rel="stylesheet" href="global-light-mode.css" data-global-light-mode>
+  <link rel="stylesheet" href="premium-theme.css">
+  <link rel="stylesheet" href="global-navigation.css">
+  <link rel="stylesheet" href="dark-mode-guard.css" data-dark-mode-guard>
+  <link rel="stylesheet" href="theme-page-overrides.css" data-page-theme-overrides>
+  <link rel="stylesheet" href="community.css">
+  <script src="icon-system.js" defer></script>
+  <script src="global-theme.js" data-global-theme defer></script>
+</head>
+<body>
+<main class="community-shell">
+  <section class="community-heading">
+    <div><p class="community-eyebrow">LEARN TOGETHER</p><h1>Student community</h1><p>Connect, share ideas and find your next learning opportunity.</p></div>
+    <a class="community-profile-link" href="#profile" data-tab-link="profile">Your profile <span aria-hidden="true">↗</span></a>
+  </section>
+  <nav class="community-tabs" aria-label="Community sections">
+    <button class="active" data-tab="feed">Feed</button>
+    <button data-tab="people">Discover</button>
+    <button data-tab="groups">Groups</button>
+    <button data-tab="videos">Videos</button>
+    <button data-tab="messages">Messages</button>
+    <button data-tab="referrals">Invite friends</button>
+    <button data-tab="profile">Profile</button>
+  </nav>
+  <div id="community-status" class="community-status" role="status" aria-live="polite"></div>
+  <section class="community-view active" id="view-feed">
+    <div class="community-layout">
+      <div class="community-main-column">
+        <form class="composer panel" id="post-form">
+          <label for="post-body">Share something with your learning community</label>
+          <textarea id="post-body" maxlength="5000" rows="3" placeholder="Ask a question, share an idea or celebrate a learning milestone…"></textarea>
+          <div class="composer-row">
+            <input id="post-subject" maxlength="100" placeholder="Subject (optional)">
+            <select id="post-visibility" aria-label="Post visibility"><option value="PUBLIC">Public</option><option value="FOLLOWERS">Connections</option></select>
+            <button class="primary-button" type="submit">Publish post</button>
+          </div>
+        </form>
+        <div class="feed-toolbar"><h2>Latest discussions</h2><button class="quiet-button" id="refresh-feed" type="button">Refresh</button></div>
+        <div id="feed-list" class="feed-list"><div class="empty-state">Loading community posts…</div></div>
+      </div>
+      <aside class="community-side-column">
+        <section class="panel side-card"><h3>Your learning identity</h3><div id="mini-profile">Loading profile…</div><button class="text-button" data-tab="profile">Edit profile</button></section>
+        <section class="panel side-card"><h3>Discover study groups</h3><p>Find people learning the same subjects.</p><button class="outline-button" data-tab="groups">Explore groups</button></section>
+        <section class="panel side-card"><h3>Invite your classmates</h3><p>Share Academic Tracker with people you study with.</p><button class="outline-button" data-tab="referrals">Open referral center</button></section>
+      </aside>
+    </div>
+  </section>
+  <section class="community-view" id="view-people">
+    <section class="panel section-panel"><h2>Find students</h2><p>Search by student name or institution. Private profiles are not listed.</p><form id="people-search" class="search-row"><input id="people-query" minlength="2" placeholder="Search students or institutions"><button class="primary-button">Search</button></form><div id="people-list" class="people-list"></div></section>
+  </section>
+  <section class="community-view" id="view-groups">
+    <div class="section-heading"><div><h2>Study groups</h2><p>Learn with people who share your interests.</p></div><button class="primary-button" id="show-group-form">Create group</button></div>
+    <form id="group-form" class="panel group-form" hidden><h3>Create a study group</h3><label>Group name<input id="group-title" maxlength="100" required></label><label>Description<textarea id="group-description" rows="3" maxlength="1000" required></textarea></label><label>Subject<input id="group-subject" maxlength="100" placeholder="Optional"></label><label class="check-line"><input id="group-cross-level" type="checkbox"> Allow students from both academic environments</label><label>Visibility<select id="group-visibility"><option value="PUBLIC">Public</option><option value="PRIVATE">Private</option><option value="INVITE">Invitation only</option></select></label><button class="primary-button">Create group</button></form>
+    <div id="group-list" class="group-grid"><div class="empty-state">Loading groups…</div></div>
+  </section>
+  <section class="community-view" id="view-videos">
+    <section class="panel section-panel"><h2>Learning videos</h2><p>Recommendations use your Best Subject and your feedback. You can change your interests in your profile.</p><div id="video-preferences" class="preference-chips"></div><form id="video-search" class="search-row"><input id="video-query" placeholder="Search an educational topic"><button class="primary-button">Search videos</button></form><div id="video-results" class="video-grid"></div><a class="text-button" href="educational-videos.html">Open full educational video studio ↗</a></section>
+  </section>
+  <section class="community-view" id="view-messages">
+    <div class="chat-layout">
+      <section class="panel chat-list-panel"><h2>Messages</h2><form id="chat-people-search" class="search-row"><input id="chat-person-query" placeholder="Find a connection"><button class="primary-button">Find</button></form><div id="chat-people-results"></div><div id="chat-list"></div></section>
+      <section class="panel chat-window"><div id="chat-placeholder" class="empty-state">Choose an existing conversation or find an accepted connection to start chatting.</div><div id="chat-active" hidden><header id="chat-title"></header><div id="chat-messages" class="chat-messages"></div><form id="chat-send" class="chat-send"><textarea id="chat-message" rows="2" maxlength="5000" placeholder="Write a message…"></textarea><button class="primary-button">Send</button></form><p class="muted-note">Voice-note uploads and live calling require media storage and TURN credentials to be configured before they can be enabled.</p></div></section>
+    </div>
+  </section>
+  <section class="community-view" id="view-referrals">
+    <div class="referral-grid"><section class="panel section-panel"><p class="community-eyebrow">GROW THE COMMUNITY</p><h2>Invite friends</h2><p>Share your unique invitation link. Referral credit stays pending until eligibility checks are completed.</p><div id="referral-card" class="referral-card">Loading your referral link…</div></section><section class="panel section-panel"><h2>Your referral activity</h2><div id="referral-stats"></div></section></div>
+  </section>
+  <section class="community-view" id="view-profile">
+    <section class="panel profile-editor"><div class="section-heading"><div><h2>Your social profile</h2><p>Choose how other students discover you.</p></div></div><form id="profile-form"><div class="profile-form-grid"><label>Username<input id="profile-username" maxlength="30" required></label><label>Best Subject<input id="profile-best-subject" maxlength="100" placeholder="e.g. Mathematics"></label><label class="full-field">Short bio<textarea id="profile-bio" rows="3" maxlength="280" placeholder="What are you learning or interested in?"></textarea></label><label>Profile image URL<input id="profile-avatar" type="url" placeholder="https://…"></label><label>Cover image URL<input id="profile-cover" type="url" placeholder="https://…"></label><label>Interests (comma separated)<input id="profile-interests" placeholder="Programming, Physics, English"></label><label>Profile visibility<select id="profile-visibility"><option value="PUBLIC">Public</option><option value="PRIVATE">Private</option></select></label></div><button class="primary-button">Save profile</button></form><div id="profile-summary" class="profile-summary"></div></section>
+  </section>
+  <footer class="community-footer">Academic Tracker Community · Keep learning, keep it respectful.</footer>
+</main>
+<script src="community.js" defer></script>
+<script src="global-navigation.js" defer></script>
+</body>
+</html>
