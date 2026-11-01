@@ -29,8 +29,8 @@
     ["Notes Summary","notes-summary.html","notes"],
     ["University Dashboard","university-dashboard.html","university"],
     ["Profile","profile.html","user"],
-    ["Community","community.html","users"],
-    ["Messages","community.html#messages","support"],
+    ["Social Media","social-media.html","users"],
+    ["Social Media Messages","social-media.html#messages","support"],
     ["Support & Messages","support.html","support"]
   ];
   const account = (() => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}"); } catch { return {}; } })();
