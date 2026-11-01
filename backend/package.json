@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:validate": "prisma validate",
-    "test": "node --test"
+    "test": "node --test",
+    "prestart": "prisma migrate deploy"
   },
   "engines": {
     "node": "22.x"
@@ -23,9 +24,8 @@
     "express": "4.21.2",
     "express-rate-limit": "7.5.0",
     "helmet": "8.0.0",
-    "jsonwebtoken": "9.0.2"
-  },
-  "devDependencies": {
+    "jsonwebtoken": "9.0.2",
     "prisma": "6.19.0"
-  }
+  },
+  "devDependencies": {}
 }
