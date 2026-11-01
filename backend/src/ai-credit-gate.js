@@ -10,6 +10,7 @@ const ACTION_CREDIT_COSTS = Object.freeze({
   "study-plan": 2,
   flashcards: 2,
   english: 1,
+  "word-spotlight": 1,
   story: 3
 });
 
