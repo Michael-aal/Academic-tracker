@@ -912,7 +912,17 @@ router.delete("/blocks/:userId", async (req, res, next) => {
 router.get("/blocks", async (req, res, next) => {
   try {
     const blocks = await prisma.communityBlock.findMany({ where: { blockerId: req.userId }, orderBy: { createdAt: "desc" } });
-    res.json({ blocks });
+    const ids = blocks.map(block => block.blockedId);
+    const [users, profiles] = await Promise.all([
+      prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } }),
+      prisma.communityProfile.findMany({ where: { userId: { in: ids } }, select: { userId: true, username: true } })
+    ]);
+    const userMap = new Map(users.map(user => [user.id, user]));
+    const profileMap = new Map(profiles.map(profile => [profile.userId, profile]));
+    res.json({ blocks: blocks.map(block => ({
+      ...block, displayName: userMap.get(block.blockedId)?.name || "Student",
+      username: profileMap.get(block.blockedId)?.username || ""
+    })) });
   } catch (e) { next(e); }
 });
 router.post("/reports", async (req, res, next) => {
