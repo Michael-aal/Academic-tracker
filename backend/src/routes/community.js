@@ -7,6 +7,13 @@ const { requireAuth } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/admin");
 
 const router = express.Router();
+
+// Public, read-only probe used to distinguish an API deployment/mount problem
+// from authentication or username-onboarding failures on protected endpoints.
+router.get("/health", (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ ok: true, service: "academic-tracker-social-api" });
+});
 const writeLimit = rateLimit({
   windowMs: 15 * 60 * 1000, limit: 80, standardHeaders: "draft-7", legacyHeaders: false,
   keyGenerator: req => req.userId,
