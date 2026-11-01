@@ -353,6 +353,45 @@ router.post("/videos/engagement", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.get("/videos/recommendations", async (req, res, next) => {
+  try {
+    if (!process.env.YOUTUBE_API_KEY) return res.status(503).json({ error: "Educational video recommendations require YOUTUBE_API_KEY." });
+    const profile = await prisma.communityProfile.findUnique({ where: { userId: req.userId } });
+    const user = await getUser(req.userId);
+    const events = await prisma.videoEngagement.findMany({ where: { userId: req.userId, createdAt: { gte: new Date(Date.now() - 90 * 86400000) } }, orderBy: { createdAt: "desc" }, take: 300 });
+    const scores = new Map();
+    if (profile?.bestSubject) scores.set(profile.bestSubject, 10);
+    for (const interest of Array.isArray(profile?.interests) ? profile.interests : []) scores.set(interest, (scores.get(interest) || 0) + 4);
+    for (const event of events) {
+      if (!event.subject) continue;
+      const weight = event.action === "NOT_INTERESTED" ? -8 : event.action === "SKIP" ? -2 : event.action === "SAVE" ? 7 : event.action === "LIKE" ? 5 : event.action === "WATCH" ? Math.min(5, event.watchSeconds / 30) : 1;
+      scores.set(event.subject, (scores.get(event.subject) || 0) + weight);
+    }
+    const ranked = [...scores.entries()].filter(([, score]) => score > 0).sort((a, b) => b[1] - a[1]).slice(0, 4);
+    const topics = ranked.length ? ranked.map(([subject]) => subject) : [user?.educationTrack === "HIGHER" ? "university study skills" : "secondary school learning"];
+    const query = topics.join(" ") + " educational lesson tutorial";
+    const params = new URLSearchParams({ part: "snippet", type: "video", videoCategoryId: "27", videoEmbeddable: "true", safeSearch: "strict", maxResults: "16", order: "relevance", q: query, key: process.env.YOUTUBE_API_KEY });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    try {
+      const response = await fetch("https://www.googleapis.com/youtube/v3/search?" + params.toString(), { signal: controller.signal, headers: { Accept: "application/json" } });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return res.status(response.status === 403 ? 503 : 502).json({ error: "The educational video provider is temporarily unavailable." });
+      const seen = new Set();
+      const items = (Array.isArray(data.items) ? data.items : []).filter(item => item?.id?.videoId && item?.snippet?.title && item?.snippet?.channelTitle).map(item => {
+        const title = String(item.snippet.title).slice(0, 300);
+        const description = String(item.snippet.description || "").slice(0, 600);
+        const haystack = (title + " " + description).toLowerCase();
+        const matched = ranked.map(([subject, score]) => ({ subject, score })).filter(x => haystack.includes(x.subject.toLowerCase()));
+        const score = matched.reduce((sum, x) => sum + x.score, 0) || 1;
+        return { id: item.id.videoId, title, channelTitle: String(item.snippet.channelTitle).slice(0, 160), description, thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.default?.url || "", recommendedSubject: matched[0]?.subject || topics[0], recommendationScore: score };
+      }).filter(item => /^[-_a-zA-Z0-9]{11}$/.test(item.id) && /^https:\/\/(i\.ytimg\.com|img\.youtube\.com)\//.test(item.thumbnail)).filter(item => { if (seen.has(item.id)) return false; seen.add(item.id); return true; }).sort((a,b) => b.recommendationScore-a.recommendationScore);
+      res.set("Cache-Control", "private, max-age=180");
+      res.json({ items, topics, algorithm: "profile-plus-feedback-hybrid-v1" });
+    } finally { clearTimeout(timeout); }
+  } catch (e) { next(e); }
+});
+
 router.get("/videos/preferences", async (req, res, next) => {
   try {
     const profile = await prisma.communityProfile.findUnique({ where: { userId: req.userId } });
