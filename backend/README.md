@@ -101,3 +101,22 @@ The `/api/ai` endpoint accepts `tutor`, `quiz`, `summarize`, `study-plan`, and `
 ## Proxy and rate-limit configuration
 
 In production, Express trusts exactly one reverse-proxy hop because the API is deployed behind Render's ingress. This allows IP-based rate limits to use the originating client address rather than grouping every visitor under the proxy address. Forwarded headers are not trusted in local development. The coarse IP limiter uses the built-in in-memory store and is intended as a single-instance safeguard; use a shared rate-limit store before horizontally scaling general API traffic. AI spend limits are PostgreSQL-backed and shared across instances.
+
+
+## Student community, chat and referrals
+
+The community feature is mounted at `/api/community`. It stores social profiles separately from academic records and supports public posts, reactions, comments, student discovery, connection requests, study groups, expiring stories, video-interest signals, referral attribution, direct/group chat records, and one-to-one WebRTC call signalling.
+
+The static frontend entry point is `/community.html`. Public feed/profile discovery is read-only; posting, connecting, joining groups, messaging and referrals require authentication. Private direct chats and calls require accepted connections in the same education track. Cross-level study groups can be created explicitly and remain subject to moderation. Referral attribution is recorded as PENDING; account registration alone does not grant rewards.
+
+### Optional media and call configuration
+
+Set the following server-side Render variables to enable voice-note uploads and improve calling reliability:
+
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — signed voice-note uploads. The API returns short-lived upload signatures only to conversation members.
+- `TURN_URL`, `TURN_USERNAME`, `TURN_CREDENTIAL` — TURN service credentials. STUN-only calling may fail on some mobile networks and restrictive NATs.
+- `PUBLIC_APP_URL` — canonical public frontend origin used in referral links. If omitted, the API uses the browser request origin.
+
+Cloudinary is not configured by this code change. Do not enable production voice notes until the media account, upload limits, retention policy and abuse handling are configured. WebRTC call signalling is persisted through authenticated API polling; a TURN service is strongly recommended before describing calling as reliable on all networks. Group video calls and media uploads for public posts/stories are not included in this initial implementation.
+
+Run `npx prisma migrate deploy` on the backend after reviewing the new migration. Validate the Prisma schema and run backend tests before deployment. No production migration or external media/calling credentials are applied by a Git branch.
