@@ -73,24 +73,27 @@ router.post("/login", loginLimiter, async (req, res, next) => {
     const configuredAdminPassword = process.env.ADMIN_PASSWORD || "";
     const user = await prisma.user.findUnique({ where: { email } });
 
-    if (configuredAdminEmail && email === configuredAdminEmail && user?.role === "ADMIN") {
-      if (!configuredAdminPassword) {
-        return res.status(503).json({ error: "Administrator login is not configured on the server." });
-      }
-      // Compare the private environment value without an early-exit string comparison.
+    // Database password hashes remain the primary credential for every account.
+    // For the configured, already-promoted owner account, also accept the
+    // server-only ADMIN_PASSWORD as a recovery/operations credential. Crucially,
+    // a stale or mismatched ADMIN_PASSWORD must never block the valid account
+    // password stored as a bcrypt hash.
+    const databasePasswordMatches = user
+      ? await bcrypt.compare(password, user.passwordHash)
+      : false;
+
+    let configuredPasswordMatches = false;
+    if (user && configuredAdminEmail && email === configuredAdminEmail &&
+        user.role === "ADMIN" && configuredAdminPassword) {
       const supplied = Buffer.from(password, "utf8");
       const expected = Buffer.from(configuredAdminPassword, "utf8");
-      const passwordMatches = supplied.length === expected.length &&
+      configuredPasswordMatches = supplied.length === expected.length &&
         require("node:crypto").timingSafeEqual(supplied, expected);
-      if (!passwordMatches) return res.status(401).json({ error: "Email or password is incorrect." });
-      return res.json({ token: issueToken(user.id, user.sessionVersion), user: publicUser(user) });
     }
 
-    // Before one-time promotion, the reserved owner account must still be able
-    // to sign in with its existing database password to complete bootstrap.
-    // All ordinary accounts continue to use their own bcrypt password and JWT.
-    const valid = user && await bcrypt.compare(password, user.passwordHash);
-    if (!valid) return res.status(401).json({ error: "Email or password is incorrect." });
+    if (!databasePasswordMatches && !configuredPasswordMatches) {
+      return res.status(401).json({ error: "Email or password is incorrect." });
+    }
     return res.json({ token: issueToken(user.id, user.sessionVersion), user: publicUser(user) });
   } catch (error) { next(error); }
 });
