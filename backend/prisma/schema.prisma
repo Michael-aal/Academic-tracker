@@ -563,3 +563,31 @@ model CallSignal {
   @@index([callId, createdAt])
   @@map("call_signals")
 }
+
+
+model CommunityBlock {
+  id        String   @id @default(cuid())
+  blockerId String   @map("blocker_id")
+  blockedId String   @map("blocked_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@unique([blockerId, blockedId])
+  @@index([blockedId, createdAt])
+  @@map("community_blocks")
+}
+
+model CommunityReport {
+  id         String   @id @default(cuid())
+  reporterId String   @map("reporter_id")
+  targetType String   @map("target_type") @db.VarChar(20)
+  targetId   String   @map("target_id") @db.VarChar(120)
+  reason     String   @db.VarChar(40)
+  details    String?  @db.VarChar(1000)
+  status     String   @default("OPEN") @db.VarChar(16)
+  reviewedBy String?  @map("reviewed_by")
+  reviewedAt DateTime? @map("reviewed_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  @@index([status, createdAt])
+  @@index([reporterId, createdAt])
+  @@index([targetType, targetId])
+  @@map("community_reports")
+}
