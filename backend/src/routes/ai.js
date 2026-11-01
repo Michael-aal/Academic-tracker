@@ -291,10 +291,11 @@ router.post("/", validateAiRequest, aiCreditGate, aiUsageAudit, async (req, res)
   const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
 
   try {
-    const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } });
+    // Keep personal and academic records in our database; the AI provider only
+    // receives the broad education track needed to adapt explanations.
+    const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { educationTrack: true } });
     if (!user) return res.status(401).json({ error: "Account not found. Please sign in again." });
-    const courses = user.educationTrack === "HIGHER" ? await prisma.universityCourse.findMany({ where: { userId: req.userId }, select: { code: true, title: true, creditUnits: true, targetScore: true, results: { orderBy: { updatedAt: "desc" }, take: 6, select: { academicYear: true, semester: true, caScore: true, examScore: true } } }, orderBy: { code: "asc" }, take: 60 }) : [];
-    const studentProfile = { ...user, courses };
+    const studentProfile = { educationTrack: user.educationTrack, courses: [] };
     const completion = await requestChatCompletion({
       messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) }],
       temperature: action === "quiz" ? 0.2 : 0.4,
