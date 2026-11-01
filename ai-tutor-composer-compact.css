@@ -1,0 +1,52 @@
+/* Compact AI Tutor composer: prioritize conversation space on phones and desktop. */
+.ai-tutor-page .tutor-composer-panel{
+  padding:8px 10px;
+  margin:10px 0 12px;
+  border-radius:18px;
+}
+.ai-tutor-page .tutor-composer{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:end;
+  gap:6px 8px;
+}
+.ai-tutor-page .tutor-composer textarea{
+  grid-column:1;
+  grid-row:1;
+  box-sizing:border-box;
+  min-height:44px;
+  height:44px;
+  max-height:132px;
+  padding:11px 12px;
+  resize:none;
+  overflow-y:auto;
+  line-height:1.45;
+  font-size:.88rem;
+  border:0;
+  border-radius:12px;
+  background:transparent;
+}
+.ai-tutor-page .tutor-composer-bottom{
+  grid-column:2;
+  grid-row:1;
+  align-self:end;
+  margin:0;
+  padding:0 1px 2px 0;
+}
+.ai-tutor-page .tutor-composer-bottom button{
+  width:36px;
+  height:36px;
+  min-height:36px;
+}
+.ai-tutor-page .tutor-composer .form-foot,
+.ai-tutor-page .tutor-composer .full-label,
+.ai-tutor-page .tutor-composer-heading,
+.ai-tutor-page .tutor-composer-bottom p{display:none!important}
+.ai-tutor-page .tutor-composer-panel .notice:empty{display:none}
+@media(max-width:560px){
+  .ai-tutor-page .tutor-composer-panel{padding:6px 8px;margin:8px 0 10px;border-radius:17px}
+  .ai-tutor-page .tutor-composer{gap:5px 6px}
+  .ai-tutor-page .tutor-composer textarea{min-height:42px;height:42px;padding:10px 9px;font-size:.84rem}
+  .ai-tutor-page .tutor-composer-bottom button{width:34px;height:34px;min-height:34px}
+}
+/* Grow only as the student writes, never beyond a compact chat-friendly height. */
