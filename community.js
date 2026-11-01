@@ -2,6 +2,7 @@
   "use strict";
   const API = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "") + "/api";
   const token = () => localStorage.getItem("academic-tracker-token") || "";
+  const currentUserId = () => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}").id || ""; } catch (_) { return ""; } };
   const $ = id => document.getElementById(id);
   let showingSavedPosts = false;
   const status = message => { $("community-status").textContent = message || ""; };
@@ -100,6 +101,7 @@
         const shared = post.sharedPost;
         const sharedAuthor = shared?.author || {};
         const sharedCard = shared ? '<div class="shared-post-card"><small>SHARED FROM @'+esc(sharedAuthor.username||"student")+'</small><strong>'+esc(sharedAuthor.displayName||"Student")+'</strong>'+(shared.body?'<p>'+esc(shared.body)+'</p>':'')+(shared.mediaUrl?'<img class="post-media" src="'+esc(shared.mediaUrl)+'" alt="Shared post media" loading="lazy">':'')+(shared.videoUrl?'<p><a target="_blank" rel="noopener noreferrer" href="'+esc(shared.videoUrl)+'">Open original video ↗</a></p>':'')+'</div>' : '';
+        const ownerActions = post.authorId === currentUserId() ? '<div class="post-owner-actions"><button type="button" data-action="edit" data-id="'+esc(post.id)+'">Edit post</button><button type="button" data-action="delete" data-id="'+esc(post.id)+'">Delete post</button></div>' : '';
         return '<article class="panel post-card" data-post="' + esc(post.id) + '"><div class="post-author"><div class="post-avatar">' + avatar + '</div><div><strong>' + esc(author.displayName || "Student") + '</strong><small>@' + esc(author.username || "student") + ' · ' + esc(author.educationTrack || "") + (post.isFriendPost?' · Friend':'') + '</small></div></div>' +
           (post.body ? '<p class="post-body">' + esc(post.body) + '</p>' : '') +
           sharedCard +
@@ -107,7 +109,7 @@
           (post.subject ? '<span class="post-subject">' + esc(post.subject) + '</span>' : '') +
           (post.videoUrl ? '<p><a target="_blank" rel="noopener noreferrer" href="' + esc(post.videoUrl) + '">Open shared learning video ↗</a></p>' : '') +
           '<div class="post-meta">' + new Date(post.createdAt).toLocaleString() + ' · ' + (post.reactionCount || 0) + ' reactions · ' + (post.commentCount || 0) + ' comments · ' + (post.shareCount || 0) + ' shares</div>' +
-          '<div class="post-actions"><button data-action="react" data-id="' + esc(post.id) + '">♡ Helpful</button><button data-action="comments" data-id="' + esc(post.id) + '">Comment</button><button data-action="share" data-id="' + esc(post.id) + '">Share</button><button data-action="save" data-id="' + esc(post.id) + '">' + (post.isSaved?'Saved ✓':'Save') + '</button><button data-action="report" data-id="' + esc(post.id) + '">Report</button></div><div class="post-comments" id="comments-' + esc(post.id) + '"></div></article>';
+          ownerActions + '<div class="post-actions"><button data-action="react" data-id="' + esc(post.id) + '">♡ Helpful</button><button data-action="comments" data-id="' + esc(post.id) + '">Comment</button><button data-action="share" data-id="' + esc(post.id) + '">Share</button><button data-action="save" data-id="' + esc(post.id) + '">' + (post.isSaved?'Saved ✓':'Save') + '</button>' + (post.authorId === currentUserId() ? '' : '<button data-action="report" data-id="' + esc(post.id) + '">Report</button>') + '</div><div class="post-comments" id="comments-' + esc(post.id) + '"></div></article>';
       }).join("");
     } catch (e) { $("feed-list").innerHTML = '<div class="empty-state">' + esc(e.message) + '</div>'; }
   }
@@ -137,10 +139,7 @@
   socialBottomNav?.addEventListener("click", e => {
     const destination = e.target.closest("[data-social-dest]");
     if (destination) { tab(destination.dataset.socialDest); return; }
-    if (e.target.closest("[data-social-create]")) {
-      tab("feed"); $("post-body").focus({ preventScroll: true });
-      $("post-form").scrollIntoView({ behavior: "smooth", block: "center" });
-    }
+    if (e.target.closest("[data-social-create]")) location.href = "social-create.html";
   });
   $("feed-list").addEventListener("click", async e => {
     const replyButton=e.target.closest("[data-reply-to]");
@@ -158,6 +157,26 @@
     if(!requireLogin())return;
     const id=b.dataset.id;
     try{
+      if(b.dataset.action==="edit"){
+        const card=b.closest(".post-card");
+        const currentBody=card?.querySelector(".post-body")?.textContent||"";
+        const currentSubject=card?.querySelector(".post-subject")?.textContent||"";
+        const body=window.prompt("Edit your post",currentBody);
+        if(body===null)return;
+        const subject=window.prompt("Update the subject (leave blank if none)",currentSubject);
+        if(subject===null)return;
+        await api("/community/posts/"+encodeURIComponent(id),{method:"PATCH",body:JSON.stringify({body,subject})});
+        status("Your post has been updated.");
+        await Promise.all([loadFeed(showingSavedPosts),loadProfile()]);
+        return;
+      }
+      if(b.dataset.action==="delete"){
+        if(!window.confirm("Delete this post? This cannot be undone."))return;
+        await api("/community/posts/"+encodeURIComponent(id),{method:"DELETE"});
+        status("Your post has been deleted.");
+        await Promise.all([loadFeed(showingSavedPosts),loadProfile()]);
+        return;
+      }
       if(b.dataset.action==="react"){
         await api("/community/posts/"+encodeURIComponent(id)+"/reaction",{method:"POST",body:JSON.stringify({reaction:"HELPFUL"})});
         loadFeed(showingSavedPosts);
@@ -209,11 +228,11 @@
     try {
       const {people=[]}=await api("/community/people?q="+encodeURIComponent(q));
       $("people-list").innerHTML=people.length?people.map(p=>{
-        const action=p.friendStatus==="FRIENDS"?'<button class="outline-button" disabled>Friends</button>':
-          p.friendStatus==="REQUEST_SENT"?'<button class="outline-button" disabled>Request sent</button>':
-          p.friendStatus==="REQUEST_RECEIVED"?'<button class="primary-button" data-friend-request="'+esc(p.friendRequestId||"")+'" data-request-action="accept">Accept request</button>':
+        const action=p.friendStatus==="FRIENDS"?'<button class="outline-button" data-unfriend="'+esc(p.userId)+'">Friends · Remove</button>':
+          p.friendStatus==="REQUEST_SENT"?'<button class="outline-button" data-cancel-friend="'+esc(p.userId)+'">Request sent · Cancel</button>':
+          p.friendStatus==="REQUEST_RECEIVED"?'<button class="primary-button" data-friend-request="'+esc(p.friendRequestId||"")+'" data-request-action="accept">Accept request</button><button class="outline-button" data-friend-request="'+esc(p.friendRequestId||"")+'" data-request-action="decline">Decline</button>':
           '<button class="outline-button" data-follow="'+esc(p.userId)+'">Add friend</button>';
-        return '<article class="person-card"><strong>'+esc(p.displayName)+'</strong><p>@'+esc(p.username)+' · '+esc(p.educationTrack)+'<br>'+esc(p.institutionName||p.programme||"")+'<br>Best subject: '+esc(p.bestSubject||"Not specified")+'</p>'+action+'</article>';
+        return '<article class="person-card"><strong>'+esc(p.displayName)+'</strong><p>@'+esc(p.username)+' · '+esc(p.educationTrack)+'<br>'+esc(p.institutionName||p.programme||"")+'<br>Best subject: '+esc(p.bestSubject||"Not specified")+'</p><div class="friend-request-actions">'+action+'<button class="quiet-button" data-block="'+esc(p.userId)+'">Block</button></div></article>';
       }).join(""):'<div class="empty-state">No public profiles found.</div>';
     } catch(err){status(err.message);}
   });
@@ -221,8 +240,15 @@
     const block=e.target.closest("[data-block]");
     if(block){
       if(!window.confirm("Block this student? They will no longer be able to connect or privately chat with you."))return;
-      try{await api("/community/blocks/"+encodeURIComponent(block.dataset.block),{method:"POST",body:"{}"});block.closest(".person-card")?.remove();status("Student blocked.");}
+      try{await api("/community/blocks/"+encodeURIComponent(block.dataset.block),{method:"POST",body:"{}"});block.closest(".person-card")?.remove();status("Student blocked.");await loadFriends();}
       catch(err){status(err.message);}
+      return;
+    }
+    const cancel=e.target.closest("[data-cancel-friend]");
+    if(cancel){
+      cancel.disabled=true;
+      try{await api("/community/follow/"+encodeURIComponent(cancel.dataset.cancelFriend),{method:"DELETE"});status("Friend request cancelled.");await loadFriends();e.target.closest(".person-card")?.remove();}
+      catch(err){status(err.message);cancel.disabled=false;}
       return;
     }
     const accept=e.target.closest("[data-friend-request]");
@@ -230,6 +256,13 @@
       accept.disabled=true;
       try{await api("/community/friend-requests/"+encodeURIComponent(accept.dataset.friendRequest),{method:"POST",body:JSON.stringify({action:accept.dataset.requestAction||"accept"})});status("Friend request accepted.");loadFriends();}
       catch(err){status(err.message);accept.disabled=false;}
+      return;
+    }
+    const unfriend=e.target.closest("[data-unfriend]");
+    if(unfriend){
+      if(!window.confirm("Remove this student from your friends?"))return;
+      try{await api("/community/follow/"+encodeURIComponent(unfriend.dataset.unfriend),{method:"DELETE"});status("Student removed from your friends.");await loadFriends();}
+      catch(err){status(err.message);}
       return;
     }
     const b=e.target.closest("[data-follow]"); if(!b)return;
@@ -246,10 +279,32 @@
       ]);
       $("friend-count").textContent=String(friends.length);
       $("friend-request-count").textContent=String(requests.length);
-      $("friends-list").innerHTML=friends.length?friends.map(p=>'<article class="person-card"><strong>'+esc(p.displayName)+'</strong><p>@'+esc(p.username)+' · '+esc(p.educationTrack)+'<br>'+esc(p.institutionName||p.programme||"")+'<br>Best subject: '+esc(p.bestSubject||"Not specified")+'</p></article>').join(""):'<div class="empty-state">Your accepted connections will appear here.</div>';
+      $("friends-list").innerHTML=friends.length?friends.map(p=>'<article class="person-card"><strong>'+esc(p.displayName)+'</strong><p>@'+esc(p.username)+' · '+esc(p.educationTrack)+'<br>'+esc(p.institutionName||p.programme||"")+'<br>Best subject: '+esc(p.bestSubject||"Not specified")+'</p><div class="friend-request-actions"><button class="outline-button" data-unfriend="'+esc(p.userId)+'">Remove friend</button><button class="quiet-button" data-block="'+esc(p.userId)+'">Block</button></div></article>').join(""):'<div class="empty-state">Your accepted connections will appear here.</div>';
       $("friend-requests-list").innerHTML=requests.length?requests.map(r=>'<article class="person-card"><strong>'+esc(r.requester?.name||"Student")+'</strong><p>Wants to connect with you · '+esc(r.requester?.educationTrack||"")+'</p><div class="friend-request-actions"><button class="primary-button" data-friend-request="'+esc(r.id)+'" data-request-action="accept">Accept</button><button class="outline-button" data-friend-request="'+esc(r.id)+'" data-request-action="decline">Decline</button></div></article>').join(""):'<div class="empty-state">No pending friend requests.</div>';
+      await loadBlockedStudents();
     }catch(e){status(e.message);}
   }
+  async function loadBlockedStudents(){
+    const box=$("blocked-students-list");
+    if(!box)return;
+    try{
+      const {blocks=[]}=await api("/community/blocks");
+      box.innerHTML=blocks.length?blocks.map(item=>'<article class="person-card"><strong>'+esc(item.displayName||"Student")+'</strong><p>@'+esc(item.username||"")+'</p><button class="outline-button" data-unblock="'+esc(item.blockedId)+'">Unblock</button></article>').join(""):'<div class="empty-state">You have not blocked anyone.</div>';
+    }catch(err){box.innerHTML='<div class="empty-state">'+esc(err.message)+'</div>';}
+  }
+  $("friends-list").addEventListener("click",async e=>{
+    const block=e.target.closest("[data-block]");
+    if(!block)return;
+    if(!window.confirm("Block this student? This also removes the friendship and prevents private contact."))return;
+    try{await api("/community/blocks/"+encodeURIComponent(block.dataset.block),{method:"POST",body:"{}"});status("Student blocked.");await loadFriends();}
+    catch(err){status(err.message);}
+  });
+  $("blocked-students-list")?.addEventListener("click",async e=>{
+    const button=e.target.closest("[data-unblock]");
+    if(!button)return;
+    try{await api("/community/blocks/"+encodeURIComponent(button.dataset.unblock),{method:"DELETE"});status("Student unblocked.");await loadBlockedStudents();}
+    catch(err){status(err.message);}
+  });
   $("friend-requests-list").addEventListener("click",async e=>{
     const button=e.target.closest("[data-friend-request]");
     if(!button)return;
