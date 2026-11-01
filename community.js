@@ -89,8 +89,21 @@
     } catch (e) { status(e.message); }
   });
 
+  async function loadHomeVideos(){
+    const section=$("home-video-section"),box=$("home-video-results");
+    if(!section||!box)return;
+    try{
+      const {items=[]}=await api("/community/videos/recommendations");
+      const clips=items.slice(0,2);
+      if(!clips.length){section.hidden=true;return;}
+      box.innerHTML=clips.map(video=>'<article class="home-video-card"><iframe src="https://www.youtube-nocookie.com/embed/'+encodeURIComponent(video.id)+'" title="'+esc(video.title)+'" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe><strong>'+esc(video.title)+'</strong><small>'+esc(video.channelTitle)+' · '+esc(video.recommendedSubject||"Learning")+'</small></article>').join("");
+      section.hidden=false;
+    }catch(_){section.hidden=true;}
+  }
+
   async function loadFeed(savedOnly = showingSavedPosts) {
     showingSavedPosts = savedOnly;
+    if (!savedOnly) loadHomeVideos();
     $("feed-heading").textContent = savedOnly ? "Saved posts" : "Recent posts";
     $("show-saved-posts").textContent = savedOnly ? "Show all posts" : "Saved posts";
     try {
