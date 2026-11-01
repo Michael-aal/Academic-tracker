@@ -296,6 +296,13 @@
     }catch(err){box.innerHTML='<div class="empty-state">'+esc(err.message)+'</div>';}
   }
   $("friends-list").addEventListener("click",async e=>{
+    const unfriend=e.target.closest("[data-unfriend]");
+    if(unfriend){
+      if(!window.confirm("Remove this student from your friends?"))return;
+      try{await api("/community/follow/"+encodeURIComponent(unfriend.dataset.unfriend),{method:"DELETE"});status("Student removed from your friends.");await loadFriends();}
+      catch(err){status(err.message);}
+      return;
+    }
     const block=e.target.closest("[data-block]");
     if(!block)return;
     if(!window.confirm("Block this student? This also removes the friendship and prevents private contact."))return;
