@@ -382,16 +382,39 @@ router.get("/people", async (req, res, next) => {
   try {
     const q = clean(req.query.q, 80);
     if (q.length < 2) return res.json({ people: [] });
+    const currentUser = await getUser(req.userId);
+    if (!currentUser) return res.status(404).json({ error: "Account not found." });
+
+    // Username lookup accepts both "student_name" and "@student_name".
+    // Search results are limited to public, active profiles in the same education track.
+    const usernameQuery = slug(q.replace(/^@/, ""));
+    const usernameProfiles = usernameQuery.length >= 2
+      ? await prisma.communityProfile.findMany({
+          where: { username: { contains: usernameQuery }, visibility: "PUBLIC", status: "ACTIVE" },
+          select: { userId: true },
+          take: 30
+        })
+      : [];
+    const usernameUserIds = usernameProfiles.map(profile => profile.userId);
     const users = await prisma.user.findMany({
-      where: { id: { not: req.userId }, OR: [{ name: { contains: q, mode: "insensitive" } }, { institutionName: { contains: q, mode: "insensitive" } }] },
+      where: {
+        id: { not: req.userId },
+        educationTrack: currentUser.educationTrack,
+        OR: [
+          { name: { contains: q.replace(/^@/, ""), mode: "insensitive" } },
+          { institutionName: { contains: q, mode: "insensitive" } },
+          ...(usernameUserIds.length ? [{ id: { in: usernameUserIds } }] : [])
+        ]
+      },
       select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true },
       take: 20
     });
+    const userIds = users.map(u => u.id);
     const [profiles, blocks, outgoing, incoming] = await Promise.all([
-      prisma.communityProfile.findMany({ where: { userId: { in: users.map(u => u.id) }, visibility: "PUBLIC" } }),
+      prisma.communityProfile.findMany({ where: { userId: { in: userIds }, visibility: "PUBLIC", status: "ACTIVE" } }),
       prisma.communityBlock.findMany({ where: { OR: [{ blockerId: req.userId }, { blockedId: req.userId }] } }),
-      prisma.communityFollow.findMany({ where: { followerId: req.userId, followingId: { in: users.map(u => u.id) } } }),
-      prisma.communityFollow.findMany({ where: { followingId: req.userId, followerId: { in: users.map(u => u.id) } } })
+      prisma.communityFollow.findMany({ where: { followerId: req.userId, followingId: { in: userIds } } }),
+      prisma.communityFollow.findMany({ where: { followingId: req.userId, followerId: { in: userIds } } })
     ]);
     const blockedIds = new Set(blocks.map(b => b.blockerId === req.userId ? b.blockedId : b.blockerId));
     const outMap = new Map(outgoing.map(x => [x.followingId, x.status]));
@@ -457,8 +480,11 @@ router.post("/friend-requests/:id", async (req, res, next) => {
 
 router.post("/follow/:userId", async (req, res, next) => {
   try {
-    const target = await getUser(req.params.userId);
+    const [target, currentUser] = await Promise.all([getUser(req.params.userId), getUser(req.userId)]);
     if (!target || target.id === req.userId) return res.status(404).json({ error: "Student not found." });
+    if (!currentUser || target.educationTrack !== currentUser.educationTrack) return res.status(403).json({ error: "Friend connections are limited to students in the same academic environment." });
+    const targetProfile = await prisma.communityProfile.findUnique({ where: { userId: target.id }, select: { visibility: true, status: true } });
+    if (!targetProfile || targetProfile.visibility !== "PUBLIC" || targetProfile.status !== "ACTIVE") return res.status(404).json({ error: "Student profile not found." });
     if (await isBlocked(req.userId, target.id)) return res.status(403).json({ error: "This connection is blocked." });
     const [outgoing, incoming] = await Promise.all([
       prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: req.userId, followingId: target.id } } }),
