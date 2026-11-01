@@ -46,6 +46,8 @@
       $("profile-cover").value = profile.coverUrl || "";
       $("profile-interests").value = (profile.interests || []).join(", ");
       $("profile-visibility").value = profile.visibility || "PUBLIC";
+      if(!profile.usernameSet){socialReady=false;$("social-onboarding").hidden=false;$("onboarding-username").value=profile.username||"";return;}
+      socialReady=true;$("social-onboarding").hidden=true;loadFeed();
       $("mini-profile").innerHTML = '<strong>@' + esc(profile.username) + '</strong><p>' + esc(profile.bestSubject || "Add your best subject") + '</p><small>' + esc(profile.educationTrack || "") + ' · ' + (profile.visibility === "PRIVATE" ? "Private" : "Public") + '</small>';
       $("social-profile-name").textContent = profile.displayName || "Student";
       $("social-profile-handle").textContent = "@" + (profile.username || "student");
@@ -59,6 +61,7 @@
       $("social-profile-posts").innerHTML = posts.length ? posts.map(post => '<article class="social-profile-post">' + (post.mediaUrl ? '<img src="' + esc(post.mediaUrl) + '" alt="Your post" loading="lazy">' : post.videoUrl ? '<div class="social-profile-video">▶ Video post</div>' : '<div class="social-profile-text-post">' + esc((post.body || "").slice(0,180)) + '</div>') + '<div class="social-profile-post-meta">' + esc(post.subject || "Post") + '<span>' + (post.reactionCount || 0) + ' likes</span></div></article>').join("") : '<div class="empty-state social-profile-empty">Your posts will appear here after you publish your first post.</div>';
     } catch (e) { status(e.message); }
   }
+  $("social-onboarding-form").addEventListener("submit",async e=>{e.preventDefault();const username=$("onboarding-username").value.trim().toLowerCase(),err=$("onboarding-error");err.textContent="";if(!/^[a-z0-9_]{3,30}$/.test(username)){err.textContent="Use 3–30 letters, numbers or underscores.";return;}const b=e.target.querySelector("button");b.disabled=true;try{await api("/community/profile/me",{method:"PATCH",body:JSON.stringify({username})});await loadProfile();}catch(x){err.textContent=x.message;}finally{b.disabled=false;}});
   $("edit-social-profile").addEventListener("click", () => $("profile-settings").scrollIntoView({behavior:"smooth",block:"start"}));
   document.addEventListener("click", e => {
     const example = e.target.closest("[data-example]");
@@ -111,19 +114,13 @@
     if(!response.ok||!result.secure_url)throw new Error("Media upload failed. Check Cloudinary configuration.");
     return isVideo?{videoUrl:result.secure_url}:{mediaUrl:result.secure_url};
   }
-  $("post-form").addEventListener("submit", async e => {
-    e.preventDefault(); if (!requireLogin()) return;
-    const body = $("post-body").value.trim(), file=$("post-media").files?.[0];
-    if (!body && !file) return status("Write a post or attach an image/video first.");
-    const submit=e.target.querySelector('button[type="submit"]');submit.disabled=true;submit.textContent="Publishing…";
-    try {
-      const media=file?await uploadCommunityMedia(file):{};
-      await api("/community/posts", { method:"POST", body:JSON.stringify({ body, ...media, subject:$("post-subject").value, visibility:$("post-visibility").value }) });
-      $("post-body").value = ""; $("post-subject").value = ""; $("post-media").value="";
-      status("Your post is live."); loadFeed();
-    } catch (e) { status(e.message); }
-    finally { submit.disabled=false;submit.textContent="Publish post"; }
-  });
+  function clearPendingMedia(){if(pendingMediaUrl)URL.revokeObjectURL(pendingMediaUrl);pendingMediaUrl="";$("post-media-preview").replaceChildren();$("post-media-preview").hidden=true;}
+  function previewMedia(file,box,keep=false){box.replaceChildren();if(!file)return;const url=URL.createObjectURL(file);if(keep){if(pendingMediaUrl)URL.revokeObjectURL(pendingMediaUrl);pendingMediaUrl=url;}const el=document.createElement(file.type.startsWith("video/")?"video":"img");el.src=url;el.alt="Selected media preview";el.className="post-preview-asset";if(file.type.startsWith("video/"))el.controls=true;box.append(el);}
+  $("post-media").addEventListener("change",()=>{const f=$("post-media").files?.[0];clearPendingMedia();if(!f)return;const v=f.type.startsWith("video/"),im=f.type.startsWith("image/");if(!v&&!im){$("post-media").value="";return status("Choose an image or video.");}if(f.size>(v?50:8)*1024*1024){$("post-media").value="";return status(v?"Videos must be 50 MB or smaller.":"Images must be 8 MB or smaller.");}previewMedia(f,$("post-media-preview"),true);$("post-media-preview").hidden=false;});
+  function closeReview(){$("post-review").hidden=true;}
+  $("post-form").addEventListener("submit",e=>{e.preventDefault();if(!requireLogin()||!socialReady)return;const body=$("post-body").value.trim(),f=$("post-media").files?.[0];if(!body&&!f)return status("Write something or attach media first.");$("post-review-body").textContent=body;$("post-review-body").hidden=!body;$("post-review-author").textContent=$("social-profile-handle").textContent;$("post-review-subject").textContent=$("post-subject").value.trim()||"No subject";$("post-review-visibility").textContent=$("post-visibility").value==="PUBLIC"?"Public":"Connections only";const box=$("post-review-media");box.replaceChildren();if(f)previewMedia(f,box);box.hidden=!f;$("post-review").hidden=false;});
+  $("close-post-review").addEventListener("click",closeReview);$("cancel-post-review").addEventListener("click",closeReview);$("post-review").addEventListener("click",e=>{if(e.target===$("post-review"))closeReview();});
+  $("confirm-publish-post").addEventListener("click",async()=>{if(!requireLogin()||!socialReady)return;const body=$("post-body").value.trim(),f=$("post-media").files?.[0],b=$("confirm-publish-post");b.disabled=true;b.textContent="Uploading and publishing…";try{const media=f?await uploadCommunityMedia(f):{};await api("/community/posts",{method:"POST",body:JSON.stringify({body,...media,subject:$("post-subject").value,visibility:$("post-visibility").value})});$("post-body").value="";$("post-subject").value="";$("post-media").value="";clearPendingMedia();closeReview();status("Published online. Your post is now live.");await Promise.all([loadFeed(),loadProfile()]);}catch(err){status(err.message);}finally{b.disabled=false;b.textContent="Publish post";}});
   $("refresh-feed").addEventListener("click", loadFeed);
   const socialBottomNav = $("social-bottom-nav");
   socialBottomNav?.addEventListener("click", e => {
