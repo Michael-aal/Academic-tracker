@@ -73,7 +73,11 @@ async function isMember(conversationId, userId) {
   return Boolean(await prisma.chatMember.findUnique({ where: { conversationId_userId: { conversationId, userId } } }));
 }
 async function canReadPost(post, userId) {
-  if (post.authorId !== userId && await isBlocked(post.authorId, userId)) return false;
+  if (post.authorId !== userId) {
+    if (await isBlocked(post.authorId, userId)) return false;
+    const authorProfile = await prisma.communityProfile.findUnique({ where: { userId: post.authorId }, select: { status: true } });
+    if (!authorProfile || authorProfile.status !== "ACTIVE") return false;
+  }
   if (post.visibility === "PUBLIC" || post.authorId === userId) return true;
   if (post.visibility === "FOLLOWERS") {
     const [outgoing, incoming] = await Promise.all([
