@@ -174,11 +174,13 @@ router.get("/profile/me", async (req, res, next) => {
     const user = await getUser(req.userId);
     if (!user) return res.status(404).json({ error: "Account not found." });
     const profile = await ensureProfile(user);
-    const [posts, followers, following] = await Promise.all([
+    const [posts, outgoing, incoming] = await Promise.all([
       prisma.communityPost.findMany({ where: { authorId: req.userId }, orderBy: { createdAt: "desc" }, take: 60 }),
-      prisma.communityFollow.count({ where: { followingId: req.userId, status: "ACCEPTED" } }),
-      prisma.communityFollow.count({ where: { followerId: req.userId, status: "ACCEPTED" } })
+      prisma.communityFollow.findMany({ where: { followerId: req.userId, status: "ACCEPTED" }, select: { followingId: true } }),
+      prisma.communityFollow.findMany({ where: { followingId: req.userId, status: "ACCEPTED" }, select: { followerId: true } })
     ]);
+    const incomingFriendIds = new Set(incoming.map(x => x.followerId));
+    const friends = outgoing.filter(x => incomingFriendIds.has(x.followingId)).length;
     const postIds = posts.map(post => post.id);
     const [reactions, comments] = postIds.length ? await Promise.all([
       prisma.communityReaction.groupBy({ by: ["postId"], where: { postId: { in: postIds } }, _count: { _all: true } }),
@@ -188,7 +190,7 @@ router.get("/profile/me", async (req, res, next) => {
     const commentCounts = new Map(comments.map(item => [item.postId, item._count._all]));
     res.json({
       profile: publicProfile(profile, user),
-      stats: { posts: posts.length, followers, following },
+      stats: { posts: posts.length, friends },
       posts: posts.map(post => ({ ...post, reactionCount: reactionCounts.get(post.id) || 0, commentCount: commentCounts.get(post.id) || 0 }))
     });
   } catch (e) { next(e); }
