@@ -344,3 +344,222 @@ model AdminBootstrapOtp {
   @@index([expiresAt])
   @@map("admin_bootstrap_otps")
 }
+
+
+// Student social network. These records are deliberately separate from academic
+// scores, course results, and private study records.
+model CommunityProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique @map("user_id")
+  username       String   @unique @db.VarChar(30)
+  bio            String?  @db.VarChar(280)
+  bestSubject    String?  @map("best_subject") @db.VarChar(100)
+  interests      Json?
+  avatarUrl      String?  @map("avatar_url") @db.VarChar(500)
+  coverUrl       String?  @map("cover_url") @db.VarChar(500)
+  visibility     String   @default("PUBLIC") @db.VarChar(16)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  @@index([bestSubject])
+  @@map("community_profiles")
+}
+
+model CommunityPost {
+  id          String   @id @default(cuid())
+  authorId    String   @map("author_id")
+  body        String   @db.VarChar(5000)
+  mediaUrl    String?  @map("media_url") @db.VarChar(1000)
+  videoUrl    String?  @map("video_url") @db.VarChar(1000)
+  subject     String?  @db.VarChar(100)
+  visibility  String   @default("PUBLIC") @db.VarChar(16)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  @@index([createdAt])
+  @@index([authorId, createdAt])
+  @@index([subject, createdAt])
+  @@map("community_posts")
+}
+
+model CommunityReaction {
+  id        String   @id @default(cuid())
+  postId    String   @map("post_id")
+  userId    String   @map("user_id")
+  reaction  String   @default("LIKE") @db.VarChar(16)
+  createdAt DateTime @default(now()) @map("created_at")
+  @@unique([postId, userId])
+  @@index([userId, createdAt])
+  @@map("community_reactions")
+}
+
+model CommunityComment {
+  id        String   @id @default(cuid())
+  postId    String   @map("post_id")
+  userId    String   @map("user_id")
+  body      String   @db.VarChar(2000)
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([postId, createdAt])
+  @@map("community_comments")
+}
+
+model CommunityFollow {
+  id          String   @id @default(cuid())
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  status      String   @default("PENDING") @db.VarChar(16)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  @@unique([followerId, followingId])
+  @@index([followingId, status])
+  @@map("community_follows")
+}
+
+model StudyGroup {
+  id             String   @id @default(cuid())
+  ownerId        String   @map("owner_id")
+  title          String   @db.VarChar(100)
+  description    String   @db.VarChar(1000)
+  subject        String?  @db.VarChar(100)
+  educationTrack String?  @map("education_track") @db.VarChar(20)
+  visibility     String   @default("PUBLIC") @db.VarChar(16)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  @@index([educationTrack, subject, createdAt])
+  @@map("study_groups")
+}
+
+model GroupMembership {
+  id        String   @id @default(cuid())
+  groupId   String   @map("group_id")
+  userId    String   @map("user_id")
+  role      String   @default("MEMBER") @db.VarChar(16)
+  status    String   @default("ACTIVE") @db.VarChar(16)
+  createdAt DateTime @default(now()) @map("created_at")
+  @@unique([groupId, userId])
+  @@index([userId, status])
+  @@map("group_memberships")
+}
+
+model CommunityStory {
+  id        String   @id @default(cuid())
+  authorId  String   @map("author_id")
+  caption   String?  @db.VarChar(500)
+  mediaUrl  String   @map("media_url") @db.VarChar(1000)
+  mediaType String   @default("IMAGE") @map("media_type") @db.VarChar(16)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([expiresAt, createdAt])
+  @@index([authorId, createdAt])
+  @@map("community_stories")
+}
+
+model VideoEngagement {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  videoId      String   @map("video_id") @db.VarChar(120)
+  provider     String   @default("YOUTUBE") @db.VarChar(20)
+  action       String   @db.VarChar(20)
+  watchSeconds Int      @default(0) @map("watch_seconds")
+  subject      String?  @db.VarChar(100)
+  createdAt    DateTime @default(now()) @map("created_at")
+  @@index([userId, createdAt])
+  @@index([userId, subject, createdAt])
+  @@index([videoId, action])
+  @@map("video_engagements")
+}
+
+model ReferralCode {
+  id        String   @id @default(cuid())
+  userId    String   @unique @map("user_id")
+  code      String   @unique @db.VarChar(24)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  @@map("referral_codes")
+}
+
+model Referral {
+  id             String   @id @default(cuid())
+  inviterId      String   @map("inviter_id")
+  referredUserId String   @unique @map("referred_user_id")
+  code           String   @db.VarChar(24)
+  status         String   @default("PENDING") @db.VarChar(20)
+  qualifiedAt    DateTime? @map("qualified_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  @@index([inviterId, createdAt])
+  @@index([status, createdAt])
+  @@map("referrals")
+}
+
+model ReferralReward {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  referralId String   @unique @map("referral_id")
+  points     Int      @default(0)
+  rewardType String   @map("reward_type") @db.VarChar(24)
+  status     String   @default("PENDING") @db.VarChar(16)
+  createdAt  DateTime @default(now()) @map("created_at")
+  @@index([userId, createdAt])
+  @@map("referral_rewards")
+}
+
+model ChatConversation {
+  id          String   @id @default(cuid())
+  kind        String   @default("DIRECT") @db.VarChar(16)
+  createdById String   @map("created_by_id")
+  groupId     String?  @map("group_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  @@index([groupId, updatedAt])
+  @@map("chat_conversations")
+}
+
+model ChatMember {
+  id             String   @id @default(cuid())
+  conversationId String   @map("conversation_id")
+  userId         String   @map("user_id")
+  lastReadAt     DateTime? @map("last_read_at")
+  joinedAt       DateTime @default(now()) @map("joined_at")
+  @@unique([conversationId, userId])
+  @@index([userId, joinedAt])
+  @@map("chat_members")
+}
+
+model ChatMessage {
+  id             String   @id @default(cuid())
+  conversationId String   @map("conversation_id")
+  senderId       String   @map("sender_id")
+  messageType    String   @default("TEXT") @map("message_type") @db.VarChar(16)
+  body           String?  @db.VarChar(5000)
+  mediaUrl       String?  @map("media_url") @db.VarChar(1000)
+  replyToId      String?  @map("reply_to_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  editedAt       DateTime? @map("edited_at")
+  deletedAt      DateTime? @map("deleted_at")
+  @@index([conversationId, createdAt])
+  @@index([senderId, createdAt])
+  @@map("chat_messages")
+}
+
+model CallSession {
+  id          String   @id @default(cuid())
+  callerId    String   @map("caller_id")
+  calleeId    String   @map("callee_id")
+  callType    String   @default("AUDIO") @map("call_type") @db.VarChar(12)
+  status      String   @default("RINGING") @db.VarChar(16)
+  startedAt   DateTime @default(now()) @map("started_at")
+  answeredAt  DateTime? @map("answered_at")
+  endedAt     DateTime? @map("ended_at")
+  @@index([calleeId, status, startedAt])
+  @@index([callerId, startedAt])
+  @@map("call_sessions")
+}
+
+model CallSignal {
+  id        String   @id @default(cuid())
+  callId    String   @map("call_id")
+  senderId  String   @map("sender_id")
+  kind      String   @db.VarChar(16)
+  payload   Json
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([callId, createdAt])
+  @@map("call_signals")
+}
