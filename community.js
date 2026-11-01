@@ -301,6 +301,19 @@
   }
   window.ATCommunityState.openChat = id => openChat(id);
   $("chat-list").addEventListener("click",e=>{const b=e.target.closest("[data-chat]");if(b)openChat(b.dataset.chat);});
+  async function refreshActiveChat(){
+    if(!activeChat||!$("view-messages").classList.contains("active"))return;
+    try{
+      const box=$("chat-messages");
+      const nearBottom=box.scrollHeight-box.scrollTop-box.clientHeight<90;
+      const {messages=[]}=await api("/community/chat/"+encodeURIComponent(activeChat)+"/messages");
+      const currentUser=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}").id;
+      box.innerHTML=messages.map(m=>'<div class="chat-bubble '+(m.senderId===currentUser?"mine":"")+'">'+(m.messageType==="VOICE_NOTE"&&m.mediaUrl?'<audio controls preload="metadata" src="'+esc(m.mediaUrl)+'"></audio>':esc(m.body||""))+'</div>').join("");
+      if(nearBottom)box.scrollTop=box.scrollHeight;
+    }catch(_){}
+  }
+  setInterval(refreshActiveChat,3000);
+
   $("chat-send").addEventListener("submit",async e=>{
     e.preventDefault();if(!activeChat)return;
     const body=$("chat-message").value.trim();if(!body)return;
