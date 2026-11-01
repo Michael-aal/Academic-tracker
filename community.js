@@ -259,8 +259,8 @@
     try {
       await api("/community/posts/"+encodeURIComponent(id)+"/comments",{method:"POST",body:JSON.stringify({body,parentId})});
       await loadFeed(showingSavedPosts);
-      if(!parentId)await renderPostComments(id);
-      status("Comment added.");
+      await renderPostComments(id);
+      status(parentId?"Reply added.":"Comment added.");
     } catch(err){status(err.message);}
   });
 
