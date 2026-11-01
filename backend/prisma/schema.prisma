@@ -436,6 +436,7 @@ model StudyGroup {
   subject        String?  @db.VarChar(100)
   educationTrack String?  @map("education_track") @db.VarChar(20)
   visibility     String   @default("PUBLIC") @db.VarChar(16)
+  status         String   @default("ACTIVE") @db.VarChar(16)
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
   @@index([educationTrack, subject, createdAt])
