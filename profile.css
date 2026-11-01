@@ -248,3 +248,22 @@
 
 /* Shared social profile picture and identity details */
 .profile-avatar{overflow:hidden;position:relative;padding:0}.profile-avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit}.profile-avatar-upload{display:inline-flex;align-items:center;justify-content:center;align-self:center;padding:9px 12px;border:1px solid var(--line);border-radius:10px;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer}.profile-avatar-upload:hover{border-color:#8b5cf6;color:#8b5cf6}.profile-hero-copy #profile-best-subject{font-weight:700;color:var(--text)}.profile-hero-copy #profile-bio{max-width:680px;line-height:1.5}
+
+
+/* Phone-first profile identity and photo picker */
+.profile-page .profile-hero{align-items:center;gap:18px}
+.profile-page .profile-avatar-stack{display:flex;flex:0 0 100px;flex-direction:column;align-items:center;gap:9px;position:relative;z-index:1}
+.profile-page .profile-avatar-stack .profile-avatar{flex:0 0 84px}
+.profile-page .profile-avatar-upload{min-height:36px;padding:8px 11px;white-space:nowrap;background:rgba(128,87,245,.08);color:var(--text);touch-action:manipulation}
+.profile-page .profile-avatar-upload:focus-within,.profile-page .profile-avatar-upload:focus-visible{outline:2px solid #8b5cf6;outline-offset:3px}
+.profile-page .profile-hero-copy{position:relative;z-index:1}
+@media(max-width:680px){
+ .profile-page .profile-hero{display:grid;grid-template-columns:88px minmax(0,1fr);align-items:center;gap:13px;padding:16px}
+ .profile-page .profile-avatar-stack{grid-column:1;grid-row:1;min-width:0;width:88px;flex-basis:88px}
+ .profile-page .profile-avatar-stack .profile-avatar{width:64px;height:64px;min-width:64px;flex-basis:64px;border-radius:19px;font-size:22px}
+ .profile-page .profile-avatar-upload{width:100%;box-sizing:border-box;min-height:36px;padding:7px 5px;font-size:11px}
+ .profile-page .profile-hero-copy{grid-column:2;grid-row:1;width:auto;min-width:0}
+ .profile-page .profile-status{grid-column:1/-1;grid-row:2;margin:0}
+ .profile-page .profile-hero-copy h2{font-size:20px;overflow-wrap:anywhere}
+}
+@media(max-width:360px){.profile-page .profile-hero{grid-template-columns:78px minmax(0,1fr);gap:10px;padding:13px}.profile-page .profile-avatar-stack{width:78px;flex-basis:78px}.profile-page .profile-avatar-stack .profile-avatar{width:58px;height:58px;min-width:58px;flex-basis:58px}}

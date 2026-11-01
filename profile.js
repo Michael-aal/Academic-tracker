@@ -112,7 +112,7 @@
   avatarInput?.addEventListener("change", async () => {
     const file = avatarInput.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) { message(errorBox, "Choose an image file."); avatarInput.value = ""; return; }
+    if (!file.type.startsWith("image/")) { message(errorBox, "Choose an image from your phone gallery or files."); avatarInput.value = ""; return; }
     if (file.size > 8 * 1024 * 1024) { message(errorBox, "Profile pictures must be 8 MB or smaller."); avatarInput.value = ""; return; }
     const label = $("profile-avatar-upload");
     if (label) label.textContent = "Uploading…";
@@ -122,14 +122,15 @@
         body: JSON.stringify({ resourceType: "image" })
       });
       const signature = await signatureResponse.json().catch(() => ({}));
-      if (!signatureResponse.ok) throw new Error(signature.error || "Could not prepare image upload.");
+      if (!signatureResponse.ok) throw new Error(signature.error || "Could not prepare image upload. Check that Cloudinary storage is configured on the API.");
+      if (!signature.cloudName || !signature.apiKey || !signature.signature || !signature.timestamp || !signature.folder) throw new Error("Image storage is not configured correctly. Please contact the administrator.");
       const formData = new FormData();
       formData.append("file", file); formData.append("api_key", signature.apiKey);
       formData.append("timestamp", String(signature.timestamp)); formData.append("folder", signature.folder);
       formData.append("signature", signature.signature);
       const upload = await fetch("https://api.cloudinary.com/v1_1/" + encodeURIComponent(signature.cloudName) + "/image/upload", { method: "POST", body: formData });
       const result = await upload.json().catch(() => ({}));
-      if (!upload.ok || !result.secure_url) throw new Error("Profile picture upload failed.");
+      if (!upload.ok || !result.secure_url) throw new Error(result.error?.message || "Profile picture upload failed. Check your connection and image format.");
       const save = await fetch(API_BASE + "/api/community/profile/me", {
         method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
         body: JSON.stringify({ avatarUrl: result.secure_url })
@@ -139,7 +140,7 @@
       await loadSocialProfile();
       message(successBox, "Profile picture updated across your profile and Social Media.", true);
     } catch (error) { message(errorBox, error.message || "Profile picture upload failed."); }
-    finally { avatarInput.value = ""; if (label) label.textContent = "Change photo"; }
+    finally { avatarInput.value = ""; if (label) label.textContent = "Choose photo"; }
   });
   $("profile-signout").addEventListener("click", () => {
     localStorage.removeItem("academic-tracker-token");
