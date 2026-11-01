@@ -89,8 +89,9 @@ router.use(requireAuth);
 router.use(async (req, res, next) => {
   if (req.path === "/profile/me" && ["GET", "PATCH"].includes(req.method)) return next();
   try {
-    const profile = await prisma.communityProfile.findUnique({ where: { userId: req.userId }, select: { usernameSet: true } });
+    const profile = await prisma.communityProfile.findUnique({ where: { userId: req.userId }, select: { usernameSet: true, status: true } });
     if (!profile?.usernameSet) return res.status(403).json({ error: "Choose your unique Social Media username before continuing.", code: "SOCIAL_USERNAME_REQUIRED" });
+    if (profile.status !== "ACTIVE") return res.status(403).json({ error: "Your Social Media access is currently restricted. Contact support if you believe this is a mistake.", code: "SOCIAL_ACCOUNT_RESTRICTED" });
     next();
   } catch (error) { next(error); }
 });
@@ -104,11 +105,14 @@ router.get("/feed", async (req, res, next) => {
     ]);
     const incomingIds = new Set(incomingFriends.map(x => x.followerId));
     const friendIds = outgoingFriends.map(x => x.followingId).filter(id => incomingIds.has(id));
+    const suspendedProfiles = await prisma.communityProfile.findMany({ where: { status: { not: "ACTIVE" } }, select: { userId: true } });
+    const suspendedIds = suspendedProfiles.map(profile => profile.userId);
     const where = { AND: [{ OR: [
       { visibility: "PUBLIC" },
       { authorId: req.userId },
       ...(friendIds.length ? [{ visibility: "FOLLOWERS", authorId: { in: friendIds } }] : [])
     ] }] };
+    if (suspendedIds.length) where.AND.push({ authorId: { notIn: suspendedIds } });
     if (req.query.subject) where.AND.push({ subject: clean(req.query.subject, 100) });
     if (req.query.track === "SECONDARY" || req.query.track === "HIGHER") {
       const users = await prisma.user.findMany({ where: { educationTrack: req.query.track }, select: { id: true } });
@@ -166,7 +170,7 @@ router.get("/feed", async (req, res, next) => {
 router.get("/profiles/:username", async (req, res, next) => {
   try {
     const profile = await prisma.communityProfile.findUnique({ where: { username: slug(req.params.username) } });
-    if (!profile || profile.visibility === "PRIVATE") return res.status(404).json({ error: "Student profile not found." });
+    if (!profile || profile.visibility === "PRIVATE" || profile.status !== "ACTIVE") return res.status(404).json({ error: "Student profile not found." });
     const user = await getUser(profile.userId);
     if (!user) return res.status(404).json({ error: "Student profile not found." });
     const posts = await prisma.communityPost.findMany({ where: { authorId: user.id, visibility: "PUBLIC" }, orderBy: { createdAt: "desc" }, take: 20 });
@@ -893,7 +897,38 @@ router.get("/admin/reports", requireAdmin, async (req, res, next) => {
   try {
     const statusFilter = ["OPEN", "RESOLVED", "DISMISSED"].includes(req.query.status) ? req.query.status : "OPEN";
     const reports = await prisma.communityReport.findMany({ where: { status: statusFilter }, orderBy: { createdAt: "asc" }, take: 100 });
-    res.json({ reports });
+    const enriched = await Promise.all(reports.map(async report => {
+      const reporter = await prisma.user.findUnique({ where: { id: report.reporterId }, select: { id: true, name: true } });
+      let target = null;
+      if (report.targetType === "USER") {
+        const user = await prisma.user.findUnique({ where: { id: report.targetId }, select: { id: true, name: true, educationTrack: true, institutionName: true } });
+        const profile = user ? await prisma.communityProfile.findUnique({ where: { userId: user.id }, select: { username: true, bio: true, bestSubject: true, status: true } }) : null;
+        target = user ? { ...user, profile } : null;
+      } else if (report.targetType === "POST") {
+        const post = await prisma.communityPost.findUnique({ where: { id: report.targetId }, select: { id: true, body: true, mediaUrl: true, videoUrl: true, subject: true, authorId: true, createdAt: true } });
+        const author = post ? await prisma.user.findUnique({ where: { id: post.authorId }, select: { id: true, name: true } }) : null;
+        target = post ? { ...post, author } : null;
+      } else if (report.targetType === "COMMENT") {
+        const comment = await prisma.communityComment.findUnique({ where: { id: report.targetId }, select: { id: true, body: true, postId: true, userId: true, createdAt: true } });
+        const [author, post] = comment ? await Promise.all([
+          prisma.user.findUnique({ where: { id: comment.userId }, select: { id: true, name: true } }),
+          prisma.communityPost.findUnique({ where: { id: comment.postId }, select: { id: true, body: true } })
+        ]) : [null, null];
+        target = comment ? { ...comment, author, post } : null;
+      } else if (report.targetType === "GROUP") {
+        const group = await prisma.studyGroup.findUnique({ where: { id: report.targetId }, select: { id: true, title: true, description: true, subject: true, visibility: true, ownerId: true, createdAt: true } });
+        const owner = group ? await prisma.user.findUnique({ where: { id: group.ownerId }, select: { id: true, name: true } }) : null;
+        target = group ? { ...group, owner } : null;
+      } else if (report.targetType === "MESSAGE") {
+        const message = await prisma.chatMessage.findUnique({ where: { id: report.targetId }, select: { id: true, body: true, messageType: true, mediaUrl: true, senderId: true, conversationId: true, createdAt: true, deletedAt: true } });
+        const sender = message ? await prisma.user.findUnique({ where: { id: message.senderId }, select: { id: true, name: true } }) : null;
+        target = message ? { ...message, sender } : null;
+      } else if (report.targetType === "VIDEO") {
+        target = { id: report.targetId, note: "This is an external educational video reference. Review the source; it cannot be removed from this platform." };
+      }
+      return { ...report, reporter, target };
+    }));
+    res.json({ reports: enriched });
   } catch (e) { next(e); }
 });
 router.patch("/admin/reports/:id", requireAdmin, async (req, res, next) => {
@@ -904,6 +939,64 @@ router.patch("/admin/reports/:id", requireAdmin, async (req, res, next) => {
     if (!report.count) return res.status(404).json({ error: "Open report not found." });
     res.json({ ok: true });
   } catch (e) { next(e); }
+});
+router.patch("/admin/reports/:id/action", requireAdmin, async (req, res, next) => {
+  try {
+    const action = clean(req.body?.action, 30).toUpperCase();
+    const report = await prisma.communityReport.findFirst({ where: { id: req.params.id, status: "OPEN" } });
+    if (!report) return res.status(404).json({ error: "Open report not found." });
+    const allowed = {
+      USER: ["RESTRICT_USER", "RESTORE_USER"],
+      POST: ["REMOVE_CONTENT"],
+      COMMENT: ["REMOVE_CONTENT"],
+      GROUP: ["REMOVE_CONTENT"],
+      MESSAGE: ["REMOVE_CONTENT"]
+    };
+    if (!allowed[report.targetType]?.includes(action)) return res.status(400).json({ error: "That moderation action is not available for this report." });
+
+    await prisma.$transaction(async tx => {
+      if (action === "RESTRICT_USER" || action === "RESTORE_USER") {
+        const profile = await tx.communityProfile.findUnique({ where: { userId: report.targetId } });
+        if (!profile) throw Object.assign(new Error("Student profile not found."), { statusCode: 404 });
+        await tx.communityProfile.update({ where: { id: profile.id }, data: { status: action === "RESTRICT_USER" ? "SUSPENDED" : "ACTIVE" } });
+      } else if (report.targetType === "POST") {
+        const post = await tx.communityPost.findUnique({ where: { id: report.targetId }, select: { id: true } });
+        if (!post) throw Object.assign(new Error("Reported post no longer exists."), { statusCode: 404 });
+        await tx.communitySavedPost.deleteMany({ where: { postId: post.id } });
+        await tx.communityReaction.deleteMany({ where: { postId: post.id } });
+        await tx.communityComment.deleteMany({ where: { postId: post.id } });
+        await tx.communityPost.updateMany({ where: { sharedPostId: post.id }, data: { sharedPostId: null } });
+        await tx.communityPost.delete({ where: { id: post.id } });
+      } else if (report.targetType === "COMMENT") {
+        const comment = await tx.communityComment.findUnique({ where: { id: report.targetId }, select: { id: true } });
+        if (!comment) throw Object.assign(new Error("Reported comment no longer exists."), { statusCode: 404 });
+        await tx.communityComment.deleteMany({ where: { parentId: comment.id } });
+        await tx.communityComment.delete({ where: { id: comment.id } });
+      } else if (report.targetType === "GROUP") {
+        const group = await tx.studyGroup.findUnique({ where: { id: report.targetId }, select: { id: true } });
+        if (!group) throw Object.assign(new Error("Reported group no longer exists."), { statusCode: 404 });
+        const conversations = await tx.chatConversation.findMany({ where: { groupId: group.id }, select: { id: true } });
+        const conversationIds = conversations.map(item => item.id);
+        if (conversationIds.length) {
+          await tx.chatMessage.deleteMany({ where: { conversationId: { in: conversationIds } } });
+          await tx.chatMember.deleteMany({ where: { conversationId: { in: conversationIds } } });
+          await tx.chatConversation.deleteMany({ where: { id: { in: conversationIds } } });
+        }
+        await tx.groupInvitation.deleteMany({ where: { groupId: group.id } });
+        await tx.groupMembership.deleteMany({ where: { groupId: group.id } });
+        await tx.studyGroup.delete({ where: { id: group.id } });
+      } else if (report.targetType === "MESSAGE") {
+        const message = await tx.chatMessage.findUnique({ where: { id: report.targetId }, select: { id: true } });
+        if (!message) throw Object.assign(new Error("Reported message no longer exists."), { statusCode: 404 });
+        await tx.chatMessage.delete({ where: { id: message.id } });
+      }
+      await tx.communityReport.update({ where: { id: report.id }, data: { status: "RESOLVED", reviewedBy: req.userId, reviewedAt: new Date() } });
+    });
+    res.json({ ok: true, action });
+  } catch (e) {
+    if (e.statusCode) return res.status(e.statusCode).json({ error: e.message });
+    next(e);
+  }
 });
 router.get("/admin/groups/pending", requireAdmin, async (_req, res, next) => {
   try { res.json({ groups: await prisma.studyGroup.findMany({ where: { status: "PENDING" }, orderBy: { createdAt: "asc" }, take: 100 }) }); }
