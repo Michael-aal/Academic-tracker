@@ -34,3 +34,12 @@
   .mobile-brand{margin-bottom:18px}
   .icon-only-back{margin-bottom:22px}
 }
+
+
+/* Administrator email PIN setup */
+.admin-pin-actions{display:grid;gap:8px}
+.admin-pin-button{min-height:44px;padding:10px 14px;border:1px solid #514276;border-radius:11px;background:#211a35;color:#d9ccff;font:700 12px 'DM Sans',sans-serif;cursor:pointer}
+.admin-pin-button:hover{background:#2b2145}
+.admin-pin-button:disabled{opacity:.65;cursor:wait}
+.admin-pin-status{color:#b69cff;font-size:11px;line-height:1.5}
+.admin-setup-option[hidden],#admin-setup-fields[hidden]{display:none}
