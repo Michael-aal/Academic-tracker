@@ -270,8 +270,13 @@ router.post("/posts/:id/comments", async (req, res, next) => {
     const post = await prisma.communityPost.findUnique({ where: { id: req.params.id } });
     if (!post || !await canReadPost(post, req.userId)) return res.status(404).json({ error: "Post not found." });
     const body = clean(req.body?.body, 2000);
+    const parentId = clean(req.body?.parentId, 100) || null;
     if (!body) return res.status(400).json({ error: "Write a comment first." });
-    const comment = await prisma.communityComment.create({ data: { postId: post.id, userId: req.userId, body } });
+    if (parentId) {
+      const parent = await prisma.communityComment.findFirst({ where: { id: parentId, postId: post.id, parentId: null } });
+      if (!parent) return res.status(400).json({ error: "Reply to a valid top-level comment." });
+    }
+    const comment = await prisma.communityComment.create({ data: { postId: post.id, userId: req.userId, parentId, body } });
     res.status(201).json({ comment });
   } catch (e) { next(e); }
 });
