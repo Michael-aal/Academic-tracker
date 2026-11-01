@@ -156,7 +156,7 @@ const bootstrapVerifyLimiter = rateLimit({
 });
 const adminEmailConfigured = () => {
   const email = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
-  return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) ? email : "";
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : "";
 };
 const adminSetupConfigured = () => Boolean(adminEmailConfigured() && process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
 
