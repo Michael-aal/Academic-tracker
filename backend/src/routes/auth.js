@@ -144,10 +144,18 @@ router.patch("/me", requireAuth, async (req, res, next) => {
     res.json({ user: publicUser(user) });
   } catch (error) { next(error); }
 });
-// One-time administrator bootstrap. This endpoint deliberately does not require
-// an existing account/session: registration reserves ADMIN_EMAIL, so requiring
-// a prior login would make first-time setup impossible.
-router.post("/admin/bootstrap", async (req, res, next) => {
+// One-time administrator bootstrap. This endpoint is available only until the
+// first administrator is created. The database transaction and serializable
+// isolation prevent two simultaneous setup requests from creating competing admins.
+const bootstrapLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many administrator setup attempts. Try again later." }
+});
+
+router.post("/admin/bootstrap", bootstrapLimiter, async (req, res, next) => {
   try {
     const configuredEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
     const configuredPassword = process.env.ADMIN_PASSWORD || "";
@@ -177,14 +185,39 @@ router.post("/admin/bootstrap", async (req, res, next) => {
     }
 
     const passwordHash = await bcrypt.hash(configuredPassword, 12);
-    const user = await prisma.user.upsert({
-      where: { email: configuredEmail },
-      create: { name: "Administrator", email: configuredEmail, passwordHash, role: "ADMIN" },
-      update: { passwordHash, role: "ADMIN" },
-      select: { id: true, name: true, email: true, role: true }
-    });
+    const user = await prisma.$transaction(async (tx) => {
+      const existingAdmin = await tx.user.findFirst({
+        where: { role: { in: ["ADMIN", "DEVELOPER", "DEV"] } },
+        select: { id: true }
+      });
+      if (existingAdmin) {
+        const error = new Error("Administrator setup has already been completed. Sign in with the existing administrator account.");
+        error.status = 409;
+        throw error;
+      }
+
+      const existingAccount = await tx.user.findUnique({ where: { email: configuredEmail } });
+      if (existingAccount) {
+        return tx.user.update({
+          where: { id: existingAccount.id },
+          data: { passwordHash, role: "ADMIN" },
+          select: { id: true, name: true, email: true, role: true }
+        });
+      }
+      return tx.user.create({
+        data: { name: "Administrator", email: configuredEmail, passwordHash, role: "ADMIN" },
+        select: { id: true, name: true, email: true, role: true }
+      });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+
     res.set("Cache-Control", "no-store");
-    return res.json({ ok: true, user: { ...user, isAdmin: true } });
-  } catch (error) { next(error); }
+    return res.status(201).json({ ok: true, created: true, user: { ...user, isAdmin: true } });
+  } catch (error) {
+    if (error.status === 409) return res.status(409).json({ error: error.message });
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034") {
+      return res.status(409).json({ error: "Administrator setup is being completed by another request. Please sign in and try again." });
+    }
+    next(error);
+  }
 });
 module.exports = router;
