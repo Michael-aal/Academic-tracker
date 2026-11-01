@@ -39,3 +39,12 @@ html[data-theme=dark] .story-generator,html[data-theme=dark] .story-vocab-item,h
 html[data-theme=dark] .story-generator-controls input,html[data-theme=dark] .story-generator-controls select{background:#0f0b18;color:#f5f3ff;border-color:#352944}
 @media(max-width:850px){.story-library{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.stories-section{padding:14px}.story-generator{grid-template-columns:1fr;padding:14px}.story-library{grid-template-columns:1fr}.story-vocabulary{grid-template-columns:1fr}.story-reader{padding:14px}.story-reader-top h3{font-size:18px}}
+
+/* AI-generated Word Spotlight */
+.english-word-content{min-width:0;flex:1}
+.english-word-meta{font-size:12px;font-weight:750;letter-spacing:.03em}
+.english-word-pronunciation{font-family:Georgia,serif;font-size:14px!important;letter-spacing:.04em;color:#d8c8ff!important}
+.english-word-tip{font-size:12px!important;color:#e9defa!important}
+.english-word-status{font-size:11px!important;color:#c4b5fd!important}
+.english-word-actions button:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:760px){.english-word-content{width:100%}}
