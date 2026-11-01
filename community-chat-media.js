@@ -133,7 +133,7 @@
           const result=await response.json().catch(()=>({}));
           if(!response.ok||!result.secure_url)throw new Error("Voice-note upload failed. Check Cloudinary configuration.");
           await api("/community/chat/"+encodeURIComponent(chatId)+"/messages",{method:"POST",body:JSON.stringify({messageType:"VOICE_NOTE",mediaUrl:result.secure_url})});
-          $("chat-list").dispatchEvent(new Event("click"));setStatus("Voice note sent.");
+          await state().openChat(chatId);setStatus("Voice note sent.");
         }catch(e){setStatus(e.message)}
         finally{$("voice-record").disabled=false;$("voice-record").textContent="Record voice note"}
       };
