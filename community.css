@@ -118,3 +118,22 @@ body.social-media-page .post-actions button:hover{background:rgba(128,85,220,.1)
 .shared-post-card strong{font-size:12px}
 .shared-post-card p{font-size:13px;line-height:1.55;white-space:pre-wrap}
 @media(max-width:560px){.feed-toolbar{align-items:flex-start}.feed-toolbar-actions{flex-wrap:wrap;justify-content:flex-end}.feed-toolbar-actions button{padding:8px 10px;font-size:11px}}
+
+/* Dedicated Social Media create-post page and clean home feed. */
+.social-create-link{color:#fff!important;text-decoration:none}
+.social-sample-video{padding:17px;margin:4px 0 18px;overflow:hidden}
+.social-sample-video video{display:block;width:100%;max-height:430px;aspect-ratio:16/9;object-fit:contain;background:#09070f;border-radius:13px}
+.sample-content-label{display:inline-flex;margin-top:10px;padding:5px 9px;border-radius:99px;background:rgba(128,85,220,.12);color:var(--community-accent);font-size:10px;font-weight:850;letter-spacing:.06em}
+.social-create-shell{width:min(760px,calc(100% - 28px));margin:30px auto 80px}
+.social-create-header{margin-bottom:20px}
+.social-create-header h1{font-size:clamp(28px,5vw,40px);margin:8px 0}
+.social-create-header>p:last-child{color:var(--community-muted)}
+.social-create-form{display:grid;gap:12px;padding:22px}
+.social-create-form label:not(.media-picker-label){font-size:13px;font-weight:750}
+.social-create-form textarea,.social-create-form input:not([type=file]),.social-create-form select{width:100%;min-width:0;padding:12px;border:1px solid var(--community-border);border-radius:11px;background:transparent;color:var(--community-text);font:inherit}
+.social-create-form textarea{resize:vertical;line-height:1.55}
+.social-create-author{display:flex;align-items:center;gap:11px;margin-bottom:7px}
+.social-create-author small{display:block;color:var(--community-muted);font-size:11px;margin-top:3px}
+.social-create-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:8px}
+.social-create-actions a{text-decoration:none}
+@media(max-width:560px){.social-create-shell{margin-top:16px}.social-create-form{padding:15px}.social-create-actions>*{flex:1;text-align:center}}
