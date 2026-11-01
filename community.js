@@ -201,7 +201,7 @@
       ]);
       $("friend-count").textContent=String(friends.length);
       $("friend-request-count").textContent=String(requests.length);
-      $("friends-list").innerHTML=friends.length?friends.map(p=>'<article class="person-card"><strong>'+esc(p.displayName)+'</strong><p>@'+esc(p.username)+' · '+esc(p.educationTrack)+'<br>'+esc(p.institutionName||p.programme||"")+'<br>Best subject: '+esc(p.bestSubject||"Not specified")+'</p><button class="quiet-button" data-message-friend="'+esc(p.userId)+'">Message</button></article>').join(""):'<div class="empty-state">Your accepted connections will appear here.</div>';
+      $("friends-list").innerHTML=friends.length?friends.map(p=>'<article class="person-card"><strong>'+esc(p.displayName)+'</strong><p>@'+esc(p.username)+' · '+esc(p.educationTrack)+'<br>'+esc(p.institutionName||p.programme||"")+'<br>Best subject: '+esc(p.bestSubject||"Not specified")+'</p></article>').join(""):'<div class="empty-state">Your accepted connections will appear here.</div>';
       $("friend-requests-list").innerHTML=requests.length?requests.map(r=>'<article class="person-card"><strong>'+esc(r.requester?.name||"Student")+'</strong><p>Wants to connect with you · '+esc(r.requester?.educationTrack||"")+'</p><div class="friend-request-actions"><button class="primary-button" data-friend-request="'+esc(r.id)+'" data-request-action="accept">Accept</button><button class="outline-button" data-friend-request="'+esc(r.id)+'" data-request-action="decline">Decline</button></div></article>').join(""):'<div class="empty-state">No pending friend requests.</div>';
     }catch(e){status(e.message);}
   }
@@ -216,14 +216,7 @@
       await loadFriends();
     }catch(err){status(err.message);button.disabled=false;}
   });
-  $("friends-list").addEventListener("click",async e=>{
-    const button=e.target.closest("[data-message-friend]");
-    if(!button)return;
-    tab("messages");
-    const search=$("chat-person-query");
-    if(search){search.value="";search.focus();}
-    status("Open your Messages tab to start a conversation with this friend.");
-  });
+
 
   async function loadGroups(){
     if(!requireLogin()) return;
