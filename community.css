@@ -118,3 +118,35 @@ body.social-media-page .post-actions button:hover{background:rgba(128,85,220,.1)
 .shared-post-card strong{font-size:12px}
 .shared-post-card p{font-size:13px;line-height:1.55;white-space:pre-wrap}
 @media(max-width:560px){.feed-toolbar{align-items:flex-start}.feed-toolbar-actions{flex-wrap:wrap;justify-content:flex-end}.feed-toolbar-actions button{padding:8px 10px;font-size:11px}}
+
+/* Dedicated Social Media create-post page and clean home feed. */
+.social-create-link{color:#fff!important;text-decoration:none}
+.social-sample-video{padding:17px;margin:4px 0 18px;overflow:hidden}
+.social-sample-video video{display:block;width:100%;max-height:430px;aspect-ratio:16/9;object-fit:contain;background:#09070f;border-radius:13px}
+.sample-content-label{display:inline-flex;margin-top:10px;padding:5px 9px;border-radius:99px;background:rgba(128,85,220,.12);color:var(--community-accent);font-size:10px;font-weight:850;letter-spacing:.06em}
+.social-create-shell{width:min(760px,calc(100% - 28px));margin:30px auto 80px}
+.social-create-header{margin-bottom:20px}
+.social-create-header h1{font-size:clamp(28px,5vw,40px);margin:8px 0}
+.social-create-header>p:last-child{color:var(--community-muted)}
+.social-create-form{display:grid;gap:12px;padding:22px}
+.social-create-form label:not(.media-picker-label){font-size:13px;font-weight:750}
+.social-create-form textarea,.social-create-form input:not([type=file]),.social-create-form select{width:100%;min-width:0;padding:12px;border:1px solid var(--community-border);border-radius:11px;background:transparent;color:var(--community-text);font:inherit}
+.social-create-form textarea{resize:vertical;line-height:1.55}
+.social-create-author{display:flex;align-items:center;gap:11px;margin-bottom:7px}
+.social-create-author small{display:block;color:var(--community-muted);font-size:11px;margin-top:3px}
+.social-create-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:8px}
+.social-create-actions a{text-decoration:none}
+@media(max-width:560px){.social-create-shell{margin-top:16px}.social-create-form{padding:15px}.social-create-actions>*{flex:1;text-align:center}}
+
+body.social-media-page #view-feed .community-layout{grid-template-columns:minmax(0,1fr)}
+body.social-media-page #view-feed .community-main-column{min-width:0}
+body.social-media-page #view-feed .community-side-column{display:none}
+.post-owner-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:7px}
+.post-owner-actions button{border:0;background:transparent;color:var(--community-accent);font:inherit;font-size:11px;font-weight:800;padding:6px 8px;cursor:pointer}
+.post-owner-actions button:last-child{color:#c05a68}
+.post-owner-actions button:hover{background:rgba(128,85,220,.1);border-radius:8px}
+@media(max-width:560px){.social-create-link{padding:9px 11px;font-size:11px}.social-sample-video{padding:13px}.post-owner-actions button{padding:7px 9px}}
+
+.social-profile-post-controls{position:absolute;top:6px;right:6px;display:flex;gap:4px;z-index:2}
+.social-profile-post-controls button{border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:5px 7px;background:rgba(12,8,20,.82);color:#fff;font-size:9px;font-weight:800;cursor:pointer}
+.social-profile-post-controls button:last-child{color:#ffd2d7}
