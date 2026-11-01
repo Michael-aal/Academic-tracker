@@ -75,21 +75,6 @@
     ).join("") : '<div class="loading-card">Credit bundles are being configured.</div>';
     document.querySelectorAll("[data-bundle]").forEach(b => b.addEventListener("click", () => startPurchase("BUNDLE", b.dataset.bundle)));
   }
-  function updateDailyTotal() {
-    const days = Number($("daily-days").value || dailyDays || 1);
-    dailyDays = days;
-    const p = catalog.plans.find(x => x.key === "daily");
-    if (!p) return;
-    $("daily-price").textContent = amountFor(p, days);
-    $("daily-price-secondary").textContent = alternateAmount(p, days);
-    $("daily-total").textContent = days + (days === 1 ? " day" : " days") + " · " + (p.credits * days).toLocaleString() + " AI credits included";
-    $("daily-credit-note").textContent = "Credits are calculated per day and added after Paystack confirms payment.";
-    const button = document.querySelector('[data-plan="daily"]');
-    if (button) {
-      button.disabled = !checkoutReady(p);
-      button.textContent = checkoutReady(p) ? "Continue · Pay " + ngn(p.amountNgnKobo * days) : "Checkout unavailable";
-    }
-  }
   async function startPurchase(type, key) {
     if (!token) { location.href = "login.html"; return; }
     if (!catalog.paymentsConfigured || !catalog.fxConfigured) { alertUser("Paystack checkout is not configured yet. Please contact support."); return; }
