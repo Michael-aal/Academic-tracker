@@ -71,6 +71,7 @@
         const avatar = author.avatarUrl ? '<img src="' + esc(author.avatarUrl) + '" alt="">' : esc((author.displayName || "S").slice(0,1).toUpperCase());
         return '<article class="panel post-card" data-post="' + esc(post.id) + '"><div class="post-author"><div class="post-avatar">' + avatar + '</div><div><strong>' + esc(author.displayName || "Student") + '</strong><small>@' + esc(author.username || "student") + ' · ' + esc(author.educationTrack || "") + '</small></div></div>' +
           (post.body ? '<p class="post-body">' + esc(post.body) + '</p>' : '') +
+          (post.mediaUrl ? '<p><img class="post-media" src="' + esc(post.mediaUrl) + '" alt="Shared learning image" loading="lazy"></p>' : '') +
           (post.subject ? '<span class="post-subject">' + esc(post.subject) + '</span>' : '') +
           (post.videoUrl ? '<p><a target="_blank" rel="noopener noreferrer" href="' + esc(post.videoUrl) + '">Open shared learning video ↗</a></p>' : '') +
           '<div class="post-meta">' + new Date(post.createdAt).toLocaleString() + ' · ' + (post.reactionCount || 0) + ' reactions · ' + (post.commentCount || 0) + ' comments</div>' +
@@ -78,15 +79,30 @@
       }).join("");
     } catch (e) { $("feed-list").innerHTML = '<div class="empty-state">' + esc(e.message) + '</div>'; }
   }
+  async function uploadCommunityMedia(file) {
+    const isVideo=file.type.startsWith("video/");
+    const isImage=file.type.startsWith("image/");
+    if(!isVideo&&!isImage)throw new Error("Choose an image or video file.");
+    if(file.size>(isVideo?50:8)*1024*1024)throw new Error(isVideo?"Videos must be 50 MB or smaller.":"Images must be 8 MB or smaller.");
+    const sig=await api("/community/media-upload-signature",{method:"POST",body:JSON.stringify({resourceType:isVideo?"video":"image"})});
+    const form=new FormData();form.append("file",file);form.append("api_key",sig.apiKey);form.append("timestamp",String(sig.timestamp));form.append("folder",sig.folder);form.append("signature",sig.signature);
+    const response=await fetch("https://api.cloudinary.com/v1_1/"+encodeURIComponent(sig.cloudName)+"/"+sig.resourceType+"/upload",{method:"POST",body:form});
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok||!result.secure_url)throw new Error("Media upload failed. Check Cloudinary configuration.");
+    return isVideo?{videoUrl:result.secure_url}:{mediaUrl:result.secure_url};
+  }
   $("post-form").addEventListener("submit", async e => {
     e.preventDefault(); if (!requireLogin()) return;
-    const body = $("post-body").value.trim();
-    if (!body) return status("Write a post before publishing.");
+    const body = $("post-body").value.trim(), file=$("post-media").files?.[0];
+    if (!body && !file) return status("Write a post or attach an image/video first.");
+    const submit=e.target.querySelector('button[type="submit"]');submit.disabled=true;submit.textContent="Publishing…";
     try {
-      await api("/community/posts", { method:"POST", body:JSON.stringify({ body, subject:$("post-subject").value, visibility:$("post-visibility").value }) });
-      $("post-body").value = ""; $("post-subject").value = "";
+      const media=file?await uploadCommunityMedia(file):{};
+      await api("/community/posts", { method:"POST", body:JSON.stringify({ body, ...media, subject:$("post-subject").value, visibility:$("post-visibility").value }) });
+      $("post-body").value = ""; $("post-subject").value = ""; $("post-media").value="";
       status("Your post is live."); loadFeed();
     } catch (e) { status(e.message); }
+    finally { submit.disabled=false;submit.textContent="Publish post"; }
   });
   $("refresh-feed").addEventListener("click", loadFeed);
   $("feed-list").addEventListener("click", async e => {
