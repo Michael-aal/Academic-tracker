@@ -21,7 +21,7 @@
     return true;
   }
   function tab(name) {
-    document.querySelectorAll(".community-tabs [data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+    document.querySelectorAll(".social-sidebar [data-tab], .social-topbar [data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
     document.querySelectorAll(".community-view").forEach(v => v.classList.toggle("active", v.id === "view-" + name));
     if (name === "feed") loadFeed();
     if (name === "people") loadFriends();
@@ -39,6 +39,15 @@
     const link = e.target.closest("[data-tab-link]");
     if (link) { e.preventDefault(); tab(link.dataset.tabLink); }
   });
+  const globalSearch = $("social-global-search");
+  globalSearch?.addEventListener("submit", event => {
+    event.preventDefault();
+    const query = $("social-global-search-input").value.trim();
+    if (query.length < 2) { status("Enter at least two characters to search."); return; }
+    tab("people");
+    $("people-query").value = query;
+    $("people-search").requestSubmit();
+  });
 
   async function loadProfile() {
     if (!requireLogin()) return;
@@ -55,6 +64,9 @@
       window.socialReady=true;$("social-onboarding").hidden=true;loadFeed();
       if ($("mini-profile")) $("mini-profile").innerHTML = '<strong>@' + esc(profile.username) + '</strong><p>' + esc(profile.bestSubject || "Add your best subject") + '</p><small>' + esc(profile.educationTrack || "") + ' · ' + (profile.visibility === "PRIVATE" ? "Private" : "Public") + '</small>';
       $("social-profile-name").textContent = profile.displayName || "Student";
+      const avatarMarkup = profile.avatarUrl ? '<img src="' + esc(profile.avatarUrl) + '" alt="">' : esc((profile.displayName || "S").slice(0,1).toUpperCase());
+      if ($("social-top-avatar")) $("social-top-avatar").innerHTML = avatarMarkup;
+      if ($("social-composer-avatar")) $("social-composer-avatar").innerHTML = avatarMarkup;
       $("social-profile-handle").textContent = "@" + (profile.username || "student");
       $("social-profile-bio").textContent = profile.bio || "Add a short bio to introduce yourself.";
       $("social-profile-avatar").innerHTML = profile.avatarUrl ? '<img src="' + esc(profile.avatarUrl) + '" alt="Profile photo">' : esc((profile.displayName || "S").slice(0,1).toUpperCase());
@@ -119,7 +131,7 @@
       })});
       $("profile-avatar").value=avatarUrl;
       $("profile-avatar-file").value="";
-      status("Your social profile settings have been saved.");
+      status("Profile settings saved.");
       if(result.profile)$("profile-username").value=result.profile.username||"";
       await loadProfile();
     } catch (e) { status("Profile could not be saved: "+e.message); }
@@ -169,9 +181,9 @@
   function previewMedia(file,box,keep=false){box.replaceChildren();if(!file)return;const url=URL.createObjectURL(file);if(keep){if(pendingMediaUrl)URL.revokeObjectURL(pendingMediaUrl);pendingMediaUrl=url;}const el=document.createElement(file.type.startsWith("video/")?"video":"img");el.src=url;el.alt="Selected media preview";el.className="post-preview-asset";if(file.type.startsWith("video/"))el.controls=true;box.append(el);}
   $("post-media").addEventListener("change",()=>{const f=$("post-media").files?.[0];clearPendingMedia();if(!f)return;const v=f.type.startsWith("video/"),im=f.type.startsWith("image/");if(!v&&!im){$("post-media").value="";return status("Choose an image or video.");}if(f.size>(v?50:8)*1024*1024){$("post-media").value="";return status(v?"Videos must be 50 MB or smaller.":"Images must be 8 MB or smaller.");}previewMedia(f,$("post-media-preview"),true);$("post-media-preview").hidden=false;});
   function closeReview(){$("post-review").hidden=true;}
-  $("post-form").addEventListener("submit",e=>{e.preventDefault();if(!requireLogin())return;if(!window.socialReady){status("Set up your Social Media username in your profile before publishing.");return;}const body=$("post-body").value.trim(),f=$("post-media").files?.[0];if(!body&&!f)return status("Write something or attach media first.");$("post-review-body").textContent=body;$("post-review-body").hidden=!body;$("post-review-author").textContent=$("social-profile-handle").textContent;$("post-review-subject").textContent=$("post-subject").value.trim()||"No subject";$("post-review-visibility").textContent=$("post-visibility").value==="PUBLIC"?"Public":"Connections only";const box=$("post-review-media");box.replaceChildren();if(f)previewMedia(f,box);box.hidden=!f;$("post-review").hidden=false;});
+  $("post-form").addEventListener("submit",e=>{e.preventDefault();if(!requireLogin())return;if(!window.socialReady){status("Choose a username in your profile in your profile before publishing.");return;}const body=$("post-body").value.trim(),f=$("post-media").files?.[0];if(!body&&!f)return status("Write something or attach media first.");$("post-review-body").textContent=body;$("post-review-body").hidden=!body;$("post-review-author").textContent=$("social-profile-handle").textContent;$("post-review-subject").textContent=$("post-subject").value.trim()||"No subject";$("post-review-visibility").textContent=$("post-visibility").value==="PUBLIC"?"Public":"Connections only";const box=$("post-review-media");box.replaceChildren();if(f)previewMedia(f,box);box.hidden=!f;$("post-review").hidden=false;});
   $("close-post-review").addEventListener("click",closeReview);$("cancel-post-review").addEventListener("click",closeReview);$("post-review").addEventListener("click",e=>{if(e.target===$("post-review"))closeReview();});
-  $("confirm-publish-post").addEventListener("click",async()=>{if(!requireLogin())return;if(!window.socialReady){status("Set up your Social Media username in your profile before publishing.");return;}const body=$("post-body").value.trim(),f=$("post-media").files?.[0],b=$("confirm-publish-post");b.disabled=true;b.textContent="Uploading and publishing…";try{const media=f?await uploadCommunityMedia(f):{};await api("/community/posts",{method:"POST",body:JSON.stringify({body,...media,subject:$("post-subject").value,visibility:$("post-visibility").value})});$("post-body").value="";$("post-subject").value="";$("post-media").value="";clearPendingMedia();closeReview();status("Published online. Your post is now live.");await Promise.all([loadFeed(),loadProfile()]);}catch(err){status(err.message);}finally{b.disabled=false;b.textContent="Publish post";}});
+  $("confirm-publish-post").addEventListener("click",async()=>{if(!requireLogin())return;if(!window.socialReady){status("Choose a username in your profile in your profile before publishing.");return;}const body=$("post-body").value.trim(),f=$("post-media").files?.[0],b=$("confirm-publish-post");b.disabled=true;b.textContent="Uploading and publishing…";try{const media=f?await uploadCommunityMedia(f):{};await api("/community/posts",{method:"POST",body:JSON.stringify({body,...media,subject:$("post-subject").value,visibility:$("post-visibility").value})});$("post-body").value="";$("post-subject").value="";$("post-media").value="";clearPendingMedia();closeReview();status("Published online. Your post is now live.");await Promise.all([loadFeed(),loadProfile()]);}catch(err){status(err.message);}finally{b.disabled=false;b.textContent="Publish post";}});
   $("refresh-feed").addEventListener("click", () => loadFeed(showingSavedPosts));
   $("show-saved-posts").addEventListener("click", () => loadFeed(!showingSavedPosts));
   const socialBottomNav = $("social-bottom-nav");
