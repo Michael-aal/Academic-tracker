@@ -21,7 +21,7 @@
     return true;
   }
   function tab(name) {
-    document.querySelectorAll(".community-tabs [data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+    document.querySelectorAll(".social-sidebar [data-tab], .social-topbar [data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
     document.querySelectorAll(".community-view").forEach(v => v.classList.toggle("active", v.id === "view-" + name));
     if (name === "feed") loadFeed();
     if (name === "people") loadFriends();
@@ -39,6 +39,15 @@
     const link = e.target.closest("[data-tab-link]");
     if (link) { e.preventDefault(); tab(link.dataset.tabLink); }
   });
+  const globalSearch = $("social-global-search");
+  globalSearch?.addEventListener("submit", event => {
+    event.preventDefault();
+    const query = $("social-global-search-input").value.trim();
+    if (query.length < 2) { status("Enter at least two characters to search."); return; }
+    tab("people");
+    $("people-query").value = query;
+    $("people-search").requestSubmit();
+  });
 
   async function loadProfile() {
     if (!requireLogin()) return;
@@ -55,6 +64,9 @@
       window.socialReady=true;$("social-onboarding").hidden=true;loadFeed();
       if ($("mini-profile")) $("mini-profile").innerHTML = '<strong>@' + esc(profile.username) + '</strong><p>' + esc(profile.bestSubject || "Add your best subject") + '</p><small>' + esc(profile.educationTrack || "") + ' · ' + (profile.visibility === "PRIVATE" ? "Private" : "Public") + '</small>';
       $("social-profile-name").textContent = profile.displayName || "Student";
+      const avatarMarkup = profile.avatarUrl ? '<img src="' + esc(profile.avatarUrl) + '" alt="">' : esc((profile.displayName || "S").slice(0,1).toUpperCase());
+      if ($("social-top-avatar")) $("social-top-avatar").innerHTML = avatarMarkup;
+      if ($("social-composer-avatar")) $("social-composer-avatar").innerHTML = avatarMarkup;
       $("social-profile-handle").textContent = "@" + (profile.username || "student");
       $("social-profile-bio").textContent = profile.bio || "Add a short bio to introduce yourself.";
       $("social-profile-avatar").innerHTML = profile.avatarUrl ? '<img src="' + esc(profile.avatarUrl) + '" alt="Profile photo">' : esc((profile.displayName || "S").slice(0,1).toUpperCase());
