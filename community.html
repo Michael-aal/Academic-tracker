@@ -28,7 +28,7 @@
   </div>
 </header>
 <main class="community-shell">
-  <section class="community-heading"><div><h1>Home</h1></div><div class="community-heading-actions"><a class="outline-button social-back-academic" href="dashboard.html">← Back to Academic Tracker</a><a class="community-profile-link" id="community-admin-link" href="community-admin.html" hidden>Moderation tools</a></div></section>
+  <section class="community-heading"><div><h1>Home</h1></div><div class="community-heading-actions"><a id="social-back-academic" class="outline-button social-back-academic" href="dashboard.html">← Back to Academic Tracker</a><a class="community-profile-link" id="community-admin-link" href="community-admin.html" hidden>Moderation tools</a></div></section>
   <nav class="community-tabs" aria-label="Main navigation">
     <button class="active" data-tab="feed">Feed</button>
     <button data-tab="people">Friends</button>
@@ -53,12 +53,12 @@
     <div class="friends-dashboard">
       <section class="panel section-panel"><div class="section-heading"><div><h2>Friend requests</h2><p></p></div><span id="friend-request-count" class="friend-count">0</span></div><div id="friend-requests-list" class="people-list"><div class="empty-state">Loading requests…</div></div></section>
       <section class="panel section-panel"><div class="section-heading"><div><h2>Your friends</h2><p></p></div><span id="friend-count" class="friend-count">0</span></div><div id="friends-list" class="people-list"><div class="empty-state">Loading friends…</div></div></section>
-      <section class="panel section-panel"><h2>Blocked students</h2><p>Unblock someone at any time. Blocking removes your existing connection.</p><div id="blocked-students-list" class="people-list"><div class="empty-state">Loading blocked students…</div></div></section>
+      <section class="panel section-panel"><h2>Blocked students</h2><div id="blocked-students-list" class="people-list"><div class="empty-state">Loading blocked students…</div></div></section>
       <section class="panel section-panel"><h2>Find students</h2><p></p><form id="people-search" class="search-row"><input id="people-query" minlength="2" autocomplete="off" placeholder="Enter @username, student name or institution"><button class="primary-button">Search</button></form><div id="people-list" class="people-list" aria-live="polite"></div></section>
     </div>
   </section>
   <section class="community-view" id="view-groups">
-    <div class="section-heading"><div><h2>Study groups</h2><p>Learn with people who share your interests.</p></div><button class="primary-button" id="show-group-form">Create group</button></div>
+    <div class="section-heading"><div><h2>Study groups</h2></div><button class="primary-button" id="show-group-form">Create group</button></div>
     <form id="group-form" class="panel group-form" hidden><h3>Create a study group</h3><label>Group name<input id="group-title" maxlength="100" required></label><label>Description<textarea id="group-description" rows="3" maxlength="1000" required></textarea></label><label>Subject<input id="group-subject" maxlength="100" placeholder="Optional"></label><label class="check-line"><input id="group-cross-level" type="checkbox"> Allow students from both academic environments</label><label>Visibility<select id="group-visibility"><option value="PUBLIC">Public</option><option value="PRIVATE">Private</option><option value="INVITE">Invitation only</option></select></label><button class="primary-button">Create group</button></form>
     <section class="panel section-panel group-invitations-panel"><h3>Group invitations</h3><div id="group-invitations"><span class="muted-note">Loading invitations…</span></div></section><div id="group-list" class="group-grid"><div class="empty-state">Loading groups…</div></div>
   </section>
@@ -72,7 +72,7 @@
     </div>
   </section>
   <section class="community-view" id="view-referrals">
-    <div class="referral-grid"><section class="panel section-panel"><p class="community-eyebrow">INVITE YOUR FRIENDS</p><h2>Invite friends</h2><p>Share your unique invitation link. Referral credit stays pending until eligibility checks are completed.</p><div id="referral-card" class="referral-card">Loading your referral link…</div></section><section class="panel section-panel"><h2>Your referral activity</h2><div id="referral-stats"></div></section></div>
+    <div class="referral-grid"><section class="panel section-panel"><p class="community-eyebrow">INVITE YOUR FRIENDS</p><h2>Invite friends</h2><div id="referral-card" class="referral-card">Loading your referral link…</div></section><section class="panel section-panel"><h2>Your referral activity</h2><div id="referral-stats"></div></section></div>
   </section>
   <section class="community-view" id="view-profile">
     <section class="social-profile-page">
