@@ -6,7 +6,7 @@
   <script>try{document.documentElement.dataset.theme=localStorage.getItem("academic-tracker-theme")==="dark"?"dark":"light"}catch(_){document.documentElement.dataset.theme="light"}</script>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Connect with students, publish posts, like and comment, discover friends and learn together.">
-  <title>Social Media · Academic Tracker</title>
+  <title>Study Social · Academic Tracker</title>
   <link rel="stylesheet" href="global-light-mode.css" data-global-light-mode>
   <link rel="stylesheet" href="premium-theme.css">
   <link rel="stylesheet" href="global-navigation.css">
@@ -17,18 +17,15 @@
   <script src="global-theme.js" data-global-theme defer></script>
 </head>
 <body class="social-media-page">
+<header class="social-topbar"><a class="social-brand" href="community.html" aria-label="Study Social home"><span class="social-brand-mark">S</span><span>Study Social</span></a><div class="social-top-search"><span aria-hidden="true">⌕</span><input id="social-global-search" type="search" placeholder="Search students, subjects and posts" aria-label="Search students, subjects and posts"></div><div class="social-top-actions"><a href="notifications.html" aria-label="Notifications" title="Notifications">♧</a><button type="button" data-social-create aria-label="Create post" title="Create post">＋</button><a href="#messages" data-tab-link="messages" aria-label="Messages" title="Messages">✉</a><a href="#profile" data-tab-link="profile" aria-label="Your profile" title="Your profile">●</a></div></header>
 <main class="community-shell">
-  <section class="community-heading">
-    <div><p class="community-eyebrow">YOUR SOCIAL SPACE</p><h1>Social Media</h1><p>Share what you are learning, discover useful lessons and connect with students.</p></div>
-    <div class="community-heading-actions"><a class="community-profile-link" href="notifications.html">Notifications</a><a class="community-profile-link" href="#profile" data-tab-link="profile">Your profile</a><a class="primary-button social-create-link" href="social-create.html">＋ Create post</a><a class="community-profile-link" id="community-admin-link" href="community-admin.html" hidden>Moderation tools</a></div>
-  </section>
+  <section class="community-heading"><div><h1>Home</h1><p class="social-home-subtitle">Your student community</p></div><div class="community-heading-actions"><a class="outline-button social-back-academic" href="dashboard.html">← Back to Academic Tracker</a><a class="community-profile-link" id="community-admin-link" href="community-admin.html" hidden>Moderation tools</a></div></section>
   <nav class="community-tabs" aria-label="Social Media sections">
     <button class="active" data-tab="feed">Feed</button>
     <button data-tab="people">Friends</button>
     <button data-tab="groups">Groups</button>
     <button data-tab="videos">Watch &amp; Reels</button>
     <button data-tab="messages">Messages</button>
-    <button data-tab="referrals">Referrals</button>
     <button data-tab="profile">Profile</button>
   </nav>
   <div id="community-status" class="community-status" role="status" aria-live="polite"></div>
@@ -47,7 +44,7 @@
         <div class="feed-toolbar"><h2 id="feed-heading">Recent posts</h2><div class="feed-toolbar-actions"><button class="quiet-button" id="show-saved-posts" type="button">Saved posts</button><button class="quiet-button" id="refresh-feed" type="button">Refresh</button></div></div>
         <div id="feed-list" class="feed-list"><div class="empty-state">Loading posts…</div></div>
       </div>
-
+      <aside class="community-side-column social-home-rail"><section class="panel side-card"><h3>Your profile</h3><div id="mini-profile" class="social-mini-profile"><span class="post-avatar">S</span><span>Loading profile…</span></div><button class="quiet-button" type="button" data-tab-link="profile">View profile</button></section><section class="panel side-card"><h3>Explore</h3><button class="social-rail-link" type="button" data-tab="people">Find students</button><button class="social-rail-link" type="button" data-tab="groups">Study groups</button><button class="social-rail-link" type="button" data-tab="videos">Learning videos</button></section></aside>
     </div>
   </section>
   <section class="community-view" id="view-people">
@@ -112,10 +109,10 @@
   <button type="button" data-social-dest="messages"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4zM8 9h8M8 13h5"/></svg><span>Messages</span></button>
   <button type="button" data-social-dest="profile"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Profile</span></button>
 </nav>
-<footer class="community-footer">Social Media · Connect, share and keep it respectful.</footer>
+<footer class="community-footer">Study Social · A community for learning together.</footer>
 </main>
 <script src="community.js" defer></script>
 <script src="community-chat-media.js" defer></script>
-<script src="global-navigation.js" defer></script>
+
 </body>
 </html>
