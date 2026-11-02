@@ -33,6 +33,20 @@
     if (name === "referrals") loadReferrals();
     if (name === "profile") loadProfile();
   }
+  const socialSearch = $("social-global-search");
+  socialSearch?.addEventListener("keydown", event => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    const query = socialSearch.value.trim();
+    if (!query) return;
+    tab("people");
+    $("people-query").value = query;
+    $("people-search").requestSubmit();
+  });
+  document.addEventListener("click", e => {
+    const create = e.target.closest("[data-social-create]");
+    if (create) { e.preventDefault(); location.href = "social-create.html"; }
+  });
   document.addEventListener("click", e => {
     const button = e.target.closest("[data-tab]");
     if (button) { e.preventDefault(); tab(button.dataset.tab); }
