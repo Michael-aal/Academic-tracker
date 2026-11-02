@@ -293,3 +293,20 @@ body.social-media-page .community-footer{display:none}
 .social-composer-heading .post-avatar img{width:100%;height:100%;object-fit:cover}
 
 .social-admin-link{margin:0 12px;padding:10px 12px;border-radius:10px;background:rgba(128,85,220,.1);color:var(--community-accent);font-size:12px;font-weight:800;text-decoration:none}
+
+/* Accessible icon system for the standalone social shell */
+.social-top-actions svg,.social-global-search svg,.social-sidebar button svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.social-sidebar button{display:flex;align-items:center;gap:13px}
+.social-sidebar button svg{width:21px;height:21px}
+.social-sidebar button.active svg{stroke:currentColor}
+.social-top-action{display:grid;place-items:center}
+.social-global-search>svg{margin-left:2px}
+.social-global-search button{display:grid;place-items:center}
+.social-global-search button svg{width:18px;height:18px}
+.social-top-actions button:focus-visible,.social-top-actions a:focus-visible,.social-sidebar button:focus-visible{outline:2px solid var(--community-accent);outline-offset:3px}
+.community-footer,.social-sidebar-foot{display:none!important}
+@media(max-width:760px){
+ .social-sidebar button{justify-content:center}
+ .social-sidebar button svg{width:22px;height:22px}
+ .social-top-actions svg{width:19px;height:19px}
+}
