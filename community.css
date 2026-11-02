@@ -291,3 +291,5 @@ body.social-media-page .community-footer{display:none}
 
 .social-top-profile img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .social-composer-heading .post-avatar img{width:100%;height:100%;object-fit:cover}
+
+.social-admin-link{margin:0 12px;padding:10px 12px;border-radius:10px;background:rgba(128,85,220,.1);color:var(--community-accent);font-size:12px;font-weight:800;text-decoration:none}
