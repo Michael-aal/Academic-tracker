@@ -17,33 +17,15 @@
   <script src="global-theme.js" data-global-theme defer></script>
 </head>
 <body class="social-media-page">
+<header class="social-topbar"><a class="social-brand" href="community.html"><span class="social-brand-mark">S</span><span>Study<span>Social</span></span></a><form class="social-global-search" id="social-global-search" role="search"><span>⌕</span><input id="social-global-search-input" type="search" placeholder="Search students, subjects and posts"><button type="submit">Search</button></form><div class="social-top-actions"><a href="social-create.html" class="social-top-action" aria-label="Create post">＋</a><a href="notifications.html" class="social-top-action" aria-label="Notifications">♧</a><button type="button" class="social-top-action" data-tab="messages" aria-label="Messages">✉</button><button type="button" class="social-top-profile" data-tab="profile"><span id="social-top-avatar">S</span></button></div></header>
+<aside class="social-sidebar" aria-label="Social navigation"><span class="social-sidebar-label">MENU</span><button class="active" type="button" data-tab="feed"><span>⌂</span> Home</button><button type="button" data-tab="people"><span>♙</span> Friends</button><button type="button" data-tab="groups"><span>▦</span> Study groups</button><button type="button" data-tab="videos"><span>▶</span> Watch &amp; explore</button><button type="button" data-tab="messages"><span>✉</span> Messages</button><button type="button" data-tab="referrals"><span>↗</span> Invite friends</button><button type="button" data-tab="profile"><span>◎</span> My profile</button><div class="social-sidebar-divider"></div><p class="social-sidebar-foot">A student community<br>inside Academic Tracker</p></aside>
 <main class="community-shell">
-  <section class="community-heading">
-    <div><p class="community-eyebrow">YOUR SOCIAL SPACE</p><h1>Social Media</h1><p>Share what you are learning, discover useful lessons and connect with students.</p></div>
-    <div class="community-heading-actions"><a class="community-profile-link" href="notifications.html">Notifications</a><a class="community-profile-link" href="#profile" data-tab-link="profile">Your profile</a><a class="primary-button social-create-link" href="social-create.html">＋ Create post</a><a class="community-profile-link" id="community-admin-link" href="community-admin.html" hidden>Moderation tools</a></div>
-  </section>
-  <nav class="community-tabs" aria-label="Social Media sections">
-    <button class="active" data-tab="feed">Feed</button>
-    <button data-tab="people">Friends</button>
-    <button data-tab="groups">Groups</button>
-    <button data-tab="videos">Watch &amp; Reels</button>
-    <button data-tab="messages">Messages</button>
-    <button data-tab="referrals">Referrals</button>
-    <button data-tab="profile">Profile</button>
-  </nav>
   <div id="community-status" class="community-status" role="status" aria-live="polite"></div>
   <section class="community-view active" id="view-feed">
     <div class="community-layout">
-      <div class="community-main-column">
-        <form class="composer panel" id="post-form" hidden><label for="post-body">What would you like to share?</label><textarea id="post-body" maxlength="5000" rows="4" placeholder="Write something for your friends…"></textarea><div id="post-media-preview" class="post-media-preview" hidden></div><div class="composer-row"><label class="media-picker-label" for="post-media">＋ Add photo or video</label><input id="post-media" type="file" accept="image/*,video/*" aria-label="Attach an image or video"><input id="post-subject" maxlength="100" placeholder="Subject (optional)"><select id="post-visibility" aria-label="Post visibility"><option value="PUBLIC">Everyone · Public</option><option value="FOLLOWERS">Connections</option></select><button class="primary-button" type="submit">Review post</button></div><p class="composer-hint">Your post is not shared until you review and publish it.</p></form>
+      <div class="community-main-column"><div class="social-home-return"><a href="dashboard.html">← Back to Academic Tracker</a><span>Home feed</span></div>
+        <form class="composer panel" id="post-form"><div class="social-composer-heading"><div class="post-avatar" id="social-composer-avatar">S</div><label for="post-body">What’s on your mind?</label></div><textarea id="post-body" maxlength="5000" rows="4" placeholder="Share a discovery, ask a question or post something you are learning…"></textarea><div id="post-media-preview" class="post-media-preview" hidden></div><div class="composer-row"><label class="media-picker-label" for="post-media">＋ Add photo or video</label><input id="post-media" type="file" accept="image/*,video/*" aria-label="Attach an image or video"><input id="post-subject" maxlength="100" placeholder="Subject (optional)"><select id="post-visibility" aria-label="Post visibility"><option value="PUBLIC">Everyone · Public</option><option value="FOLLOWERS">Connections</option></select><button class="primary-button" type="submit">Review post</button></div><p class="composer-hint">Your post is not shared until you review and publish it.</p></form>
         <section class="post-review-overlay" id="post-review" hidden role="dialog" aria-modal="true"><div class="post-review-card"><div class="post-review-heading"><h2>Preview your post</h2><button type="button" id="close-post-review" class="quiet-button">✕</button></div><div id="post-review-author" class="post-review-author"></div><p id="post-review-body" class="post-review-body"></p><div id="post-review-media" class="post-review-media"></div><div class="post-review-details"><span id="post-review-subject"></span><span id="post-review-visibility"></span></div><p class="post-review-note">Publishing saves this post online for authenticated students.</p><div class="post-review-actions"><button type="button" class="outline-button" id="cancel-post-review">Keep editing</button><button type="button" class="primary-button" id="confirm-publish-post">Publish post</button></div></div></section>
-        <section class="social-sample-video panel" aria-labelledby="sample-video-title">
-          <div class="social-discover-heading"><div><p class="community-eyebrow">SAMPLE LEARNING CLIP</p><h2 id="sample-video-title">A helicopter flying on Mars</h2><p>NASA footage · Science and engineering · Clearly labelled sample content</p></div><a class="quiet-button" href="https://images.nasa.gov/details/PIA24521" target="_blank" rel="noopener noreferrer">Source ↗</a></div>
-          <div class="sample-video-frame">
-            <iframe title="NASA Ingenuity helicopter's first flight on Mars" src="https://www.youtube-nocookie.com/embed/wMnOo2zcjXA?rel=0" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
-          </div>
-          <span class="sample-content-label">SAMPLE · Not a student upload</span>
-        </section>
         <div class="feed-toolbar"><h2 id="feed-heading">Recent posts</h2><div class="feed-toolbar-actions"><button class="quiet-button" id="show-saved-posts" type="button">Saved posts</button><button class="quiet-button" id="refresh-feed" type="button">Refresh</button></div></div>
         <div id="feed-list" class="feed-list"><div class="empty-state">Loading posts…</div></div>
       </div>
@@ -112,7 +94,7 @@
   <button type="button" data-social-dest="messages"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4zM8 9h8M8 13h5"/></svg><span>Messages</span></button>
   <button type="button" data-social-dest="profile"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Profile</span></button>
 </nav>
-<footer class="community-footer">Social Media · Connect, share and keep it respectful.</footer>
+
 </main>
 <script src="community.js" defer></script>
 <script src="community-chat-media.js" defer></script>
