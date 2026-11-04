@@ -34,7 +34,15 @@
     ["Support & Messages","support.html","support"]
   ];
   const account = (() => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}"); } catch { return {}; } })();
-  const isHigherTrack = account.educationTrack === "HIGHER";
+  const isHigherTrack = String(account.educationTrack || "").toUpperCase() === "HIGHER";
+  // Shared pages often retain legacy dashboard links. Keep every return/home link
+  // aligned with the signed-in student's academic environment.
+  if (isHigherTrack) {
+    document.querySelectorAll('a[href="dashboard.html"], a[href^="dashboard.html?"], a[href^="dashboard.html#"]').forEach(link => {
+      const suffix = link.getAttribute("href").slice("dashboard.html".length);
+      link.setAttribute("href", "university-dashboard.html" + suffix);
+    });
+  }
   if (isHigherTrack) {
     const dashboardIndex = routes.findIndex(route => route[1] === "dashboard.html");
     if (dashboardIndex >= 0) routes.splice(dashboardIndex, 1, ["University Dashboard", "university-dashboard.html", "university"]);
