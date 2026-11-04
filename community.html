@@ -18,8 +18,7 @@
 </head>
 <body class="social-media-page">
 <header class="social-topbar">
-  <a class="social-brand" href="community.html" aria-label="Home"><span class="social-brand-mark">A</span></a>
-  <label class="social-top-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><input id="social-global-search" type="search" placeholder="Search" aria-label="Search students and posts"></label>
+  <a class="social-brand" href="community.html" aria-label="Study Social home"><span class="social-brand-mark">A</span><span class="social-brand-name">Study Social</span></a>
   <div class="social-top-actions">
     <a href="notifications.html" aria-label="Notifications" title="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></a>
     <button type="button" data-social-create aria-label="Create post" title="Create post"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -27,6 +26,13 @@
     <a href="#profile" data-tab-link="profile" aria-label="Profile" title="Profile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></a>
   </div>
 </header>
+<div class="social-search-wrap">
+  <label class="social-search-bar" for="social-global-search">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg>
+    <input id="social-global-search" type="search" placeholder="Search students, subjects and posts" aria-label="Search students, subjects and posts">
+    <span>Search</span>
+  </label>
+</div>
 <main class="community-shell">
   <section class="community-heading"><div><h1>Home</h1></div><div class="community-heading-actions"><a id="social-back-academic" class="outline-button social-back-academic" href="dashboard.html">← Back to Academic Tracker</a><a class="community-profile-link" id="community-admin-link" href="community-admin.html" hidden>Moderation tools</a></div></section>
   <nav class="community-tabs" aria-label="Main navigation">
