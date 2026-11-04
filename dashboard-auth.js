@@ -7,6 +7,11 @@
     const title = document.getElementById('page-title');
     if (title && cachedUser?.name) title.textContent = 'Welcome, ' + cachedUser.name.split(/\s+/)[0];
   } catch {}
+  // The secondary dashboard must never become the destination for a university account.
+  if (String(cachedUser?.educationTrack || '').toUpperCase() === 'HIGHER') {
+    window.location.replace('university-dashboard.html');
+    return;
+  }
   const supportLink = document.getElementById('support-link');
   const applyRole = (user) => {
     if (!supportLink || !user) return;
@@ -19,6 +24,10 @@
   }).then(response => response.ok ? response.json() : null).then(data => {
     if (data?.user) {
       localStorage.setItem('academic-tracker-user', JSON.stringify(data.user));
+      if (String(data.user.educationTrack || '').toUpperCase() === 'HIGHER') {
+        window.location.replace('university-dashboard.html');
+        return;
+      }
       applyRole(data.user);
     }
   }).catch(() => {});
