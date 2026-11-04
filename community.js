@@ -195,7 +195,13 @@
       $("social-profile-handle").textContent = "@" + (profile.username || "student");
       $("social-profile-bio").textContent = profile.bio || "Add a short bio to introduce yourself.";
       $("social-profile-avatar").innerHTML = profile.avatarUrl ? '<img src="' + esc(profile.avatarUrl) + '" alt="Profile photo">' : esc((profile.displayName || "S").slice(0,1).toUpperCase());
-      $("social-profile-cover").innerHTML = profile.coverUrl ? '<img src="' + esc(profile.coverUrl) + '" alt="Profile cover">' : '<span>YOUR SPACE</span>';
+      const cover = $("social-profile-cover");
+      let coverImage = cover.querySelector(".social-cover-image");
+      if (!coverImage) { coverImage = document.createElement("img"); coverImage.className = "social-cover-image"; coverImage.alt = "Profile cover"; cover.prepend(coverImage); }
+      coverImage.hidden = !profile.coverUrl;
+      if (profile.coverUrl) coverImage.src = profile.coverUrl; else coverImage.removeAttribute("src");
+      const coverFallback = cover.querySelector(".social-cover-fallback");
+      if (coverFallback) coverFallback.hidden = Boolean(profile.coverUrl);
       $("profile-post-count").textContent = String(stats.posts || 0);
       $("profile-friend-count").textContent = String(stats.friends || 0);
       $("profile-like-count").textContent = String(stats.likes || 0);
