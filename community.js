@@ -56,6 +56,119 @@
     if (link) { e.preventDefault(); tab(link.dataset.tabLink); }
   });
 
+  let profilePostsCache = [];
+  function renderProfilePosts(posts) {
+    profilePostsCache = posts || [];
+    $("social-profile-posts").innerHTML = profilePostsCache.length ? profilePostsCache.map(post => {
+      const media = post.mediaUrl ? '<img class="post-media" src="' + esc(post.mediaUrl) + '" alt="Post image" loading="lazy">' :
+        post.videoUrl ? '<video class="post-video" controls playsinline preload="metadata"><source src="' + esc(post.videoUrl) + '">Video unavailable.</video>' : "";
+      const ownerMenu = '<details class="profile-post-menu"><summary aria-label="Post options">•••</summary><div class="profile-post-menu-pop"><button type="button" data-profile-action="edit" data-id="' + esc(post.id) + '" data-body="' + esc(post.body || "") + '" data-subject="' + esc(post.subject || "") + '" data-visibility="' + esc(post.visibility || "PUBLIC") + '">Edit post</button><button type="button" data-profile-action="delete" data-id="' + esc(post.id) + '">Delete post</button></div></details>';
+      return '<article class="panel post-card profile-post-card" data-profile-post="' + esc(post.id) + '"><header class="post-author"><div class="post-avatar">' + esc(($("social-profile-name").textContent || "S").slice(0,1).toUpperCase()) + '</div><div><strong>' + esc($("social-profile-name").textContent || "Student") + '</strong><small>@' + esc(($("social-profile-handle").textContent || "@student").replace(/^@/,"")) + ' · ' + new Date(post.createdAt).toLocaleDateString() + '</small></div>' + ownerMenu + '</header>' +
+      (post.body ? '<p class="post-body">' + esc(post.body) + '</p>' : '') + media +
+      (post.subject ? '<span class="post-subject">' + esc(post.subject) + '</span>' : '') +
+      '<div class="post-meta">' + (post.reactionCount || 0) + ' likes · ' + (post.commentCount || 0) + ' comments · ' + (post.shareCount || 0) + ' shares</div>' +
+      '<div class="post-actions"><button type="button" data-profile-action="like" data-id="' + esc(post.id) + '">♡ Like</button><button type="button" data-profile-action="comments" data-id="' + esc(post.id) + '">Comment</button><button type="button" data-profile-action="share" data-id="' + esc(post.id) + '">Share</button></div><div class="post-comments" id="comments-' + esc(post.id) + '" hidden></div></article>';
+    }).join("") : '<div class="empty-state social-profile-empty">Your posts will appear here after you publish your first post.</div>';
+  }
+  function renderProfileAbout(profile) {
+    const rows = [
+      ["Best subject", profile.bestSubject || "Not added yet"],
+      ["Education", profile.educationTrack || "Not specified"],
+      ["Institution", profile.institutionName || "Not specified"],
+      ["Programme", profile.programme || "Not specified"],
+      ["Study level", profile.studyLevel || "Not specified"],
+      ["Interests", (profile.interests || []).join(", ") || "Not added yet"]
+    ];
+    $("social-profile-about").innerHTML = '<div class="profile-about-bio"><h3>About</h3><p>' + esc(profile.bio || "No bio added yet.") + '</p></div><div class="profile-about-grid">' + rows.map(row => '<div><small>' + esc(row[0]) + '</small><strong>' + esc(row[1]) + '</strong></div>').join("") + '</div>';
+  }
+  function renderProfileMedia(posts) {
+    const photos = (posts || []).filter(post => post.mediaUrl);
+    const videos = (posts || []).filter(post => post.videoUrl);
+    $("social-profile-photos").innerHTML = photos.length ? photos.map(post => '<a class="social-profile-media-item" href="' + esc(post.mediaUrl) + '" target="_blank" rel="noopener"><img src="' + esc(post.mediaUrl) + '" alt="Post photo" loading="lazy"></a>').join("") : '<div class="empty-state">Your shared photos will appear here.</div>';
+    $("social-profile-videos").innerHTML = videos.length ? videos.map(post => '<article class="social-profile-video-item"><video controls playsinline preload="metadata"><source src="' + esc(post.videoUrl) + '"></video>' + (post.body ? '<p>' + esc(post.body) + '</p>' : '') + '</article>').join("") : '<div class="empty-state">Your shared videos will appear here.</div>';
+  }
+  async function loadProfileFriends() {
+    const box = $("social-profile-friends");
+    if (!box) return;
+    try {
+      const { friends = [] } = await api("/community/friends");
+      box.innerHTML = friends.length ? friends.map(person => '<article class="profile-friend-card"><div class="post-avatar">' + (person.avatarUrl ? '<img src="' + esc(person.avatarUrl) + '" alt="">' : esc((person.displayName || "S").slice(0,1).toUpperCase())) + '</div><div><strong>' + esc(person.displayName || "Student") + '</strong><small>@' + esc(person.username || "student") + '</small></div><button type="button" class="outline-button" data-profile-message="' + esc(person.userId) + '">Message</button></article>').join("") : '<div class="empty-state">Your accepted friends will appear here.</div>';
+    } catch (error) { box.innerHTML = '<div class="empty-state">' + esc(error.message) + '</div>'; }
+  }
+  async function uploadAndSaveProfileImage(file, field) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) throw new Error("Choose an image file.");
+    if (file.size > 8 * 1024 * 1024) throw new Error("Images must be 8 MB or smaller.");
+    const uploaded = await uploadCommunityMedia(file);
+    const value = uploaded.mediaUrl;
+    await api("/community/profile/me", { method:"PATCH", body:JSON.stringify({ [field]:value }) });
+    if (field === "avatarUrl") $("profile-avatar").value = value;
+    else $("profile-cover").value = value;
+    status(field === "avatarUrl" ? "Profile picture updated." : "Cover photo updated.");
+    await loadProfile();
+  }
+  document.querySelectorAll("[data-profile-tab]").forEach(button => button.addEventListener("click", () => {
+    const name = button.dataset.profileTab;
+    document.querySelectorAll("[data-profile-tab]").forEach(item => item.classList.toggle("active", item === button));
+    document.querySelectorAll(".social-profile-panel").forEach(panel => panel.classList.toggle("active", panel.id === "profile-panel-" + name));
+    if (name === "friends") loadProfileFriends();
+  }));
+  $("choose-profile-avatar").addEventListener("click", () => $("profile-avatar-file").click());
+  $("choose-profile-cover").addEventListener("click", () => $("profile-cover-file").click());
+  $("profile-avatar-file").addEventListener("change", async event => {
+    try { await uploadAndSaveProfileImage(event.target.files?.[0], "avatarUrl"); } catch (error) { status(error.message); }
+    event.target.value = "";
+  });
+  $("profile-cover-file").addEventListener("change", async event => {
+    try { await uploadAndSaveProfileImage(event.target.files?.[0], "coverUrl"); } catch (error) { status(error.message); }
+    event.target.value = "";
+  });
+  $("profile-cover-file-editor").addEventListener("change", async event => {
+    try { await uploadAndSaveProfileImage(event.target.files?.[0], "coverUrl"); } catch (error) { status(error.message); }
+    event.target.value = "";
+  });
+  $("profile-message-button").addEventListener("click", () => tab("messages"));
+  $("profile-find-friends").addEventListener("click", () => tab("people"));
+  $("social-profile-posts").addEventListener("click", async event => {
+    const message = event.target.closest("[data-profile-message]");
+    if (message) {
+      try { const { conversation } = await api("/community/chat/direct/" + encodeURIComponent(message.dataset.profileMessage), { method:"POST", body:"{}" }); await loadChats(); tab("messages"); openChat(conversation.id); }
+      catch (error) { status(error.message); }
+      return;
+    }
+    const button = event.target.closest("[data-profile-action]");
+    if (!button) return;
+    if (!requireLogin()) return;
+    const id = button.dataset.id, action = button.dataset.profileAction;
+    try {
+      if (action === "like") { await api("/community/posts/" + encodeURIComponent(id) + "/reaction", { method:"POST", body:JSON.stringify({reaction:"LIKE"}) }); await loadProfile(); }
+      if (action === "comments") { const box = $("comments-" + id); if (box && !box.hidden) box.hidden = true; else await renderPostComments(id); }
+      if (action === "share") { const note = window.prompt("Add a message to your share (optional):", ""); if (note === null) return; await api("/community/posts/" + encodeURIComponent(id) + "/share", { method:"POST", body:JSON.stringify({body:note}) }); status("Post shared to your feed."); await loadProfile(); }
+      if (action === "edit") {
+        const body = window.prompt("Edit your post", button.dataset.body || "");
+        if (body === null) return;
+        const subject = window.prompt("Update the subject (leave blank if none)", button.dataset.subject || "");
+        if (subject === null) return;
+        const visibilityChoice = window.prompt("Post visibility: type PUBLIC or FOLLOWERS", button.dataset.visibility || "PUBLIC");
+        if (visibilityChoice === null) return;
+        const visibility = ["PUBLIC","FOLLOWERS"].includes(visibilityChoice.trim().toUpperCase()) ? visibilityChoice.trim().toUpperCase() : "PUBLIC";
+        await api("/community/posts/" + encodeURIComponent(id), { method:"PATCH", body:JSON.stringify({body,subject,visibility}) });
+        status("Post updated."); await Promise.all([loadProfile(),loadFeed()]);
+      }
+      if (action === "delete") {
+        if (!window.confirm("Delete this post? This cannot be undone.")) return;
+        await api("/community/posts/" + encodeURIComponent(id), { method:"DELETE" });
+        status("Post deleted."); await Promise.all([loadProfile(),loadFeed()]);
+      }
+    } catch (error) { status(error.message); }
+  });
+  $("social-profile-posts").addEventListener("submit", async event => {
+    if (!event.target.matches(".comment-form")) return;
+    event.preventDefault();
+    const id = event.target.dataset.post, body = new FormData(event.target).get("body"), parentId = event.target.dataset.parent || null;
+    try { await api("/community/posts/" + encodeURIComponent(id) + "/comments", { method:"POST", body:JSON.stringify({body,parentId}) }); await loadProfile(); await renderPostComments(id); }
+    catch (error) { status(error.message); }
+  });
   async function loadProfile() {
     if (!requireLogin()) return;
     try {
@@ -79,7 +192,10 @@
       $("profile-friend-count").textContent = String(stats.friends || 0);
       $("profile-like-count").textContent = String(stats.likes || 0);
       $("social-profile-subject").textContent = [profile.bestSubject, profile.educationTrack, profile.programme].filter(Boolean).join(" · ");
-      $("social-profile-posts").innerHTML = posts.length ? posts.map(post => '<article class="social-profile-post" data-profile-post="' + esc(post.id) + '">' + (post.mediaUrl ? '<img src="' + esc(post.mediaUrl) + '" alt="Your post" loading="lazy">' : post.videoUrl ? '<video class="social-profile-video-player" controls playsinline preload="metadata"><source src="' + esc(post.videoUrl) + '">Video unavailable.</video>' : '<div class="social-profile-text-post">' + esc((post.body || "").slice(0,180)) + '</div>') + '<div class="social-profile-post-meta">' + esc(post.subject || "Post") + '<span>' + (post.reactionCount || 0) + ' likes · ' + (post.commentCount || 0) + ' comments · ' + (post.shareCount || 0) + ' shares</span></div><div class="social-profile-post-controls"><button type="button" data-profile-edit="' + esc(post.id) + '" data-body="' + esc(post.body || "") + '" data-subject="' + esc(post.subject || "") + '" data-visibility="' + esc(post.visibility || "PUBLIC") + '">Edit</button><button type="button" data-profile-delete="' + esc(post.id) + '">Delete</button></div></article>').join("") : '<div class="empty-state social-profile-empty">Your posts will appear here after you publish your first post.</div>';
+      renderProfilePosts(posts);
+      renderProfileAbout(profile);
+      renderProfileMedia(posts);
+      loadProfileFriends();
     } catch (e) { status(e.message); }
   }
   $("social-onboarding-form").addEventListener("submit",async e=>{e.preventDefault();const username=$("onboarding-username").value.trim().toLowerCase(),err=$("onboarding-error");err.textContent="";if(!/^[a-z0-9_]{3,30}$/.test(username)){err.textContent="Use 3–30 letters, numbers or underscores.";return;}const b=e.target.querySelector("button");b.disabled=true;try{await api("/community/profile/me",{method:"PATCH",body:JSON.stringify({username})});await loadProfile();}catch(x){err.textContent=x.message;}finally{b.disabled=false;}});
@@ -93,27 +209,7 @@
       $("post-form").scrollIntoView({behavior:"smooth",block:"center"});
     }
   });
-  $("social-profile-posts").addEventListener("click",async e=>{
-    const edit=e.target.closest("[data-profile-edit]");
-    const remove=e.target.closest("[data-profile-delete]");
-    if(edit){
-      const body=window.prompt("Edit your post",edit.dataset.body||"");
-      if(body===null)return;
-      const subject=window.prompt("Update the subject (leave blank if none)",edit.dataset.subject||"");
-      if(subject===null)return;
-      const visibility=window.prompt("Post visibility: type PUBLIC or FOLLOWERS",(edit.dataset.visibility||"PUBLIC"));
-      if(visibility===null)return;
-      const safeVisibility=["PUBLIC","FOLLOWERS"].includes(visibility.trim().toUpperCase())?visibility.trim().toUpperCase():"PUBLIC";
-      try{await api("/community/posts/"+encodeURIComponent(edit.dataset.profileEdit),{method:"PATCH",body:JSON.stringify({body,subject,visibility:safeVisibility})});status("Your post has been updated.");await Promise.all([loadProfile(),loadFeed()]);}
-      catch(err){status(err.message);}
-      return;
-    }
-    if(remove){
-      if(!window.confirm("Delete this post? This cannot be undone."))return;
-      try{await api("/community/posts/"+encodeURIComponent(remove.dataset.profileDelete),{method:"DELETE"});status("Your post has been deleted.");await Promise.all([loadProfile(),loadFeed()]);}
-      catch(err){status(err.message);}
-    }
-  });
+
   $("profile-form").addEventListener("submit", async e => {
     e.preventDefault(); if (!requireLogin()) return;
     const interests = $("profile-interests").value.split(",").map(x => x.trim()).filter(Boolean).slice(0,12);
@@ -121,20 +217,17 @@
     if(submitButton){submitButton.disabled=true;submitButton.dataset.originalText=submitButton.textContent;submitButton.textContent="Saving profile…";}
     try {
       const avatarFile=$("profile-avatar-file").files?.[0];
+      const coverFile=$("profile-cover-file-editor").files?.[0];
       let avatarUrl=$("profile-avatar").value.trim();
-      if(avatarFile){
-        if(!avatarFile.type.startsWith("image/"))throw new Error("Choose an image file for your profile picture.");
-        if(avatarFile.size>8*1024*1024)throw new Error("Profile pictures must be 8 MB or smaller.");
-        const uploaded=await uploadCommunityMedia(avatarFile);
-        avatarUrl=uploaded.mediaUrl;
-      }
+      let coverUrl=$("profile-cover").value.trim();
+      if(avatarFile){const uploaded=await uploadCommunityMedia(avatarFile);avatarUrl=uploaded.mediaUrl;}
+      if(coverFile){const uploaded=await uploadCommunityMedia(coverFile);coverUrl=uploaded.mediaUrl;}
       const result=await api("/community/profile/me", { method:"PATCH", body:JSON.stringify({
         username:$("profile-username").value.trim(), bestSubject:$("profile-best-subject").value.trim(),
-        bio:$("profile-bio").value, avatarUrl,
-        coverUrl:$("profile-cover").value.trim(), interests, visibility:$("profile-visibility").value
+        bio:$("profile-bio").value, avatarUrl, coverUrl, interests, visibility:$("profile-visibility").value
       })});
       $("profile-avatar").value=avatarUrl;
-      $("profile-avatar-file").value="";
+      $("profile-avatar-file").value=""; $("profile-cover-file-editor").value="";
       status("Profile settings saved.");
       if(result.profile)$("profile-username").value=result.profile.username||"";
       await loadProfile();
