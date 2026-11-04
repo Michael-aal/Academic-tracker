@@ -162,6 +162,14 @@
       }
     } catch (error) { status(error.message); }
   });
+  $("social-profile-friends").addEventListener("click", async event => {
+    const button = event.target.closest("[data-profile-message]");
+    if (!button) return;
+    try {
+      const { conversation } = await api("/community/chat/direct/" + encodeURIComponent(button.dataset.profileMessage), { method:"POST", body:"{}" });
+      await loadChats(); tab("messages"); openChat(conversation.id);
+    } catch (error) { status(error.message); }
+  });
   $("social-profile-posts").addEventListener("submit", async event => {
     if (!event.target.matches(".comment-form")) return;
     event.preventDefault();
