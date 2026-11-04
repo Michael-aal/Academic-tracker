@@ -4,6 +4,24 @@
   const token = () => localStorage.getItem("academic-tracker-token") || "";
   const currentUserId = () => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}").id || ""; } catch (_) { return ""; } };
   const $ = id => document.getElementById(id);
+  function academicDashboardPath() {
+    try {
+      const user = JSON.parse(localStorage.getItem("academic-tracker-user") || "{}");
+      return String(user.educationTrack || "SECONDARY").toUpperCase() === "HIGHER"
+        ? "university-dashboard.html"
+        : "dashboard.html";
+    } catch (_) {
+      return "dashboard.html";
+    }
+  }
+  function syncAcademicReturnLink() {
+    const link = $("social-back-academic");
+    if (link) link.href = academicDashboardPath();
+  }
+  syncAcademicReturnLink();
+  window.addEventListener("storage", event => {
+    if (event.key === "academic-tracker-user") syncAcademicReturnLink();
+  });
   let showingSavedPosts = false;
   // Social profile setup gates publishing until the account has a username.
   window.socialReady = false;
