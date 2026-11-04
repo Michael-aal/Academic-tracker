@@ -276,7 +276,7 @@ body.social-media-page .community-footer{padding:22px 0 0}
 .social-back-academic{display:inline-flex;align-items:center;gap:7px}
 .community-footer{display:none!important}
 .community-heading .social-home-subtitle{display:none!important}
-.social-profile-cover:has(span:empty){display:none}
+
 @media(max-width:760px){
  .social-topbar{grid-template-columns:36px minmax(0,1fr) auto}
  .social-brand{width:34px;height:34px;justify-content:center}
