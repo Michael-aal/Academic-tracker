@@ -106,6 +106,7 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
     assert.equal(data.people[0].username, online.profile.username, "online users should be sorted before offline and never-active profiles");
     assert.ok(data.onlineCount >= 1);
     assert.equal(byUsername.get(online.profile.username).userId, undefined, "public profile responses must not expose account IDs");
+    assert.equal(byUsername.get(online.profile.username).id, undefined);
     assert.ok(byUsername.has(offline.profile.username));
     assert.ok(!byUsername.has(viewer.profile.username), "the current user must not appear in their own discovery list");
     assert.ok(!byUsername.has(privateStudent.profile.username), "private profiles must not be discoverable");
@@ -115,6 +116,12 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
     assert.equal(byUsername.get(online.profile.username).online, true);
     assert.equal(byUsername.get(offline.profile.username).online, false);
     assert.equal(byUsername.get(online.profile.username).canFriend, false, "cross-track profiles are discoverable but cannot receive friend requests");
+
+    const selfProfileResponse = await request("/api/community/profile/me", viewer.user);
+    const selfProfile = await selfProfileResponse.json();
+    assert.equal(selfProfile.profile.usernameSet, true, "the signed-in user must retain their username setup state");
+    assert.equal(selfProfile.profile.userId, undefined);
+    assert.equal(selfProfile.profile.id, undefined);
 
     const publicProfile = await request("/api/community/profiles/" + online.profile.username, viewer.user);
     assert.equal(publicProfile.status, 200);
