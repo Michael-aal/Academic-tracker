@@ -74,12 +74,14 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
     const privateStudent = await createStudent("Private Student", "SECONDARY", { visibility: "PRIVATE" });
     const suspendedStudent = await createStudent("Suspended Student", "SECONDARY", { status: "SUSPENDED" });
     const blockedStudent = await createStudent("Blocked Student", "SECONDARY");
+    const blockingStudent = await createStudent("Blocking Student", "SECONDARY");
     const requester = await createStudent("Incoming Requester", "SECONDARY");
     const sameTrack = await createStudent("Same Track Candidate", "SECONDARY");
 
-    await prisma.communityBlock.create({
-      data: { blockerId: viewer.user.id, blockedId: blockedStudent.user.id }
-    });
+    await prisma.communityBlock.createMany({ data: [
+      { blockerId: viewer.user.id, blockedId: blockedStudent.user.id },
+      { blockerId: blockingStudent.user.id, blockedId: viewer.user.id }
+    ] });
     const incoming = await prisma.communityFollow.create({
       data: { followerId: requester.user.id, followingId: viewer.user.id, status: "PENDING" }
     });
@@ -101,7 +103,8 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
     assert.ok(!byUsername.has(viewer.profile.username), "the current user must not appear in their own discovery list");
     assert.ok(!byUsername.has(privateStudent.profile.username), "private profiles must not be discoverable");
     assert.ok(!byUsername.has(suspendedStudent.profile.username), "suspended profiles must not be discoverable");
-    assert.ok(!byUsername.has(blockedStudent.profile.username), "blocked users must be excluded in both directions");
+    assert.ok(!byUsername.has(blockedStudent.profile.username), "users blocked by the viewer must be excluded");
+    assert.ok(!byUsername.has(blockingStudent.profile.username), "users who blocked the viewer must also be excluded");
     assert.equal(byUsername.get(online.profile.username).online, true);
     assert.equal(byUsername.get(offline.profile.username).online, false);
     assert.equal(byUsername.get(online.profile.username).canFriend, false, "cross-track profiles are discoverable but cannot receive friend requests");
@@ -113,6 +116,13 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
 
     const blockedProfile = await request("/api/community/profiles/" + blockedStudent.profile.username, viewer.user);
     assert.equal(blockedProfile.status, 404, "blocked profiles must not be accessible");
+    const blockListResponse = await request("/api/community/blocks", viewer.user);
+    assert.equal(blockListResponse.status, 200);
+    assert.ok((await blockListResponse.json()).blocks.some(item => item.blockedId === blockedStudent.user.id));
+    const unblock = await request("/api/community/blocks/" + blockedStudent.user.id, viewer.user, { method: "DELETE" });
+    assert.equal(unblock.status, 200);
+    const afterUnblock = await request("/api/community/people?limit=30", viewer.user);
+    assert.ok((await afterUnblock.json()).people.some(person => person.username === blockedStudent.profile.username), "unblocked public users should become discoverable again");
 
     const usernameSearch = await request("/api/community/people?q=%40" + encodeURIComponent(online.profile.username), viewer.user);
     assert.equal(usernameSearch.status, 200);
