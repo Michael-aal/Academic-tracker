@@ -61,20 +61,45 @@
     });
     return video?{videoUrl:result.secure_url}:{mediaUrl:result.secure_url};
   }
-  $("social-create-form").addEventListener("submit",async event=>{
+  const review = $("create-review-overlay");
+  function closeReview(){review.hidden=true;}
+  $("social-create-form").addEventListener("submit",event=>{
     event.preventDefault();
     if(!profileReady){status("Your profile is still loading. Wait a moment and try again; if this message remains, refresh the page.");return;}
     const body=$("create-body").value.trim(),file=$("create-media").files?.[0];
     if(!body&&!file){status("Write something or attach a photo or video first.");return;}
-    const button=$("publish-social-post");button.disabled=true;button.textContent="Publishing…";
+    $("create-review-author").textContent=$("create-handle").textContent;
+    $("create-review-body").textContent=body;
+    $("create-review-body").hidden=!body;
+    $("create-review-subject").textContent=$("create-subject").value.trim()||"No subject";
+    $("create-review-visibility").textContent=$("create-visibility").value==="PUBLIC"?"Public":"Friends only";
+    const mediaBox=$("create-review-media");mediaBox.replaceChildren();
+    if(file&&previewUrl){
+      const media=document.createElement(file.type.startsWith("video/")?"video":"img");
+      media.src=previewUrl;media.alt="Post media preview";media.className="post-preview-asset";
+      if(file.type.startsWith("video/"))media.controls=true;
+      mediaBox.append(media);
+    }
+    mediaBox.hidden=!file;
+    review.hidden=false;
+  });
+  $("close-create-review").addEventListener("click",closeReview);
+  $("cancel-create-review").addEventListener("click",closeReview);
+  review.addEventListener("click",event=>{if(event.target===review)closeReview();});
+  $("confirm-create-publish").addEventListener("click",async()=>{
+    if(!profileReady)return;
+    const body=$("create-body").value.trim(),file=$("create-media").files?.[0];
+    const button=$("confirm-create-publish");
+    button.disabled=true;button.textContent="Publishing…";
+    $("publish-social-post").disabled=true;
     try{
       const media=file?await upload(file):{};
       await api("/community/posts",{method:"POST",body:JSON.stringify({body,...media,subject:$("create-subject").value.trim(),visibility:$("create-visibility").value})});
       status("Your post is live. Taking you back to the feed…");
-      $("social-create-form").reset();clearPreview();
+      $("social-create-form").reset();clearPreview();closeReview();
       setTimeout(()=>{location.href="social-media.html";},500);
     }catch(error){status(error.message);}
-    finally{button.disabled=false;button.textContent="Publish post";}
+    finally{button.disabled=false;button.textContent="Publish post";$("publish-social-post").disabled=false;}
   });
   status("Loading your profile…");
   api("/community/profile/me").then(({profile})=>{
