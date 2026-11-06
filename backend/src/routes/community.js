@@ -1149,7 +1149,7 @@ router.get("/calls/ice", (req, res) => {
   // Use time-limited TURN REST credentials; never expose a permanent TURN secret to browsers.
   if (process.env.TURN_URL && process.env.TURN_SHARED_SECRET) {
     const expires = Math.floor(Date.now() / 1000) + 3600;
-    const username = expires + ":" + req.userId;
+    const username = expires + ":" + crypto.randomBytes(12).toString("hex");
     const credential = crypto.createHmac("sha1", process.env.TURN_SHARED_SECRET).update(username).digest("base64");
     iceServers.push({ urls: process.env.TURN_URL.split(",").map(x => x.trim()), username, credential });
   }
