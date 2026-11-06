@@ -5,6 +5,8 @@
   const currentUserId = () => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}").id || ""; } catch (_) { return ""; } };
   const $ = id => document.getElementById(id);
   let showingSavedPosts = false;
+  let peopleNextCursor = "";
+  let peopleQuery = "";
   // Social profile setup gates publishing until the account has a username.
   window.socialReady = false;
   const status = message => { $("community-status").textContent = message || ""; };
@@ -292,70 +294,148 @@
     } catch(err){status(err.message);}
   });
 
-  function renderPeople(people, total) {
-    const count = $("people-results-count");
-    if (count) count.textContent = total + (total === 1 ? " student" : " students");
-    $("people-list").innerHTML = people.length ? people.map(p => {
-      const avatar = p.avatarUrl
-        ? '<img src="' + esc(p.avatarUrl) + '" alt="" loading="lazy">'
-        : '<span>' + esc((p.displayName || p.username || "S").slice(0, 1).toUpperCase()) + '</span>';
-      const action = p.friendStatus === "FRIENDS" ? '<button class="outline-button" data-unfriend="' + esc(p.userId) + '">Friends · Remove</button>' :
-        p.friendStatus === "REQUEST_SENT" ? '<button class="outline-button" data-cancel-friend="' + esc(p.userId) + '">Request sent · Cancel</button>' :
-        p.friendStatus === "REQUEST_RECEIVED" ? '<button class="primary-button" data-friend-request="' + esc(p.friendRequestId || "") + '" data-request-action="accept">Accept request</button><button class="outline-button" data-friend-request="' + esc(p.friendRequestId || "") + '" data-request-action="decline">Decline</button>' :
-        p.canFriend ? '<button class="outline-button" data-follow="' + esc(p.userId) + '">Add friend</button>' : '<button class="outline-button" type="button" disabled title="Friend requests are limited to the same academic environment">Different academic track</button>';
-      return '<article class="person-card person-discovery-card"><div class="person-profile-link" aria-label="Student profile: ' + esc(p.displayName) + '"><span class="person-discovery-avatar">' + avatar + '<i class="' + (p.online ? "is-online" : "is-offline") + '" aria-label="' + (p.online ? "Online" : "Offline") + '"></i></span><span class="person-discovery-identity"><strong>' + esc(p.displayName || "Student") + '</strong><small>@' + esc(p.username) + '</small><small class="person-presence ' + (p.online ? "online" : "offline") + '">' + (p.online ? "Online now" : "Offline") + '</small></span></div><p>' + esc(p.educationTrack || "Student") + ' · ' + esc(p.institutionName || p.programme || "Institution not specified") + '<br>Best subject: ' + esc(p.bestSubject || "Not specified") + '</p><div class="friend-request-actions">' + action + '<button class="quiet-button" data-block="' + esc(p.userId) + '">Block</button></div></article>';
-    }).join("") : '<div class="empty-state">No public student profiles found. Try another name or username.</div>';
+  function personCardMarkup(p) {
+    const avatar = p.avatarUrl
+      ? '<img src="' + esc(p.avatarUrl) + '" alt="" loading="lazy">'
+      : '<span>' + esc((p.displayName || p.username || "S").slice(0, 1).toUpperCase()) + '</span>';
+    const action = p.friendStatus === "FRIENDS" ? '<button class="outline-button" data-unfriend="' + esc(p.userId) + '">Friends · Remove</button>' :
+      p.friendStatus === "REQUEST_SENT" ? '<button class="outline-button" data-cancel-friend="' + esc(p.userId) + '">Request sent · Cancel</button>' :
+      p.friendStatus === "REQUEST_RECEIVED" ? '<button class="primary-button" data-friend-request="' + esc(p.friendRequestId || "") + '" data-request-action="accept">Accept request</button><button class="outline-button" data-friend-request="' + esc(p.friendRequestId || "") + '" data-request-action="decline">Decline</button>' :
+      p.canFriend ? '<button class="outline-button" data-follow="' + esc(p.userId) + '">Add friend</button>' : '<button class="outline-button" type="button" disabled title="Friend requests are limited to students in the same academic environment">Different academic track</button>';
+    return '<article class="person-card person-discovery-card"><a class="person-profile-link" href="#profile/' + encodeURIComponent(p.username) + '" aria-label="View ' + esc(p.displayName || "student") + ' profile"><span class="person-discovery-avatar">' + avatar + '<i class="' + (p.online ? "is-online" : "is-offline") + '" aria-label="' + (p.online ? "Online" : "Offline") + '"></i></span><span class="person-discovery-identity"><strong>' + esc(p.displayName || "Student") + '</strong><small>@' + esc(p.username) + '</small><small class="person-presence ' + (p.online ? "online" : "offline") + '">' + (p.online ? "Online now" : "Offline") + '</small></span></a><p>' + esc(p.educationTrack || "Student") + ' · ' + esc(p.institutionName || p.programme || "Institution not specified") + '<br>Best subject: ' + esc(p.bestSubject || "Not specified") + '</p><div class="friend-request-actions">' + action + '<button class="quiet-button" data-block="' + esc(p.userId) + '">Block</button></div></article>';
   }
-  async function loadPeople(query = $("people-query").value.trim()) {
+  function renderPeople(people, total, onlineCount, nextCursor, append = false) {
+    const count = $("people-results-count");
+    if (count) count.textContent = total + (total === 1 ? " student" : " students") + " · " + onlineCount + " online";
+    const markup = people.map(personCardMarkup).join("");
+    if (append) $("people-list").insertAdjacentHTML("beforeend", markup);
+    else $("people-list").innerHTML = markup || '<div class="empty-state">No public student profiles found. Try another name or username.</div>';
+    peopleNextCursor = nextCursor || "";
+    const more = $("people-load-more");
+    if (more) { more.hidden = !peopleNextCursor; more.disabled = false; more.textContent = "Load more students"; }
+  }
+  async function loadPeople(query = peopleQuery, cursor = "", append = false) {
     if (!requireLogin()) return;
-    $("people-list").innerHTML = '<div class="empty-state">Loading students…</div>';
+    if (!append) {
+      peopleQuery = query;
+      peopleNextCursor = "";
+      $("people-list").innerHTML = '<div class="empty-state">Loading students…</div>';
+      if ($("people-load-more")) $("people-load-more").hidden = true;
+    }
     try {
-      const { people = [], total = 0 } = await api("/community/people" + (query ? "?q=" + encodeURIComponent(query) : ""));
-      renderPeople(people, total);
+      const params = new URLSearchParams({ limit: "20" });
+      if (query) params.set("q", query);
+      if (cursor) params.set("cursor", cursor);
+      const { people = [], total = 0, onlineCount = 0, nextCursor = null } = await api("/community/people?" + params.toString());
+      renderPeople(people, total, onlineCount, nextCursor, append);
     } catch (err) {
-      $("people-list").innerHTML = '<div class="empty-state">Could not load students. Please refresh and try again.</div>';
+      if (!append) $("people-list").innerHTML = '<div class="empty-state">Could not load students. Please refresh and try again.</div>';
       status(err.message);
+      if ($("people-load-more")) { $("people-load-more").disabled = false; $("people-load-more").textContent = "Retry loading students"; }
     }
   }
-  $("clear-people-search").addEventListener("click", () => { $("people-query").value = ""; loadPeople(""); });
+  $("clear-people-search").addEventListener("click", () => {
+    $("people-query").value = "";
+    if ($("preproom-explore-query")) $("preproom-explore-query").value = "";
+    loadPeople("");
+  });
+  $("people-load-more").addEventListener("click", async () => {
+    if (!peopleNextCursor) return;
+    const button = $("people-load-more");
+    button.disabled = true;
+    button.textContent = "Loading…";
+    await loadPeople(peopleQuery, peopleNextCursor, true);
+  });
   $("people-search").addEventListener("submit", async e => {
     e.preventDefault();
     const q = $("people-query").value.trim();
     if (q.length === 1) return status("Enter at least two characters, or clear the search to browse everyone.");
+    if ($("preproom-explore-query")) $("preproom-explore-query").value = q;
     await loadPeople(q);
   });
-    $("people-list").addEventListener("click",async e=>{
+  $("people-list").addEventListener("click", async e => {
     const block=e.target.closest("[data-block]");
     if(block){
       if(!window.confirm("Block this student? They will no longer be able to connect or privately chat with you."))return;
-      try{await api("/community/blocks/"+encodeURIComponent(block.dataset.block),{method:"POST",body:"{}"});block.closest(".person-card")?.remove();status("Student blocked.");await loadFriends();}
+      try{await api("/community/blocks/"+encodeURIComponent(block.dataset.block),{method:"POST",body:"{}"});status("Student blocked.");await Promise.all([loadPeople(peopleQuery),loadFriends()]);}
       catch(err){status(err.message);}
       return;
     }
     const cancel=e.target.closest("[data-cancel-friend]");
     if(cancel){
       cancel.disabled=true;
-      try{await api("/community/follow/"+encodeURIComponent(cancel.dataset.cancelFriend),{method:"DELETE"});status("Friend request cancelled.");await loadFriends();e.target.closest(".person-card")?.remove();}
+      try{await api("/community/follow/"+encodeURIComponent(cancel.dataset.cancelFriend),{method:"DELETE"});status("Friend request cancelled.");await Promise.all([loadPeople(peopleQuery),loadFriends()]);}
       catch(err){status(err.message);cancel.disabled=false;}
       return;
     }
     const accept=e.target.closest("[data-friend-request]");
     if(accept){
       accept.disabled=true;
-      try{const action=accept.dataset.requestAction||"accept";await api("/community/friend-requests/"+encodeURIComponent(accept.dataset.friendRequest),{method:"POST",body:JSON.stringify({action})});status(action==="accept"?"Friend request accepted.":"Friend request declined.");loadFriends();}
+      try{const action=accept.dataset.requestAction||"accept";await api("/community/friend-requests/"+encodeURIComponent(accept.dataset.friendRequest),{method:"POST",body:JSON.stringify({action})});status(action==="accept"?"Friend request accepted.":"Friend request declined.");await Promise.all([loadPeople(peopleQuery),loadFriends()]);}
       catch(err){status(err.message);accept.disabled=false;}
       return;
     }
     const unfriend=e.target.closest("[data-unfriend]");
     if(unfriend){
       if(!window.confirm("Remove this student from your friends?"))return;
-      try{await api("/community/follow/"+encodeURIComponent(unfriend.dataset.unfriend),{method:"DELETE"});status("Student removed from your friends.");await loadFriends();}
+      try{await api("/community/follow/"+encodeURIComponent(unfriend.dataset.unfriend),{method:"DELETE"});status("Student removed from your friends.");await Promise.all([loadPeople(peopleQuery),loadFriends()]);}
       catch(err){status(err.message);}
       return;
     }
-    const b=e.target.closest("[data-follow]"); if(!b)return;
-    try { await api("/community/follow/"+encodeURIComponent(b.dataset.follow),{method:"POST",body:"{}"}); b.dataset.cancelFriend=b.dataset.follow; delete b.dataset.follow; b.textContent="Request sent · Cancel"; status("Friend request sent. You can cancel it until it is accepted."); }
-    catch(err){status(err.message);}
+    const b=e.target.closest("[data-follow]");
+    if(!b)return;
+    b.disabled=true;
+    try{await api("/community/follow/"+encodeURIComponent(b.dataset.follow),{method:"POST",body:"{}"});status("Friend request sent.");await Promise.all([loadPeople(peopleQuery),loadFriends()]);}
+    catch(err){status(err.message);b.disabled=false;}
+  });
+
+  async function loadPublicProfile(username) {
+    if (!requireLogin()) return;
+    const box = $("public-student-profile");
+    const own = document.querySelector(".social-profile-page");
+    box.hidden = false;
+    own.hidden = true;
+    box.innerHTML = '<div class="empty-state">Loading student profile…</div>';
+    try {
+      const { profile, posts = [], relationship = {}, stats = {} } = await api("/community/profiles/" + encodeURIComponent(username));
+      const avatar = profile.avatarUrl ? '<img src="' + esc(profile.avatarUrl) + '" alt="' + esc(profile.displayName) + ' profile photo">' : esc((profile.displayName || "S").slice(0,1).toUpperCase());
+      const cover = profile.coverUrl ? '<img src="' + esc(profile.coverUrl) + '" alt="" class="public-profile-cover-image">' : "";
+      const statusAction = relationship.friendStatus === "FRIENDS" ? '<button type="button" class="outline-button" data-public-remove="' + esc(profile.userId) + '">Remove friend</button>' :
+        relationship.friendStatus === "REQUEST_SENT" ? '<button type="button" class="outline-button" data-public-cancel="' + esc(profile.userId) + '">Cancel request</button>' :
+        relationship.friendStatus === "REQUEST_RECEIVED" ? '<button type="button" class="primary-button" data-public-request="' + esc(relationship.friendRequestId || "") + '" data-request-action="accept">Accept request</button><button type="button" class="outline-button" data-public-request="' + esc(relationship.friendRequestId || "") + '" data-request-action="decline">Decline</button>' :
+        relationship.canFriend ? '<button type="button" class="primary-button" data-public-add="' + esc(profile.userId) + '">Add friend</button>' : '<span class="muted-note">Friend requests are limited to your academic environment.</span>';
+      const postMarkup = posts.length ? posts.map(post => '<article class="public-profile-post"><p>' + esc(post.body || "") + '</p>' + (post.mediaUrl ? '<img src="' + esc(post.mediaUrl) + '" alt="Post image" loading="lazy">' : "") + (post.videoUrl ? '<video controls playsinline preload="metadata"><source src="' + esc(post.videoUrl) + '"></video>' : "") + '<small>' + esc(post.subject || "Post") + ' · ' + (post.reactionCount || 0) + ' likes · ' + (post.commentCount || 0) + ' comments</small></article>').join("") : '<div class="empty-state">No public posts yet.</div>';
+      box.innerHTML = '<button type="button" class="quiet-button" id="close-public-profile">← Back to students</button><div class="public-profile-cover">' + cover + '</div><div class="public-profile-heading"><div class="public-profile-avatar">' + avatar + '</div><div class="public-profile-identity"><h1>' + esc(profile.displayName || "Student") + '</h1><p>@' + esc(profile.username) + '</p><p>' + esc(profile.bio || "No bio added yet.") + '</p></div><div class="public-profile-actions">' + statusAction + '<button type="button" class="outline-button" data-public-message="' + esc(profile.userId) + '" ' + (relationship.friendStatus === "FRIENDS" ? "" : "disabled") + '>Message</button><button type="button" class="quiet-button" data-public-block="' + esc(profile.userId) + '">Block</button></div></div><div class="public-profile-meta">' + esc(profile.educationTrack || "Student") + ' · ' + esc(profile.institutionName || profile.programme || "Institution not specified") + ' · Best subject: ' + esc(profile.bestSubject || "Not specified") + '</div><div class="public-profile-stats"><span>' + (stats.posts || 0) + ' posts</span><span>' + (stats.likes || 0) + ' likes</span></div><section class="public-profile-posts"><h2>Public posts</h2>' + postMarkup + '</section>';
+      box.dataset.userId = profile.userId;
+    } catch (err) {
+      box.innerHTML = '<button type="button" class="quiet-button" id="close-public-profile">← Back to students</button><div class="empty-state">' + esc(err.message || "This profile is unavailable.") + '</div>';
+      box.dataset.userId = "";
+    }
+  }
+  $("public-student-profile").addEventListener("click", async e => {
+    if (e.target.closest("#close-public-profile")) { $("public-student-profile").hidden = true; document.querySelector(".social-profile-page").hidden = false; location.hash = "#people"; return; }
+    const add=e.target.closest("[data-public-add]");
+    const cancel=e.target.closest("[data-public-cancel]");
+    const remove=e.target.closest("[data-public-remove]");
+    const request=e.target.closest("[data-public-request]");
+    const block=e.target.closest("[data-public-block]");
+    const message=e.target.closest("[data-public-message]");
+    try {
+      if(add) await api("/community/follow/"+encodeURIComponent(add.dataset.publicAdd),{method:"POST",body:"{}"});
+      else if(cancel||remove) await api("/community/follow/"+encodeURIComponent((cancel||remove).dataset.publicCancel||(cancel||remove).dataset.publicRemove),{method:"DELETE"});
+      else if(request) await api("/community/friend-requests/"+encodeURIComponent(request.dataset.publicRequest),{method:"POST",body:JSON.stringify({action:request.dataset.requestAction})});
+      else if(block){if(!window.confirm("Block this student?"))return;await api("/community/blocks/"+encodeURIComponent(block.dataset.publicBlock),{method:"POST",body:"{}"});$("public-student-profile").hidden=true;document.querySelector(".social-profile-page").hidden=false;location.hash="#people";await loadPeople(peopleQuery);return;}
+      else if(message){const {conversation}=await api("/community/chat/direct/"+encodeURIComponent(message.dataset.publicMessage),{method:"POST",body:"{}"});tab("messages");openChat(conversation.id);return;}
+      else return;
+      await loadPublicProfile(usernameFromHash());
+      await loadFriends();
+    } catch(err){status(err.message);}
+  });
+  function usernameFromHash(){return decodeURIComponent(location.hash.replace(/^#profile\//,""));}
+  window.addEventListener("hashchange", () => {
+    const hash = location.hash.replace(/^#/, "");
+    if (hash.startsWith("profile/")) { tab("profile"); loadPublicProfile(decodeURIComponent(hash.slice(8))); return; }
+    if (["feed","people","messages","profile"].includes(hash)) tab(hash);
   });
 
   async function loadFriends(){
@@ -603,11 +683,19 @@
   } catch (_) {}
   if (!token()) { location.replace("login.html?next=social-media.html"); return; }
   loadProfile();
-  const sendPresenceHeartbeat = () => { if (token()) api("/community/presence/heartbeat", { method: "POST", body: "{}" }).catch(() => {}); };
+  const sendPresenceHeartbeat = () => {
+    if (token() && document.visibilityState === "visible") {
+      api("/community/presence/heartbeat", { method: "POST", body: "{}" }).catch(() => {});
+    }
+  };
   sendPresenceHeartbeat();
   setInterval(sendPresenceHeartbeat, 60000);
+  document.addEventListener("visibilitychange", sendPresenceHeartbeat);
   try { const u=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}"); if(u.isAdmin||["ADMIN","DEVELOPER","DEV"].includes(String(u.role||"").toUpperCase())) $("community-admin-link").hidden=false; } catch (_) {}
   const requestedView = location.hash.replace(/^#/, "");
-  document.body.dataset.preproomView = ["feed","people","messages","profile","videos"].includes(requestedView) ? requestedView : "feed";
-  if (["feed","people","messages","profile"].includes(requestedView)) tab(requestedView);
+  const publicProfileMatch = requestedView.match(/^profile\/(.+)$/);
+  const initialView = publicProfileMatch ? "profile" : requestedView;
+  document.body.dataset.preproomView = ["feed","people","messages","profile","videos"].includes(initialView) ? initialView : "feed";
+  if (["feed","people","messages","profile"].includes(initialView)) tab(initialView);
+  if (publicProfileMatch) loadPublicProfile(decodeURIComponent(publicProfileMatch[1]));
 })();
