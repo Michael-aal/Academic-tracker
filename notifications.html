@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="dark-mode-guard.css" data-dark-mode-guard>
   <link rel="stylesheet" href="theme-page-overrides.css" data-page-theme-overrides>
   <link rel="stylesheet" href="notifications.css">
+  <link rel="stylesheet" href="preproom-ui.css">
   <script src="global-theme.js" defer></script>
   <title>Notifications · Academic Tracker</title>
 </head>
@@ -36,12 +37,21 @@
         <button class="notification-primary-button" type="submit" id="send-announcement">Publish notification</button>
       </form>
     </section>
+    <div class="preproom-notification-filters" role="group" aria-label="Notification filters"><button type="button" class="active" data-notification-filter="all">All</button><button type="button" data-notification-filter="likes">Likes</button><button type="button" data-notification-filter="comments">Comments</button><button type="button" data-notification-filter="shares">Shares</button></div>
     <div class="notification-list-toolbar"><span id="notification-count">Loading notifications…</span><button id="refresh-notifications" type="button">Refresh</button></div>
     <section id="notification-list" class="notification-list" aria-live="polite" aria-busy="true">
       <div class="notification-loading">Loading your notifications…</div>
     </section>
   </main>
+  <nav class="preproom-page-nav" aria-label="Preproom navigation">
+    <a href="social-media.html#feed"><span aria-hidden="true">⌂</span><small>Home</small></a>
+    <a href="social-media.html#people"><span aria-hidden="true">⌕</span><small>Explore</small></a>
+    <a href="social-create.html"><span aria-hidden="true">＋</span><small>Create</small></a>
+    <a href="social-media.html#messages"><span aria-hidden="true">▢</span><small>Messages</small></a>
+    <a href="social-media.html#profile"><span aria-hidden="true">♙</span><small>Profile</small></a>
+  </nav>
   <script src="notifications.js"></script>
+  <script src="preproom-ui.js" defer></script>
   <script src="global-navigation.js"></script>
 </body>
 </html>

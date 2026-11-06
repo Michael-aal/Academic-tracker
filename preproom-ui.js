@@ -38,11 +38,8 @@
     }
   }
   function setupHome(){
-    const layout=$(".community-layout");
-    if(!layout||$(".preproom-side-rail",layout))return;
-    const rail=document.createElement("aside");rail.className="preproom-side-rail";
-    rail.innerHTML='<section class="preproom-side-card"><h3>Trending topics</h3><div class="preproom-topic-list"><span class="preproom-topic">#StudyTips</span><span class="preproom-topic">#Programming</span><span class="preproom-topic">#WebDev</span><span class="preproom-topic">#Mathematics</span><span class="preproom-topic">#UniversityLife</span></div></section><section class="preproom-side-card"><h3>About Preproom</h3><p class="preproom-side-note">A focused space for students to share what they are learning, exchange useful ideas and keep up with classmates.</p></section>';
-    layout.append(rail);
+    /* Keep the homepage intentionally focused: feed, composer and post actions only. */
+    const rail=$(".preproom-side-rail"); if(rail)rail.remove();
   }
   function simplifyFeed(){
     const returnBar=$(".social-home-return");
@@ -53,6 +50,38 @@
     const composerLabel=$(".social-composer-heading label");if(composerLabel)composerLabel.textContent="Share something you're learning";
     const textarea=$("#post-body");if(textarea)textarea.placeholder="Share a useful idea, question or study update…";
   }
-  function boot(){setupBrand();setupNavigation();setupHome();simplifyFeed();}
+
+  function setupExplore(){
+    const query=$("#preproom-explore-query"), form=$("#people-search"), field=$("#people-query");
+    $("#preproom-explore-search-btn")?.addEventListener("click",()=>{if(!query||!field||!form)return;field.value=query.value.trim();form.requestSubmit();});
+    query?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("#preproom-explore-search-btn")?.click();}});
+    $("[data-topic]").forEach(button=>button.addEventListener("click",()=>{if(query){query.value=button.dataset.topic;$("#preproom-explore-search-btn")?.click();}}));
+    $("[data-explore-filter]").forEach(button=>button.addEventListener("click",()=>{$("[data-explore-filter]").forEach(b=>b.classList.toggle("active",b===button));const filter=button.dataset.exploreFilter;if(filter==="people"){field?.focus();}else if(filter==="groups"){document.querySelector('[data-tab="groups"]')?.click();}else if(filter==="posts"){document.querySelector('[data-tab="feed"]')?.click();}else{field?.focus();}}));
+  }
+  function setupProfileTabs(){
+    $("[data-profile-tab]").forEach(button=>button.addEventListener("click",()=>{
+      $("[data-profile-tab]").forEach(b=>b.classList.toggle("active",b===button));
+      const tab=button.dataset.profileTab;
+      if(tab==="friends"){document.querySelector('[data-tab="people"]')?.click();return;}
+      if(tab==="media"){const posts=$("#social-profile-posts");if(posts)posts.scrollIntoView({behavior:"smooth",block:"start"});return;}
+      if(tab==="about")$("#profile-settings")?.scrollIntoView({behavior:"smooth",block:"start"});
+      if(tab==="posts")$("#social-profile-posts")?.scrollIntoView({behavior:"smooth",block:"start"});
+    }));
+  }
+
+  function setupNotificationFilters(){
+    const buttons=$("[data-notification-filter]");
+    if(!buttons.length)return;
+    buttons.forEach(button=>button.addEventListener("click",()=>{
+      buttons.forEach(b=>b.classList.toggle("active",b===button));
+      const type=button.dataset.notificationFilter;
+      $(".notification-item").forEach(item=>{
+        const content=(item.innerText||"").toLowerCase();
+        const match=type==="all"||(type==="likes"&&/liked|like/.test(content))||(type==="comments"&&/commented|comment/.test(content))||(type==="shares"&&/shared|share/.test(content));
+        item.hidden=!match;
+      });
+    }));
+  }
+  function boot(){setupBrand();setupNavigation();setupHome();simplifyFeed();setupExplore();setupProfileTabs();setupNotificationFilters();}
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 })();

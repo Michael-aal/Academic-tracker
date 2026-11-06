@@ -19,16 +19,24 @@
 </head>
 <body class="social-media-page">
 <header class="social-topbar">
-<a class="social-brand" href="community.html" aria-label="Home"><span class="social-brand-mark">A</span></a>
-<form class="social-global-search" id="social-global-search" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><input id="social-global-search-input" type="search" placeholder="Search" aria-label="Search students and posts"><button type="submit" aria-label="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg></button></form>
-<div class="social-top-actions"><a href="social-create.html" class="social-top-action" aria-label="Create post" title="Create post"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a><a href="notifications.html" class="social-top-action" aria-label="Notifications" title="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></a><button type="button" class="social-top-action" data-tab="messages" aria-label="Messages" title="Messages"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4zM8 9h8M8 13h5"/></svg></button><button type="button" class="social-top-profile" data-tab="profile" aria-label="Profile" title="Profile"><span id="social-top-avatar">S</span></button></div></header>
+  <a class="social-brand" href="community.html" aria-label="Preproom home"></a>
+  <form class="social-global-search" id="social-global-search" role="search">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg>
+    <input id="social-global-search-input" type="search" placeholder="Search in Preproom..." aria-label="Search students and posts">
+    <button type="submit" aria-label="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg></button>
+  </form>
+  <div class="social-top-actions at-nav-actions">
+    <a href="notifications.html" class="social-top-action" aria-label="Notifications" title="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span class="social-notification-dot" id="social-notification-dot" hidden></span></a>
+    <button type="button" class="social-top-profile" data-tab="profile" aria-label="Profile" title="Profile"><span id="social-top-avatar">S</span></button>
+  </div>
+</header>
 <aside class="social-sidebar" aria-label="Main navigation"><button class="active" type="button" data-tab="feed"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/></svg> Home</button><button type="button" data-tab="people"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 5.5a3.5 3.5 0 0 1 0 7M17 14a5.5 5.5 0 0 1 4.5 5.5"/></svg> Friends</button><button type="button" data-tab="groups"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg> Study groups</button><button type="button" data-tab="videos"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m10 9 5 3-5 3z"/></svg> Watch &amp; explore</button><button type="button" data-tab="messages"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4zM8 9h8M8 13h5"/></svg> Messages</button><button type="button" data-tab="referrals"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg> Invite friends</button><button type="button" data-tab="profile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> My profile</button><div class="social-sidebar-divider"></div><a class="social-admin-link" id="community-admin-link" href="community-admin.html" hidden>Moderation tools</a></aside>
 <main class="community-shell">
   <div id="community-status" class="community-status" role="status" aria-live="polite"></div>
   <section class="community-view active" id="view-feed">
     <div class="community-layout">
       <div class="community-main-column"><div class="social-home-return"><a href="dashboard.html">← Back to Academic Tracker</a><span>Home feed</span></div>
-        <form class="composer panel" id="post-form"><div class="social-composer-heading"><div class="post-avatar" id="social-composer-avatar">S</div><label for="post-body">What’s on your mind?</label></div><textarea id="post-body" maxlength="5000" rows="4" placeholder="Write a post…"></textarea><div id="post-media-preview" class="post-media-preview" hidden></div><div class="composer-row"><label class="media-picker-label" for="post-media">＋ Add photo or video</label><input id="post-media" type="file" accept="image/*,video/*" aria-label="Attach an image or video"><input id="post-subject" maxlength="100" placeholder="Subject (optional)"><select id="post-visibility" aria-label="Post visibility"><option value="PUBLIC">Everyone · Public</option><option value="FOLLOWERS">Connections</option></select><button class="primary-button" type="submit">Review post</button></div></form>
+        <form class="composer panel" id="post-form"><div class="social-composer-heading"><div class="post-avatar" id="social-composer-avatar">S</div><label for="post-body">What’s on your mind?</label></div><a class="preproom-home-create" href="social-create.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Create Post</span></a><textarea id="post-body" maxlength="5000" rows="4" placeholder="Write a post…"></textarea><div id="post-media-preview" class="post-media-preview" hidden></div><div class="composer-row"><label class="media-picker-label" for="post-media">＋ Add photo or video</label><input id="post-media" type="file" accept="image/*,video/*" aria-label="Attach an image or video"><input id="post-subject" maxlength="100" placeholder="Subject (optional)"><select id="post-visibility" aria-label="Post visibility"><option value="PUBLIC">Everyone · Public</option><option value="FOLLOWERS">Connections</option></select><button class="primary-button" type="submit">Review post</button></div></form>
         <section class="post-review-overlay" id="post-review" hidden role="dialog" aria-modal="true"><div class="post-review-card"><div class="post-review-heading"><h2>Preview your post</h2><button type="button" id="close-post-review" class="quiet-button">✕</button></div><div id="post-review-author" class="post-review-author"></div><p id="post-review-body" class="post-review-body"></p><div id="post-review-media" class="post-review-media"></div><div class="post-review-details"><span id="post-review-subject"></span><span id="post-review-visibility"></span></div><p class="post-review-note">Publishing saves this post online for authenticated students.</p><div class="post-review-actions"><button type="button" class="outline-button" id="cancel-post-review">Keep editing</button><button type="button" class="primary-button" id="confirm-publish-post">Publish post</button></div></div></section>
         <div class="feed-toolbar"><h2 id="feed-heading">Recent posts</h2><div class="feed-toolbar-actions"><button class="quiet-button" id="show-saved-posts" type="button">Saved posts</button><button class="quiet-button" id="refresh-feed" type="button">Refresh</button></div></div>
         <div id="feed-list" class="feed-list"><div class="empty-state">Loading posts…</div></div>
@@ -37,11 +45,20 @@
     </div>
   </section>
   <section class="community-view" id="view-people">
-    <div class="friends-dashboard">
-      <section class="panel section-panel"><div class="section-heading"><div><h2>Friend requests</h2><p>Review students who want to connect with you.</p></div><span id="friend-request-count" class="friend-count">0</span></div><div id="friend-requests-list" class="people-list"><div class="empty-state">Loading requests…</div></div></section>
-      <section class="panel section-panel"><div class="section-heading"><div><h2>Your friends</h2><p>Students you have mutually connected with.</p></div><span id="friend-count" class="friend-count">0</span></div><div id="friends-list" class="people-list"><div class="empty-state">Loading friends…</div></div></section>
-      <section class="panel section-panel"><h2>Blocked students</h2><p>Unblock someone at any time. Blocking removes your existing connection.</p><div id="blocked-students-list" class="people-list"><div class="empty-state">Loading blocked students…</div></div></section>
-      <section class="panel section-panel"><h2>Find students</h2><p>Find a classmate using their exact username, such as <strong>@michael_dev</strong>, or search by student name or institution. Friend connections are limited to your academic environment.</p><form id="people-search" class="search-row"><input id="people-query" minlength="2" autocomplete="off" placeholder="Enter @username, student name or institution"><button class="primary-button">Search</button></form><div id="people-list" class="people-list" aria-live="polite"></div></section>
+    <div class="preproom-screen-heading"><div><span class="preproom-kicker">DISCOVER</span><h1>Explore</h1><p>Find students, useful posts and learning communities.</p></div></div>
+    <div class="preproom-explore-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><input id="preproom-explore-query" type="search" placeholder="Search people, topics or posts"><button type="button" id="preproom-explore-search-btn">Search</button></div>
+    <div class="preproom-explore-filters" role="group" aria-label="Explore filters"><button type="button" class="active" data-explore-filter="all">All</button><button type="button" data-explore-filter="people">People</button><button type="button" data-explore-filter="posts">Posts</button><button type="button" data-explore-filter="groups">Groups</button></div>
+    <div class="preproom-explore-grid">
+      <section class="panel section-panel preproom-explore-main"><div class="section-heading"><div><h2>People you may know</h2><p>Search students by username, name or institution.</p></div><span class="preproom-section-icon">♙</span></div>
+        <form id="people-search" class="search-row"><input id="people-query" minlength="2" autocomplete="off" placeholder="Enter @username, student name or institution"><button class="primary-button">Search</button></form>
+        <div id="people-list" class="people-list" aria-live="polite"><div class="empty-state">Search for students to discover profiles.</div></div>
+      </section>
+      <aside class="preproom-explore-rail">
+        <section class="panel section-panel"><h2>Trending topics</h2><p class="muted-note">Explore what students are learning about.</p><div class="preproom-topic-list"><button type="button" data-topic="Mathematics"># Mathematics</button><button type="button" data-topic="Programming"># Programming</button><button type="button" data-topic="Physics"># Physics</button><button type="button" data-topic="English"># English</button><button type="button" data-topic="Study tips"># StudyTips</button></div></section>
+        <section class="panel section-panel"><h2>Friend requests</h2><p class="muted-note">Manage requests from other students.</p><span id="friend-request-count" class="friend-count">0</span><div id="friend-requests-list" class="people-list"><div class="empty-state">Loading requests…</div></div></section>
+        <section class="panel section-panel"><h2>Your connections</h2><span id="friend-count" class="friend-count">0</span><div id="friends-list" class="people-list"><div class="empty-state">Loading friends…</div></div></section>
+        <section class="panel section-panel"><h2>Blocked accounts</h2><div id="blocked-students-list" class="people-list"><div class="empty-state">Loading…</div></div></section>
+      </aside>
     </div>
   </section>
   <section class="community-view" id="view-groups">
@@ -72,10 +89,10 @@
         </div>
         <div class="social-profile-stats"><div><strong id="profile-post-count">0</strong><span>Posts</span></div><div><strong id="profile-friend-count">0</strong><span>Friends</span></div><div><strong id="profile-like-count">0</strong><span>Likes received</span></div></div>
         <div class="social-profile-subject" id="social-profile-subject"></div>
-        <div class="social-profile-posts-heading"><h3>Your posts</h3><a class="primary-button" href="social-create.html">＋ Create post</a></div>
-        <div id="social-profile-posts" class="social-profile-post-grid"><div class="empty-state">Loading your posts…</div></div>
+        <div class="preproom-profile-tabs" role="tablist" aria-label="Profile sections"><button type="button" class="active" data-profile-tab="posts">Posts</button><button type="button" data-profile-tab="about">About</button><button type="button" data-profile-tab="friends">Friends</button><button type="button" data-profile-tab="media">Media</button></div><div class="social-profile-posts-heading"><h3>Your posts</h3><a class="primary-button" href="social-create.html">＋ Create post</a></div>
+        <div id="social-profile-posts" class="social-profile-post-grid" data-profile-panel="posts"><div class="empty-state">Loading your posts…</div></div>
       </section>
-      <section class="panel profile-editor" id="profile-settings">
+      <section class="panel profile-editor" id="profile-settings" data-profile-panel="about">
         <div class="section-heading"><div><h2>Profile settings</h2><p>Customise how your social profile appears to other students.</p></div></div>
         <form id="profile-form"><div class="profile-form-grid">
           <label>Username<input id="profile-username" maxlength="30" required></label>
@@ -91,12 +108,12 @@
     </section>
   </section>
   <section class="social-onboarding-overlay" id="social-onboarding" hidden role="dialog" aria-modal="true"><form class="social-onboarding-card" id="social-onboarding-form"><h1>Choose a username</h1><p>Your username must be unique.</p><label for="onboarding-username">Username</label><div class="username-input-wrap"><span>@</span><input id="onboarding-username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}" placeholder="your_username" required></div><small>3–30 characters. Letters, numbers and underscores only.</small><div id="onboarding-error" role="alert"></div><button class="primary-button" type="submit">Continue</button></form></section>
-  <nav class="social-bottom-nav" id="social-bottom-nav" aria-label="Main navigation">
-  <button type="button" data-social-dest="feed" class="active" aria-current="page"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/></svg><span>Home</span></button>
-  <button type="button" data-social-dest="people"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 5.5a3.5 3.5 0 0 1 0 7M17 14a5.5 5.5 0 0 1 4.5 5.5"/></svg><span>Friends</span></button>
-  <button type="button" data-social-create class="social-create"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Create</span></button>
-  <button type="button" data-social-dest="messages"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4zM8 9h8M8 13h5"/></svg><span>Messages</span></button>
-  <button type="button" data-social-dest="profile"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Profile</span></button>
+  <nav class="social-bottom-nav" id="social-bottom-nav" aria-label="Preproom navigation">
+  <button type="button" data-social-dest="feed" class="active" aria-current="page" aria-label="Home"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/></svg><span>Home</span></button>
+  <button type="button" data-social-dest="people" aria-label="Explore"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><span>Explore</span></button>
+  <button type="button" data-social-create class="social-create" aria-label="Create post"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="sr-only">Create</span></button>
+  <button type="button" data-social-dest="messages" aria-label="Messages"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4zM8 9h8"/></svg><span>Messages</span><i class="social-nav-badge" id="social-message-badge" hidden>3</i></button>
+  <button type="button" data-social-dest="profile" aria-label="Profile"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Profile</span></button>
 </nav>
 
 </main>

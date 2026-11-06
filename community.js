@@ -550,5 +550,6 @@
   if (!token()) { location.replace("login.html?next=social-media.html"); return; }
   loadProfile();
   try { const u=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}"); if(u.isAdmin||["ADMIN","DEVELOPER","DEV"].includes(String(u.role||"").toUpperCase())) $("community-admin-link").hidden=false; } catch (_) {}
-  if(location.hash === "#messages") tab("messages");
+  const requestedView = location.hash.replace(/^#/, "");
+  if (["feed","people","messages","profile"].includes(requestedView)) tab(requestedView);
 })();
