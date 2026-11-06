@@ -212,3 +212,142 @@ html[data-theme="light"] body.social-create-page .social-create-form select{
 }
 html[data-theme="light"] body.social-create-page .social-create-form textarea::placeholder,
 html[data-theme="light"] body.social-create-page .social-create-form input::placeholder{color:#675779}
+
+
+/* PREPROOM REFERENCE PASS — Nov 2026
+   Layout and spacing pass based on the supplied eight-screen reference.
+   Keeps existing API-driven views and account theme behavior. */
+body.social-media-page{--preproom-bg:#090611;--preproom-panel:#130d20;--preproom-line:rgba(151,78,255,.28);background:#090611!important;color:#f7f1ff!important;padding-top:76px!important}
+body.social-media-page .social-topbar{height:76px;grid-template-columns:250px minmax(220px,620px) 1fr;gap:26px;padding:0 max(18px,calc((100vw - 1480px)/2));background:rgba(9,6,17,.96);border-bottom:1px solid var(--preproom-line)}
+body.social-media-page .social-brand{font-size:22px;color:#fff}
+body.social-media-page .social-brand-mark{width:48px;height:48px;border-radius:14px}
+body.social-media-page .social-global-search{height:48px;background:#1a102b;border:1px solid var(--preproom-line)}
+body.social-media-page .social-global-search button{display:none}
+body.social-media-page .social-global-search input{font-size:14px;color:#fff}
+body.social-media-page .social-top-action,body.social-media-page .social-top-profile{width:42px;height:42px;background:#1a102b;border:1px solid var(--preproom-line);color:#fff}
+body.social-media-page .social-sidebar{top:76px;left:14px;bottom:18px;width:224px;padding:22px 12px;background:#120b20;border:1px solid var(--preproom-line);border-radius:22px}
+body.social-media-page .social-sidebar button{min-height:48px;border-radius:13px;font-size:14px}
+body.social-media-page .social-sidebar button.active{background:linear-gradient(105deg,#7014e7,#a33cff);box-shadow:0 8px 24px #7c20ef44;color:#fff}
+body.social-media-page .social-sidebar button svg{width:21px;height:21px;flex:0 0 21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body.social-media-page .preproom-create-link{min-height:48px!important;border-radius:13px!important}
+body.social-media-page .preproom-dashboard-link{margin-top:auto;padding:13px;border:1px solid var(--preproom-line);border-radius:13px;color:#e7d8ff;text-decoration:none;font-size:12px;font-weight:750}
+body.social-media-page .community-shell{width:min(1120px,calc(100% - 270px));max-width:1120px;margin:28px 20px 90px 258px}
+body.social-media-page .community-layout{display:grid;grid-template-columns:minmax(0,650px) minmax(230px,280px);justify-content:center;gap:18px}
+body.social-media-page .community-main-column{min-width:0;gap:14px}
+body.social-media-page .social-home-return{font-size:11px;margin-bottom:2px}
+body.social-media-page .social-home-return span{display:none}
+body.social-media-page .social-home-return a{color:#b98aff}
+body.social-media-page .composer{padding:13px 15px;border-radius:18px}
+body.social-media-page .social-composer-heading{margin:0 0 9px}
+body.social-media-page .social-composer-heading label{font-size:13px}
+body.social-media-page .composer textarea{min-height:48px;max-height:100px;padding:12px 14px;border-radius:14px;font-size:13px}
+body.social-media-page .composer-row{display:flex;align-items:center;gap:8px;padding-top:9px}
+body.social-media-page .composer-row input#post-subject{display:none}
+body.social-media-page .composer-row select{max-width:135px}
+body.social-media-page .composer-row .primary-button{margin-left:auto}
+body.social-media-page .feed-toolbar{margin:14px 2px 9px}
+body.social-media-page .feed-toolbar h2{font-size:17px}
+body.social-media-page #show-saved-posts{display:none!important}
+body.social-media-page .post-card{padding:14px 15px;border-radius:18px;margin-bottom:12px}
+body.social-media-page .post-author{gap:10px;font-size:13px}
+body.social-media-page .post-author small{font-size:11px}
+body.social-media-page .post-body{margin:12px 0;font-size:14px;line-height:1.55}
+body.social-media-page .post-meta{font-size:10px;opacity:.75}
+body.social-media-page .post-card .post-media,body.social-media-page .post-card .post-video{max-height:380px;aspect-ratio:16/9;object-fit:cover;margin:10px 0;border-radius:12px}
+body.social-media-page .post-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding-top:8px;margin-top:9px}
+body.social-media-page .post-actions button{min-height:36px;font-size:12px;border-radius:9px}
+body.social-media-page .post-actions [data-action="save"],body.social-media-page .post-actions [data-action="report"],body.social-media-page .post-owner-actions{display:none!important}
+body.social-media-page .preproom-side-rail{position:sticky;top:92px;align-self:start;gap:14px}
+body.social-media-page .preproom-side-card{padding:16px;border-radius:18px;background:linear-gradient(145deg,#170e29,#100a1c);border:1px solid var(--preproom-line)}
+body.social-media-page .preproom-side-card h3{font-size:14px}
+body.social-media-page .preproom-topic{background:#291342;color:#c58aff}
+body.social-media-page .community-view{min-height:55vh}
+body.social-media-page #view-people .friends-dashboard{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+body.social-media-page #view-people .friends-dashboard>section{padding:16px;border-radius:17px}
+body.social-media-page #view-people .friends-dashboard>section:last-child{grid-column:1/-1}
+body.social-media-page #view-people .section-heading p{font-size:12px}
+body.social-media-page #view-profile .social-profile-page{max-width:760px;margin:0 auto}
+body.social-media-page .social-profile-cover{min-height:210px;background:linear-gradient(160deg,#9b31ff 0%,#351078 48%,#100a1c 100%)}
+body.social-media-page .social-profile-main{padding:0 24px;align-items:flex-end}
+body.social-media-page .social-profile-avatar{width:112px;height:112px;margin-top:-58px}
+body.social-media-page .social-profile-identity{padding-top:13px}
+body.social-media-page .social-profile-identity h2{font-size:23px}
+body.social-media-page .social-profile-stats{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;margin:15px 24px;padding:15px 0}
+body.social-media-page .social-profile-post-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+body.social-media-page .social-profile-post{border-radius:10px}
+body.social-media-page .profile-editor{padding:20px}
+body.social-media-page .chat-layout{grid-template-columns:280px minmax(0,1fr);min-height:620px}
+body.social-media-page .chat-list-panel,body.social-media-page .chat-window{border-radius:18px}
+body.social-media-page .social-bottom-nav{display:none}
+body.social-create-page{padding:0 14px 30px!important;background:radial-gradient(ellipse at 50% -20%,#35115f 0,transparent 42%),#090611!important}
+body.social-create-page .social-create-shell{width:min(680px,100%);margin:24px auto}
+body.social-create-page .social-create-form{background:#160e24!important;border:1px solid var(--preproom-line)!important;border-radius:20px;padding:22px}
+body.social-create-page .social-create-form textarea,body.social-create-page .social-create-form input,body.social-create-page .social-create-form select{background:#1b1030;color:#fff;border:1px solid var(--preproom-line)}
+body.social-create-page .social-create-header h1{color:#fff}
+body.social-create-page .social-create-header p{color:#b8a9ca}
+body.social-create-page .social-create-actions .primary-button{background:linear-gradient(115deg,#a855f7,#7100e8)}
+body.notifications-page{--notice-bg:#090611;--notice-card:#130d20;--notice-border:rgba(151,78,255,.28);--notice-text:#f7f1ff;--notice-muted:#b8a9ca;--notice-accent:#b77bff;--notice-soft:#211233;background:#090611!important;color:#f7f1ff!important}
+body.notifications-page .notification-item,body.notifications-page .notification-admin-card{background:#130d20;border-color:var(--notice-border);border-radius:17px}
+body.notifications-page .notification-item.is-unread{background:#1c1030}
+body.notifications-page .notification-page-heading h1,body.notifications-page .notification-admin-card h2,body.notifications-page .notification-item h3{color:#fff}
+body.notifications-page .notification-page-heading p:not(.notification-eyebrow),body.notifications-page .notification-item p,body.notifications-page .notification-item time{color:#b8a9ca}
+body.notifications-page #notification-compose-form input,body.notifications-page #notification-compose-form textarea,body.notifications-page #notification-compose-form select{background:#1b1030;color:#fff;border-color:var(--notice-border)}
+@media(max-width:900px){
+ body.social-media-page .social-sidebar{width:205px}
+ body.social-media-page .community-shell{width:calc(100% - 235px);margin-left:225px;margin-right:10px}
+ body.social-media-page .community-layout{grid-template-columns:minmax(0,1fr)}
+ body.social-media-page .preproom-side-rail{display:none}
+}
+@media(max-width:760px){
+ body.social-media-page{padding-top:58px!important;padding-bottom:calc(76px + env(safe-area-inset-bottom))!important}
+ body.social-media-page .social-topbar{height:58px;grid-template-columns:36px minmax(0,1fr) auto;gap:8px;padding:0 10px}
+ body.social-media-page .social-brand{font-size:0;gap:0}
+ body.social-media-page .social-brand-mark{width:36px;height:36px}
+ body.social-media-page .social-global-search{height:38px;padding:0 12px}
+ body.social-media-page .social-global-search input{font-size:12px}
+ body.social-media-page .social-top-actions{gap:5px}
+ body.social-media-page .social-top-action,body.social-media-page .social-top-profile{width:34px;height:34px}
+ body.social-media-page .social-sidebar{display:none}
+ body.social-media-page .community-shell{width:calc(100% - 16px);margin:12px 8px 18px}
+ body.social-media-page .community-layout{display:block}
+ body.social-media-page .community-main-column{gap:11px}
+ body.social-media-page .social-home-return{display:none}
+ body.social-media-page .composer{padding:11px;border-radius:15px}
+ body.social-media-page .composer textarea{min-height:42px}
+ body.social-media-page .composer-row{gap:6px;flex-wrap:nowrap}
+ body.social-media-page .composer-row .media-picker-label{font-size:0;padding:9px}
+ body.social-media-page .composer-row .media-picker-label:after{content:"Photo/video";font-size:11px}
+ body.social-media-page .composer-row select{max-width:105px;font-size:10px}
+ body.social-media-page .composer-row .primary-button{font-size:11px;padding:9px 13px}
+ body.social-media-page .post-card{padding:12px;border-radius:15px}
+ body.social-media-page .post-body{font-size:13px;line-height:1.5}
+ body.social-media-page .post-card .post-media,body.social-media-page .post-card .post-video{max-height:330px}
+ body.social-media-page .post-actions button{font-size:10px;min-height:35px}
+ body.social-media-page .social-bottom-nav{position:fixed;z-index:500;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);gap:0;padding:7px 8px calc(7px + env(safe-area-inset-bottom));background:rgba(10,6,18,.97);border-top:1px solid var(--preproom-line);backdrop-filter:blur(18px)}
+ body.social-media-page .social-bottom-nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:46px;padding:3px 2px;border:0;background:none;color:#a99ab9;font:600 10px system-ui}
+ body.social-media-page .social-bottom-nav button.active{color:#c084fc}
+ body.social-media-page .social-bottom-nav .social-create{width:46px;height:46px;min-height:46px;justify-self:center;align-self:center;border-radius:50%;background:linear-gradient(135deg,#a855f7,#7000e8);color:#fff;box-shadow:0 6px 22px #8100ef66}
+ body.social-media-page .social-bottom-nav .social-nav-icon{width:21px!important;height:21px!important;display:block!important;fill:none!important;stroke:currentColor!important;stroke-width:1.9!important}
+ body.social-media-page #view-people .friends-dashboard{grid-template-columns:1fr}
+ body.social-media-page #view-people .friends-dashboard>section:last-child{grid-column:auto}
+ body.social-media-page .social-profile-main{padding:0 14px;gap:10px;flex-wrap:wrap}
+ body.social-media-page .social-profile-avatar{width:88px;height:88px;margin-top:-44px}
+ body.social-media-page .social-profile-identity{padding-top:9px}
+ body.social-media-page .social-profile-identity h2{font-size:18px}
+ body.social-media-page #edit-social-profile{margin:8px 0 0 auto}
+ body.social-media-page .social-profile-stats{margin:12px 14px;padding:13px 0}
+ body.social-media-page .social-profile-posts-heading{padding:13px 14px}
+ body.social-media-page .social-profile-post-grid{padding:0 10px 15px;gap:3px}
+ body.social-media-page .profile-editor{padding:14px}
+ body.social-media-page .chat-layout{display:flex;flex-direction:column;gap:10px}
+ body.social-media-page .chat-list-panel{max-height:250px}
+ body.social-media-page .chat-window{min-height:55vh}
+ body.social-create-page .social-create-shell{margin:14px auto}
+ body.social-create-page .social-create-form{padding:15px}
+ body.notifications-page .notification-shell{padding-top:22px}
+}
+@media(max-width:380px){
+ body.social-media-page .social-global-search input{font-size:11px}
+ body.social-media-page .post-actions button{font-size:9px}
+ body.social-media-page .social-profile-stats{gap:4px}
+}
