@@ -648,3 +648,7 @@ html[data-theme="light"] body.social-media-page .social-create-form input:not([t
 html[data-theme="light"] body.social-media-page .social-create-form select,
 html[data-theme="light"] body.social-media-page .chat-send textarea{background:#f0e8fb;color:#21152f}
 html[data-theme="light"] body.social-media-page .chat-item{color:#21152f}
+
+body.notifications-page .preproom-notification-filters{display:flex;gap:7px;margin:16px 0;overflow:auto}
+body.notifications-page .preproom-notification-filters button{padding:8px 15px;border:1px solid var(--notice-border);border-radius:999px;background:var(--notice-card);color:var(--notice-muted);font-size:12px;font-weight:700}
+body.notifications-page .preproom-notification-filters button.active{background:var(--notice-accent);border-color:var(--notice-accent);color:#fff}
