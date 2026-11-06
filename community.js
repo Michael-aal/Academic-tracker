@@ -288,7 +288,7 @@
   const socialBottomNav = $("social-bottom-nav");
   socialBottomNav?.addEventListener("click", e => {
     const destination = e.target.closest("[data-social-dest]");
-    if (destination) { tab(destination.dataset.socialDest); return; }
+    if (destination) { navigateSocialTab(destination.dataset.socialDest); return; }
     if (e.target.closest("[data-social-create]")) location.href = "social-create.html";
   });
   async function renderPostComments(postId){
@@ -522,7 +522,7 @@
       else if(cancel||remove) await api("/community/follow/"+encodeURIComponent((cancel||remove).dataset.publicCancel||(cancel||remove).dataset.publicRemove),{method:"DELETE"});
       else if(request) await api("/community/friend-requests/"+encodeURIComponent(request.dataset.publicRequest),{method:"POST",body:JSON.stringify({action:request.dataset.requestAction})});
       else if(block){if(!window.confirm("Block this student?"))return;await api("/community/blocks/"+encodeURIComponent(block.dataset.publicBlock),{method:"POST",body:"{}"});$("public-student-profile").hidden=true;document.querySelector(".social-profile-page").hidden=false;location.hash="#people";await loadPeople(peopleQuery);return;}
-      else if(message){const {conversation}=await api("/community/chat/direct/"+encodeURIComponent(message.dataset.publicMessage),{method:"POST",body:"{}"});tab("messages");openChat(conversation.id);return;}
+      else if(message){const {conversation}=await api("/community/chat/direct/"+encodeURIComponent(message.dataset.publicMessage),{method:"POST",body:"{}"});navigateSocialTab("messages");openChat(conversation.id);return;}
       else return;
       await loadPublicProfile(usernameFromHash());
       await loadFriends();
