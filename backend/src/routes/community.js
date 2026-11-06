@@ -420,43 +420,62 @@ router.post("/posts/:id/comments", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.post("/presence/heartbeat", async (req, res, next) => {
+  try {
+    await prisma.communityProfile.updateMany({
+      where: { userId: req.userId, usernameSet: true, status: "ACTIVE" },
+      data: { lastSeenAt: new Date() }
+    });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
 router.get("/people", async (req, res, next) => {
   try {
     const q = clean(req.query.q, 80);
-    if (q.length < 2) return res.json({ people: [] });
+    if (q.length === 1) return res.json({ people: [] });
     const currentUser = await getUser(req.userId);
     if (!currentUser) return res.status(404).json({ error: "Account not found." });
 
-    // Username lookup accepts both "student_name" and "@student_name".
-    // Search results are limited to public, active profiles in the same education track.
-    const exactUsernameSearch = q.startsWith("@");
-    const usernameQuery = slug(q.replace(/^@/, ""));
-    const usernameProfiles = usernameQuery.length >= 2
-      ? await prisma.communityProfile.findMany({
-          where: { username: exactUsernameSearch ? usernameQuery : { contains: usernameQuery }, visibility: "PUBLIC", status: "ACTIVE" },
-          select: { userId: true },
-          take: exactUsernameSearch ? 1 : 30
-        })
-      : [];
-    const usernameUserIds = usernameProfiles.map(profile => profile.userId);
-    const users = await prisma.user.findMany({
-      where: {
-        id: { not: req.userId },
-        educationTrack: currentUser.educationTrack,
-        OR: exactUsernameSearch
-          ? [{ id: { in: usernameUserIds } }]
-          : [
-              { name: { contains: q, mode: "insensitive" } },
-              { institutionName: { contains: q, mode: "insensitive" } },
-              ...(usernameUserIds.length ? [{ id: { in: usernameUserIds } }] : [])
-            ]
-      },
-      select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true },
-      take: 20
-    });
+    const profileWhere = { userId: { not: req.userId }, visibility: "PUBLIC", status: "ACTIVE", usernameSet: true };
+    let users;
+    if (!q) {
+      const profiles = await prisma.communityProfile.findMany({
+        where: profileWhere, orderBy: [{ lastSeenAt: "desc" }, { createdAt: "desc" }], take: 60
+      });
+      users = await prisma.user.findMany({
+        where: { id: { in: profiles.map(p => p.userId) } },
+        select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true }
+      });
+    } else {
+      const exactUsernameSearch = q.startsWith("@");
+      const usernameQuery = slug(q.replace(/^@/, ""));
+      const usernameProfiles = usernameQuery.length >= 2
+        ? await prisma.communityProfile.findMany({
+            where: { ...profileWhere, username: exactUsernameSearch ? usernameQuery : { contains: usernameQuery } },
+            select: { userId: true }, take: exactUsernameSearch ? 1 : 60
+          })
+        : [];
+      const usernameUserIds = usernameProfiles.map(profile => profile.userId);
+      users = await prisma.user.findMany({
+        where: {
+          id: { not: req.userId },
+          OR: exactUsernameSearch
+            ? [{ id: { in: usernameUserIds } }]
+            : [
+                { name: { contains: q, mode: "insensitive" } },
+                { institutionName: { contains: q, mode: "insensitive" } },
+                { programme: { contains: q, mode: "insensitive" } },
+                ...(usernameUserIds.length ? [{ id: { in: usernameUserIds } }] : [])
+              ]
+        },
+        select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true },
+        take: 40
+      });
+    }
     const userIds = users.map(u => u.id);
     const [profiles, blocks, outgoing, incoming] = await Promise.all([
-      prisma.communityProfile.findMany({ where: { userId: { in: userIds }, visibility: "PUBLIC", status: "ACTIVE" } }),
+      prisma.communityProfile.findMany({ where: { ...profileWhere, userId: { in: userIds } }, orderBy: [{ lastSeenAt: "desc" }, { createdAt: "desc" }] }),
       prisma.communityBlock.findMany({ where: { OR: [{ blockerId: req.userId }, { blockedId: req.userId }] } }),
       prisma.communityFollow.findMany({ where: { followerId: req.userId, followingId: { in: userIds } } }),
       prisma.communityFollow.findMany({ where: { followingId: req.userId, followerId: { in: userIds } } })
@@ -464,14 +483,22 @@ router.get("/people", async (req, res, next) => {
     const blockedIds = new Set(blocks.map(b => b.blockerId === req.userId ? b.blockedId : b.blockerId));
     const outMap = new Map(outgoing.map(x => [x.followingId, x.status]));
     const inMap = new Map(incoming.map(x => [x.followerId, x.status]));
-    const map = new Map(profiles.map(p => [p.userId, p]));
-    res.json({ people: users.filter(u => map.has(u.id) && !blockedIds.has(u.id)).map(u => ({
-      ...publicProfile(map.get(u.id), u),
-      friendStatus: outMap.get(u.id) === "ACCEPTED" && inMap.get(u.id) === "ACCEPTED" ? "FRIENDS" :
-        inMap.get(u.id) === "PENDING" ? "REQUEST_RECEIVED" :
-        outMap.get(u.id) === "PENDING" ? "REQUEST_SENT" : "NONE",
-      friendRequestId: incoming.find(x => x.followerId === u.id && x.status === "PENDING")?.id || null
-    })) });
+    const profileMap = new Map(profiles.map(p => [p.userId, p]));
+    const userMap = new Map(users.map(u => [u.id, u]));
+    const now = Date.now();
+    const people = profiles.filter(p => !blockedIds.has(p.userId) && userMap.has(p.userId)).map(p => {
+      const u = userMap.get(p.userId);
+      const lastSeen = p.lastSeenAt ? new Date(p.lastSeenAt).getTime() : 0;
+      return {
+        ...publicProfile(p, u),
+        online: Boolean(lastSeen && now - lastSeen <= 120000),
+        friendStatus: outMap.get(u.id) === "ACCEPTED" && inMap.get(u.id) === "ACCEPTED" ? "FRIENDS" :
+          inMap.get(u.id) === "PENDING" ? "REQUEST_RECEIVED" :
+          outMap.get(u.id) === "PENDING" ? "REQUEST_SENT" : "NONE",
+        friendRequestId: incoming.find(x => x.followerId === u.id && x.status === "PENDING")?.id || null
+      };
+    });
+    res.json({ people, total: people.length, onlineCount: people.filter(p => p.online).length });
   } catch (e) { next(e); }
 });
 
