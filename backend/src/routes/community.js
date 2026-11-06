@@ -41,10 +41,10 @@ async function verifyCommunityCloudinaryAsset(rawUrl, userId, expectedResourceTy
   const parts = url.pathname.split("/").filter(Boolean).map(decodeURIComponent);
   if (parts.length < 5 || parts[0] !== cloudName || parts[1] !== expectedResourceType || parts[2] !== "upload") return false;
   let assetParts = parts.slice(3);
-  if (/^v\\d+$/.test(assetParts[0] || "")) assetParts = assetParts.slice(1);
+  if (/^v\d+$/.test(assetParts[0] || "")) assetParts = assetParts.slice(1);
   if (!assetParts.length) return false;
   const last = assetParts[assetParts.length - 1];
-  assetParts[assetParts.length - 1] = last.replace(/\\.[a-z0-9]{2,8}$/i, "");
+  assetParts[assetParts.length - 1] = last.replace(/\.[a-z0-9]{2,8}$/i, "");
   const publicId = assetParts.join("/");
   const expectedFolder = "academic-tracker/community/" + userId + "/";
   if (!publicId.startsWith(expectedFolder)) return false;
