@@ -8,6 +8,7 @@
   let feedNextCursor = "";
   let peopleNextCursor = "";
   let peopleQuery = "";
+  let peopleLoadedPages = 0;
   // Social profile setup gates publishing until the account has a username.
   window.socialReady = false;
   const status = message => { $("community-status").textContent = message || ""; };
@@ -406,11 +407,13 @@
     if (!requireLogin()) return;
     if (!append) {
       peopleQuery = query;
+      peopleLoadedPages = 1;
       peopleNextCursor = "";
       $("people-list").innerHTML = '<div class="empty-state">Loading students…</div>';
       if ($("people-load-more")) $("people-load-more").hidden = true;
     }
     try {
+      if (append) peopleLoadedPages += 1;
       const params = new URLSearchParams({ limit: "20" });
       if (query) params.set("q", query);
       if (cursor) params.set("cursor", cursor);
@@ -801,6 +804,11 @@
   };
   loadProfile().then(sendPresenceHeartbeat);
   setInterval(sendPresenceHeartbeat, 60000);
+  setInterval(() => {
+    if (document.visibilityState === "visible" && document.body.dataset.preproomView === "people" && peopleLoadedPages <= 1) {
+      loadPeople(peopleQuery);
+    }
+  }, 60000);
   document.addEventListener("visibilitychange", sendPresenceHeartbeat);
   updateSocialBadges();
   setInterval(updateSocialBadges, 30000);
