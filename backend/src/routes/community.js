@@ -644,9 +644,22 @@ router.get("/people", async (req, res, next) => {
 router.get("/follow-requests", async (req, res, next) => {
   try {
     const requests = await prisma.communityFollow.findMany({ where: { followingId: req.userId, status: "PENDING" }, orderBy: { createdAt: "desc" }, take: 50 });
-    const users = await prisma.user.findMany({ where: { id: { in: requests.map(r => r.followerId) } }, select: { id: true, name: true, educationTrack: true } });
-    const map = new Map(users.map(u => [u.id, u]));
-    res.json({ requests: requests.map(r => ({ ...r, requester: map.get(r.followerId) || null })) });
+    const ids = requests.map(request => request.followerId);
+    const [users, profiles] = await Promise.all([
+      prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, educationTrack: true } }),
+      prisma.communityProfile.findMany({ where: { userId: { in: ids }, visibility: "PUBLIC", status: "ACTIVE", usernameSet: true }, select: { userId: true, username: true } })
+    ]);
+    const userMap = new Map(users.map(user => [user.id, user]));
+    const profileMap = new Map(profiles.map(profile => [profile.userId, profile]));
+    res.json({ requests: requests.filter(request => profileMap.has(request.followerId)).map(request => ({
+      id: request.id,
+      createdAt: request.createdAt,
+      requester: {
+        displayName: userMap.get(request.followerId)?.name || "Student",
+        username: profileMap.get(request.followerId)?.username || "",
+        educationTrack: userMap.get(request.followerId)?.educationTrack || ""
+      }
+    })) });
   } catch (e) { next(e); }
 });
 
@@ -1179,9 +1192,10 @@ router.get("/blocks", async (req, res, next) => {
     const userMap = new Map(users.map(user => [user.id, user]));
     const profileMap = new Map(profiles.map(profile => [profile.userId, profile]));
     res.json({ blocks: blocks.map(block => ({
-      ...block, displayName: userMap.get(block.blockedId)?.name || "Student",
-      username: profileMap.get(block.blockedId)?.username || ""
-    })) });
+      displayName: userMap.get(block.blockedId)?.name || "Student",
+      username: profileMap.get(block.blockedId)?.username || "",
+      createdAt: block.createdAt
+    })).filter(block => block.username) });
   } catch (e) { next(e); }
 });
 router.post("/reports", async (req, res, next) => {
