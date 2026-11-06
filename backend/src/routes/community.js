@@ -15,8 +15,13 @@ router.get("/health", (_req, res) => {
   res.json({ ok: true, service: "academic-tracker-social-api" });
 });
 const writeLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, limit: 80, standardHeaders: "draft-7", legacyHeaders: false,
+  windowMs: 15 * 60 * 1000,
+  limit: 80,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
   keyGenerator: req => req.userId,
+  // Browsing must not consume the community write-action allowance.
+  skip: req => ["GET", "HEAD", "OPTIONS"].includes(req.method),
   message: { error: "Too many community actions. Please slow down." }
 });
 const clean = (v, max) => typeof v === "string" ? v.trim().slice(0, max) : "";
