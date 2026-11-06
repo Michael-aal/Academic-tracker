@@ -9,7 +9,7 @@
     brand.setAttribute("aria-label","Preproom home");
   }
   function dashboardHref(){try{const account=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}");return account.educationTrack==="HIGHER"?"university-dashboard.html":"dashboard.html";}catch(_){return "dashboard.html";}}
-  function syncDashboardLinks(){const href=dashboardHref();$(".social-home-return a, .preproom-dashboard-link").forEach(link=>{link.href=href;});}
+  function syncDashboardLinks(){const href=dashboardHref();$( ".social-home-return a, .preproom-dashboard-link").forEach(link=>{link.href=href;});}
   function setupNavigation(){
     const sidebar=$(".social-sidebar");
     if(sidebar){
