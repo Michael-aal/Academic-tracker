@@ -328,3 +328,42 @@ body.social-media-page .community-footer{display:none}
 .person-discovery-card .friend-request-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:auto}
 .person-discovery-card .friend-request-actions button{min-height:40px}
 @media(max-width:700px){.people-list{grid-template-columns:1fr}.person-discovery-card{padding:13px}.people-discovery-toolbar{align-items:flex-start}}
+
+/* Discovery pagination and public student profiles */
+.people-load-more{display:block;min-height:42px;margin:14px auto 0}
+.person-discovery-card{display:flex;flex-direction:column;gap:9px}
+.person-profile-link{display:flex;align-items:center;gap:11px;min-width:0;color:var(--community-text);text-decoration:none}
+.person-profile-link:hover .person-discovery-identity strong{text-decoration:underline}
+.person-discovery-avatar{width:48px;height:48px;flex:0 0 48px;position:relative;display:grid;place-items:center;border-radius:50%;background:linear-gradient(135deg,#9d7be8,#5c35a7);color:#fff;font-weight:800;overflow:visible}
+.person-discovery-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.person-discovery-avatar i{position:absolute;right:0;bottom:0;width:12px;height:12px;border:2px solid var(--preproom-panel);border-radius:50%;background:#92929c}
+.person-discovery-avatar i.is-online{background:#22c55e}
+.person-discovery-identity{display:grid;gap:2px;min-width:0}
+.person-discovery-identity strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.person-discovery-identity small{font-size:11px;color:var(--community-muted)}
+.person-presence.online{color:#16a34a;font-weight:800}
+.person-presence.offline{color:var(--community-muted)}
+.person-discovery-card .friend-request-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:auto}
+.person-discovery-card .friend-request-actions button{min-height:40px}
+.public-student-profile{overflow:hidden;padding:0 0 18px;margin-bottom:18px}
+.public-profile-cover{height:clamp(130px,24vw,240px);position:relative;overflow:hidden;background:linear-gradient(125deg,#21143a,#7049bd 55%,#a78bfa)}
+.public-profile-cover-image{width:100%;height:100%;object-fit:cover}
+.public-profile-heading{display:flex;align-items:flex-end;gap:14px;padding:0 18px;margin-top:-38px;position:relative;flex-wrap:wrap}
+.public-profile-avatar{width:82px;height:82px;flex:0 0 82px;display:grid;place-items:center;border:4px solid var(--preproom-panel);border-radius:50%;background:#7049bd;color:#fff;font-size:24px;font-weight:800;overflow:hidden}
+.public-profile-avatar img{width:100%;height:100%;object-fit:cover}
+.public-profile-identity{flex:1;min-width:180px;padding-top:42px}
+.public-profile-identity h1{margin:0;font-size:22px}
+.public-profile-identity p{margin:4px 0;color:var(--community-muted);font-size:12px;overflow-wrap:anywhere}
+.public-profile-actions{display:flex;gap:7px;flex-wrap:wrap}
+.public-profile-actions button{min-height:40px}
+.public-profile-meta,.public-profile-stats{margin:14px 18px;color:var(--community-muted);font-size:12px}
+.public-profile-stats{display:flex;gap:18px;padding:12px 0;border-top:1px solid var(--community-border);border-bottom:1px solid var(--community-border)}
+.public-profile-posts{padding:0 18px}
+.public-profile-posts h2{font-size:16px}
+.public-profile-post{padding:13px 0;border-bottom:1px solid var(--community-border)}
+.public-profile-post p{white-space:pre-wrap;overflow-wrap:anywhere}
+.public-profile-post img,.public-profile-post video{display:block;width:100%;max-height:440px;object-fit:contain;border-radius:12px;background:#090611}
+.public-profile-post small{display:block;margin-top:8px;color:var(--community-muted)}
+.social-profile-cover{position:relative}
+.social-cover-change{position:absolute;right:12px;bottom:12px;z-index:2;padding:8px 11px;border:1px solid rgba(255,255,255,.28);border-radius:10px;background:rgba(12,8,20,.78);color:#fff;font:700 11px system-ui;cursor:pointer}
+@media(max-width:700px){.public-profile-heading{padding:0 12px;gap:10px}.public-profile-avatar{width:68px;height:68px;flex-basis:68px}.public-profile-identity{min-width:140px}.public-profile-identity h1{font-size:18px}.public-profile-actions{width:100%;padding-left:0}.public-profile-meta,.public-profile-stats{margin-inline:12px}.public-profile-posts{padding-inline:12px}}
