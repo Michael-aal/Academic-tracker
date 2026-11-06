@@ -89,10 +89,10 @@
         </div>
         <div class="social-profile-stats"><div><strong id="profile-post-count">0</strong><span>Posts</span></div><div><strong id="profile-friend-count">0</strong><span>Friends</span></div><div><strong id="profile-like-count">0</strong><span>Likes received</span></div></div>
         <div class="social-profile-subject" id="social-profile-subject"></div>
-        <div class="social-profile-posts-heading"><h3>Your posts</h3><a class="primary-button" href="social-create.html">＋ Create post</a></div>
-        <div id="social-profile-posts" class="social-profile-post-grid"><div class="empty-state">Loading your posts…</div></div>
+        <div class="preproom-profile-tabs" role="tablist" aria-label="Profile sections"><button type="button" class="active" data-profile-tab="posts">Posts</button><button type="button" data-profile-tab="about">About</button><button type="button" data-profile-tab="friends">Friends</button><button type="button" data-profile-tab="media">Media</button></div><div class="social-profile-posts-heading"><h3>Your posts</h3><a class="primary-button" href="social-create.html">＋ Create post</a></div>
+        <div id="social-profile-posts" class="social-profile-post-grid" data-profile-panel="posts"><div class="empty-state">Loading your posts…</div></div>
       </section>
-      <section class="panel profile-editor" id="profile-settings">
+      <section class="panel profile-editor" id="profile-settings" data-profile-panel="about">
         <div class="section-heading"><div><h2>Profile settings</h2><p>Customise how your social profile appears to other students.</p></div></div>
         <form id="profile-form"><div class="profile-form-grid">
           <label>Username<input id="profile-username" maxlength="30" required></label>
