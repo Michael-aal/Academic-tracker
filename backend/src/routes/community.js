@@ -113,15 +113,17 @@ async function acceptedFriend(userA, userB) {
 async function notifySocial(userId, actorId, title, body, metadata) {
   if (!userId || userId === actorId) return;
   try {
+    const safeMetadata = { ...(metadata || {}) };
+    delete safeMetadata.userId;
+    delete safeMetadata.requesterId;
+    const actorProfile = actorId ? await prisma.communityProfile.findUnique({ where: { userId: actorId }, select: { username: true } }) : null;
+    if (actorProfile?.username) safeMetadata.actorUsername = actorProfile.username;
     await prisma.notification.create({ data: {
       userId, createdById: actorId, title: clean(title, 120), body: clean(body, 4000),
-      category: "SOCIAL", metadata: metadata || {}
+      category: "SOCIAL", metadata: safeMetadata
     }});
-  } catch (_) {
-    // A notification failure must not roll back the social action itself.
-  }
-}
-async function isMember(conversationId, userId) {
+  } catch (_) {}
+}async function isMember(conversationId, userId) {
   return Boolean(await prisma.chatMember.findUnique({ where: { conversationId_userId: { conversationId, userId } } }));
 }
 async function canReadPost(post, userId) {
@@ -731,7 +733,7 @@ router.post("/friend-requests/:id", async (req, res, next) => {
         update: { status: "ACCEPTED" }
       })
     ]);
-    await notifySocial(request.followerId, req.userId, "Friend request accepted", "Your friend request was accepted.", { type: "FRIEND_ACCEPTED", userId: req.userId });
+    await notifySocial(request.followerId, req.userId, "Friend request accepted", "Your friend request was accepted.", { type: "FRIEND_ACCEPTED" });
     res.json({ ok: true, status: "ACCEPTED" });
   } catch (e) { next(e); }
 });
@@ -758,7 +760,7 @@ router.post("/follow/:userId", async (req, res, next) => {
     if (status === "ACCEPTED") await prisma.communityFollow.update({
       where: { followerId_followingId: { followerId: target.id, followingId: req.userId } }, data: { status: "ACCEPTED" }
     });
-    if (status === "PENDING") await notifySocial(target.id, req.userId, "New friend request", "A student sent you a friend request.", { type: "FRIEND_REQUEST", requesterId: req.userId });
+    if (status === "PENDING") await notifySocial(target.id, req.userId, "New friend request", "A student sent you a friend request.", { type: "FRIEND_REQUEST" });
     else await notifySocial(target.id, req.userId, "Friend request accepted", "Your friend request was accepted.", { type: "FRIEND_ACCEPTED", userId: req.userId });
     res.json({ ok: true, status });
   } catch (e) { next(e); }
