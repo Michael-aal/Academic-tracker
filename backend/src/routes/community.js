@@ -1035,9 +1035,28 @@ router.get("/chat", async (req, res, next) => {
     const messages = await prisma.chatMessage.findMany({ where: { conversationId: { in: visibleIds }, deletedAt: null }, orderBy: { createdAt: "desc" }, take: 160 });
     const allMembers = await prisma.chatMember.findMany({ where: { conversationId: { in: visibleIds } } });
     const memberIds = [...new Set(allMembers.map(m => m.userId))];
-    const memberUsers = await prisma.user.findMany({ where: { id: { in: memberIds } }, select: { id: true, name: true, educationTrack: true } });
-    const memberMap = new Map(memberUsers.map(u => [u.id, u]));
-    res.json({ conversations: conversations.map(c => ({ ...c, members: allMembers.filter(m => m.conversationId === c.id).map(m => ({ ...m, user: memberMap.get(m.userId) || null })), lastMessage: messages.find(m => m.conversationId === c.id) || null })) });
+    const [memberUsers, memberProfiles] = await Promise.all([
+      prisma.user.findMany({ where: { id: { in: memberIds } }, select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } }),
+      prisma.communityProfile.findMany({ where: { userId: { in: memberIds } } })
+    ]);
+    const memberMap = new Map(memberUsers.map(user => [user.id, user]));
+    const profileMap = new Map(memberProfiles.map(profile => [profile.userId, profile]));
+    res.json({ conversations: conversations.map(conversation => {
+      const { createdById, ...safeConversation } = conversation;
+      const members = allMembers.filter(member => member.conversationId === conversation.id).map(member => {
+        const { userId, ...safeMember } = member;
+        const user = memberMap.get(userId);
+        const profile = profileMap.get(userId);
+        const safeUser = user && profile?.visibility === "PUBLIC" && profile.status === "ACTIVE"
+          ? publicProfile(profile, user)
+          : user ? { displayName: user.name, educationTrack: user.educationTrack, username: null, avatarUrl: null } : null;
+        return { ...safeMember, isMe: userId === req.userId, user: safeUser };
+      });
+      const last = messages.find(message => message.conversationId === conversation.id) || null;
+      let lastMessage = null;
+      if (last) { const { senderId, ...safeMessage } = last; lastMessage = { ...safeMessage, isMine: senderId === req.userId }; }
+      return { ...safeConversation, members, lastMessage };
+    }) });
   } catch (e) { next(e); }
 });
 router.post("/chat/direct/:userId", async (req, res, next) => {
@@ -1046,7 +1065,7 @@ router.post("/chat/direct/:userId", async (req, res, next) => {
     if (!target || !await canChat(req.userId, target.id)) return res.status(403).json({ error: "Private chats are available between accepted connections in the same academic environment." });
     const conversation = await prisma.chatConversation.create({ data: { createdById: req.userId, kind: "DIRECT" } });
     await prisma.chatMember.createMany({ data: [{ conversationId: conversation.id, userId: req.userId }, { conversationId: conversation.id, userId: target.id }] });
-    res.status(201).json({ conversation });
+    res.status(201).json({ conversation: { id: conversation.id, kind: conversation.kind, createdAt: conversation.createdAt, updatedAt: conversation.updatedAt } });
   } catch (e) { next(e); }
 });
 router.post("/chat/group/:groupId", async (req, res, next) => {
@@ -1067,7 +1086,10 @@ router.get("/chat/:id/messages", async (req, res, next) => {
   try {
     if (!await canAccessConversation(req.params.id, req.userId)) return res.status(404).json({ error: "Conversation not found or connection no longer available." });
     const messages = await prisma.chatMessage.findMany({ where: { conversationId: req.params.id, deletedAt: null }, orderBy: { createdAt: "asc" }, take: 100 });
-    res.json({ messages });
+    res.json({ messages: messages.map(message => {
+      const { senderId, ...safeMessage } = message;
+      return { ...safeMessage, isMine: senderId === req.userId };
+    }) });
   } catch (e) { next(e); }
 });
 router.post("/chat/:id/voice-upload-signature", async (req, res, next) => {
@@ -1101,7 +1123,8 @@ router.post("/chat/:id/messages", async (req, res, next) => {
       member.userId, req.userId, "New message", messageType === "VOICE_NOTE" ? "You received a voice message." : "You received a new message.",
       { type: "NEW_MESSAGE", conversationId: req.params.id, messageId: message.id }
     )));
-    res.status(201).json({ message });
+    const { senderId, ...safeMessage } = message;
+    res.status(201).json({ message: { ...safeMessage, isMine: senderId === req.userId } });
   } catch (e) { next(e); }
 });
 router.patch("/chat/:id/read", async (req, res, next) => {
