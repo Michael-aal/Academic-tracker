@@ -31,13 +31,13 @@ const safeUrl = value => {
   try { const u = new URL(raw); return u.protocol === "https:" ? raw : null; } catch { return null; }
 };
 async function verifyCommunityCloudinaryAsset(rawUrl, userId, expectedResourceType, maxBytes) {
+  let url;
+  try { url = new URL(rawUrl); } catch { return false; }
+  if (url.protocol !== "https:" || url.hostname !== "res.cloudinary.com") return false;
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   const apiKey = process.env.CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
   if (!cloudName || !apiKey || !apiSecret) throw new Error("Community media storage is not configured.");
-  let url;
-  try { url = new URL(rawUrl); } catch { return false; }
-  if (url.protocol !== "https:" || url.hostname !== "res.cloudinary.com") return false;
   const parts = url.pathname.split("/").filter(Boolean).map(decodeURIComponent);
   if (parts.length < 5 || parts[0] !== cloudName || parts[1] !== expectedResourceType || parts[2] !== "upload") return false;
   let assetParts = parts.slice(3);
