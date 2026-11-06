@@ -208,17 +208,26 @@ router.get("/feed", async (req, res, next) => {
     const likedSet = new Set(myReactions.map(x => x.postId));
     const sharedUserMap = new Map(sharedUsers.map(u => [u.id, u]));
     const sharedProfileMap = new Map(sharedProfiles.map(p => [p.userId, p]));
-    const sharedMap = new Map(readableSharedOriginals.map(p => [p.id, {
-      ...p,
-      author: sharedUserMap.get(p.authorId) ? publicProfile(sharedProfileMap.get(p.authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, sharedUserMap.get(p.authorId)) : null
-    }]));
-    res.json({ posts: posts.map(p => ({
-      ...p, author: userMap.get(p.authorId) ? publicProfile(profileMap.get(p.authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, userMap.get(p.authorId)) : null,
-      sharedPost: p.sharedPostId ? sharedMap.get(p.sharedPostId) || null : null,
-      isSaved: savedSet.has(p.id), isLiked: likedSet.has(p.id), shareCount: shareMap.get(p.id) || 0,
-      isFriendPost: p.authorId === req.userId || friendIds.includes(p.authorId),
-      reactionCount: reactionMap.get(p.id) || 0, commentCount: commentMap.get(p.id) || 0
-    })), nextCursor, hasMore });
+    const sharedMap = new Map(readableSharedOriginals.map(p => {
+      const { authorId, ...safePost } = p;
+      return [p.id, {
+        ...safePost,
+        isOwner: authorId === req.userId,
+        author: sharedUserMap.get(authorId) ? publicProfile(sharedProfileMap.get(authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, sharedUserMap.get(authorId)) : null
+      }];
+    }));
+    res.json({ posts: posts.map(p => {
+      const { authorId, ...safePost } = p;
+      return {
+        ...safePost,
+        isOwner: authorId === req.userId,
+        author: userMap.get(authorId) ? publicProfile(profileMap.get(authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, userMap.get(authorId)) : null,
+        sharedPost: p.sharedPostId ? sharedMap.get(p.sharedPostId) || null : null,
+        isSaved: savedSet.has(p.id), isLiked: likedSet.has(p.id), shareCount: shareMap.get(p.id) || 0,
+        isFriendPost: authorId === req.userId || friendIds.includes(authorId),
+        reactionCount: reactionMap.get(p.id) || 0, commentCount: commentMap.get(p.id) || 0
+      };
+    }), nextCursor, hasMore });
   } catch (e) { next(e); }
 });
 
@@ -258,12 +267,16 @@ router.get("/profiles/:username", async (req, res, next) => {
         posts: posts.length,
         likes: reactions.reduce((sum, row) => sum + row._count._all, 0)
       },
-      posts: posts.map(post => ({
-        ...post,
-        reactionCount: reactionCounts.get(post.id) || 0,
-        commentCount: commentCounts.get(post.id) || 0,
-        shareCount: shareCounts.get(post.id) || 0
-      }))
+      posts: posts.map(post => {
+        const { authorId, ...safePost } = post;
+        return {
+          ...safePost,
+          isOwner: authorId === req.userId,
+          reactionCount: reactionCounts.get(post.id) || 0,
+          commentCount: commentCounts.get(post.id) || 0,
+          shareCount: shareCounts.get(post.id) || 0
+        };
+      })
     });
   } catch (e) { next(e); }
 });
@@ -299,7 +312,10 @@ router.get("/profile/me", async (req, res, next) => {
     res.json({
       profile: publicProfile(profile, user),
       stats: { posts: posts.length, friends, likes: totalLikes },
-      posts: posts.map(post => ({ ...post, reactionCount: reactionCounts.get(post.id) || 0, commentCount: commentCounts.get(post.id) || 0, shareCount: shareCounts.get(post.id) || 0 }))
+      posts: posts.map(post => {
+        const { authorId, ...safePost } = post;
+        return { ...safePost, isOwner: authorId === req.userId, reactionCount: reactionCounts.get(post.id) || 0, commentCount: commentCounts.get(post.id) || 0, shareCount: shareCounts.get(post.id) || 0 };
+      })
     });
   } catch (e) { next(e); }
 });
@@ -430,10 +446,15 @@ router.get("/saved-posts", async (req, res, next) => {
     const reactionMap = new Map(reactions.map(x => [x.postId, x._count._all]));
     const commentMap = new Map(comments.map(x => [x.postId, x._count._all]));
     readable.sort((a,b) => ids.indexOf(a.id) - ids.indexOf(b.id));
-    res.json({ posts: readable.map(p => ({
-      ...p, author: userMap.get(p.authorId) ? publicProfile(profileMap.get(p.authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, userMap.get(p.authorId)) : null,
-      isSaved: true, reactionCount: reactionMap.get(p.id) || 0, commentCount: commentMap.get(p.id) || 0
-    })) });
+    res.json({ posts: readable.map(p => {
+      const { authorId, ...safePost } = p;
+      return {
+        ...safePost,
+        isOwner: authorId === req.userId,
+        author: userMap.get(authorId) ? publicProfile(profileMap.get(authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, userMap.get(authorId)) : null,
+        isSaved: true, reactionCount: reactionMap.get(p.id) || 0, commentCount: commentMap.get(p.id) || 0
+      };
+    }) });
   } catch (e) { next(e); }
 });
 
@@ -501,11 +522,16 @@ router.get("/posts/:id/comments", async (req, res, next) => {
     ]) : [[], []];
     const userMap = new Map(users.map(u => [u.id, u]));
     const profileMap = new Map(profiles.map(p => [p.userId, p]));
-    res.json({ comments: comments.map(c => ({
-      ...c, authorName: userMap.get(c.userId)?.name || "Student",
-      authorUsername: profileMap.get(c.userId)?.username || "student",
-      avatarUrl: profileMap.get(c.userId)?.avatarUrl || null
-    })) });
+    res.json({ comments: comments.map(c => {
+      const { userId, ...safeComment } = c;
+      return {
+        ...safeComment,
+        isMine: userId === req.userId,
+        authorName: userMap.get(userId)?.name || "Student",
+        authorUsername: profileMap.get(userId)?.username || "student",
+        avatarUrl: profileMap.get(userId)?.avatarUrl || null
+      };
+    }) });
   } catch (e) { next(e); }
 });
 
