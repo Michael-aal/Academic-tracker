@@ -303,7 +303,7 @@
         p.friendStatus === "REQUEST_SENT" ? '<button class="outline-button" data-cancel-friend="' + esc(p.userId) + '">Request sent · Cancel</button>' :
         p.friendStatus === "REQUEST_RECEIVED" ? '<button class="primary-button" data-friend-request="' + esc(p.friendRequestId || "") + '" data-request-action="accept">Accept request</button><button class="outline-button" data-friend-request="' + esc(p.friendRequestId || "") + '" data-request-action="decline">Decline</button>' :
         '<button class="outline-button" data-follow="' + esc(p.userId) + '">Add friend</button>';
-      return '<article class="person-card person-discovery-card"><a class="person-profile-link" href="community.html#profile-' + esc(p.username) + '" aria-label="View ' + esc(p.displayName) + ' profile"><span class="person-discovery-avatar">' + avatar + '<i class="' + (p.online ? "is-online" : "is-offline") + '" aria-label="' + (p.online ? "Online" : "Offline") + '"></i></span><span class="person-discovery-identity"><strong>' + esc(p.displayName || "Student") + '</strong><small>@' + esc(p.username) + '</small><small class="person-presence ' + (p.online ? "online" : "offline") + '">' + (p.online ? "Online now" : "Offline") + '</small></span></a><p>' + esc(p.educationTrack || "Student") + ' · ' + esc(p.institutionName || p.programme || "Institution not specified") + '<br>Best subject: ' + esc(p.bestSubject || "Not specified") + '</p><div class="friend-request-actions">' + action + '<button class="quiet-button" data-block="' + esc(p.userId) + '">Block</button></div></article>';
+      return '<article class="person-card person-discovery-card"><div class="person-profile-link" aria-label="Student profile: ' + esc(p.displayName) + '"><span class="person-discovery-avatar">' + avatar + '<i class="' + (p.online ? "is-online" : "is-offline") + '" aria-label="' + (p.online ? "Online" : "Offline") + '"></i></span><span class="person-discovery-identity"><strong>' + esc(p.displayName || "Student") + '</strong><small>@' + esc(p.username) + '</small><small class="person-presence ' + (p.online ? "online" : "offline") + '">' + (p.online ? "Online now" : "Offline") + '</small></span></div><p>' + esc(p.educationTrack || "Student") + ' · ' + esc(p.institutionName || p.programme || "Institution not specified") + '<br>Best subject: ' + esc(p.bestSubject || "Not specified") + '</p><div class="friend-request-actions">' + action + '<button class="quiet-button" data-block="' + esc(p.userId) + '">Block</button></div></article>';
     }).join("") : '<div class="empty-state">No public student profiles found. Try another name or username.</div>';
   }
   async function loadPeople(query = $("people-query").value.trim()) {
@@ -317,6 +317,7 @@
       status(err.message);
     }
   }
+  $("clear-people-search").addEventListener("click", () => { $("people-query").value = ""; loadPeople(""); });
   $("people-search").addEventListener("submit", async e => {
     e.preventDefault();
     const q = $("people-query").value.trim();
