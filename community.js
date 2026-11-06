@@ -5,6 +5,7 @@
   const currentUserId = () => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}").id || ""; } catch (_) { return ""; } };
   const $ = id => document.getElementById(id);
   let showingSavedPosts = false;
+  let feedNextCursor = "";
   let peopleNextCursor = "";
   let peopleQuery = "";
   // Social profile setup gates publishing until the account has a username.
@@ -172,22 +173,23 @@
     finally{if(submitButton){submitButton.disabled=false;submitButton.textContent=submitButton.dataset.originalText||"Save profile settings";}}
   });
 
-  async function loadFeed(savedOnly = showingSavedPosts) {
+  async function loadFeed(savedOnly = showingSavedPosts, cursor = "", append = false) {
     showingSavedPosts = savedOnly;
+    if (!append) { feedNextCursor = ""; if ($("feed-load-more")) $("feed-load-more").hidden = true; }
     $("feed-heading").textContent = savedOnly ? "Saved posts" : "Recent posts";
     $("show-saved-posts").textContent = savedOnly ? "Show all posts" : "Saved posts";
     try {
-      const endpoint = savedOnly ? "/community/saved-posts" : "/community/feed?limit=25";
-      const { posts=[] } = await api(endpoint);
-      if (!posts.length) { $("feed-list").innerHTML = '<div class="empty-state">'+(savedOnly?"You have not saved any posts yet.":"No posts yet. Be the first to start a useful discussion.")+'</div>'; return; }
-      $("feed-list").innerHTML = posts.map(post => {
+      const endpoint = savedOnly ? "/community/saved-posts" : "/community/feed?limit=25" + (cursor ? "&before=" + encodeURIComponent(cursor) : "");
+      const { posts=[], nextCursor=null } = await api(endpoint);
+      if (!posts.length && !append) { $("feed-list").innerHTML = '<div class="empty-state">'+(savedOnly?"You have not saved any posts yet.":"No posts yet. Be the first to start a useful discussion.")+'</div>'; return; }
+      const markup = posts.map(post => {
         const author = post.author || {};
         const avatar = author.avatarUrl ? '<img src="' + esc(author.avatarUrl) + '" alt="">' : esc((author.displayName || "S").slice(0,1).toUpperCase());
         const shared = post.sharedPost;
         const sharedAuthor = shared?.author || {};
         const sharedCard = shared ? '<div class="shared-post-card"><small>SHARED FROM @'+esc(sharedAuthor.username||"student")+'</small><strong>'+esc(sharedAuthor.displayName||"Student")+'</strong>'+(shared.body?'<p>'+esc(shared.body)+'</p>':'')+(shared.mediaUrl?'<img class="post-media" src="'+esc(shared.mediaUrl)+'" alt="Shared post media" loading="lazy">':'')+(shared.videoUrl?'<video class="post-video" controls playsinline preload="metadata"><source src="'+esc(shared.videoUrl)+'">Your browser cannot play this video.</video>':'')+'</div>' : '';
         const ownerActions = post.authorId === currentUserId() ? '<div class="post-owner-actions"><button type="button" data-action="edit" data-id="'+esc(post.id)+'">Edit post</button><button type="button" data-action="delete" data-id="'+esc(post.id)+'">Delete post</button></div>' : '';
-        return '<article class="panel post-card" data-post="' + esc(post.id) + '"><div class="post-author"><div class="post-avatar">' + avatar + '</div><div><strong>' + esc(author.displayName || "Student") + '</strong><small>@' + esc(author.username || "student") + ' · ' + esc(author.educationTrack || "") + (post.isFriendPost?' · Friend':'') + '</small></div></div>' +
+        return '<article class="panel post-card" data-post="' + esc(post.id) + '"><div class="post-author"><div class="post-avatar">' + avatar + '</div><div><a class="post-author-profile-link" href="#profile/' + encodeURIComponent(author.username || "student") + '"><strong>' + esc(author.displayName || "Student") + '</strong></a><small>@' + esc(author.username || "student") + ' · ' + esc(author.educationTrack || "") + (post.isFriendPost?' · Friend':'') + '</small></div></div>' +
           (post.body ? '<p class="post-body">' + esc(post.body) + '</p>' : '') +
           sharedCard +
           (post.mediaUrl ? '<img class="post-media" src="' + esc(post.mediaUrl) + '" alt="Shared learning image" loading="lazy">' : '') +
@@ -196,8 +198,26 @@
           '<div class="post-meta">' + new Date(post.createdAt).toLocaleString() + ' · ' + (post.reactionCount || 0) + ' likes · ' + (post.commentCount || 0) + ' comments · ' + (post.shareCount || 0) + ' shares</div>' +
           ownerActions + '<div class="post-actions" aria-label="Post actions"><button type="button" class="post-action-like' + (post.isLiked?' is-liked':'') + '" data-action="react" data-id="' + esc(post.id) + '">' + (post.isLiked?'♥ Liked':'♡ Like') + '</button><button type="button" data-action="comments" data-id="' + esc(post.id) + '">▢ Comment (' + (post.commentCount || 0) + ')</button><button type="button" data-action="share" data-id="' + esc(post.id) + '">↗ Share</button><button type="button" data-action="save" data-id="' + esc(post.id) + '">' + (post.isSaved?'Saved ✓':'☆ Save') + '</button>' + (post.authorId === currentUserId() ? '' : '<button type="button" data-action="report" data-id="' + esc(post.id) + '">Report</button>') + '</div><div class="post-comments" id="comments-' + esc(post.id) + '" hidden></div></article>';
       }).join("");
-    } catch (e) { $("feed-list").innerHTML = '<div class="empty-state">' + esc(e.message) + '</div>'; }
+      if (append) $("feed-list").insertAdjacentHTML("beforeend", markup);
+      else $("feed-list").innerHTML = markup;
+      feedNextCursor = savedOnly ? "" : (nextCursor || "");
+      if ($("feed-load-more")) $("feed-load-more").hidden = !feedNextCursor;
+    } catch (e) {
+      if (!append) $("feed-list").innerHTML = '<div class="empty-state">' + esc(e.message) + '</div>';
+      status(e.message);
+      if ($("feed-load-more")) { $("feed-load-more").hidden = false; $("feed-load-more").disabled = false; $("feed-load-more").textContent = "Retry loading posts"; }
+    }
   }
+
+  $("feed-load-more").addEventListener("click", async () => {
+    if (!feedNextCursor) return;
+    const button = $("feed-load-more");
+    button.disabled = true;
+    button.textContent = "Loading…";
+    await loadFeed(false, feedNextCursor, true);
+    button.disabled = false;
+    if (!button.hidden) button.textContent = "Load more posts";
+  });
 
   async function uploadCommunityMedia(file) {
     const isVideo=file.type.startsWith("video/");
