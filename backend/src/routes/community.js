@@ -900,6 +900,31 @@ async function canAccessConversation(conversationId, userId) {
   }
   return false;
 }
+router.get("/chat/unread-count", async (req, res, next) => {
+  try {
+    const memberships = await prisma.chatMember.findMany({
+      where: { userId: req.userId },
+      select: { conversationId: true, lastReadAt: true },
+      take: 100
+    });
+    const accessible = [];
+    for (const member of memberships) {
+      if (await canAccessConversation(member.conversationId, req.userId)) accessible.push(member);
+    }
+    if (!accessible.length) return res.json({ unreadCount: 0 });
+    const unreadCount = await prisma.chatMessage.count({
+      where: {
+        senderId: { not: req.userId },
+        deletedAt: null,
+        OR: accessible.map(member => ({
+          conversationId: member.conversationId,
+          createdAt: { gt: member.lastReadAt || new Date(0) }
+        }))
+      }
+    });
+    res.json({ unreadCount });
+  } catch (e) { next(e); }
+});
 router.get("/chat", async (req, res, next) => {
   try {
     const memberships = await prisma.chatMember.findMany({ where: { userId: req.userId }, orderBy: { joinedAt: "desc" }, take: 80 });
@@ -968,6 +993,14 @@ router.post("/chat/:id/messages", async (req, res, next) => {
     if (messageType === "VOICE_NOTE" && (!mediaUrl || new URL(mediaUrl).hostname !== "res.cloudinary.com")) return res.status(400).json({ error: "Voice notes must be uploaded to the configured Cloudinary media storage." });
     const message = await prisma.chatMessage.create({ data: { conversationId: req.params.id, senderId: req.userId, body: messageType === "TEXT" ? body : null, mediaUrl, messageType } });
     await prisma.chatConversation.update({ where: { id: req.params.id }, data: { updatedAt: new Date() } });
+    const recipients = await prisma.chatMember.findMany({
+      where: { conversationId: req.params.id, userId: { not: req.userId } },
+      select: { userId: true }
+    });
+    await Promise.all(recipients.map(member => notifySocial(
+      member.userId, req.userId, "New message", messageType === "VOICE_NOTE" ? "You received a voice message." : "You received a new message.",
+      { type: "NEW_MESSAGE", conversationId: req.params.id, messageId: message.id }
+    )));
     res.status(201).json({ message });
   } catch (e) { next(e); }
 });
