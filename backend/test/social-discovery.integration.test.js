@@ -128,6 +128,11 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
     });
     assert.equal(crossTrackRequest.status, 403, "the server must enforce same-track friend restrictions");
 
+    const externalMediaPost = await request("/api/community/posts", viewer.user, {
+      method: "POST", body: JSON.stringify({ body: "Reject unverified external media", mediaUrl: "https://example.com/unverified.jpg" })
+    });
+    assert.equal(externalMediaPost.status, 400, "the server must reject media not uploaded to the signed user Cloudinary folder");
+
     const sameTrackRequest = await request("/api/community/follow/" + sameTrack.user.id, viewer.user, {
       method: "POST", body: "{}"
     });
