@@ -84,7 +84,7 @@
     if(!other){setStatus("Calls are available in direct conversations with accepted connections.");return}
     try{
       const {call}=await api("/community/calls",{method:"POST",body:JSON.stringify({calleeUsername:other.user.username,callType:type})});
-      currentCall=call;setStatus("Calling "+(other.user?.name||"student")+"…");await makePeer(call,true);
+      currentCall=call;setStatus("Calling "+(other.user?.displayName||"student")+"…");await makePeer(call,true);
     }catch(e){if(currentCall)try{await api("/community/calls/"+currentCall.id,{method:"PATCH",body:JSON.stringify({action:"END"})})}catch(_){}cleanup();setStatus(e.message)}
   }
   async function checkIncoming(){
