@@ -68,7 +68,7 @@ async function verifyCommunityCloudinaryAsset(rawUrl, userId, expectedResourceTy
 }
 const slug = value => clean(value, 30).toLowerCase().replace(/[^a-z0-9_]/g, "").replace(/^_+|_+$/g, "");
 const publicProfile = (profile, user) => ({
-  id: profile.id, userId: user.id, username: profile.username, usernameSet: profile.usernameSet, displayName: user.name,
+  username: profile.username, displayName: user.name,
   educationTrack: user.educationTrack, institutionName: user.institutionName,
   programme: user.programme, studyLevel: user.studyLevel, bio: profile.bio,
   bestSubject: profile.bestSubject, interests: profile.interests || [],
@@ -79,6 +79,17 @@ async function getUser(userId) {
     id: true, name: true, educationTrack: true, institutionName: true, programme: true,
     studyLevel: true, role: true
   }});
+}
+async function getSocialUser(identifier) {
+  const value = clean(identifier, 100);
+  if (!value) return null;
+  const byId = await getUser(value);
+  if (byId) return byId;
+  const profile = await prisma.communityProfile.findUnique({
+    where: { username: slug(value) },
+    select: { userId: true }
+  });
+  return profile ? getUser(profile.userId) : null;
 }
 async function ensureProfile(user) {
   let profile = await prisma.communityProfile.findUnique({ where: { userId: user.id } });
@@ -684,7 +695,7 @@ router.post("/friend-requests/:id", async (req, res, next) => {
 
 router.post("/follow/:userId", async (req, res, next) => {
   try {
-    const [target, currentUser] = await Promise.all([getUser(req.params.userId), getUser(req.userId)]);
+    const [target, currentUser] = await Promise.all([getSocialUser(req.params.userId), getUser(req.userId)]);
     if (!target || target.id === req.userId) return res.status(404).json({ error: "Student not found." });
     if (!currentUser || target.educationTrack !== currentUser.educationTrack) return res.status(403).json({ error: "Friend connections are limited to students in the same academic environment." });
     const targetProfile = await prisma.communityProfile.findUnique({ where: { userId: target.id }, select: { visibility: true, status: true, usernameSet: true } });
@@ -712,7 +723,8 @@ router.post("/follow/:userId", async (req, res, next) => {
 
 router.delete("/follow/:userId", async (req, res, next) => {
   try {
-    const targetId = clean(req.params.userId, 100);
+    const target = await getSocialUser(req.params.userId);
+    const targetId = target?.id;
     if (!targetId || targetId === req.userId) return res.status(400).json({ error: "Invalid student." });
     const [outgoing, incoming] = await Promise.all([
       prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: req.userId, followingId: targetId } } }),
@@ -991,9 +1003,10 @@ router.get("/chat", async (req, res, next) => {
 });
 router.post("/chat/direct/:userId", async (req, res, next) => {
   try {
-    if (!await canChat(req.userId, req.params.userId)) return res.status(403).json({ error: "Private chats are available between accepted connections in the same academic environment." });
+    const target = await getSocialUser(req.params.userId);
+    if (!target || !await canChat(req.userId, target.id)) return res.status(403).json({ error: "Private chats are available between accepted connections in the same academic environment." });
     const conversation = await prisma.chatConversation.create({ data: { createdById: req.userId, kind: "DIRECT" } });
-    await prisma.chatMember.createMany({ data: [{ conversationId: conversation.id, userId: req.userId }, { conversationId: conversation.id, userId: req.params.userId }] });
+    await prisma.chatMember.createMany({ data: [{ conversationId: conversation.id, userId: req.userId }, { conversationId: conversation.id, userId: target.id }] });
     res.status(201).json({ conversation });
   } catch (e) { next(e); }
 });
@@ -1129,8 +1142,9 @@ router.patch("/calls/:id", async (req, res, next) => {
 
 router.post("/blocks/:userId", async (req, res, next) => {
   try {
-    const targetId = clean(req.params.userId, 100);
-    if (!targetId || targetId === req.userId || !await prisma.user.findUnique({ where: { id: targetId }, select: { id: true } })) return res.status(404).json({ error: "Student not found." });
+    const target = await getSocialUser(req.params.userId);
+    const targetId = target?.id;
+    if (!targetId || targetId === req.userId) return res.status(404).json({ error: "Student not found." });
     await prisma.$transaction([
       prisma.communityBlock.upsert({
         where: { blockerId_blockedId: { blockerId: req.userId, blockedId: targetId } },
@@ -1148,7 +1162,9 @@ router.post("/blocks/:userId", async (req, res, next) => {
 });
 router.delete("/blocks/:userId", async (req, res, next) => {
   try {
-    await prisma.communityBlock.deleteMany({ where: { blockerId: req.userId, blockedId: req.params.userId } });
+    const target = await getSocialUser(req.params.userId);
+    if (!target) return res.json({ ok: true });
+    await prisma.communityBlock.deleteMany({ where: { blockerId: req.userId, blockedId: target.id } });
     res.json({ ok: true });
   } catch (e) { next(e); }
 });
