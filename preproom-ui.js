@@ -65,13 +65,13 @@
     $("[data-explore-filter]").forEach(button=>button.addEventListener("click",()=>{$("[data-explore-filter]").forEach(b=>b.classList.toggle("active",b===button));const filter=button.dataset.exploreFilter;if(filter==="people"){field?.focus();}else if(filter==="groups"){document.querySelector('[data-tab="groups"]')?.click();}else if(filter==="posts"){document.querySelector('[data-tab="feed"]')?.click();}else{field?.focus();}}));
   }
   function setupProfileTabs(){
-    $("[data-profile-tab]").forEach(button=>button.addEventListener("click",()=>{
-      $("[data-profile-tab]").forEach(b=>b.classList.toggle("active",b===button));
-      const tab=button.dataset.profileTab;
-      if(tab==="friends"){document.querySelector('[data-tab="people"]')?.click();return;}
-      if(tab==="media"){const posts=$("#social-profile-posts");if(posts)posts.scrollIntoView({behavior:"smooth",block:"start"});return;}
-      if(tab==="about")$("#profile-settings")?.scrollIntoView({behavior:"smooth",block:"start"});
-      if(tab==="posts")$("#social-profile-posts")?.scrollIntoView({behavior:"smooth",block:"start"});
+    const buttons=$$("[data-profile-tab]");
+    const panels=$$("[data-profile-panel]");
+    buttons.forEach(button=>button.addEventListener("click",()=>{
+      buttons.forEach(item=>item.classList.toggle("active",item===button));
+      const name=button.dataset.profileTab;
+      panels.forEach(panel=>{panel.hidden=panel.dataset.profilePanel!==name;});
+      if(name==="friends")window.dispatchEvent(new CustomEvent("at-profile-friends-open"));
     }));
   }
 
