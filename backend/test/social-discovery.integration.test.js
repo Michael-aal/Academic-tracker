@@ -267,10 +267,21 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
     if (server) await new Promise(resolve => server.close(resolve));
     const ids = users.map(user => user.id);
     if (ids.length) {
+      const authoredPosts = await prisma.communityPost.findMany({ where: { authorId: { in: ids } }, select: { id: true } });
+      const postIds = authoredPosts.map(post => post.id);
+      const conversations = await prisma.chatConversation.findMany({ where: { createdById: { in: ids } }, select: { id: true } });
+      const conversationIds = conversations.map(conversation => conversation.id);
+      await prisma.chatMessage.deleteMany({ where: { conversationId: { in: conversationIds } } });
+      await prisma.chatMember.deleteMany({ where: { conversationId: { in: conversationIds } } });
+      await prisma.chatConversation.deleteMany({ where: { id: { in: conversationIds } } });
+      await prisma.communityComment.deleteMany({ where: { postId: { in: postIds } } });
+      await prisma.communityReaction.deleteMany({ where: { postId: { in: postIds } } });
+      await prisma.communitySavedPost.deleteMany({ where: { postId: { in: postIds } } });
+      await prisma.communityPost.deleteMany({ where: { id: { in: postIds } } });
       await prisma.communityBlock.deleteMany({ where: { OR: [{ blockerId: { in: ids } }, { blockedId: { in: ids } }] } });
       await prisma.communityFollow.deleteMany({ where: { OR: [{ followerId: { in: ids } }, { followingId: { in: ids } }] } });
       await prisma.communityProfile.deleteMany({ where: { userId: { in: ids } } });
-      await prisma.notification.deleteMany({ where: { userId: { in: ids } } });
+      await prisma.notification.deleteMany({ where: { OR: [{ userId: { in: ids } }, { createdById: { in: ids } }] } });
       await prisma.user.deleteMany({ where: { id: { in: ids } } });
     }
     await prisma.$disconnect();
