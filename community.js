@@ -787,11 +787,11 @@
       $("chat-placeholder").hidden=true;$("chat-active").hidden=false;
       const currentUser=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}").id;
       const conversation=conversationCache.find(item=>item.id===id);
-      const other=conversation?.members?.find(member=>member.userId!==currentUser);
-      $("chat-title").textContent=other?.user?.name||(conversation?.kind==="GROUP"?"Study group":"Conversation");
+      const other=conversation?.members?.find(member=>!member.isMe);
+      $("chat-title").textContent=other?.user?.displayName||(conversation?.kind==="GROUP"?"Study group":"Conversation");
       const callAllowed=conversation?.kind==="DIRECT"&&Boolean(other);
       $("audio-call").hidden=!callAllowed;$("video-call").hidden=!callAllowed;
-      $("chat-messages").innerHTML=messages.map(m=>'<div class="chat-bubble '+(m.senderId===currentUser?"mine":"")+'">'+(m.messageType==="VOICE_NOTE"&&m.mediaUrl?'<audio controls preload="metadata" src="'+esc(m.mediaUrl)+'"></audio>':esc(m.body||""))+'</div>').join("");
+      $("chat-messages").innerHTML=messages.map(m=>'<div class="chat-bubble '+(m.isMine?"mine":"")+'">'+(m.messageType==="VOICE_NOTE"&&m.mediaUrl?'<audio controls preload="metadata" src="'+esc(m.mediaUrl)+'"></audio>':esc(m.body||""))+'</div>').join("");
       $("chat-messages").scrollTop=$("chat-messages").scrollHeight;
       await api("/community/chat/"+encodeURIComponent(id)+"/read",{method:"PATCH",body:"{}"});
     }catch(e){status(e.message);}
