@@ -249,9 +249,22 @@
     if(file.size>(isVideo?50:8)*1024*1024)throw new Error(isVideo?"Videos must be 50 MB or smaller.":"Images must be 8 MB or smaller.");
     const sig=await api("/community/media-upload-signature",{method:"POST",body:JSON.stringify({resourceType:isVideo?"video":"image"})});
     const form=new FormData();form.append("file",file);form.append("api_key",sig.apiKey);form.append("timestamp",String(sig.timestamp));form.append("folder",sig.folder);form.append("signature",sig.signature);
-    const response=await fetch("https://api.cloudinary.com/v1_1/"+encodeURIComponent(sig.cloudName)+"/"+sig.resourceType+"/upload",{method:"POST",body:form});
-    const result=await response.json().catch(()=>({}));
-    if(!response.ok||!result.secure_url)throw new Error("Media upload failed. Check Cloudinary configuration.");
+    const uploadUrl="https://api.cloudinary.com/v1_1/"+encodeURIComponent(sig.cloudName)+"/"+sig.resourceType+"/upload";
+    const result=await new Promise((resolve,reject)=>{
+      const xhr=new XMLHttpRequest();
+      xhr.open("POST",uploadUrl);
+      xhr.upload.addEventListener("progress",event=>{
+        if(event.lengthComputable)status("Uploading media… "+Math.round(event.loaded/event.total*100)+"%");
+      });
+      xhr.addEventListener("load",()=>{
+        let data={};try{data=JSON.parse(xhr.responseText||"{}");}catch(_){}
+        if(xhr.status<200||xhr.status>=300||!data.secure_url)return reject(new Error(data.error?.message||"Media upload failed. Check Cloudinary configuration."));
+        resolve(data);
+      });
+      xhr.addEventListener("error",()=>reject(new Error("Network error while uploading media. Check your connection and retry.")));
+      xhr.addEventListener("abort",()=>reject(new Error("Media upload was cancelled.")));
+      xhr.send(form);
+    });
     return isVideo?{videoUrl:result.secure_url}:{mediaUrl:result.secure_url};
   }
   function clearPendingMedia(){if(pendingMediaUrl)URL.revokeObjectURL(pendingMediaUrl);pendingMediaUrl="";$("post-media-preview").replaceChildren();$("post-media-preview").hidden=true;}
