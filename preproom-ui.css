@@ -745,3 +745,6 @@ body.social-create-page .preproom-page-nav a.active,body.notifications-page .pre
 html[data-theme="light"] body.social-create-page .preproom-page-nav,html[data-theme="light"] body.notifications-page .preproom-page-nav{background:rgba(255,255,255,.97)}
 html[data-theme="light"] body.social-create-page .preproom-page-nav a,html[data-theme="light"] body.notifications-page .preproom-page-nav a{color:#71647f}
 html[data-theme="light"] body.social-create-page .preproom-page-nav a.active,html[data-theme="light"] body.notifications-page .preproom-page-nav a.active{color:#7624d8}
+
+body.notifications-page.social-media-page{padding-top:0!important;background:var(--preproom-bg)!important;color:var(--preproom-text)!important}
+body.notifications-page.social-media-page .notification-shell{color:var(--preproom-text)}
