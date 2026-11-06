@@ -75,6 +75,7 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
     const suspendedStudent = await createStudent("Suspended Student", "SECONDARY", { status: "SUSPENDED" });
     const blockedStudent = await createStudent("Blocked Student", "SECONDARY");
     const requester = await createStudent("Incoming Requester", "SECONDARY");
+    const sameTrack = await createStudent("Same Track Candidate", "SECONDARY");
 
     await prisma.communityBlock.create({
       data: { blockerId: viewer.user.id, blockedId: blockedStudent.user.id }
@@ -105,6 +106,18 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
     assert.equal(byUsername.get(offline.profile.username).online, false);
     assert.equal(byUsername.get(online.profile.username).canFriend, false, "cross-track profiles are discoverable but cannot receive friend requests");
 
+    const publicProfile = await request("/api/community/profiles/" + online.profile.username, viewer.user);
+    assert.equal(publicProfile.status, 200);
+    const publicProfileData = await publicProfile.json();
+    assert.equal(publicProfileData.relationship.canFriend, false, "public profiles should expose connection eligibility without allowing cross-track requests");
+
+    const blockedProfile = await request("/api/community/profiles/" + blockedStudent.profile.username, viewer.user);
+    assert.equal(blockedProfile.status, 404, "blocked profiles must not be accessible");
+
+    const usernameSearch = await request("/api/community/people?q=%40" + encodeURIComponent(online.profile.username), viewer.user);
+    assert.equal(usernameSearch.status, 200);
+    assert.ok((await usernameSearch.json()).people.some(person => person.username === online.profile.username), "search must support @username");
+
     const search = await request("/api/community/people?q=Computer%20Engineering", viewer.user);
     assert.equal(search.status, 200);
     const searchData = await search.json();
@@ -114,6 +127,12 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
       method: "POST", body: "{}"
     });
     assert.equal(crossTrackRequest.status, 403, "the server must enforce same-track friend restrictions");
+
+    const sameTrackRequest = await request("/api/community/follow/" + sameTrack.user.id, viewer.user, {
+      method: "POST", body: "{}"
+    });
+    assert.equal(sameTrackRequest.status, 200);
+    assert.equal((await sameTrackRequest.json()).status, "PENDING", "same-track users should be able to send a persisted friend request");
 
     const accept = await request("/api/community/friend-requests/" + incoming.id, viewer.user, {
       method: "POST", body: JSON.stringify({ action: "accept" })
