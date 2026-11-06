@@ -85,10 +85,17 @@
       $("profile-like-count").textContent = String(stats.likes || 0);
       $("social-profile-subject").textContent = [profile.bestSubject, profile.educationTrack, profile.programme].filter(Boolean).join(" · ");
       $("social-profile-posts").innerHTML = posts.length ? posts.map(post => '<article class="social-profile-post" data-profile-post="' + esc(post.id) + '">' + (post.mediaUrl ? '<img src="' + esc(post.mediaUrl) + '" alt="Your post" loading="lazy">' : post.videoUrl ? '<video class="social-profile-video-player" controls playsinline preload="metadata"><source src="' + esc(post.videoUrl) + '">Video unavailable.</video>' : '<div class="social-profile-text-post">' + esc((post.body || "").slice(0,180)) + '</div>') + '<div class="social-profile-post-meta">' + esc(post.subject || "Post") + '<span>' + (post.reactionCount || 0) + ' likes · ' + (post.commentCount || 0) + ' comments · ' + (post.shareCount || 0) + ' shares</span></div><div class="social-profile-post-controls"><button type="button" data-profile-edit="' + esc(post.id) + '" data-body="' + esc(post.body || "") + '" data-subject="' + esc(post.subject || "") + '" data-visibility="' + esc(post.visibility || "PUBLIC") + '">Edit</button><button type="button" data-profile-delete="' + esc(post.id) + '">Delete</button></div></article>').join("") : '<div class="empty-state social-profile-empty">Your posts will appear here after you publish your first post.</div>';
+      $("social-profile-media").innerHTML = posts.some(post => post.mediaUrl || post.videoUrl)
+        ? posts.filter(post => post.mediaUrl || post.videoUrl).map(post => post.mediaUrl
+          ? '<a class="social-profile-media-item" href="' + esc(post.mediaUrl) + '" target="_blank" rel="noopener"><img src="' + esc(post.mediaUrl) + '" alt="Your post photo" loading="lazy"></a>'
+          : '<article class="social-profile-media-item"><video controls playsinline preload="metadata"><source src="' + esc(post.videoUrl) + '"></video></article>').join("")
+        : '<div class="empty-state">Your photos and videos will appear here.</div>';
+      loadProfileFriends();
+
     } catch (e) { status(e.message); }
   }
   $("social-onboarding-form").addEventListener("submit",async e=>{e.preventDefault();const username=$("onboarding-username").value.trim().toLowerCase(),err=$("onboarding-error");err.textContent="";if(!/^[a-z0-9_]{3,30}$/.test(username)){err.textContent="Use 3–30 letters, numbers or underscores.";return;}const b=e.target.querySelector("button");b.disabled=true;try{await api("/community/profile/me",{method:"PATCH",body:JSON.stringify({username})});await loadProfile();if(window.socialReady)sendPresenceHeartbeat();}catch(x){err.textContent=x.message;}finally{b.disabled=false;}});
-  $("edit-social-profile").addEventListener("click", () => $("profile-settings").scrollIntoView({behavior:"smooth",block:"start"}));
+  $("edit-social-profile").addEventListener("click", () => { document.querySelector('[data-profile-tab="about"]')?.click(); $("profile-settings").scrollIntoView({behavior:"smooth",block:"start"}); });
   document.addEventListener("click", e => {
     const example = e.target.closest("[data-example]");
     if (example) {
@@ -486,6 +493,30 @@
     const hash = location.hash.replace(/^#/, "");
     if (hash.startsWith("profile/")) { tab("profile"); loadPublicProfile(decodeURIComponent(hash.slice(8))); return; }
     if (["feed","people","messages","profile"].includes(hash)) tab(hash);
+  });
+
+  async function loadProfileFriends() {
+    const box = $("social-profile-friends");
+    if (!box) return;
+    try {
+      const { friends = [] } = await api("/community/friends");
+      box.innerHTML = friends.length ? friends.map(person =>
+        '<article class="profile-friend-card"><div class="post-avatar">' +
+        (person.avatarUrl ? '<img src="' + esc(person.avatarUrl) + '" alt="">' : esc((person.displayName || "S").slice(0,1).toUpperCase())) +
+        '</div><div><strong>' + esc(person.displayName || "Student") + '</strong><small>@' + esc(person.username || "student") + '</small></div>' +
+        '<button type="button" class="outline-button" data-profile-friend-message="' + esc(person.userId) + '">Message</button></article>'
+      ).join("") : '<div class="empty-state">Your accepted friends will appear here.</div>';
+    } catch (error) { box.innerHTML = '<div class="empty-state">' + esc(error.message) + '</div>'; }
+  }
+  window.addEventListener("at-profile-friends-open", loadProfileFriends);
+  $("social-profile-friends").addEventListener("click", async e => {
+    const button = e.target.closest("[data-profile-friend-message]");
+    if (!button) return;
+    try {
+      const { conversation } = await api("/community/chat/direct/" + encodeURIComponent(button.dataset.profileFriendMessage), { method:"POST", body:"{}" });
+      tab("messages");
+      openChat(conversation.id);
+    } catch (error) { status(error.message); }
   });
 
   async function loadFriends(){
