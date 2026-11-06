@@ -21,8 +21,10 @@
     return true;
   }
   function tab(name) {
+    document.body.dataset.preproomView = name;
     document.querySelectorAll(".social-sidebar [data-tab], .social-topbar [data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
     document.querySelectorAll(".community-view").forEach(v => v.classList.toggle("active", v.id === "view-" + name));
+    if (name !== "videos") pauseFocusedVideo();
     if (name === "feed") loadFeed();
     if (name === "people") loadFriends();
     document.querySelectorAll("#social-bottom-nav [data-social-dest]").forEach(b => { const active = b.dataset.socialDest === name; b.classList.toggle("active", active); if (active) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
@@ -442,8 +444,40 @@
     catch(err){status(err.message);}
   });
 
+  let focusedVideoItems = [];
+  let focusedVideoIndex = 0;
+  let focusedVideoObserver = null;
+  function pauseFocusedVideo() {
+    if (focusedVideoObserver) { focusedVideoObserver.disconnect(); focusedVideoObserver = null; }
+    const frame = $("video-results")?.querySelector("iframe");
+    if (frame) frame.src = "about:blank";
+  }
+  function showFocusedVideo() {
+    const root = $("video-results");
+    const video = focusedVideoItems[focusedVideoIndex];
+    if (!root || !video) { root.innerHTML = '<div class="empty-state">No videos found. Try another subject.</div>'; return; }
+    const subject = video.recommendedSubject || "";
+    const videoId = encodeURIComponent(video.id);
+    root.innerHTML = '<section class="preproom-video-viewer" aria-label="Focused video viewer"><div class="preproom-video-stage"><iframe title="'+esc(video.title)+'" data-embed-src="https://www.youtube-nocookie.com/embed/'+videoId+'?autoplay=1&mute=1&controls=1&rel=0&playsinline=1&loop=1&playlist='+videoId+'" src="about:blank" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div><div class="preproom-video-details"><div><strong>'+esc(video.title)+'</strong><p>'+esc(video.channelTitle||"")+' · '+esc(subject)+'</p></div><span>'+ (focusedVideoIndex+1) +' / '+focusedVideoItems.length +'</span></div><div class="preproom-video-controls"><button type="button" data-video-step="-1" '+(focusedVideoIndex===0?'disabled':'')+'>Previous</button><button type="button" data-video-action="SAVE" data-video-id="'+esc(video.id)+'" data-subject="'+esc(subject)+'">Save</button><button type="button" data-video-action="NOT_INTERESTED" data-video-id="'+esc(video.id)+'" data-subject="'+esc(subject)+'">Not interested</button><button type="button" data-video-step="1" '+(focusedVideoIndex===focusedVideoItems.length-1?'disabled':'')+'>Next video</button></div></section>';
+    const stage=root.querySelector(".preproom-video-stage");
+    if ("IntersectionObserver" in window && stage) {
+      focusedVideoObserver = new IntersectionObserver(entries => {
+        const frame = stage.querySelector("iframe");
+        const active = entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= 0.65);
+        if (frame) frame.src = active ? frame.dataset.embedSrc : "about:blank";
+      }, {threshold:[0,0.65,1]});
+      focusedVideoObserver.observe(stage);
+    } else {
+      const frame = stage?.querySelector("iframe");
+      if (frame) frame.src = frame.dataset.embedSrc;
+    }
+  }
   function renderVideoCards(items, fallbackSubject="") {
-    $("video-results").innerHTML=(items||[]).map(v=>'<article class="video-card"><iframe src="https://www.youtube-nocookie.com/embed/'+encodeURIComponent(v.id)+'" title="'+esc(v.title)+'" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe><strong>'+esc(v.title)+'</strong><p>'+esc(v.channelTitle)+' · '+esc(v.recommendedSubject||fallbackSubject)+'</p><button class="quiet-button" data-video-action="SAVE" data-video-id="'+esc(v.id)+'" data-subject="'+esc(v.recommendedSubject||fallbackSubject)+'">Save</button><button class="quiet-button" data-video-action="NOT_INTERESTED" data-video-id="'+esc(v.id)+'" data-subject="'+esc(v.recommendedSubject||fallbackSubject)+'">Not interested</button></article>').join("")||'<div class="empty-state">No videos found. Try another subject.</div>';
+    focusedVideoItems = (items||[]).filter(v=>v && v.id);
+    focusedVideoIndex = 0;
+    if (!focusedVideoItems.length) { $("video-results").innerHTML='<div class="empty-state">No videos found. Try another subject.</div>'; return; }
+    focusedVideoItems.forEach(v=>{if(!v.recommendedSubject)v.recommendedSubject=fallbackSubject;});
+    showFocusedVideo();
   }
   async function loadVideoPreferences(){
     if(!requireLogin())return;
@@ -465,6 +499,8 @@
     }catch(err){status(err.message);}
   });
   $("video-results").addEventListener("click",async e=>{
+    const step=e.target.closest("[data-video-step]");
+    if(step){const next=focusedVideoIndex+Number(step.dataset.videoStep);if(next>=0&&next<focusedVideoItems.length){pauseFocusedVideo();focusedVideoIndex=next;showFocusedVideo();}return;}
     const b=e.target.closest("[data-video-action]");if(!b)return;
     try{await api("/community/videos/engagement",{method:"POST",body:JSON.stringify({videoId:b.dataset.videoId,action:b.dataset.videoAction,subject:b.dataset.subject})});b.textContent=b.dataset.videoAction==="SAVE"?"Saved":"Hidden";b.disabled=true;}
     catch(err){status(err.message);}
@@ -551,5 +587,6 @@
   loadProfile();
   try { const u=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}"); if(u.isAdmin||["ADMIN","DEVELOPER","DEV"].includes(String(u.role||"").toUpperCase())) $("community-admin-link").hidden=false; } catch (_) {}
   const requestedView = location.hash.replace(/^#/, "");
+  document.body.dataset.preproomView = ["feed","people","messages","profile","videos"].includes(requestedView) ? requestedView : "feed";
   if (["feed","people","messages","profile"].includes(requestedView)) tab(requestedView);
 })();
