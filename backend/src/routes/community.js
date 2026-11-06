@@ -534,7 +534,7 @@ router.get("/people", async (req, res, next) => {
     const [profiles, onlineCount] = await Promise.all([
       prisma.communityProfile.findMany({
         where: profileWhere,
-        orderBy: [{ lastSeenAt: "desc" }, { createdAt: "desc" }, { id: "asc" }],
+        orderBy: [{ lastSeenAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }, { id: "asc" }],
         take: limit + 1,
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {})
       }),
@@ -564,7 +564,7 @@ router.get("/people", async (req, res, next) => {
       const inStatus = inMap.get(user.id);
       return {
         ...publicProfile(profile, user),
-        online: Boolean(lastSeen && now - lastSeen <= 120000),
+        online: Boolean(lastSeen && lastSeen <= now && now - lastSeen <= 120000),
         canFriend: user.educationTrack === currentUser.educationTrack,
         friendStatus: outStatus === "ACCEPTED" && inStatus === "ACCEPTED" ? "FRIENDS" :
           inStatus === "PENDING" ? "REQUEST_RECEIVED" :
