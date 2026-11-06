@@ -1,0 +1,11 @@
+/* Keep AI Tutor conversation bubbles compact and visually separate from the composer. */
+.ai-tutor-page .tutor-chat-panel{width:100%;max-width:100%;margin:0 auto;padding:8px 0 12px}
+.ai-tutor-page .tutor-chat-messages{gap:14px}
+.ai-tutor-page .tutor-chat-messages .tutor-message{max-width:min(100%,760px);padding:2px 0 4px}
+.ai-tutor-page .tutor-chat-messages .tutor-message-student{max-width:min(72%,620px);padding:9px 13px;border-radius:16px 16px 5px 16px}
+.ai-tutor-page .tutor-chat-messages .tutor-message-body{line-height:1.72}
+@media(max-width:560px){
+ .ai-tutor-page .tutor-chat-panel{padding:6px 0 10px}
+ .ai-tutor-page .tutor-chat-messages{gap:12px}
+ .ai-tutor-page .tutor-chat-messages .tutor-message-student{max-width:86%;padding:8px 11px}
+}

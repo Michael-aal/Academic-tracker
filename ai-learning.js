@@ -189,6 +189,12 @@
       }
       host.append(card);
     });
+    // Keep the newest tutor reply in view after each response, without jumping
+    // back to the beginning of a long conversation.
+    const latestTutorReply = host.querySelector(".tutor-message-tutor:last-of-type");
+    if (latestTutorReply) {
+      requestAnimationFrame(() => latestTutorReply.scrollIntoView({ behavior: "smooth", block: "center" }));
+    }
   }
 
   function renderQuiz(quiz, attemptId, submittedAnswers = [], result = null, feedbackByQuestion = {}) {
