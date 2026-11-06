@@ -387,3 +387,10 @@ html[data-theme="light"] body.notifications-page .notification-admin-card{backgr
  .preproom-page-nav a.active{color:#c084fc}
  .preproom-page-nav a.active:first-letter{color:#fff}
 }
+
+@media(max-width:760px){
+ body.notifications-page{padding-bottom:calc(82px + env(safe-area-inset-bottom))}
+ body.notifications-page .preproom-page-nav{position:fixed;z-index:500;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);padding:7px 8px calc(7px + env(safe-area-inset-bottom));background:rgba(10,6,18,.97);border-top:1px solid rgba(151,78,255,.28);backdrop-filter:blur(18px)}
+ body.notifications-page .preproom-page-nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:46px;color:#a99ab9;text-decoration:none;font-size:21px}
+ body.notifications-page .preproom-page-nav a small{font-size:10px;font-weight:650}
+}
