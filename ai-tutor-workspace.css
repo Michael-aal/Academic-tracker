@@ -279,3 +279,35 @@ html[data-theme="dark"] .ai-tutor-page :is(button,a,[role="button"]):focus-visib
 /* Normalize every non-primary tutor action to a dark raised surface. */
 html[data-theme="dark"] .ai-tutor-page :is(button,[role="button"],a.button,a.btn):not(.tutor-composer-bottom button):not(#submit-learning){background:#211832!important;background-color:#211832!important;background-image:none!important;border-color:#49375f!important}
 html[data-theme="dark"] .ai-tutor-page :is(.active,[aria-pressed="true"]){background:rgba(139,92,246,.24)!important;background-color:rgba(139,92,246,.24)!important;border-color:#8b5cf6!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+
+
+/* Keep the first-screen welcome area compact so it never dominates the composer. */
+.ai-tutor-page .tutor-welcome{
+  min-height:0;
+  padding:14px 0 12px;
+}
+.ai-tutor-page .tutor-welcome h2{
+  font-size:clamp(1.35rem,3vw,1.8rem);
+}
+.ai-tutor-page .tutor-welcome>p:not(.tutor-eyebrow){
+  margin:7px auto 13px;
+  line-height:1.55;
+}
+.ai-tutor-page .tutor-prompt-grid{
+  max-width:620px;
+  gap:7px;
+}
+.ai-tutor-page .tutor-prompt-grid button{
+  min-height:54px;
+  padding:9px 12px;
+  border-radius:12px;
+}
+.ai-tutor-page .tutor-prompt-grid strong{font-size:.78rem}
+.ai-tutor-page .tutor-prompt-grid small{font-size:.68rem}
+@media(max-width:560px){
+  .ai-tutor-page .tutor-welcome{padding:10px 0 9px}
+  .ai-tutor-page .tutor-welcome h2{font-size:1.35rem}
+  .ai-tutor-page .tutor-welcome>p:not(.tutor-eyebrow){margin:6px auto 10px;font-size:.78rem}
+  .ai-tutor-page .tutor-prompt-grid{gap:6px}
+  .ai-tutor-page .tutor-prompt-grid button{min-height:48px;padding:8px 10px}
+}
