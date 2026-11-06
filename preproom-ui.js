@@ -11,7 +11,7 @@
   }
   function setupBrand(){
     const brand=$(".social-brand"); if(!brand)return;
-    brand.innerHTML='<span class="social-brand-mark" aria-hidden="true">'+icon("M2 10 12 3l10 7-10 7zM6 13v5c4 3 8 3 12 0v-5M21 11v6")+'</span><span><strong>Preproom</strong></span>';
+    brand.innerHTML='<span class="social-brand-mark" aria-hidden="true">'+icon("M2 10 12 3l10 7-10 7zM6 13v5c4 3 8 3 12 0v-5M21 11v6")+'</span><span><strong>Preproom</strong><small>Learn. Share. Connect.</small></span>';
     brand.setAttribute("aria-label","Preproom home");
   }
   function setupNavigation(){
