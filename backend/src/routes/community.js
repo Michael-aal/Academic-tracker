@@ -19,6 +19,11 @@ const writeLimit = rateLimit({
   keyGenerator: req => req.userId,
   message: { error: "Too many community actions. Please slow down." }
 });
+const presenceLimit = rateLimit({
+  windowMs: 5 * 60 * 1000, limit: 10, standardHeaders: "draft-7", legacyHeaders: false,
+  keyGenerator: req => req.userId,
+  message: { error: "Presence updates are arriving too frequently. Please wait a moment." }
+});
 const clean = (v, max) => typeof v === "string" ? v.trim().slice(0, max) : "";
 const safeUrl = value => {
   const raw = clean(value, 1000);
@@ -170,7 +175,7 @@ router.get("/feed", async (req, res, next) => {
 router.get("/profiles/:username", async (req, res, next) => {
   try {
     const profile = await prisma.communityProfile.findUnique({ where: { username: slug(req.params.username) } });
-    if (!profile || profile.visibility === "PRIVATE" || await isBlocked(profile.userId, req.userId)) return res.status(404).json({ error: "Student profile not found." });
+    if (!profile || !profile.usernameSet || profile.status !== "ACTIVE" || profile.visibility !== "PUBLIC" || await isBlocked(profile.userId, req.userId)) return res.status(404).json({ error: "Student profile not found." });
     const user = await getUser(profile.userId);
     if (!user) return res.status(404).json({ error: "Student profile not found." });
     const posts = await prisma.communityPost.findMany({ where: { authorId: user.id, visibility: "PUBLIC" }, orderBy: { createdAt: "desc" }, take: 20 });
@@ -178,7 +183,11 @@ router.get("/profiles/:username", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.use(writeLimit);
+router.use((req, res, next) => {
+  if (req.method === "POST" && req.path === "/presence/heartbeat") return presenceLimit(req, res, next);
+  if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
+  return writeLimit(req, res, next);
+});
 
 router.get("/profile/me", async (req, res, next) => {
   try {
@@ -433,73 +442,105 @@ router.post("/presence/heartbeat", async (req, res, next) => {
 router.get("/people", async (req, res, next) => {
   try {
     const q = clean(req.query.q, 80);
-    if (q.length === 1) return res.json({ people: [] });
+    if (q.length === 1) return res.status(400).json({ error: "Search using at least two characters." });
+    const limit = Math.min(30, Math.max(1, Number.parseInt(req.query.limit, 10) || 20));
+    const cursor = clean(req.query.cursor, 100);
     const currentUser = await getUser(req.userId);
     if (!currentUser) return res.status(404).json({ error: "Account not found." });
 
-    const profileWhere = { userId: { not: req.userId }, visibility: "PUBLIC", status: "ACTIVE", usernameSet: true };
-    let users;
-    if (!q) {
-      const profiles = await prisma.communityProfile.findMany({
-        where: profileWhere, orderBy: [{ lastSeenAt: "desc" }, { createdAt: "desc" }], take: 60
-      });
-      users = await prisma.user.findMany({
-        where: { id: { in: profiles.map(p => p.userId) } },
-        select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true }
-      });
-    } else {
+    const blocks = await prisma.communityBlock.findMany({
+      where: { OR: [{ blockerId: req.userId }, { blockedId: req.userId }] },
+      select: { blockerId: true, blockedId: true }
+    });
+    const blockedIds = [...new Set(blocks.map(b => b.blockerId === req.userId ? b.blockedId : b.blockerId))];
+    const excludedIds = [req.userId, ...blockedIds];
+    const profileWhere = {
+      userId: { notIn: excludedIds },
+      visibility: "PUBLIC",
+      status: "ACTIVE",
+      usernameSet: true
+    };
+
+    if (q) {
       const exactUsernameSearch = q.startsWith("@");
       const usernameQuery = slug(q.replace(/^@/, ""));
       const usernameProfiles = usernameQuery.length >= 2
         ? await prisma.communityProfile.findMany({
-            where: { ...profileWhere, username: exactUsernameSearch ? usernameQuery : { contains: usernameQuery } },
-            select: { userId: true }, take: exactUsernameSearch ? 1 : 60
+            where: {
+              visibility: "PUBLIC", status: "ACTIVE", usernameSet: true,
+              username: exactUsernameSearch ? usernameQuery : { contains: usernameQuery }
+            },
+            select: { userId: true },
+            take: 500
           })
         : [];
-      const usernameUserIds = usernameProfiles.map(profile => profile.userId);
-      users = await prisma.user.findMany({
+      const usernameIds = usernameProfiles.map(profile => profile.userId);
+      const matchingUsers = exactUsernameSearch || q.startsWith("@") ? [] : await prisma.user.findMany({
         where: {
-          id: { not: req.userId },
-          OR: exactUsernameSearch
-            ? [{ id: { in: usernameUserIds } }]
-            : [
-                { name: { contains: q, mode: "insensitive" } },
-                { institutionName: { contains: q, mode: "insensitive" } },
-                { programme: { contains: q, mode: "insensitive" } },
-                ...(usernameUserIds.length ? [{ id: { in: usernameUserIds } }] : [])
-              ]
+          id: { notIn: excludedIds },
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { institutionName: { contains: q, mode: "insensitive" } },
+            { programme: { contains: q, mode: "insensitive" } }
+          ]
         },
-        select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true },
-        take: 40
+        select: { id: true },
+        take: 500
       });
+      const matchingIds = [...new Set([...usernameIds, ...matchingUsers.map(user => user.id)])];
+      profileWhere.userId = { in: matchingIds, notIn: excludedIds };
     }
-    const userIds = users.map(u => u.id);
-    const [profiles, blocks, outgoing, incoming] = await Promise.all([
-      prisma.communityProfile.findMany({ where: { ...profileWhere, userId: { in: userIds } }, orderBy: [{ lastSeenAt: "desc" }, { createdAt: "desc" }] }),
-      prisma.communityBlock.findMany({ where: { OR: [{ blockerId: req.userId }, { blockedId: req.userId }] } }),
+
+    const total = await prisma.communityProfile.count({ where: profileWhere });
+    const now = Date.now();
+    const [profiles, onlineCount] = await Promise.all([
+      prisma.communityProfile.findMany({
+        where: profileWhere,
+        orderBy: [{ lastSeenAt: "desc" }, { createdAt: "desc" }, { id: "asc" }],
+        take: limit + 1,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {})
+      }),
+      prisma.communityProfile.count({
+        where: { ...profileWhere, lastSeenAt: { gte: new Date(now - 120000) } }
+      })
+    ]);
+    const hasMore = profiles.length > limit;
+    const pageProfiles = profiles.slice(0, limit);
+    const userIds = pageProfiles.map(profile => profile.userId);
+    const [users, outgoing, incoming] = await Promise.all([
+      prisma.user.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true }
+      }),
       prisma.communityFollow.findMany({ where: { followerId: req.userId, followingId: { in: userIds } } }),
       prisma.communityFollow.findMany({ where: { followingId: req.userId, followerId: { in: userIds } } })
     ]);
-    const blockedIds = new Set(blocks.map(b => b.blockerId === req.userId ? b.blockedId : b.blockerId));
-    const outMap = new Map(outgoing.map(x => [x.followingId, x.status]));
-    const inMap = new Map(incoming.map(x => [x.followerId, x.status]));
-    const profileMap = new Map(profiles.map(p => [p.userId, p]));
-    const userMap = new Map(users.map(u => [u.id, u]));
-    const now = Date.now();
-    const people = profiles.filter(p => !blockedIds.has(p.userId) && userMap.has(p.userId)).map(p => {
-      const u = userMap.get(p.userId);
-      const lastSeen = p.lastSeenAt ? new Date(p.lastSeenAt).getTime() : 0;
+    const outMap = new Map(outgoing.map(row => [row.followingId, row.status]));
+    const inMap = new Map(incoming.map(row => [row.followerId, row.status]));
+    const incomingPending = new Map(incoming.filter(row => row.status === "PENDING").map(row => [row.followerId, row.id]));
+    const userMap = new Map(users.map(user => [user.id, user]));
+    const people = pageProfiles.filter(profile => userMap.has(profile.userId)).map(profile => {
+      const user = userMap.get(profile.userId);
+      const lastSeen = profile.lastSeenAt ? new Date(profile.lastSeenAt).getTime() : 0;
+      const outStatus = outMap.get(user.id);
+      const inStatus = inMap.get(user.id);
       return {
-        ...publicProfile(p, u),
+        ...publicProfile(profile, user),
         online: Boolean(lastSeen && now - lastSeen <= 120000),
-        canFriend: u.educationTrack === currentUser.educationTrack,
-        friendStatus: outMap.get(u.id) === "ACCEPTED" && inMap.get(u.id) === "ACCEPTED" ? "FRIENDS" :
-          inMap.get(u.id) === "PENDING" ? "REQUEST_RECEIVED" :
-          outMap.get(u.id) === "PENDING" ? "REQUEST_SENT" : "NONE",
-        friendRequestId: incoming.find(x => x.followerId === u.id && x.status === "PENDING")?.id || null
+        canFriend: user.educationTrack === currentUser.educationTrack,
+        friendStatus: outStatus === "ACCEPTED" && inStatus === "ACCEPTED" ? "FRIENDS" :
+          inStatus === "PENDING" ? "REQUEST_RECEIVED" :
+          outStatus === "PENDING" ? "REQUEST_SENT" : "NONE",
+        friendRequestId: incomingPending.get(user.id) || null
       };
     });
-    res.json({ people, total: people.length, onlineCount: people.filter(p => p.online).length });
+    res.json({
+      people,
+      total,
+      onlineCount,
+      nextCursor: hasMore && pageProfiles.length ? pageProfiles[pageProfiles.length - 1].id : null,
+      limit
+    });
   } catch (e) { next(e); }
 });
 
