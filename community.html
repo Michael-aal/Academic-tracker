@@ -45,11 +45,20 @@
     </div>
   </section>
   <section class="community-view" id="view-people">
-    <div class="friends-dashboard">
-      <section class="panel section-panel"><div class="section-heading"><div><h2>Friend requests</h2><p>Review students who want to connect with you.</p></div><span id="friend-request-count" class="friend-count">0</span></div><div id="friend-requests-list" class="people-list"><div class="empty-state">Loading requests…</div></div></section>
-      <section class="panel section-panel"><div class="section-heading"><div><h2>Your friends</h2><p>Students you have mutually connected with.</p></div><span id="friend-count" class="friend-count">0</span></div><div id="friends-list" class="people-list"><div class="empty-state">Loading friends…</div></div></section>
-      <section class="panel section-panel"><h2>Blocked students</h2><p>Unblock someone at any time. Blocking removes your existing connection.</p><div id="blocked-students-list" class="people-list"><div class="empty-state">Loading blocked students…</div></div></section>
-      <section class="panel section-panel"><h2>Find students</h2><p>Find a classmate using their exact username, such as <strong>@michael_dev</strong>, or search by student name or institution. Friend connections are limited to your academic environment.</p><form id="people-search" class="search-row"><input id="people-query" minlength="2" autocomplete="off" placeholder="Enter @username, student name or institution"><button class="primary-button">Search</button></form><div id="people-list" class="people-list" aria-live="polite"></div></section>
+    <div class="preproom-screen-heading"><div><span class="preproom-kicker">DISCOVER</span><h1>Explore</h1><p>Find students, useful posts and learning communities.</p></div></div>
+    <div class="preproom-explore-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><input id="preproom-explore-query" type="search" placeholder="Search people, topics or posts"><button type="button" id="preproom-explore-search-btn">Search</button></div>
+    <div class="preproom-explore-filters" role="group" aria-label="Explore filters"><button type="button" class="active" data-explore-filter="all">All</button><button type="button" data-explore-filter="people">People</button><button type="button" data-explore-filter="posts">Posts</button><button type="button" data-explore-filter="groups">Groups</button></div>
+    <div class="preproom-explore-grid">
+      <section class="panel section-panel preproom-explore-main"><div class="section-heading"><div><h2>People you may know</h2><p>Search students by username, name or institution.</p></div><span class="preproom-section-icon">♙</span></div>
+        <form id="people-search" class="search-row"><input id="people-query" minlength="2" autocomplete="off" placeholder="Enter @username, student name or institution"><button class="primary-button">Search</button></form>
+        <div id="people-list" class="people-list" aria-live="polite"><div class="empty-state">Search for students to discover profiles.</div></div>
+      </section>
+      <aside class="preproom-explore-rail">
+        <section class="panel section-panel"><h2>Trending topics</h2><p class="muted-note">Explore what students are learning about.</p><div class="preproom-topic-list"><button type="button" data-topic="Mathematics"># Mathematics</button><button type="button" data-topic="Programming"># Programming</button><button type="button" data-topic="Physics"># Physics</button><button type="button" data-topic="English"># English</button><button type="button" data-topic="Study tips"># StudyTips</button></div></section>
+        <section class="panel section-panel"><h2>Friend requests</h2><p class="muted-note">Manage requests from other students.</p><span id="friend-request-count" class="friend-count">0</span><div id="friend-requests-list" class="people-list"><div class="empty-state">Loading requests…</div></div></section>
+        <section class="panel section-panel"><h2>Your connections</h2><span id="friend-count" class="friend-count">0</span><div id="friends-list" class="people-list"><div class="empty-state">Loading friends…</div></div></section>
+        <section class="panel section-panel"><h2>Blocked accounts</h2><div id="blocked-students-list" class="people-list"><div class="empty-state">Loading…</div></div></section>
+      </aside>
     </div>
   </section>
   <section class="community-view" id="view-groups">
