@@ -1151,8 +1151,9 @@ router.get("/calls/ice", (req, res) => {
 });
 router.post("/calls", async (req, res, next) => {
   try {
-    const calleeId = clean(req.body?.calleeId, 100);
-    if (!await canChat(req.userId, calleeId)) return res.status(403).json({ error: "Calls are available only between accepted connections in the same academic environment." });
+    const callee = await getSocialUser(req.body?.calleeUsername || req.body?.calleeId);
+    const calleeId = callee?.id;
+    if (!calleeId || !await canChat(req.userId, calleeId)) return res.status(403).json({ error: "Calls are available only between accepted connections in the same academic environment." });
     const active = await prisma.callSession.findFirst({ where: { status: { in: ["RINGING", "ACTIVE"] }, OR: [{ callerId: req.userId }, { calleeId: req.userId }] } });
     if (active) return res.status(409).json({ error: "You already have an incoming or outgoing call." });
     const callType = req.body?.callType === "VIDEO" ? "VIDEO" : "AUDIO";
