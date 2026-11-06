@@ -34,8 +34,18 @@
       <input id="create-media" type="file" accept="image/*,video/*" aria-label="Attach an image or video">
       <div id="create-preview" class="post-media-preview" hidden></div>
       <p class="composer-hint">Images up to 8 MB. Videos up to 50 MB. Keep posts educational and respectful.</p>
-      <div class="social-create-actions"><a class="outline-button" href="social-media.html">Cancel</a><button id="publish-social-post" class="primary-button" type="submit">Publish post</button></div>
+      <div class="social-create-actions"><a class="outline-button" href="social-media.html">Cancel</a><button id="publish-social-post" class="primary-button" type="submit">Review post</button></div>
     </form>
+    <section id="create-review-overlay" class="post-review-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="create-review-title">
+      <div class="post-review-card">
+        <div class="post-review-heading"><h2 id="create-review-title">Preview your post</h2><button type="button" id="close-create-review" class="quiet-button" aria-label="Close preview">✕</button></div>
+        <div id="create-review-author" class="post-review-author"></div>
+        <p id="create-review-body" class="post-review-body"></p>
+        <div id="create-review-media" class="post-review-media"></div>
+        <div class="post-review-details"><span id="create-review-subject"></span><span id="create-review-visibility"></span></div>
+        <div class="post-review-actions"><button type="button" id="cancel-create-review" class="outline-button">Keep editing</button><button type="button" id="confirm-create-publish" class="primary-button">Publish post</button></div>
+      </div>
+    </section>
   </main>
   <nav class="preproom-page-nav" aria-label="Preproom navigation">
     <a href="social-media.html#feed"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/></svg><small>Home</small></a>
