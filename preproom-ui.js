@@ -9,7 +9,7 @@
     brand.setAttribute("aria-label","Preproom home");
   }
   function dashboardHref(){try{const account=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}");return account.educationTrack==="HIGHER"?"university-dashboard.html":"dashboard.html";}catch(_){return "dashboard.html";}}
-  function syncDashboardLinks(){const href=dashboardHref();$( ".social-home-return a, .preproom-dashboard-link").forEach(link=>{link.href=href;});}
+  function syncDashboardLinks(){const href=dashboardHref();$$(".social-home-return a, .preproom-dashboard-link").forEach(link=>{link.href=href;});}
   function setupNavigation(){
     const sidebar=$(".social-sidebar");
     if(sidebar){
@@ -62,7 +62,7 @@
     $("[data-explore-filter]").forEach(button=>button.addEventListener("click",()=>{$("[data-explore-filter]").forEach(b=>b.classList.toggle("active",b===button));const filter=button.dataset.exploreFilter;if(filter==="people"){field?.focus();}else if(filter==="groups"){document.querySelector('[data-tab="groups"]')?.click();}else if(filter==="posts"){document.querySelector('[data-tab="feed"]')?.click();}else{field?.focus();}}));
   }
   function setupProfileTabs(){
-    const panels=$("[data-profile-panel]");
+    const panels=$$("[data-profile-panel]");
     $("[data-profile-tab]").forEach(button=>button.addEventListener("click",()=>{
       $("[data-profile-tab]").forEach(b=>b.classList.toggle("active",b===button));
       const tab=button.dataset.profileTab;
