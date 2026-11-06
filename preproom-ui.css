@@ -1,0 +1,116 @@
+/* Preproom — focused social workspace */
+:root{--preproom-bg:#090611;--preproom-panel:#130d20;--preproom-panel-2:#1b1030;--preproom-line:rgba(155,91,255,.25);--preproom-purple:#8b2cff;--preproom-violet:#a855f7;--preproom-text:#f8f3ff;--preproom-muted:#b8a9ca}
+html[data-theme="dark"] body.social-media-page,body.social-media-page{background:var(--preproom-bg)!important;color:var(--preproom-text)!important}
+body.social-media-page{padding-top:76px!important}
+body.social-media-page .social-topbar{height:70px;grid-template-columns:260px minmax(180px,620px) 1fr;gap:24px;padding:0 max(20px,calc((100vw - 1440px)/2));background:rgba(9,6,17,.94);border-bottom:1px solid var(--preproom-line);backdrop-filter:blur(18px)}
+.social-brand{gap:12px;color:var(--preproom-text);font-size:22px;letter-spacing:-.7px}
+.social-brand-mark{width:48px;height:48px;border-radius:15px;background:linear-gradient(145deg,#a855f7,#6500dc);box-shadow:0 8px 28px #7100d955}
+.social-global-search{height:46px;background:#1b1030;border-color:var(--preproom-line);color:var(--preproom-muted)}
+.social-global-search input{color:var(--preproom-text);font-size:14px}
+.social-global-search button{background:linear-gradient(120deg,#a855f7,#7200ed)}
+.social-top-action,.social-top-profile{background:#1a1028;color:var(--preproom-text);border:1px solid var(--preproom-line)}
+.social-sidebar{top:70px;width:248px;padding:28px 18px;background:#100a1b;border-right:1px solid var(--preproom-line)}
+.social-sidebar button{min-height:50px;border-radius:14px;color:#cbbddd;font-size:14px}
+.social-sidebar button.active,.social-sidebar button:hover{background:linear-gradient(105deg,#8126ed,#a33bff);color:white;box-shadow:0 8px 22px #7600dd35}
+.social-sidebar button svg{width:21px;height:21px}
+.social-sidebar .social-admin-link{margin-top:auto}
+body.social-media-page .community-shell{width:min(1160px,calc(100% - 300px));margin:28px 30px 110px 278px;color:var(--preproom-text)}
+body.social-media-page .community-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:22px;align-items:start}
+body.social-media-page .community-main-column{gap:16px}
+body.social-media-page .panel{background:linear-gradient(145deg,#160e24,#100a1b);border:1px solid var(--preproom-line);border-radius:20px;box-shadow:0 12px 34px #0005}
+body.social-media-page .community-status:not(:empty){background:#1d1030;color:#e8d9ff;border:1px solid var(--preproom-line)}
+.social-home-return{margin-bottom:0;color:var(--preproom-muted)}
+.social-home-return a{color:#bd8aff}
+body.social-media-page .composer{padding:16px 18px;border-radius:19px}
+.social-composer-heading{margin-bottom:12px}
+.social-composer-heading label{color:var(--preproom-text)}
+body.social-media-page .composer textarea{min-height:58px;background:#1a1028;border:1px solid var(--preproom-line);color:var(--preproom-text)}
+body.social-media-page .composer textarea::placeholder{color:#a998bd}
+body.social-media-page .composer-row{border-color:var(--preproom-line)}
+body.social-media-page .composer-row input,body.social-media-page .composer-row select{background:#1a1028;color:var(--preproom-text);border-color:var(--preproom-line)}
+.primary-button{background:linear-gradient(115deg,#a855f7,#7100e8);color:white;box-shadow:0 6px 18px #7400df35}
+.outline-button{background:#241337;color:#d8baff;border:1px solid var(--preproom-line)}
+.quiet-button{color:#c79bff}
+body.social-media-page .feed-toolbar h2{color:var(--preproom-text);font-size:19px}
+body.social-media-page .post-card{padding:18px;background:linear-gradient(145deg,#160e24,#100a1b);border:1px solid var(--preproom-line);border-radius:20px}
+body.social-media-page .post-body{color:#f1eaff;font-size:15px;line-height:1.65}
+body.social-media-page .post-author,body.social-media-page .post-actions{color:var(--preproom-muted)}
+body.social-media-page .post-actions button{color:#d7c5eb}
+body.social-media-page .post-actions button:hover{color:#c084fc}
+body.social-media-page .post-card img,body.social-media-page .post-card video{border-radius:14px}
+body.social-media-page .post-avatar{border:2px solid #a855f7;background:#241337;color:white}
+.preproom-side-rail{display:grid;gap:16px;position:sticky;top:92px}
+.preproom-side-card{padding:18px;border:1px solid var(--preproom-line);border-radius:18px;background:linear-gradient(145deg,#170e28,#100a1b)}
+.preproom-side-card h3{margin:0 0 14px;font-size:15px;color:#f5edff}
+.preproom-topic-list{display:flex;flex-wrap:wrap;gap:8px}
+.preproom-topic{padding:7px 11px;border-radius:999px;background:#281342;color:#c58aff;font-size:12px;font-weight:750}
+.preproom-side-note{margin:0;color:var(--preproom-muted);font-size:13px;line-height:1.6}
+body.social-media-page .social-bottom-nav{display:none}
+body.social-media-page .community-view{min-height:60vh}
+body.social-media-page .social-profile-page{display:grid;gap:18px}
+body.social-media-page .social-profile-card{overflow:hidden;padding:0}
+body.social-media-page .social-profile-cover{min-height:190px;background:linear-gradient(135deg,#5b13c8,#170b30 58%,#9a35ff);border:0;position:relative}
+body.social-media-page .social-profile-cover:after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 75% 15%,#c084fc66,transparent 40%),linear-gradient(145deg,transparent 45%,#08051188)}
+body.social-media-page .social-profile-cover span{display:none}
+body.social-media-page .social-profile-main{padding:0 24px;align-items:flex-end;gap:16px}
+body.social-media-page .social-profile-avatar{width:112px;height:112px;margin-top:-54px;border:5px solid #130d20;background:#5b21b6;z-index:1}
+body.social-media-page .social-profile-identity{padding:14px 0 4px}
+body.social-media-page .social-profile-identity h2{color:#fff;font-size:25px}
+body.social-media-page .social-profile-identity p{color:var(--preproom-muted)}
+body.social-media-page .social-profile-stats{margin:20px 24px;padding:16px 0;border-top:1px solid var(--preproom-line);border-bottom:1px solid var(--preproom-line)}
+body.social-media-page .social-profile-stats strong{color:#fff;font-size:22px}
+body.social-media-page .social-profile-stats span{color:var(--preproom-muted)}
+body.social-media-page .social-profile-subject{padding:0 24px 18px;color:#d9c5f3}
+body.social-media-page .social-profile-posts-heading{padding:16px 24px;border-top:1px solid var(--preproom-line)}
+body.social-media-page .social-profile-post-grid{padding:0 20px 22px}
+body.social-media-page .profile-editor{padding:22px}
+body.social-media-page .profile-editor input,body.social-media-page .profile-editor select,body.social-media-page .profile-editor textarea{background:#1a1028;color:#fff;border-color:var(--preproom-line)}
+body.social-media-page .chat-layout{grid-template-columns:280px minmax(0,1fr);gap:16px}
+body.social-media-page .chat-list-panel,body.social-media-page .chat-window{background:#130d20;border-color:var(--preproom-line)}
+body.social-media-page .chat-send textarea{background:#1b1030;color:#fff;border-color:var(--preproom-line)}
+body.social-media-page .social-onboarding-card{background:#160e24;color:#fff;border:1px solid var(--preproom-line)}
+body.social-media-page .social-onboarding-card input{background:#1b1030;color:#fff;border-color:var(--preproom-line)}
+/* Standalone post composer */
+body.social-create-page{min-height:100vh;background:radial-gradient(ellipse at 50% -20%,#35115f 0,transparent 42%),#090611!important;color:#f8f3ff!important;padding:28px 14px!important}
+.social-create-shell{width:min(680px,100%);margin:0 auto}
+.social-create-header{margin-bottom:20px}
+.social-create-header h1{font-size:30px;margin:10px 0;color:#fff}
+.social-create-header p:last-child{color:#b8a9ca}
+.social-create-form{padding:24px;background:#160e24!important;border:1px solid var(--preproom-line)!important;border-radius:22px}
+.social-create-form label{display:block;margin:16px 0 7px;color:#e7d9f8;font-weight:700;font-size:13px}
+.social-create-form textarea,.social-create-form input,.social-create-form select{width:100%;padding:13px;border-radius:12px;background:#1b1030;color:#fff;border:1px solid var(--preproom-line);font:inherit}
+.social-create-form textarea{resize:vertical}
+.social-create-author{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.social-create-author small{display:block;color:#b8a9ca;margin-top:3px}
+.social-create-form .media-picker-label{display:inline-flex;padding:10px 13px;border:1px solid var(--preproom-line);border-radius:12px;cursor:pointer}
+.social-create-form input[type=file]{margin-top:8px}
+.social-create-form .composer-hint{color:#b8a9ca;font-size:12px}
+.social-create-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+@media(max-width:1050px){body.social-media-page .community-layout{grid-template-columns:minmax(0,1fr) 230px}body.social-media-page .community-shell{width:calc(100% - 280px);margin-left:264px;margin-right:16px}}
+@media(max-width:760px){
+ body.social-media-page{padding-top:58px!important;padding-bottom:calc(78px + env(safe-area-inset-bottom))!important}
+ body.social-media-page .social-topbar{height:58px;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;padding:0 10px}
+ .social-brand{font-size:0;gap:0}.social-brand-mark{width:36px;height:36px}
+ .social-global-search{height:38px;padding-left:10px}.social-global-search input{font-size:12px}
+ .social-top-actions{gap:4px}.social-top-action,.social-top-profile{width:34px;height:34px}
+ .social-sidebar{display:none}
+ body.social-media-page .community-shell{width:calc(100% - 16px);margin:12px 8px 20px}
+ body.social-media-page .community-layout{display:block}
+ .preproom-side-rail{display:none}
+ body.social-media-page .social-bottom-nav{position:fixed;z-index:160;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);gap:0;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:rgba(13,8,22,.97);border-top:1px solid var(--preproom-line);backdrop-filter:blur(18px)}
+ body.social-media-page .social-bottom-nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:48px;padding:4px 2px;border:0;background:none;color:#a99ab9;font:600 10px system-ui}
+ body.social-media-page .social-bottom-nav button.active{color:#c084fc}
+ body.social-media-page .social-bottom-nav .social-create{width:48px;height:48px;min-height:48px;justify-self:center;align-self:center;border-radius:50%;background:linear-gradient(135deg,#a855f7,#7000e8);color:#fff;box-shadow:0 6px 22px #8100ef66}
+ .social-nav-icon{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+ body.social-media-page .social-profile-main{padding:0 16px;flex-wrap:wrap}
+ body.social-media-page .social-profile-avatar{width:94px;height:94px}
+ body.social-media-page .social-profile-identity{padding-top:10px}
+ body.social-media-page .social-profile-stats{margin:16px}
+ body.social-media-page .social-profile-posts-heading{padding:14px 16px}
+ body.social-media-page .social-profile-post-grid{padding:0 12px 18px}
+ body.social-media-page .profile-editor{padding:16px}
+ body.social-media-page .chat-layout{display:flex;flex-direction:column;min-height:0}
+ body.social-media-page .chat-list-panel{max-height:230px}
+ body.social-media-page .chat-window{min-height:55vh}
+}
+@media(max-width:420px){body.social-media-page .social-global-search input{font-size:11px}body.social-media-page .composer-row{gap:6px}body.social-media-page .composer-row input,body.social-media-page .composer-row select{font-size:11px}}
