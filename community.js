@@ -46,7 +46,7 @@
     document.querySelectorAll(".community-view").forEach(v => v.classList.toggle("active", v.id === "view-" + name));
     if (name !== "videos") pauseFocusedVideo();
     if (name === "feed") loadFeed();
-    if (name === "people") { loadPeople(); loadFriends(); }
+    if (name === "people") { loadPeople(); loadFriends(); loadBlockedPeople(); }
     document.querySelectorAll("#social-bottom-nav [data-social-dest]").forEach(b => { const active = b.dataset.socialDest === name; b.classList.toggle("active", active); if (active) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
 
     if (name === "groups") loadGroups();
@@ -454,7 +454,7 @@
     const block=e.target.closest("[data-block]");
     if(block){
       if(!window.confirm("Block this student? They will no longer be able to connect or privately chat with you."))return;
-      try{await api("/community/blocks/"+encodeURIComponent(block.dataset.block),{method:"POST",body:"{}"});status("Student blocked.");await Promise.all([loadPeople(peopleQuery),loadFriends()]);}
+      try{await api("/community/blocks/"+encodeURIComponent(block.dataset.block),{method:"POST",body:"{}"});status("Student blocked.");await Promise.all([loadPeople(peopleQuery),loadFriends(),loadBlockedPeople()]);}
       catch(err){status(err.message);}
       return;
     }
@@ -484,6 +484,27 @@
     b.disabled=true;
     try{await api("/community/follow/"+encodeURIComponent(b.dataset.follow),{method:"POST",body:"{}"});status("Friend request sent.");await Promise.all([loadPeople(peopleQuery),loadFriends()]);}
     catch(err){status(err.message);b.disabled=false;}
+  });
+
+  async function loadBlockedPeople() {
+    const box = $("blocked-people-list");
+    if (!box) return;
+    try {
+      const { blocks = [] } = await api("/community/blocks");
+      box.innerHTML = blocks.length ? blocks.map(item =>
+        '<div class="blocked-person-row"><span><strong>' + esc(item.displayName || "Student") + '</strong><small>@' + esc(item.username || "unknown") + '</small></span><button type="button" class="outline-button" data-unblock="' + esc(item.blockedId) + '">Unblock</button></div>'
+      ).join("") : '<div class="empty-state">You have not blocked anyone.</div>';
+    } catch (error) { box.innerHTML = '<div class="empty-state">' + esc(error.message) + '</div>'; }
+  }
+  $("blocked-people-list").addEventListener("click", async e => {
+    const button=e.target.closest("[data-unblock]");
+    if(!button)return;
+    button.disabled=true;
+    try{
+      await api("/community/blocks/"+encodeURIComponent(button.dataset.unblock),{method:"DELETE"});
+      status("Student unblocked.");
+      await Promise.all([loadBlockedPeople(),loadPeople(peopleQuery)]);
+    }catch(error){status(error.message);button.disabled=false;}
   });
 
   async function loadPublicProfile(username) {
@@ -521,7 +542,7 @@
       if(add) await api("/community/follow/"+encodeURIComponent(add.dataset.publicAdd),{method:"POST",body:"{}"});
       else if(cancel||remove) await api("/community/follow/"+encodeURIComponent((cancel||remove).dataset.publicCancel||(cancel||remove).dataset.publicRemove),{method:"DELETE"});
       else if(request) await api("/community/friend-requests/"+encodeURIComponent(request.dataset.publicRequest),{method:"POST",body:JSON.stringify({action:request.dataset.requestAction})});
-      else if(block){if(!window.confirm("Block this student?"))return;await api("/community/blocks/"+encodeURIComponent(block.dataset.publicBlock),{method:"POST",body:"{}"});$("public-student-profile").hidden=true;document.querySelector(".social-profile-page").hidden=false;location.hash="#people";await loadPeople(peopleQuery);return;}
+      else if(block){if(!window.confirm("Block this student?"))return;await api("/community/blocks/"+encodeURIComponent(block.dataset.publicBlock),{method:"POST",body:"{}"});$("public-student-profile").hidden=true;document.querySelector(".social-profile-page").hidden=false;location.hash="#people";await Promise.all([loadPeople(peopleQuery),loadBlockedPeople()]);return;}
       else if(message){const {conversation}=await api("/community/chat/direct/"+encodeURIComponent(message.dataset.publicMessage),{method:"POST",body:"{}"});navigateSocialTab("messages");openChat(conversation.id);return;}
       else return;
       await loadPublicProfile(usernameFromHash());
