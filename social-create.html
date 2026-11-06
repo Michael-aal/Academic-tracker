@@ -34,15 +34,25 @@
       <input id="create-media" type="file" accept="image/*,video/*" aria-label="Attach an image or video">
       <div id="create-preview" class="post-media-preview" hidden></div>
       <p class="composer-hint">Images up to 8 MB. Videos up to 50 MB. Keep posts educational and respectful.</p>
-      <div class="social-create-actions"><a class="outline-button" href="social-media.html">Cancel</a><button id="publish-social-post" class="primary-button" type="submit">Publish post</button></div>
+      <div class="social-create-actions"><a class="outline-button" href="social-media.html">Cancel</a><button id="publish-social-post" class="primary-button" type="submit">Review post</button></div>
     </form>
+    <section id="create-review-overlay" class="post-review-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="create-review-title">
+      <div class="post-review-card">
+        <div class="post-review-heading"><h2 id="create-review-title">Preview your post</h2><button type="button" id="close-create-review" class="quiet-button" aria-label="Close preview">✕</button></div>
+        <div id="create-review-author" class="post-review-author"></div>
+        <p id="create-review-body" class="post-review-body"></p>
+        <div id="create-review-media" class="post-review-media"></div>
+        <div class="post-review-details"><span id="create-review-subject"></span><span id="create-review-visibility"></span></div>
+        <div class="post-review-actions"><button type="button" id="cancel-create-review" class="outline-button">Keep editing</button><button type="button" id="confirm-create-publish" class="primary-button">Publish post</button></div>
+      </div>
+    </section>
   </main>
   <nav class="preproom-page-nav" aria-label="Preproom navigation">
-    <a href="social-media.html#feed"><span aria-hidden="true">⌂</span><small>Home</small></a>
-    <a href="social-media.html#people"><span aria-hidden="true">⌕</span><small>Explore</small></a>
-    <a class="active" href="social-create.html" aria-current="page"><span aria-hidden="true">＋</span><small>Create</small></a>
-    <a href="social-media.html#messages"><span aria-hidden="true">▢</span><small>Messages</small></a>
-    <a href="social-media.html#profile"><span aria-hidden="true">♙</span><small>Profile</small></a>
+    <a href="social-media.html#feed"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/></svg><small>Home</small></a>
+    <a href="social-media.html#people"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2 20a7 7 0 0 1 14 0M16 5a3.5 3.5 0 0 1 0 7M17 14a5.5 5.5 0 0 1 4.5 5.5"/></svg><small>Friends</small></a>
+    <a class="active" href="social-create.html" aria-current="page"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><small>Create</small></a>
+    <a href="social-media.html#messages"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4zM8 9h8"/></svg><small>Messages</small></a>
+    <a href="social-media.html#profile"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><small>Profile</small></a>
   </nav>
   <script src="social-create.js" defer></script>
 </body>

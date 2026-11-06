@@ -43,25 +43,63 @@
     if(!signature.cloudName||!signature.apiKey||!signature.signature||!signature.timestamp||!signature.folder)throw new Error("Media storage is not configured correctly. Please contact the administrator.");
     const form=new FormData();
     form.append("file",file);form.append("api_key",signature.apiKey);form.append("timestamp",String(signature.timestamp));form.append("folder",signature.folder);form.append("signature",signature.signature);
-    const response=await fetch("https://api.cloudinary.com/v1_1/"+encodeURIComponent(signature.cloudName)+"/"+signature.resourceType+"/upload",{method:"POST",body:form});
-    const result=await response.json().catch(()=>({}));
-    if(!response.ok||!result.secure_url)throw new Error(result.error?.message||"Media upload failed. Check the community media configuration and try again.");
+    const uploadUrl="https://api.cloudinary.com/v1_1/"+encodeURIComponent(signature.cloudName)+"/"+signature.resourceType+"/upload";
+    const result=await new Promise((resolve,reject)=>{
+      const xhr=new XMLHttpRequest();
+      xhr.open("POST",uploadUrl);
+      xhr.upload.addEventListener("progress",event=>{
+        if(event.lengthComputable)status("Uploading media… "+Math.round(event.loaded/event.total*100)+"%");
+      });
+      xhr.addEventListener("load",()=>{
+        let data={};try{data=JSON.parse(xhr.responseText||"{}");}catch(_){}
+        if(xhr.status<200||xhr.status>=300||!data.secure_url)return reject(new Error(data.error?.message||"Media upload failed. Check the community media configuration and try again."));
+        resolve(data);
+      });
+      xhr.addEventListener("error",()=>reject(new Error("Network error while uploading media. Check your connection and retry.")));
+      xhr.addEventListener("abort",()=>reject(new Error("Media upload was cancelled.")));
+      xhr.send(form);
+    });
     return video?{videoUrl:result.secure_url}:{mediaUrl:result.secure_url};
   }
-  $("social-create-form").addEventListener("submit",async event=>{
+  const review = $("create-review-overlay");
+  function closeReview(){review.hidden=true;}
+  $("social-create-form").addEventListener("submit",event=>{
     event.preventDefault();
     if(!profileReady){status("Your profile is still loading. Wait a moment and try again; if this message remains, refresh the page.");return;}
     const body=$("create-body").value.trim(),file=$("create-media").files?.[0];
     if(!body&&!file){status("Write something or attach a photo or video first.");return;}
-    const button=$("publish-social-post");button.disabled=true;button.textContent="Publishing…";
+    $("create-review-author").textContent=$("create-handle").textContent;
+    $("create-review-body").textContent=body;
+    $("create-review-body").hidden=!body;
+    $("create-review-subject").textContent=$("create-subject").value.trim()||"No subject";
+    $("create-review-visibility").textContent=$("create-visibility").value==="PUBLIC"?"Public":"Friends only";
+    const mediaBox=$("create-review-media");mediaBox.replaceChildren();
+    if(file&&previewUrl){
+      const media=document.createElement(file.type.startsWith("video/")?"video":"img");
+      media.src=previewUrl;media.alt="Post media preview";media.className="post-preview-asset";
+      if(file.type.startsWith("video/"))media.controls=true;
+      mediaBox.append(media);
+    }
+    mediaBox.hidden=!file;
+    review.hidden=false;
+  });
+  $("close-create-review").addEventListener("click",closeReview);
+  $("cancel-create-review").addEventListener("click",closeReview);
+  review.addEventListener("click",event=>{if(event.target===review)closeReview();});
+  $("confirm-create-publish").addEventListener("click",async()=>{
+    if(!profileReady)return;
+    const body=$("create-body").value.trim(),file=$("create-media").files?.[0];
+    const button=$("confirm-create-publish");
+    button.disabled=true;button.textContent="Publishing…";
+    $("publish-social-post").disabled=true;
     try{
       const media=file?await upload(file):{};
       await api("/community/posts",{method:"POST",body:JSON.stringify({body,...media,subject:$("create-subject").value.trim(),visibility:$("create-visibility").value})});
       status("Your post is live. Taking you back to the feed…");
-      $("social-create-form").reset();clearPreview();
+      $("social-create-form").reset();clearPreview();closeReview();
       setTimeout(()=>{location.href="social-media.html";},500);
     }catch(error){status(error.message);}
-    finally{button.disabled=false;button.textContent="Publish post";}
+    finally{button.disabled=false;button.textContent="Publish post";$("publish-social-post").disabled=false;}
   });
   status("Loading your profile…");
   api("/community/profile/me").then(({profile})=>{

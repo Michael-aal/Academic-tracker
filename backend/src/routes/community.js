@@ -19,15 +19,56 @@ const writeLimit = rateLimit({
   keyGenerator: req => req.userId,
   message: { error: "Too many community actions. Please slow down." }
 });
+const presenceLimit = rateLimit({
+  windowMs: 5 * 60 * 1000, limit: 10, standardHeaders: "draft-7", legacyHeaders: false,
+  keyGenerator: req => req.userId,
+  message: { error: "Presence updates are arriving too frequently. Please wait a moment." }
+});
 const clean = (v, max) => typeof v === "string" ? v.trim().slice(0, max) : "";
 const safeUrl = value => {
   const raw = clean(value, 1000);
   if (!raw) return null;
   try { const u = new URL(raw); return u.protocol === "https:" ? raw : null; } catch { return null; }
 };
+async function verifyCommunityCloudinaryAsset(rawUrl, userId, expectedResourceType, maxBytes) {
+  let url;
+  try { url = new URL(rawUrl); } catch { return false; }
+  if (url.protocol !== "https:" || url.hostname !== "res.cloudinary.com") return false;
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  if (!cloudName || !apiKey || !apiSecret) throw new Error("Community media storage is not configured.");
+  const parts = url.pathname.split("/").filter(Boolean).map(decodeURIComponent);
+  if (parts.length < 5 || parts[0] !== cloudName || parts[1] !== expectedResourceType || parts[2] !== "upload") return false;
+  let assetParts = parts.slice(3);
+  if (/^v\d+$/.test(assetParts[0] || "")) assetParts = assetParts.slice(1);
+  if (!assetParts.length) return false;
+  const last = assetParts[assetParts.length - 1];
+  assetParts[assetParts.length - 1] = last.replace(/\.[a-z0-9]{2,8}$/i, "");
+  const publicId = assetParts.join("/");
+  const expectedFolder = "academic-tracker/community/" + userId + "/";
+  if (!publicId.startsWith(expectedFolder)) return false;
+
+  const endpoint = new URL("https://api.cloudinary.com/v1_1/" + encodeURIComponent(cloudName) + "/resources/" + expectedResourceType + "/upload");
+  endpoint.searchParams.append("public_ids[]", publicId);
+  const response = await fetch(endpoint, {
+    headers: { Authorization: "Basic " + Buffer.from(apiKey + ":" + apiSecret).toString("base64") },
+    signal: AbortSignal.timeout(7000),
+    redirect: "error"
+  });
+  if (!response.ok) {
+    if (response.status === 404) return false;
+    throw new Error("Could not verify the uploaded media with Cloudinary.");
+  }
+  const data = await response.json().catch(() => ({}));
+  const asset = (Array.isArray(data.resources) ? data.resources : []).find(item =>
+    item.public_id === publicId && item.resource_type === expectedResourceType && item.type === "upload"
+  );
+  return Boolean(asset && Number(asset.bytes) > 0 && Number(asset.bytes) <= maxBytes);
+}
 const slug = value => clean(value, 30).toLowerCase().replace(/[^a-z0-9_]/g, "").replace(/^_+|_+$/g, "");
 const publicProfile = (profile, user) => ({
-  id: profile.id, userId: user.id, username: profile.username, usernameSet: profile.usernameSet, displayName: user.name,
+  username: profile.username, displayName: user.name,
   educationTrack: user.educationTrack, institutionName: user.institutionName,
   programme: user.programme, studyLevel: user.studyLevel, bio: profile.bio,
   bestSubject: profile.bestSubject, interests: profile.interests || [],
@@ -38,6 +79,17 @@ async function getUser(userId) {
     id: true, name: true, educationTrack: true, institutionName: true, programme: true,
     studyLevel: true, role: true
   }});
+}
+async function getSocialUser(identifier) {
+  const value = clean(identifier, 100);
+  if (!value) return null;
+  const byId = await getUser(value);
+  if (byId) return byId;
+  const profile = await prisma.communityProfile.findUnique({
+    where: { username: slug(value) },
+    select: { userId: true }
+  });
+  return profile ? getUser(profile.userId) : null;
 }
 async function ensureProfile(user) {
   let profile = await prisma.communityProfile.findUnique({ where: { userId: user.id } });
@@ -61,15 +113,17 @@ async function acceptedFriend(userA, userB) {
 async function notifySocial(userId, actorId, title, body, metadata) {
   if (!userId || userId === actorId) return;
   try {
+    const safeMetadata = { ...(metadata || {}) };
+    delete safeMetadata.userId;
+    delete safeMetadata.requesterId;
+    const actorProfile = actorId ? await prisma.communityProfile.findUnique({ where: { userId: actorId }, select: { username: true } }) : null;
+    if (actorProfile?.username) safeMetadata.actorUsername = actorProfile.username;
     await prisma.notification.create({ data: {
       userId, createdById: actorId, title: clean(title, 120), body: clean(body, 4000),
-      category: "SOCIAL", metadata: metadata || {}
+      category: "SOCIAL", metadata: safeMetadata
     }});
-  } catch (_) {
-    // A notification failure must not roll back the social action itself.
-  }
-}
-async function isMember(conversationId, userId) {
+  } catch (_) {}
+}async function isMember(conversationId, userId) {
   return Boolean(await prisma.chatMember.findUnique({ where: { conversationId_userId: { conversationId, userId } } }));
 }
 async function canReadPost(post, userId) {
@@ -116,10 +170,13 @@ router.get("/feed", async (req, res, next) => {
       const users = await prisma.user.findMany({ where: { educationTrack: req.query.track }, select: { id: true } });
       where.AND.push({ authorId: { in: users.map(x => x.id) } });
     }
-    const posts = await prisma.communityPost.findMany({
-      where, orderBy: { createdAt: "desc" }, take: limit,
+    const fetchedPosts = await prisma.communityPost.findMany({
+      where, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: limit + 1,
       ...(typeof req.query.before === "string" && req.query.before ? { cursor: { id: req.query.before }, skip: 1 } : {})
     });
+    const hasMore = fetchedPosts.length > limit;
+    const nextCursor = hasMore ? fetchedPosts[limit - 1]?.id || null : null;
+    const posts = fetchedPosts.slice(0, limit);
     posts.sort((a,b) => {
       const aRank = a.authorId === req.userId || friendIds.includes(a.authorId) ? 0 : 1;
       const bRank = b.authorId === req.userId || friendIds.includes(b.authorId) ? 0 : 1;
@@ -153,32 +210,84 @@ router.get("/feed", async (req, res, next) => {
     const likedSet = new Set(myReactions.map(x => x.postId));
     const sharedUserMap = new Map(sharedUsers.map(u => [u.id, u]));
     const sharedProfileMap = new Map(sharedProfiles.map(p => [p.userId, p]));
-    const sharedMap = new Map(readableSharedOriginals.map(p => [p.id, {
-      ...p,
-      author: sharedUserMap.get(p.authorId) ? publicProfile(sharedProfileMap.get(p.authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, sharedUserMap.get(p.authorId)) : null
-    }]));
-    res.json({ posts: posts.map(p => ({
-      ...p, author: userMap.get(p.authorId) ? publicProfile(profileMap.get(p.authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, userMap.get(p.authorId)) : null,
-      sharedPost: p.sharedPostId ? sharedMap.get(p.sharedPostId) || null : null,
-      isSaved: savedSet.has(p.id), isLiked: likedSet.has(p.id), shareCount: shareMap.get(p.id) || 0,
-      isFriendPost: p.authorId === req.userId || friendIds.includes(p.authorId),
-      reactionCount: reactionMap.get(p.id) || 0, commentCount: commentMap.get(p.id) || 0
-    }))});
+    const sharedMap = new Map(readableSharedOriginals.map(p => {
+      const { authorId, ...safePost } = p;
+      return [p.id, {
+        ...safePost,
+        isOwner: authorId === req.userId,
+        author: sharedUserMap.get(authorId) ? publicProfile(sharedProfileMap.get(authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, sharedUserMap.get(authorId)) : null
+      }];
+    }));
+    res.json({ posts: posts.map(p => {
+      const { authorId, ...safePost } = p;
+      return {
+        ...safePost,
+        isOwner: authorId === req.userId,
+        author: userMap.get(authorId) ? publicProfile(profileMap.get(authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, userMap.get(authorId)) : null,
+        sharedPost: p.sharedPostId ? sharedMap.get(p.sharedPostId) || null : null,
+        isSaved: savedSet.has(p.id), isLiked: likedSet.has(p.id), shareCount: shareMap.get(p.id) || 0,
+        isFriendPost: authorId === req.userId || friendIds.includes(authorId),
+        reactionCount: reactionMap.get(p.id) || 0, commentCount: commentMap.get(p.id) || 0
+      };
+    }), nextCursor, hasMore });
   } catch (e) { next(e); }
 });
 
 router.get("/profiles/:username", async (req, res, next) => {
   try {
     const profile = await prisma.communityProfile.findUnique({ where: { username: slug(req.params.username) } });
-    if (!profile || profile.visibility === "PRIVATE" || await isBlocked(profile.userId, req.userId)) return res.status(404).json({ error: "Student profile not found." });
-    const user = await getUser(profile.userId);
-    if (!user) return res.status(404).json({ error: "Student profile not found." });
-    const posts = await prisma.communityPost.findMany({ where: { authorId: user.id, visibility: "PUBLIC" }, orderBy: { createdAt: "desc" }, take: 20 });
-    res.json({ profile: publicProfile(profile, user), posts });
+    if (!profile || !profile.usernameSet || profile.status !== "ACTIVE" || profile.visibility !== "PUBLIC" || await isBlocked(profile.userId, req.userId)) {
+      return res.status(404).json({ error: "Student profile not found." });
+    }
+    const [user, currentUser] = await Promise.all([getUser(profile.userId), getUser(req.userId)]);
+    if (!user || !currentUser) return res.status(404).json({ error: "Student profile not found." });
+    const [posts, outgoing, incoming] = await Promise.all([
+      prisma.communityPost.findMany({ where: { authorId: user.id, visibility: "PUBLIC" }, orderBy: { createdAt: "desc" }, take: 30 }),
+      prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: req.userId, followingId: user.id } } }),
+      prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: user.id, followingId: req.userId } } })
+    ]);
+    const postIds = posts.map(post => post.id);
+    const [reactions, comments, shares] = postIds.length ? await Promise.all([
+      prisma.communityReaction.groupBy({ by: ["postId"], where: { postId: { in: postIds } }, _count: { _all: true } }),
+      prisma.communityComment.groupBy({ by: ["postId"], where: { postId: { in: postIds } }, _count: { _all: true } }),
+      prisma.communityPost.groupBy({ by: ["sharedPostId"], where: { sharedPostId: { in: postIds } }, _count: { _all: true } })
+    ]) : [[], [], []];
+    const reactionCounts = new Map(reactions.map(row => [row.postId, row._count._all]));
+    const commentCounts = new Map(comments.map(row => [row.postId, row._count._all]));
+    const shareCounts = new Map(shares.map(row => [row.sharedPostId, row._count._all]));
+    const friendStatus = outgoing?.status === "ACCEPTED" && incoming?.status === "ACCEPTED" ? "FRIENDS" :
+      incoming?.status === "PENDING" ? "REQUEST_RECEIVED" :
+      outgoing?.status === "PENDING" ? "REQUEST_SENT" : "NONE";
+    res.json({
+      profile: publicProfile(profile, user),
+      relationship: {
+        canFriend: user.educationTrack === currentUser.educationTrack,
+        friendStatus,
+        friendRequestId: incoming?.status === "PENDING" ? incoming.id : null
+      },
+      stats: {
+        posts: posts.length,
+        likes: reactions.reduce((sum, row) => sum + row._count._all, 0)
+      },
+      posts: posts.map(post => {
+        const { authorId, ...safePost } = post;
+        return {
+          ...safePost,
+          isOwner: authorId === req.userId,
+          reactionCount: reactionCounts.get(post.id) || 0,
+          commentCount: commentCounts.get(post.id) || 0,
+          shareCount: shareCounts.get(post.id) || 0
+        };
+      })
+    });
   } catch (e) { next(e); }
 });
 
-router.use(writeLimit);
+router.use((req, res, next) => {
+  if (req.method === "POST" && req.path === "/presence/heartbeat") return presenceLimit(req, res, next);
+  if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
+  return writeLimit(req, res, next);
+});
 
 router.get("/profile/me", async (req, res, next) => {
   try {
@@ -203,9 +312,12 @@ router.get("/profile/me", async (req, res, next) => {
     const shareCounts = new Map(shares.map(item => [item.sharedPostId, item._count._all]));
     const totalLikes = reactions.reduce((sum, item) => sum + item._count._all, 0);
     res.json({
-      profile: publicProfile(profile, user),
+      profile: { ...publicProfile(profile, user), usernameSet: profile.usernameSet },
       stats: { posts: posts.length, friends, likes: totalLikes },
-      posts: posts.map(post => ({ ...post, reactionCount: reactionCounts.get(post.id) || 0, commentCount: commentCounts.get(post.id) || 0, shareCount: shareCounts.get(post.id) || 0 }))
+      posts: posts.map(post => {
+        const { authorId, ...safePost } = post;
+        return { ...safePost, isOwner: authorId === req.userId, reactionCount: reactionCounts.get(post.id) || 0, commentCount: commentCounts.get(post.id) || 0, shareCount: shareCounts.get(post.id) || 0 };
+      })
     });
   } catch (e) { next(e); }
 });
@@ -240,6 +352,12 @@ router.patch("/profile/me", async (req, res, next) => {
       data.interests = [...new Set(req.body.interests.map(x => x.trim()))];
     }
     const current = await ensureProfile(user);
+    if (data.avatarUrl && data.avatarUrl !== current.avatarUrl && !await verifyCommunityCloudinaryAsset(data.avatarUrl, req.userId, "image", 8 * 1024 * 1024)) {
+      return res.status(400).json({ error: "Profile photos must be valid Cloudinary images no larger than 8 MB uploaded to your account." });
+    }
+    if (data.coverUrl && data.coverUrl !== current.coverUrl && !await verifyCommunityCloudinaryAsset(data.coverUrl, req.userId, "image", 8 * 1024 * 1024)) {
+      return res.status(400).json({ error: "Cover photos must be valid Cloudinary images no larger than 8 MB uploaded to your account." });
+    }
     const profile = Object.keys(data).length ? await prisma.communityProfile.update({ where: { id: current.id }, data }) : current;
     res.json({ profile: publicProfile(profile, user) });
   } catch (e) {
@@ -270,10 +388,17 @@ router.post("/posts", async (req, res, next) => {
     const videoUrl = req.body?.videoUrl ? safeUrl(req.body.videoUrl) : null;
     const subject = clean(req.body?.subject, 100) || null;
     const visibility = ["PUBLIC", "FOLLOWERS"].includes(req.body?.visibility) ? req.body.visibility : "PUBLIC";
-    if (!body && !mediaUrl && !videoUrl) return res.status(400).json({ error: "Write something or attach a valid HTTPS media link." });
+    if (!body && !mediaUrl && !videoUrl) return res.status(400).json({ error: "Write something or attach a valid media file." });
     if (req.body?.mediaUrl && !mediaUrl || req.body?.videoUrl && !videoUrl) return res.status(400).json({ error: "Media links must use HTTPS." });
+    if (mediaUrl && !await verifyCommunityCloudinaryAsset(mediaUrl, req.userId, "image", 8 * 1024 * 1024)) {
+      return res.status(400).json({ error: "Post images must be valid Cloudinary images no larger than 8 MB uploaded to your account." });
+    }
+    if (videoUrl && !await verifyCommunityCloudinaryAsset(videoUrl, req.userId, "video", 50 * 1024 * 1024)) {
+      return res.status(400).json({ error: "Post videos must be valid Cloudinary videos no larger than 50 MB uploaded to your account." });
+    }
     const post = await prisma.communityPost.create({ data: { authorId: req.userId, body, mediaUrl, videoUrl, subject, visibility } });
-    res.status(201).json({ post });
+    const { authorId, ...safePost } = post;
+    res.status(201).json({ post: { ...safePost, isOwner: authorId === req.userId } });
   } catch (e) { next(e); }
 });
 
@@ -287,7 +412,8 @@ router.post("/posts/:id/share", async (req, res, next) => {
       authorId: req.userId, body, sharedPostId: original.id, subject: original.subject, visibility
     }});
     await notifySocial(original.authorId, req.userId, "Your post was shared", "A student shared one of your posts.", { type: "POST_SHARED", postId: original.id });
-    res.status(201).json({ post });
+    const { authorId, ...safePost } = post;
+    res.status(201).json({ post: { ...safePost, isOwner: authorId === req.userId } });
   } catch (e) { next(e); }
 });
 
@@ -324,10 +450,15 @@ router.get("/saved-posts", async (req, res, next) => {
     const reactionMap = new Map(reactions.map(x => [x.postId, x._count._all]));
     const commentMap = new Map(comments.map(x => [x.postId, x._count._all]));
     readable.sort((a,b) => ids.indexOf(a.id) - ids.indexOf(b.id));
-    res.json({ posts: readable.map(p => ({
-      ...p, author: userMap.get(p.authorId) ? publicProfile(profileMap.get(p.authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, userMap.get(p.authorId)) : null,
-      isSaved: true, reactionCount: reactionMap.get(p.id) || 0, commentCount: commentMap.get(p.id) || 0
-    })) });
+    res.json({ posts: readable.map(p => {
+      const { authorId, ...safePost } = p;
+      return {
+        ...safePost,
+        isOwner: authorId === req.userId,
+        author: userMap.get(authorId) ? publicProfile(profileMap.get(authorId) || { username: "student", bio: null, bestSubject: null, interests: [], avatarUrl: null, coverUrl: null, visibility: "PUBLIC" }, userMap.get(authorId)) : null,
+        isSaved: true, reactionCount: reactionMap.get(p.id) || 0, commentCount: commentMap.get(p.id) || 0
+      };
+    }) });
   } catch (e) { next(e); }
 });
 
@@ -346,7 +477,8 @@ router.patch("/posts/:id", async (req, res, next) => {
     if (!nextBody && !existing.mediaUrl && !existing.videoUrl) return res.status(400).json({ error: "A post must contain text or media." });
     if (!Object.keys(data).length) return res.status(400).json({ error: "There are no changes to save." });
     const post = await prisma.communityPost.update({ where: { id: existing.id }, data });
-    res.json({ post });
+    const { authorId, ...safePost } = post;
+    res.json({ post: { ...safePost, isOwner: authorId === req.userId } });
   } catch (e) { next(e); }
 });
 
@@ -395,11 +527,16 @@ router.get("/posts/:id/comments", async (req, res, next) => {
     ]) : [[], []];
     const userMap = new Map(users.map(u => [u.id, u]));
     const profileMap = new Map(profiles.map(p => [p.userId, p]));
-    res.json({ comments: comments.map(c => ({
-      ...c, authorName: userMap.get(c.userId)?.name || "Student",
-      authorUsername: profileMap.get(c.userId)?.username || "student",
-      avatarUrl: profileMap.get(c.userId)?.avatarUrl || null
-    })) });
+    res.json({ comments: comments.map(c => {
+      const { userId, ...safeComment } = c;
+      return {
+        ...safeComment,
+        isMine: userId === req.userId,
+        authorName: userMap.get(userId)?.name || "Student",
+        authorUsername: profileMap.get(userId)?.username || "student",
+        avatarUrl: profileMap.get(userId)?.avatarUrl || null
+      };
+    }) });
   } catch (e) { next(e); }
 });
 
@@ -416,71 +553,145 @@ router.post("/posts/:id/comments", async (req, res, next) => {
     }
     const comment = await prisma.communityComment.create({ data: { postId: post.id, userId: req.userId, parentId, body } });
     await notifySocial(post.authorId, req.userId, parentId ? "New reply on your post" : "New comment on your post", "A student commented on your post.", { type: "POST_COMMENT", postId: post.id, commentId: comment.id });
-    res.status(201).json({ comment });
+    const { userId, ...safeComment } = comment;
+    res.status(201).json({ comment: { ...safeComment, isMine: userId === req.userId } });
+  } catch (e) { next(e); }
+});
+
+router.post("/presence/heartbeat", async (req, res, next) => {
+  try {
+    await prisma.communityProfile.updateMany({
+      where: { userId: req.userId, usernameSet: true, status: "ACTIVE" },
+      data: { lastSeenAt: new Date() }
+    });
+    res.json({ ok: true });
   } catch (e) { next(e); }
 });
 
 router.get("/people", async (req, res, next) => {
   try {
     const q = clean(req.query.q, 80);
-    if (q.length < 2) return res.json({ people: [] });
+    if (q.length === 1) return res.status(400).json({ error: "Search using at least two characters." });
+    const limit = Math.min(30, Math.max(1, Number.parseInt(req.query.limit, 10) || 20));
+    const cursor = clean(req.query.cursor, 100);
     const currentUser = await getUser(req.userId);
     if (!currentUser) return res.status(404).json({ error: "Account not found." });
 
-    // Username lookup accepts both "student_name" and "@student_name".
-    // Search results are limited to public, active profiles in the same education track.
-    const exactUsernameSearch = q.startsWith("@");
-    const usernameQuery = slug(q.replace(/^@/, ""));
-    const usernameProfiles = usernameQuery.length >= 2
-      ? await prisma.communityProfile.findMany({
-          where: { username: exactUsernameSearch ? usernameQuery : { contains: usernameQuery }, visibility: "PUBLIC", status: "ACTIVE" },
-          select: { userId: true },
-          take: exactUsernameSearch ? 1 : 30
-        })
-      : [];
-    const usernameUserIds = usernameProfiles.map(profile => profile.userId);
-    const users = await prisma.user.findMany({
-      where: {
-        id: { not: req.userId },
-        educationTrack: currentUser.educationTrack,
-        OR: exactUsernameSearch
-          ? [{ id: { in: usernameUserIds } }]
-          : [
-              { name: { contains: q, mode: "insensitive" } },
-              { institutionName: { contains: q, mode: "insensitive" } },
-              ...(usernameUserIds.length ? [{ id: { in: usernameUserIds } }] : [])
-            ]
-      },
-      select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true },
-      take: 20
+    const blocks = await prisma.communityBlock.findMany({
+      where: { OR: [{ blockerId: req.userId }, { blockedId: req.userId }] },
+      select: { blockerId: true, blockedId: true }
     });
-    const userIds = users.map(u => u.id);
-    const [profiles, blocks, outgoing, incoming] = await Promise.all([
-      prisma.communityProfile.findMany({ where: { userId: { in: userIds }, visibility: "PUBLIC", status: "ACTIVE" } }),
-      prisma.communityBlock.findMany({ where: { OR: [{ blockerId: req.userId }, { blockedId: req.userId }] } }),
+    const blockedIds = [...new Set(blocks.map(b => b.blockerId === req.userId ? b.blockedId : b.blockerId))];
+    const excludedIds = [req.userId, ...blockedIds];
+    const profileWhere = {
+      userId: { notIn: excludedIds },
+      visibility: "PUBLIC",
+      status: "ACTIVE",
+      usernameSet: true
+    };
+
+    if (q) {
+      const exactUsernameSearch = q.startsWith("@");
+      const usernameQuery = slug(q.replace(/^@/, ""));
+      const usernameProfiles = usernameQuery.length >= 2
+        ? await prisma.communityProfile.findMany({
+            where: {
+              visibility: "PUBLIC", status: "ACTIVE", usernameSet: true,
+              username: exactUsernameSearch ? usernameQuery : { contains: usernameQuery }
+            },
+            select: { userId: true },
+            take: 500
+          })
+        : [];
+      const usernameIds = usernameProfiles.map(profile => profile.userId);
+      const matchingUsers = exactUsernameSearch || q.startsWith("@") ? [] : await prisma.user.findMany({
+        where: {
+          id: { notIn: excludedIds },
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { institutionName: { contains: q, mode: "insensitive" } },
+            { programme: { contains: q, mode: "insensitive" } }
+          ]
+        },
+        select: { id: true },
+        take: 500
+      });
+      const matchingIds = [...new Set([...usernameIds, ...matchingUsers.map(user => user.id)])];
+      profileWhere.userId = { in: matchingIds, notIn: excludedIds };
+    }
+
+    const total = await prisma.communityProfile.count({ where: profileWhere });
+    const now = Date.now();
+    const [profiles, onlineCount] = await Promise.all([
+      prisma.communityProfile.findMany({
+        where: profileWhere,
+        orderBy: [{ lastSeenAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }, { id: "asc" }],
+        take: limit + 1,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {})
+      }),
+      prisma.communityProfile.count({
+        where: { ...profileWhere, lastSeenAt: { gte: new Date(now - 120000), lte: new Date(now) } }
+      })
+    ]);
+    const hasMore = profiles.length > limit;
+    const pageProfiles = profiles.slice(0, limit);
+    const userIds = pageProfiles.map(profile => profile.userId);
+    const [users, outgoing, incoming] = await Promise.all([
+      prisma.user.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true }
+      }),
       prisma.communityFollow.findMany({ where: { followerId: req.userId, followingId: { in: userIds } } }),
       prisma.communityFollow.findMany({ where: { followingId: req.userId, followerId: { in: userIds } } })
     ]);
-    const blockedIds = new Set(blocks.map(b => b.blockerId === req.userId ? b.blockedId : b.blockerId));
-    const outMap = new Map(outgoing.map(x => [x.followingId, x.status]));
-    const inMap = new Map(incoming.map(x => [x.followerId, x.status]));
-    const map = new Map(profiles.map(p => [p.userId, p]));
-    res.json({ people: users.filter(u => map.has(u.id) && !blockedIds.has(u.id)).map(u => ({
-      ...publicProfile(map.get(u.id), u),
-      friendStatus: outMap.get(u.id) === "ACCEPTED" && inMap.get(u.id) === "ACCEPTED" ? "FRIENDS" :
-        inMap.get(u.id) === "PENDING" ? "REQUEST_RECEIVED" :
-        outMap.get(u.id) === "PENDING" ? "REQUEST_SENT" : "NONE",
-      friendRequestId: incoming.find(x => x.followerId === u.id && x.status === "PENDING")?.id || null
-    })) });
+    const outMap = new Map(outgoing.map(row => [row.followingId, row.status]));
+    const inMap = new Map(incoming.map(row => [row.followerId, row.status]));
+    const incomingPending = new Map(incoming.filter(row => row.status === "PENDING").map(row => [row.followerId, row.id]));
+    const userMap = new Map(users.map(user => [user.id, user]));
+    const people = pageProfiles.filter(profile => userMap.has(profile.userId)).map(profile => {
+      const user = userMap.get(profile.userId);
+      const lastSeen = profile.lastSeenAt ? new Date(profile.lastSeenAt).getTime() : 0;
+      const outStatus = outMap.get(user.id);
+      const inStatus = inMap.get(user.id);
+      return {
+        ...publicProfile(profile, user),
+        online: Boolean(lastSeen && lastSeen <= now && now - lastSeen <= 120000),
+        canFriend: user.educationTrack === currentUser.educationTrack,
+        friendStatus: outStatus === "ACCEPTED" && inStatus === "ACCEPTED" ? "FRIENDS" :
+          inStatus === "PENDING" ? "REQUEST_RECEIVED" :
+          outStatus === "PENDING" ? "REQUEST_SENT" : "NONE",
+        friendRequestId: incomingPending.get(user.id) || null
+      };
+    });
+    res.json({
+      people,
+      total,
+      onlineCount,
+      nextCursor: hasMore && pageProfiles.length ? pageProfiles[pageProfiles.length - 1].id : null,
+      limit
+    });
   } catch (e) { next(e); }
 });
 
 router.get("/follow-requests", async (req, res, next) => {
   try {
     const requests = await prisma.communityFollow.findMany({ where: { followingId: req.userId, status: "PENDING" }, orderBy: { createdAt: "desc" }, take: 50 });
-    const users = await prisma.user.findMany({ where: { id: { in: requests.map(r => r.followerId) } }, select: { id: true, name: true, educationTrack: true } });
-    const map = new Map(users.map(u => [u.id, u]));
-    res.json({ requests: requests.map(r => ({ ...r, requester: map.get(r.followerId) || null })) });
+    const ids = requests.map(request => request.followerId);
+    const [users, profiles] = await Promise.all([
+      prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, educationTrack: true } }),
+      prisma.communityProfile.findMany({ where: { userId: { in: ids }, visibility: "PUBLIC", status: "ACTIVE", usernameSet: true }, select: { userId: true, username: true } })
+    ]);
+    const userMap = new Map(users.map(user => [user.id, user]));
+    const profileMap = new Map(profiles.map(profile => [profile.userId, profile]));
+    res.json({ requests: requests.filter(request => profileMap.has(request.followerId)).map(request => ({
+      id: request.id,
+      createdAt: request.createdAt,
+      requester: {
+        displayName: userMap.get(request.followerId)?.name || "Student",
+        username: profileMap.get(request.followerId)?.username || "",
+        educationTrack: userMap.get(request.followerId)?.educationTrack || ""
+      }
+    })) });
   } catch (e) { next(e); }
 });
 
@@ -522,18 +733,18 @@ router.post("/friend-requests/:id", async (req, res, next) => {
         update: { status: "ACCEPTED" }
       })
     ]);
-    await notifySocial(request.followerId, req.userId, "Friend request accepted", "Your friend request was accepted.", { type: "FRIEND_ACCEPTED", userId: req.userId });
+    await notifySocial(request.followerId, req.userId, "Friend request accepted", "Your friend request was accepted.", { type: "FRIEND_ACCEPTED" });
     res.json({ ok: true, status: "ACCEPTED" });
   } catch (e) { next(e); }
 });
 
 router.post("/follow/:userId", async (req, res, next) => {
   try {
-    const [target, currentUser] = await Promise.all([getUser(req.params.userId), getUser(req.userId)]);
+    const [target, currentUser] = await Promise.all([getSocialUser(req.params.userId), getUser(req.userId)]);
     if (!target || target.id === req.userId) return res.status(404).json({ error: "Student not found." });
     if (!currentUser || target.educationTrack !== currentUser.educationTrack) return res.status(403).json({ error: "Friend connections are limited to students in the same academic environment." });
-    const targetProfile = await prisma.communityProfile.findUnique({ where: { userId: target.id }, select: { visibility: true, status: true } });
-    if (!targetProfile || targetProfile.visibility !== "PUBLIC" || targetProfile.status !== "ACTIVE") return res.status(404).json({ error: "Student profile not found." });
+    const targetProfile = await prisma.communityProfile.findUnique({ where: { userId: target.id }, select: { visibility: true, status: true, usernameSet: true } });
+    if (!targetProfile || !targetProfile.usernameSet || targetProfile.visibility !== "PUBLIC" || targetProfile.status !== "ACTIVE") return res.status(404).json({ error: "Student profile not found." });
     if (await isBlocked(req.userId, target.id)) return res.status(403).json({ error: "This connection is blocked." });
     const [outgoing, incoming] = await Promise.all([
       prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: req.userId, followingId: target.id } } }),
@@ -549,7 +760,7 @@ router.post("/follow/:userId", async (req, res, next) => {
     if (status === "ACCEPTED") await prisma.communityFollow.update({
       where: { followerId_followingId: { followerId: target.id, followingId: req.userId } }, data: { status: "ACCEPTED" }
     });
-    if (status === "PENDING") await notifySocial(target.id, req.userId, "New friend request", "A student sent you a friend request.", { type: "FRIEND_REQUEST", requesterId: req.userId });
+    if (status === "PENDING") await notifySocial(target.id, req.userId, "New friend request", "A student sent you a friend request.", { type: "FRIEND_REQUEST" });
     else await notifySocial(target.id, req.userId, "Friend request accepted", "Your friend request was accepted.", { type: "FRIEND_ACCEPTED", userId: req.userId });
     res.json({ ok: true, status });
   } catch (e) { next(e); }
@@ -557,7 +768,8 @@ router.post("/follow/:userId", async (req, res, next) => {
 
 router.delete("/follow/:userId", async (req, res, next) => {
   try {
-    const targetId = clean(req.params.userId, 100);
+    const target = await getSocialUser(req.params.userId);
+    const targetId = target?.id;
     if (!targetId || targetId === req.userId) return res.status(400).json({ error: "Invalid student." });
     const [outgoing, incoming] = await Promise.all([
       prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: req.userId, followingId: targetId } } }),
@@ -793,6 +1005,31 @@ async function canAccessConversation(conversationId, userId) {
   }
   return false;
 }
+router.get("/chat/unread-count", async (req, res, next) => {
+  try {
+    const memberships = await prisma.chatMember.findMany({
+      where: { userId: req.userId },
+      select: { conversationId: true, lastReadAt: true },
+      take: 100
+    });
+    const accessible = [];
+    for (const member of memberships) {
+      if (await canAccessConversation(member.conversationId, req.userId)) accessible.push(member);
+    }
+    if (!accessible.length) return res.json({ unreadCount: 0 });
+    const unreadCount = await prisma.chatMessage.count({
+      where: {
+        senderId: { not: req.userId },
+        deletedAt: null,
+        OR: accessible.map(member => ({
+          conversationId: member.conversationId,
+          createdAt: { gt: member.lastReadAt || new Date(0) }
+        }))
+      }
+    });
+    res.json({ unreadCount });
+  } catch (e) { next(e); }
+});
 router.get("/chat", async (req, res, next) => {
   try {
     const memberships = await prisma.chatMember.findMany({ where: { userId: req.userId }, orderBy: { joinedAt: "desc" }, take: 80 });
@@ -804,17 +1041,37 @@ router.get("/chat", async (req, res, next) => {
     const messages = await prisma.chatMessage.findMany({ where: { conversationId: { in: visibleIds }, deletedAt: null }, orderBy: { createdAt: "desc" }, take: 160 });
     const allMembers = await prisma.chatMember.findMany({ where: { conversationId: { in: visibleIds } } });
     const memberIds = [...new Set(allMembers.map(m => m.userId))];
-    const memberUsers = await prisma.user.findMany({ where: { id: { in: memberIds } }, select: { id: true, name: true, educationTrack: true } });
-    const memberMap = new Map(memberUsers.map(u => [u.id, u]));
-    res.json({ conversations: conversations.map(c => ({ ...c, members: allMembers.filter(m => m.conversationId === c.id).map(m => ({ ...m, user: memberMap.get(m.userId) || null })), lastMessage: messages.find(m => m.conversationId === c.id) || null })) });
+    const [memberUsers, memberProfiles] = await Promise.all([
+      prisma.user.findMany({ where: { id: { in: memberIds } }, select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } }),
+      prisma.communityProfile.findMany({ where: { userId: { in: memberIds } } })
+    ]);
+    const memberMap = new Map(memberUsers.map(user => [user.id, user]));
+    const profileMap = new Map(memberProfiles.map(profile => [profile.userId, profile]));
+    res.json({ conversations: conversations.map(conversation => {
+      const { createdById, ...safeConversation } = conversation;
+      const members = allMembers.filter(member => member.conversationId === conversation.id).map(member => {
+        const { userId, ...safeMember } = member;
+        const user = memberMap.get(userId);
+        const profile = profileMap.get(userId);
+        const safeUser = user && profile?.visibility === "PUBLIC" && profile.status === "ACTIVE"
+          ? publicProfile(profile, user)
+          : user ? { displayName: user.name, educationTrack: user.educationTrack, username: null, avatarUrl: null } : null;
+        return { ...safeMember, isMe: userId === req.userId, user: safeUser };
+      });
+      const last = messages.find(message => message.conversationId === conversation.id) || null;
+      let lastMessage = null;
+      if (last) { const { senderId, ...safeMessage } = last; lastMessage = { ...safeMessage, isMine: senderId === req.userId }; }
+      return { ...safeConversation, members, lastMessage };
+    }) });
   } catch (e) { next(e); }
 });
 router.post("/chat/direct/:userId", async (req, res, next) => {
   try {
-    if (!await canChat(req.userId, req.params.userId)) return res.status(403).json({ error: "Private chats are available between accepted connections in the same academic environment." });
+    const target = await getSocialUser(req.params.userId);
+    if (!target || !await canChat(req.userId, target.id)) return res.status(403).json({ error: "Private chats are available between accepted connections in the same academic environment." });
     const conversation = await prisma.chatConversation.create({ data: { createdById: req.userId, kind: "DIRECT" } });
-    await prisma.chatMember.createMany({ data: [{ conversationId: conversation.id, userId: req.userId }, { conversationId: conversation.id, userId: req.params.userId }] });
-    res.status(201).json({ conversation });
+    await prisma.chatMember.createMany({ data: [{ conversationId: conversation.id, userId: req.userId }, { conversationId: conversation.id, userId: target.id }] });
+    res.status(201).json({ conversation: { id: conversation.id, kind: conversation.kind, createdAt: conversation.createdAt, updatedAt: conversation.updatedAt } });
   } catch (e) { next(e); }
 });
 router.post("/chat/group/:groupId", async (req, res, next) => {
@@ -835,7 +1092,10 @@ router.get("/chat/:id/messages", async (req, res, next) => {
   try {
     if (!await canAccessConversation(req.params.id, req.userId)) return res.status(404).json({ error: "Conversation not found or connection no longer available." });
     const messages = await prisma.chatMessage.findMany({ where: { conversationId: req.params.id, deletedAt: null }, orderBy: { createdAt: "asc" }, take: 100 });
-    res.json({ messages });
+    res.json({ messages: messages.map(message => {
+      const { senderId, ...safeMessage } = message;
+      return { ...safeMessage, isMine: senderId === req.userId };
+    }) });
   } catch (e) { next(e); }
 });
 router.post("/chat/:id/voice-upload-signature", async (req, res, next) => {
@@ -861,7 +1121,16 @@ router.post("/chat/:id/messages", async (req, res, next) => {
     if (messageType === "VOICE_NOTE" && (!mediaUrl || new URL(mediaUrl).hostname !== "res.cloudinary.com")) return res.status(400).json({ error: "Voice notes must be uploaded to the configured Cloudinary media storage." });
     const message = await prisma.chatMessage.create({ data: { conversationId: req.params.id, senderId: req.userId, body: messageType === "TEXT" ? body : null, mediaUrl, messageType } });
     await prisma.chatConversation.update({ where: { id: req.params.id }, data: { updatedAt: new Date() } });
-    res.status(201).json({ message });
+    const recipients = await prisma.chatMember.findMany({
+      where: { conversationId: req.params.id, userId: { not: req.userId } },
+      select: { userId: true }
+    });
+    await Promise.all(recipients.map(member => notifySocial(
+      member.userId, req.userId, "New message", messageType === "VOICE_NOTE" ? "You received a voice message." : "You received a new message.",
+      { type: "NEW_MESSAGE", conversationId: req.params.id, messageId: message.id }
+    )));
+    const { senderId, ...safeMessage } = message;
+    res.status(201).json({ message: { ...safeMessage, isMine: senderId === req.userId } });
   } catch (e) { next(e); }
 });
 router.patch("/chat/:id/read", async (req, res, next) => {
@@ -880,7 +1149,7 @@ router.get("/calls/ice", (req, res) => {
   // Use time-limited TURN REST credentials; never expose a permanent TURN secret to browsers.
   if (process.env.TURN_URL && process.env.TURN_SHARED_SECRET) {
     const expires = Math.floor(Date.now() / 1000) + 3600;
-    const username = expires + ":" + req.userId;
+    const username = expires + ":" + crypto.randomBytes(12).toString("hex");
     const credential = crypto.createHmac("sha1", process.env.TURN_SHARED_SECRET).update(username).digest("base64");
     iceServers.push({ urls: process.env.TURN_URL.split(",").map(x => x.trim()), username, credential });
   }
@@ -888,13 +1157,14 @@ router.get("/calls/ice", (req, res) => {
 });
 router.post("/calls", async (req, res, next) => {
   try {
-    const calleeId = clean(req.body?.calleeId, 100);
-    if (!await canChat(req.userId, calleeId)) return res.status(403).json({ error: "Calls are available only between accepted connections in the same academic environment." });
+    const callee = await getSocialUser(req.body?.calleeUsername || req.body?.calleeId);
+    const calleeId = callee?.id;
+    if (!calleeId || !await canChat(req.userId, calleeId)) return res.status(403).json({ error: "Calls are available only between accepted connections in the same academic environment." });
     const active = await prisma.callSession.findFirst({ where: { status: { in: ["RINGING", "ACTIVE"] }, OR: [{ callerId: req.userId }, { calleeId: req.userId }] } });
     if (active) return res.status(409).json({ error: "You already have an incoming or outgoing call." });
     const callType = req.body?.callType === "VIDEO" ? "VIDEO" : "AUDIO";
     const call = await prisma.callSession.create({ data: { callerId: req.userId, calleeId, callType } });
-    res.status(201).json({ call });
+    res.status(201).json({ call: { id: call.id, callType: call.callType, status: call.status, startedAt: call.startedAt } });
   } catch (e) { next(e); }
 });
 router.get("/calls/incoming", async (req, res, next) => {
@@ -902,7 +1172,7 @@ router.get("/calls/incoming", async (req, res, next) => {
     const expiredBefore = new Date(Date.now() - 90 * 1000);
     await prisma.callSession.updateMany({ where: { calleeId: req.userId, status: "RINGING", startedAt: { lt: expiredBefore } }, data: { status: "MISSED", endedAt: new Date() } });
     const calls = await prisma.callSession.findMany({ where: { calleeId: req.userId, status: "RINGING", startedAt: { gte: expiredBefore } }, orderBy: { startedAt: "desc" }, take: 10 });
-    res.json({ calls });
+    res.json({ calls: calls.map(call => ({ id: call.id, callType: call.callType, status: call.status, startedAt: call.startedAt })) });
   } catch (e) { next(e); }
 });
 router.post("/calls/:id/signals", async (req, res, next) => {
@@ -922,7 +1192,7 @@ router.get("/calls/:id/signals", async (req, res, next) => {
     if (!await canAccessCall(call, req.userId)) return res.status(404).json({ error: "Call not found or connection no longer available." });
     const after = typeof req.query.after === "string" ? req.query.after : "";
     const signals = await prisma.callSignal.findMany({ where: { callId: call.id, senderId: { not: req.userId }, ...(after ? { id: { gt: after } } : {}) }, orderBy: { createdAt: "asc" }, take: 50 });
-    res.json({ call, signals });
+    res.json({ call: { id: call.id, callType: call.callType, status: call.status }, signals: signals.map(signal => ({ id: signal.id, kind: signal.kind, payload: signal.payload, createdAt: signal.createdAt })) });
   } catch (e) { next(e); }
 });
 router.patch("/calls/:id", async (req, res, next) => {
@@ -935,14 +1205,15 @@ router.patch("/calls/:id", async (req, res, next) => {
       : action === "END" ? { status: "ENDED", endedAt: new Date() } : null;
     if (!data) return res.status(400).json({ error: "Invalid call action." });
     const updated = await prisma.callSession.update({ where: { id: call.id }, data });
-    res.json({ call: updated });
+    res.json({ call: { id: updated.id, callType: updated.callType, status: updated.status, startedAt: updated.startedAt } });
   } catch (e) { next(e); }
 });
 
 router.post("/blocks/:userId", async (req, res, next) => {
   try {
-    const targetId = clean(req.params.userId, 100);
-    if (!targetId || targetId === req.userId || !await prisma.user.findUnique({ where: { id: targetId }, select: { id: true } })) return res.status(404).json({ error: "Student not found." });
+    const target = await getSocialUser(req.params.userId);
+    const targetId = target?.id;
+    if (!targetId || targetId === req.userId) return res.status(404).json({ error: "Student not found." });
     await prisma.$transaction([
       prisma.communityBlock.upsert({
         where: { blockerId_blockedId: { blockerId: req.userId, blockedId: targetId } },
@@ -960,7 +1231,9 @@ router.post("/blocks/:userId", async (req, res, next) => {
 });
 router.delete("/blocks/:userId", async (req, res, next) => {
   try {
-    await prisma.communityBlock.deleteMany({ where: { blockerId: req.userId, blockedId: req.params.userId } });
+    const target = await getSocialUser(req.params.userId);
+    if (!target) return res.json({ ok: true });
+    await prisma.communityBlock.deleteMany({ where: { blockerId: req.userId, blockedId: target.id } });
     res.json({ ok: true });
   } catch (e) { next(e); }
 });
@@ -975,9 +1248,10 @@ router.get("/blocks", async (req, res, next) => {
     const userMap = new Map(users.map(user => [user.id, user]));
     const profileMap = new Map(profiles.map(profile => [profile.userId, profile]));
     res.json({ blocks: blocks.map(block => ({
-      ...block, displayName: userMap.get(block.blockedId)?.name || "Student",
-      username: profileMap.get(block.blockedId)?.username || ""
-    })) });
+      displayName: userMap.get(block.blockedId)?.name || "Student",
+      username: profileMap.get(block.blockedId)?.username || "",
+      createdAt: block.createdAt
+    })).filter(block => block.username) });
   } catch (e) { next(e); }
 });
 router.post("/reports", async (req, res, next) => {

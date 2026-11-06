@@ -360,9 +360,11 @@ model CommunityProfile {
   coverUrl       String?  @map("cover_url") @db.VarChar(500)
   visibility     String   @default("PUBLIC") @db.VarChar(16)
   status         String   @default("ACTIVE") @db.VarChar(16)
+  lastSeenAt     DateTime? @map("last_seen_at")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
   @@index([bestSubject])
+  @@index([lastSeenAt])
   @@map("community_profiles")
 }
 
