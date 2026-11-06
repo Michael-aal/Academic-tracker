@@ -35,7 +35,11 @@
     if (name === "videos") loadVideoPreferences();
     if (name === "messages") loadChats();
     if (name === "referrals") loadReferrals();
-    if (name === "profile") loadProfile();
+    if (name === "profile") {
+      if ($("public-student-profile")) $("public-student-profile").hidden = true;
+      if (document.querySelector(".social-profile-page")) document.querySelector(".social-profile-page").hidden = false;
+      loadProfile();
+    }
   }
   document.addEventListener("click", e => {
     const button = e.target.closest("[data-tab]");
@@ -114,6 +118,21 @@
       catch(err){status(err.message);}
     }
   });
+  $("choose-profile-cover").addEventListener("click", () => $("profile-cover-file").click());
+  $("profile-cover-file").addEventListener("change", async e => {
+    const file=e.target.files?.[0];
+    if(!file)return;
+    try{
+      if(!file.type.startsWith("image/"))throw new Error("Choose an image file for your cover photo.");
+      if(file.size>8*1024*1024)throw new Error("Cover photos must be 8 MB or smaller.");
+      const uploaded=await uploadCommunityMedia(file);
+      await api("/community/profile/me",{method:"PATCH",body:JSON.stringify({coverUrl:uploaded.mediaUrl})});
+      $("profile-cover").value=uploaded.mediaUrl;
+      status("Cover photo updated.");
+      await loadProfile();
+    }catch(error){status(error.message);}
+    finally{e.target.value="";}
+  });
   $("profile-form").addEventListener("submit", async e => {
     e.preventDefault(); if (!requireLogin()) return;
     const interests = $("profile-interests").value.split(",").map(x => x.trim()).filter(Boolean).slice(0,12);
@@ -121,20 +140,31 @@
     if(submitButton){submitButton.disabled=true;submitButton.dataset.originalText=submitButton.textContent;submitButton.textContent="Saving profile…";}
     try {
       const avatarFile=$("profile-avatar-file").files?.[0];
+      const coverFile=$("profile-cover-file-editor").files?.[0] || $("profile-cover-file").files?.[0];
       let avatarUrl=$("profile-avatar").value.trim();
+      let coverUrl=$("profile-cover").value.trim();
       if(avatarFile){
         if(!avatarFile.type.startsWith("image/"))throw new Error("Choose an image file for your profile picture.");
         if(avatarFile.size>8*1024*1024)throw new Error("Profile pictures must be 8 MB or smaller.");
         const uploaded=await uploadCommunityMedia(avatarFile);
         avatarUrl=uploaded.mediaUrl;
       }
+      if(coverFile){
+        if(!coverFile.type.startsWith("image/"))throw new Error("Choose an image file for your cover photo.");
+        if(coverFile.size>8*1024*1024)throw new Error("Cover photos must be 8 MB or smaller.");
+        const uploaded=await uploadCommunityMedia(coverFile);
+        coverUrl=uploaded.mediaUrl;
+      }
       const result=await api("/community/profile/me", { method:"PATCH", body:JSON.stringify({
         username:$("profile-username").value.trim(), bestSubject:$("profile-best-subject").value.trim(),
         bio:$("profile-bio").value, avatarUrl,
-        coverUrl:$("profile-cover").value.trim(), interests, visibility:$("profile-visibility").value
+        coverUrl, interests, visibility:$("profile-visibility").value
       })});
       $("profile-avatar").value=avatarUrl;
+      $("profile-cover").value=coverUrl;
       $("profile-avatar-file").value="";
+      $("profile-cover-file-editor").value="";
+      $("profile-cover-file").value="";
       status("Profile settings saved.");
       if(result.profile)$("profile-username").value=result.profile.username||"";
       await loadProfile();
