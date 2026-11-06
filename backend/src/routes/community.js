@@ -1158,7 +1158,7 @@ router.post("/calls", async (req, res, next) => {
     if (active) return res.status(409).json({ error: "You already have an incoming or outgoing call." });
     const callType = req.body?.callType === "VIDEO" ? "VIDEO" : "AUDIO";
     const call = await prisma.callSession.create({ data: { callerId: req.userId, calleeId, callType } });
-    res.status(201).json({ call });
+    res.status(201).json({ call: { id: call.id, callType: call.callType, status: call.status, startedAt: call.startedAt } });
   } catch (e) { next(e); }
 });
 router.get("/calls/incoming", async (req, res, next) => {
@@ -1166,7 +1166,7 @@ router.get("/calls/incoming", async (req, res, next) => {
     const expiredBefore = new Date(Date.now() - 90 * 1000);
     await prisma.callSession.updateMany({ where: { calleeId: req.userId, status: "RINGING", startedAt: { lt: expiredBefore } }, data: { status: "MISSED", endedAt: new Date() } });
     const calls = await prisma.callSession.findMany({ where: { calleeId: req.userId, status: "RINGING", startedAt: { gte: expiredBefore } }, orderBy: { startedAt: "desc" }, take: 10 });
-    res.json({ calls });
+    res.json({ calls: calls.map(call => ({ id: call.id, callType: call.callType, status: call.status, startedAt: call.startedAt })) });
   } catch (e) { next(e); }
 });
 router.post("/calls/:id/signals", async (req, res, next) => {
@@ -1186,7 +1186,7 @@ router.get("/calls/:id/signals", async (req, res, next) => {
     if (!await canAccessCall(call, req.userId)) return res.status(404).json({ error: "Call not found or connection no longer available." });
     const after = typeof req.query.after === "string" ? req.query.after : "";
     const signals = await prisma.callSignal.findMany({ where: { callId: call.id, senderId: { not: req.userId }, ...(after ? { id: { gt: after } } : {}) }, orderBy: { createdAt: "asc" }, take: 50 });
-    res.json({ call, signals });
+    res.json({ call: { id: call.id, callType: call.callType, status: call.status }, signals: signals.map(signal => ({ id: signal.id, kind: signal.kind, payload: signal.payload, createdAt: signal.createdAt })) });
   } catch (e) { next(e); }
 });
 router.patch("/calls/:id", async (req, res, next) => {
@@ -1199,7 +1199,7 @@ router.patch("/calls/:id", async (req, res, next) => {
       : action === "END" ? { status: "ENDED", endedAt: new Date() } : null;
     if (!data) return res.status(400).json({ error: "Invalid call action." });
     const updated = await prisma.callSession.update({ where: { id: call.id }, data });
-    res.json({ call: updated });
+    res.json({ call: { id: updated.id, callType: updated.callType, status: updated.status, startedAt: updated.startedAt } });
   } catch (e) { next(e); }
 });
 
