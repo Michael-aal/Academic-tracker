@@ -26,7 +26,7 @@
     document.querySelectorAll(".community-view").forEach(v => v.classList.toggle("active", v.id === "view-" + name));
     if (name !== "videos") pauseFocusedVideo();
     if (name === "feed") loadFeed();
-    if (name === "people") loadFriends();
+    if (name === "people") { loadPeople(); loadFriends(); }
     document.querySelectorAll("#social-bottom-nav [data-social-dest]").forEach(b => { const active = b.dataset.socialDest === name; b.classList.toggle("active", active); if (active) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
 
     if (name === "groups") loadGroups();
@@ -292,21 +292,38 @@
     } catch(err){status(err.message);}
   });
 
-  $("people-search").addEventListener("submit",async e=>{
-    e.preventDefault(); if(!requireLogin()) return;
-    const q=$("people-query").value.trim(); if(q.length<2) return status("Enter at least two characters.");
+  function renderPeople(people, total) {
+    const count = $("people-results-count");
+    if (count) count.textContent = total + (total === 1 ? " student" : " students");
+    $("people-list").innerHTML = people.length ? people.map(p => {
+      const avatar = p.avatarUrl
+        ? '<img src="' + esc(p.avatarUrl) + '" alt="" loading="lazy">'
+        : '<span>' + esc((p.displayName || p.username || "S").slice(0, 1).toUpperCase()) + '</span>';
+      const action = p.friendStatus === "FRIENDS" ? '<button class="outline-button" data-unfriend="' + esc(p.userId) + '">Friends · Remove</button>' :
+        p.friendStatus === "REQUEST_SENT" ? '<button class="outline-button" data-cancel-friend="' + esc(p.userId) + '">Request sent · Cancel</button>' :
+        p.friendStatus === "REQUEST_RECEIVED" ? '<button class="primary-button" data-friend-request="' + esc(p.friendRequestId || "") + '" data-request-action="accept">Accept request</button><button class="outline-button" data-friend-request="' + esc(p.friendRequestId || "") + '" data-request-action="decline">Decline</button>' :
+        '<button class="outline-button" data-follow="' + esc(p.userId) + '">Add friend</button>';
+      return '<article class="person-card person-discovery-card"><a class="person-profile-link" href="community.html#profile-' + esc(p.username) + '" aria-label="View ' + esc(p.displayName) + ' profile"><span class="person-discovery-avatar">' + avatar + '<i class="' + (p.online ? "is-online" : "is-offline") + '" aria-label="' + (p.online ? "Online" : "Offline") + '"></i></span><span class="person-discovery-identity"><strong>' + esc(p.displayName || "Student") + '</strong><small>@' + esc(p.username) + '</small><small class="person-presence ' + (p.online ? "online" : "offline") + '">' + (p.online ? "Online now" : "Offline") + '</small></span></a><p>' + esc(p.educationTrack || "Student") + ' · ' + esc(p.institutionName || p.programme || "Institution not specified") + '<br>Best subject: ' + esc(p.bestSubject || "Not specified") + '</p><div class="friend-request-actions">' + action + '<button class="quiet-button" data-block="' + esc(p.userId) + '">Block</button></div></article>';
+    }).join("") : '<div class="empty-state">No public student profiles found. Try another name or username.</div>';
+  }
+  async function loadPeople(query = $("people-query").value.trim()) {
+    if (!requireLogin()) return;
+    $("people-list").innerHTML = '<div class="empty-state">Loading students…</div>';
     try {
-      const {people=[]}=await api("/community/people?q="+encodeURIComponent(q));
-      $("people-list").innerHTML=people.length?people.map(p=>{
-        const action=p.friendStatus==="FRIENDS"?'<button class="outline-button" data-unfriend="'+esc(p.userId)+'">Friends · Remove</button>':
-          p.friendStatus==="REQUEST_SENT"?'<button class="outline-button" data-cancel-friend="'+esc(p.userId)+'">Request sent · Cancel</button>':
-          p.friendStatus==="REQUEST_RECEIVED"?'<button class="primary-button" data-friend-request="'+esc(p.friendRequestId||"")+'" data-request-action="accept">Accept request</button><button class="outline-button" data-friend-request="'+esc(p.friendRequestId||"")+'" data-request-action="decline">Decline</button>':
-          '<button class="outline-button" data-follow="'+esc(p.userId)+'">Add friend</button>';
-        return '<article class="person-card"><strong>'+esc(p.displayName)+'</strong><p>@'+esc(p.username)+' · '+esc(p.educationTrack)+'<br>'+esc(p.institutionName||p.programme||"")+'<br>Best subject: '+esc(p.bestSubject||"Not specified")+'</p><div class="friend-request-actions">'+action+'<button class="quiet-button" data-block="'+esc(p.userId)+'">Block</button></div></article>';
-      }).join(""):'<div class="empty-state">No public profiles found.</div>';
-    } catch(err){status(err.message);}
+      const { people = [], total = 0 } = await api("/community/people" + (query ? "?q=" + encodeURIComponent(query) : ""));
+      renderPeople(people, total);
+    } catch (err) {
+      $("people-list").innerHTML = '<div class="empty-state">Could not load students. Please refresh and try again.</div>';
+      status(err.message);
+    }
+  }
+  $("people-search").addEventListener("submit", async e => {
+    e.preventDefault();
+    const q = $("people-query").value.trim();
+    if (q.length === 1) return status("Enter at least two characters, or clear the search to browse everyone.");
+    await loadPeople(q);
   });
-  $("people-list").addEventListener("click",async e=>{
+    $("people-list").addEventListener("click",async e=>{
     const block=e.target.closest("[data-block]");
     if(block){
       if(!window.confirm("Block this student? They will no longer be able to connect or privately chat with you."))return;
@@ -585,6 +602,9 @@
   } catch (_) {}
   if (!token()) { location.replace("login.html?next=social-media.html"); return; }
   loadProfile();
+  const sendPresenceHeartbeat = () => { if (token()) api("/community/presence/heartbeat", { method: "POST", body: "{}" }).catch(() => {}); };
+  sendPresenceHeartbeat();
+  setInterval(sendPresenceHeartbeat, 60000);
   try { const u=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}"); if(u.isAdmin||["ADMIN","DEVELOPER","DEV"].includes(String(u.role||"").toUpperCase())) $("community-admin-link").hidden=false; } catch (_) {}
   const requestedView = location.hash.replace(/^#/, "");
   document.body.dataset.preproomView = ["feed","people","messages","profile","videos"].includes(requestedView) ? requestedView : "feed";
