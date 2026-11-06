@@ -103,6 +103,9 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
     const data = await response.json();
     const byUsername = new Map(data.people.map(person => [person.username, person]));
     assert.ok(byUsername.has(online.profile.username), "public profiles from the other academic track should be discoverable");
+    assert.equal(data.people[0].username, online.profile.username, "online users should be sorted before offline and never-active profiles");
+    assert.equal(data.onlineCount, 1);
+    assert.equal(byUsername.get(online.profile.username).userId, undefined, "public profile responses must not expose account IDs");
     assert.ok(byUsername.has(offline.profile.username));
     assert.ok(!byUsername.has(viewer.profile.username), "the current user must not appear in their own discovery list");
     assert.ok(!byUsername.has(privateStudent.profile.username), "private profiles must not be discoverable");
@@ -117,6 +120,8 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
     assert.equal(publicProfile.status, 200);
     const publicProfileData = await publicProfile.json();
     assert.equal(publicProfileData.relationship.canFriend, false, "public profiles should expose connection eligibility without allowing cross-track requests");
+    assert.equal(publicProfileData.profile.userId, undefined);
+    assert.equal(publicProfileData.profile.id, undefined);
 
     const blockedProfile = await request("/api/community/profiles/" + blockedStudent.profile.username, viewer.user);
     assert.equal(blockedProfile.status, 404, "blocked profiles must not be accessible");
@@ -131,6 +136,11 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
     const usernameSearch = await request("/api/community/people?q=%40" + encodeURIComponent(online.profile.username), viewer.user);
     assert.equal(usernameSearch.status, 200);
     assert.ok((await usernameSearch.json()).people.some(person => person.username === online.profile.username), "search must support @username");
+
+    const nameSearch = await request("/api/community/people?q=Online%20Higher%20Student", viewer.user);
+    assert.ok((await nameSearch.json()).people.some(person => person.username === online.profile.username), "search must include display names");
+    const institutionSearch = await request("/api/community/people?q=Lagos%20Tech", viewer.user);
+    assert.ok((await institutionSearch.json()).people.some(person => person.username === online.profile.username), "search must include institution");
 
     const search = await request("/api/community/people?q=Computer%20Engineering", viewer.user);
     assert.equal(search.status, 200);
