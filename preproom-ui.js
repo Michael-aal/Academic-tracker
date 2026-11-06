@@ -68,6 +68,20 @@
       if(tab==="posts")$("#social-profile-posts")?.scrollIntoView({behavior:"smooth",block:"start"});
     }));
   }
-  function boot(){setupBrand();setupNavigation();setupHome();simplifyFeed();setupExplore();setupProfileTabs();}
+
+  function setupNotificationFilters(){
+    const buttons=$("[data-notification-filter]");
+    if(!buttons.length)return;
+    buttons.forEach(button=>button.addEventListener("click",()=>{
+      buttons.forEach(b=>b.classList.toggle("active",b===button));
+      const type=button.dataset.notificationFilter;
+      $(".notification-item").forEach(item=>{
+        const content=(item.innerText||"").toLowerCase();
+        const match=type==="all"||(type==="likes"&&/liked|like/.test(content))||(type==="comments"&&/commented|comment/.test(content))||(type==="shares"&&/shared|share/.test(content));
+        item.hidden=!match;
+      });
+    }));
+  }
+  function boot(){setupBrand();setupNavigation();setupHome();simplifyFeed();setupExplore();setupProfileTabs();setupNotificationFilters();}
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 })();
