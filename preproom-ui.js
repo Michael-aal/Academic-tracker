@@ -5,7 +5,7 @@
   function icon(path){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>'}
   function setupBrand(){
     const brand=$(".social-brand"); if(!brand)return;
-    brand.innerHTML='<span class="social-brand-mark" aria-hidden="true">'+icon("M2 10 12 3l10 7-10 7zM6 13v5c4 3 8 3 12 0v-5M21 11v6")+'</span><span><strong>Preproom</strong><small style="display:block;font-size:10px;font-weight:500;letter-spacing:0;color:#b8a9ca">Learn. Share. Connect.</small></span>';
+    brand.innerHTML='<span class="social-brand-mark" aria-hidden="true">'+icon("M2 10 12 3l10 7-10 7zM6 13v5c4 3 8 3 12 0v-5M21 11v6")+'</span><span><strong>Preproom</strong></span>';
     brand.setAttribute("aria-label","Preproom home");
   }
   function setupNavigation(){
@@ -15,7 +15,7 @@
       buttons.forEach(button=>{
         const key=button.dataset.tab;
         if(key==="feed")button.innerHTML=icon("m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7")+"Home";
-        if(key==="people")button.innerHTML=icon("M4 5h16v14H4zM8 9h8M8 13h5")+"Explore";
+        if(key==="people")button.innerHTML=icon("M9 8a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M2 20a7 7 0 0 1 14 0M16 5a3.5 3.5 0 0 1 0 7M17 14a5.5 5.5 0 0 1 4.5 5.5")+"Friends";
         if(key==="messages")button.innerHTML=icon("M4 5h16v12H8l-4 4zM8 9h8")+"Messages";
         if(key==="profile")button.innerHTML=icon("M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8M4 21a8 8 0 0 1 16 0")+"Profile";
         if(!["feed","people","messages","profile"].includes(key))button.hidden=true;
@@ -33,7 +33,7 @@
     if(bottom){
       $$("[data-social-dest]",bottom).forEach(button=>{
         const key=button.dataset.socialDest;
-        if(key==="people")button.querySelector("span").textContent="Explore";
+        if(key==="people")button.querySelector("span").textContent="Friends";
       });
     }
   }
