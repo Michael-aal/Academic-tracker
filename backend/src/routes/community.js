@@ -492,6 +492,7 @@ router.get("/people", async (req, res, next) => {
       return {
         ...publicProfile(p, u),
         online: Boolean(lastSeen && now - lastSeen <= 120000),
+        canFriend: u.educationTrack === currentUser.educationTrack,
         friendStatus: outMap.get(u.id) === "ACCEPTED" && inMap.get(u.id) === "ACCEPTED" ? "FRIENDS" :
           inMap.get(u.id) === "PENDING" ? "REQUEST_RECEIVED" :
           outMap.get(u.id) === "PENDING" ? "REQUEST_SENT" : "NONE",
