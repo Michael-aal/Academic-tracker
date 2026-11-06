@@ -5,7 +5,6 @@
   const api=(path,options={})=>state().api(path,options);
   let recorder=null,recordingStream=null,chunks=[];
   let currentCall=null,incomingCall=null,pc=null,localStream=null,pollHandle=null,incomingHandle=null,lastSignal="",pendingIce=[];
-  const me=()=>{try{return JSON.parse(localStorage.getItem("academic-tracker-user")||"{}").id||""}catch(_){return ""}};
   const setStatus=message=>{if($("call-status"))$("call-status").textContent=message||""};
   function stopTracks(){if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null}if(recordingStream){recordingStream.getTracks().forEach(t=>t.stop());recordingStream=null}}
   function cleanup(){
