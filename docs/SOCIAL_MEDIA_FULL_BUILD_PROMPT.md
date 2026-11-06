@@ -13,7 +13,7 @@ You are a senior full-stack engineer working in the existing `Michael-aal/Academ
 - This is an academic-focused social network called Social Media / Preproom, not a generic “Community” landing page.
 - Open directly into a real feed. Do not add promotional hero copy such as “share, connect, discover” or introductory marketing paragraphs.
 - Facebook-like familiar feed behavior with a clean, premium, modern student-network aesthetic.
-- Responsive mobile-first design. On phones use a single-column feed, compact top bar, generous but efficient spacing, readable typography, full-width media, touch-friendly controls, and a fixed bottom navigation with exactly: Home, Explore/Friends, Create, Messages, Profile.
+- Responsive mobile-first design. On phones use a single-column feed, compact top bar, generous but efficient spacing, readable typography, full-width media, touch-friendly controls, and a fixed bottom navigation with exactly: Home, Friends, Create, Messages, Profile.
 - The social area has its own navigation. Do not show the Academic Tracker dashboard navbar inside Social Media. Provide a clear return-to-Academic-Tracker action, and preserve the originating secondary or university dashboard when returning.
 - No Stories row, circular story avatars, or Stories feature.
 - Use a consistent icon system (Lucide-style SVG or the repository's icon system); avoid emoji icons, decorative blue arrows, and inconsistent icon styles.
