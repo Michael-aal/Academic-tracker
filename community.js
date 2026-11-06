@@ -19,6 +19,22 @@
     if (!response.ok) throw new Error(data.error || "The request could not be completed.");
     return data;
   }
+  async function updateSocialBadges() {
+    if (!token()) return;
+    const [notifications, messages] = await Promise.allSettled([
+      api("/notifications?limit=1"),
+      api("/community/chat/unread-count")
+    ]);
+    if (notifications.status === "fulfilled") {
+      const dot = $("social-notification-dot");
+      if (dot) dot.hidden = !(Number(notifications.value.unreadCount) > 0);
+    }
+    if (messages.status === "fulfilled") {
+      const badge = $("social-message-badge");
+      const count = Number(messages.value.unreadCount) || 0;
+      if (badge) { badge.textContent = count > 99 ? "99+" : String(count); badge.hidden = count < 1; }
+    }
+  }
   function requireLogin() {
     if (!token()) { location.href = "login.html?next=social-media.html"; return false; }
     return true;
@@ -771,6 +787,8 @@
   loadProfile().then(sendPresenceHeartbeat);
   setInterval(sendPresenceHeartbeat, 60000);
   document.addEventListener("visibilitychange", sendPresenceHeartbeat);
+  updateSocialBadges();
+  setInterval(updateSocialBadges, 30000);
   try { const u=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}"); if(u.isAdmin||["ADMIN","DEVELOPER","DEV"].includes(String(u.role||"").toUpperCase())) $("community-admin-link").hidden=false; } catch (_) {}
   const requestedView = location.hash.replace(/^#/, "");
   const publicProfileMatch = requestedView.match(/^profile\/(.+)$/);
