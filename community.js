@@ -458,13 +458,18 @@
     if (!root || !video) { root.innerHTML = '<div class="empty-state">No videos found. Try another subject.</div>'; return; }
     const subject = video.recommendedSubject || "";
     const videoId = encodeURIComponent(video.id);
-    root.innerHTML = '<section class="preproom-video-viewer" aria-label="Focused video viewer"><div class="preproom-video-stage"><iframe title="'+esc(video.title)+'" src="https://www.youtube-nocookie.com/embed/'+videoId+'?autoplay=1&mute=1&controls=1&rel=0&playsinline=1&loop=1&playlist='+videoId+'" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div><div class="preproom-video-details"><div><strong>'+esc(video.title)+'</strong><p>'+esc(video.channelTitle||"")+' · '+esc(subject)+'</p></div><span>'+ (focusedVideoIndex+1) +' / '+focusedVideoItems.length +'</span></div><div class="preproom-video-controls"><button type="button" data-video-step="-1" '+(focusedVideoIndex===0?'disabled':'')+'>Previous</button><button type="button" data-video-action="SAVE" data-video-id="'+esc(video.id)+'" data-subject="'+esc(subject)+'">Save</button><button type="button" data-video-action="NOT_INTERESTED" data-video-id="'+esc(video.id)+'" data-subject="'+esc(subject)+'">Not interested</button><button type="button" data-video-step="1" '+(focusedVideoIndex===focusedVideoItems.length-1?'disabled':'')+'>Next video</button></div></section>';
+    root.innerHTML = '<section class="preproom-video-viewer" aria-label="Focused video viewer"><div class="preproom-video-stage"><iframe title="'+esc(video.title)+'" data-embed-src="https://www.youtube-nocookie.com/embed/'+videoId+'?autoplay=1&mute=1&controls=1&rel=0&playsinline=1&loop=1&playlist='+videoId+'" src="about:blank" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div><div class="preproom-video-details"><div><strong>'+esc(video.title)+'</strong><p>'+esc(video.channelTitle||"")+' · '+esc(subject)+'</p></div><span>'+ (focusedVideoIndex+1) +' / '+focusedVideoItems.length +'</span></div><div class="preproom-video-controls"><button type="button" data-video-step="-1" '+(focusedVideoIndex===0?'disabled':'')+'>Previous</button><button type="button" data-video-action="SAVE" data-video-id="'+esc(video.id)+'" data-subject="'+esc(subject)+'">Save</button><button type="button" data-video-action="NOT_INTERESTED" data-video-id="'+esc(video.id)+'" data-subject="'+esc(subject)+'">Not interested</button><button type="button" data-video-step="1" '+(focusedVideoIndex===focusedVideoItems.length-1?'disabled':'')+'>Next video</button></div></section>';
     const stage=root.querySelector(".preproom-video-stage");
     if ("IntersectionObserver" in window && stage) {
       focusedVideoObserver = new IntersectionObserver(entries => {
-        if (!entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= 0.65)) pauseFocusedVideo();
+        const frame = stage.querySelector("iframe");
+        const active = entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= 0.65);
+        if (frame) frame.src = active ? frame.dataset.embedSrc : "about:blank";
       }, {threshold:[0,0.65,1]});
       focusedVideoObserver.observe(stage);
+    } else {
+      const frame = stage?.querySelector("iframe");
+      if (frame) frame.src = frame.dataset.embedSrc;
     }
   }
   function renderVideoCards(items, fallbackSubject="") {
