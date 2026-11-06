@@ -87,7 +87,7 @@
       $("social-profile-posts").innerHTML = posts.length ? posts.map(post => '<article class="social-profile-post" data-profile-post="' + esc(post.id) + '">' + (post.mediaUrl ? '<img src="' + esc(post.mediaUrl) + '" alt="Your post" loading="lazy">' : post.videoUrl ? '<video class="social-profile-video-player" controls playsinline preload="metadata"><source src="' + esc(post.videoUrl) + '">Video unavailable.</video>' : '<div class="social-profile-text-post">' + esc((post.body || "").slice(0,180)) + '</div>') + '<div class="social-profile-post-meta">' + esc(post.subject || "Post") + '<span>' + (post.reactionCount || 0) + ' likes · ' + (post.commentCount || 0) + ' comments · ' + (post.shareCount || 0) + ' shares</span></div><div class="social-profile-post-controls"><button type="button" data-profile-edit="' + esc(post.id) + '" data-body="' + esc(post.body || "") + '" data-subject="' + esc(post.subject || "") + '" data-visibility="' + esc(post.visibility || "PUBLIC") + '">Edit</button><button type="button" data-profile-delete="' + esc(post.id) + '">Delete</button></div></article>').join("") : '<div class="empty-state social-profile-empty">Your posts will appear here after you publish your first post.</div>';
     } catch (e) { status(e.message); }
   }
-  $("social-onboarding-form").addEventListener("submit",async e=>{e.preventDefault();const username=$("onboarding-username").value.trim().toLowerCase(),err=$("onboarding-error");err.textContent="";if(!/^[a-z0-9_]{3,30}$/.test(username)){err.textContent="Use 3–30 letters, numbers or underscores.";return;}const b=e.target.querySelector("button");b.disabled=true;try{await api("/community/profile/me",{method:"PATCH",body:JSON.stringify({username})});await loadProfile();}catch(x){err.textContent=x.message;}finally{b.disabled=false;}});
+  $("social-onboarding-form").addEventListener("submit",async e=>{e.preventDefault();const username=$("onboarding-username").value.trim().toLowerCase(),err=$("onboarding-error");err.textContent="";if(!/^[a-z0-9_]{3,30}$/.test(username)){err.textContent="Use 3–30 letters, numbers or underscores.";return;}const b=e.target.querySelector("button");b.disabled=true;try{await api("/community/profile/me",{method:"PATCH",body:JSON.stringify({username})});await loadProfile();if(window.socialReady)sendPresenceHeartbeat();}catch(x){err.textContent=x.message;}finally{b.disabled=false;}});
   $("edit-social-profile").addEventListener("click", () => $("profile-settings").scrollIntoView({behavior:"smooth",block:"start"}));
   document.addEventListener("click", e => {
     const example = e.target.closest("[data-example]");
@@ -481,7 +481,7 @@
       await loadFriends();
     } catch(err){status(err.message);}
   });
-  function usernameFromHash(){return decodeURIComponent(location.hash.replace(/^#profile\//,""));}
+  function usernameFromHash(){return decodeURIComponent(location.hash.slice("#profile/".length));}
   window.addEventListener("hashchange", () => {
     const hash = location.hash.replace(/^#/, "");
     if (hash.startsWith("profile/")) { tab("profile"); loadPublicProfile(decodeURIComponent(hash.slice(8))); return; }
@@ -732,13 +732,12 @@
     if(ref) sessionStorage.setItem("academic-tracker-referral",ref.toUpperCase());
   } catch (_) {}
   if (!token()) { location.replace("login.html?next=social-media.html"); return; }
-  loadProfile();
   const sendPresenceHeartbeat = () => {
-    if (token() && document.visibilityState === "visible") {
+    if (token() && window.socialReady && document.visibilityState === "visible") {
       api("/community/presence/heartbeat", { method: "POST", body: "{}" }).catch(() => {});
     }
   };
-  sendPresenceHeartbeat();
+  loadProfile().then(sendPresenceHeartbeat);
   setInterval(sendPresenceHeartbeat, 60000);
   document.addEventListener("visibilitychange", sendPresenceHeartbeat);
   try { const u=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}"); if(u.isAdmin||["ADMIN","DEVELOPER","DEV"].includes(String(u.role||"").toUpperCase())) $("community-admin-link").hidden=false; } catch (_) {}
