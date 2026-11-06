@@ -377,3 +377,13 @@ html[data-theme="light"] body.social-media-page .chat-send textarea{background:#
 html[data-theme="light"] body.notifications-page{background:#090611!important;color:#f7f1ff!important}
 html[data-theme="light"] body.notifications-page .notification-item,
 html[data-theme="light"] body.notifications-page .notification-admin-card{background:#130d20!important;color:#f7f1ff!important;border-color:var(--notice-border)!important}
+
+.preproom-page-nav{display:none}
+@media(max-width:760px){
+ body.social-create-page{padding-bottom:calc(84px + env(safe-area-inset-bottom))!important}
+ body.social-create-page .preproom-page-nav{position:fixed;z-index:500;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);padding:7px 8px calc(7px + env(safe-area-inset-bottom));background:rgba(10,6,18,.97);border-top:1px solid var(--preproom-line);backdrop-filter:blur(18px)}
+ .preproom-page-nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:46px;color:#a99ab9;text-decoration:none;font-size:21px}
+ .preproom-page-nav a small{font-size:10px;font-weight:650}
+ .preproom-page-nav a.active{color:#c084fc}
+ .preproom-page-nav a.active:first-letter{color:#fff}
+}
