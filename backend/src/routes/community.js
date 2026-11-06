@@ -121,10 +121,13 @@ router.get("/feed", async (req, res, next) => {
       const users = await prisma.user.findMany({ where: { educationTrack: req.query.track }, select: { id: true } });
       where.AND.push({ authorId: { in: users.map(x => x.id) } });
     }
-    const posts = await prisma.communityPost.findMany({
-      where, orderBy: { createdAt: "desc" }, take: limit,
+    const fetchedPosts = await prisma.communityPost.findMany({
+      where, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: limit + 1,
       ...(typeof req.query.before === "string" && req.query.before ? { cursor: { id: req.query.before }, skip: 1 } : {})
     });
+    const hasMore = fetchedPosts.length > limit;
+    const nextCursor = hasMore ? fetchedPosts[limit - 1]?.id || null : null;
+    const posts = fetchedPosts.slice(0, limit);
     posts.sort((a,b) => {
       const aRank = a.authorId === req.userId || friendIds.includes(a.authorId) ? 0 : 1;
       const bRank = b.authorId === req.userId || friendIds.includes(b.authorId) ? 0 : 1;
@@ -168,7 +171,7 @@ router.get("/feed", async (req, res, next) => {
       isSaved: savedSet.has(p.id), isLiked: likedSet.has(p.id), shareCount: shareMap.get(p.id) || 0,
       isFriendPost: p.authorId === req.userId || friendIds.includes(p.authorId),
       reactionCount: reactionMap.get(p.id) || 0, commentCount: commentMap.get(p.id) || 0
-    }))});
+    })), nextCursor, hasMore });
   } catch (e) { next(e); }
 });
 
