@@ -734,3 +734,25 @@ body.social-media-page[data-preproom-view="feed"] .social-topbar{display:grid!im
 .preproom-video-controls button{border:1px solid var(--preproom-line);border-radius:10px;padding:9px 13px;background:var(--preproom-panel);color:var(--preproom-text);font-size:12px;font-weight:700}
 .preproom-video-controls button:disabled{opacity:.4}
 @media(max-width:600px){.preproom-video-stage{aspect-ratio:9/16;border-radius:12px}.preproom-video-details strong{font-size:13px}.preproom-video-controls button{flex:1}}
+
+
+/* UI audit: functional profile sections, compact post menus and consistent standalone navigation. */
+body.social-media-page [data-profile-panel][hidden]{display:none!important}
+body.social-media-page .social-profile-section{padding:18px 24px;border-top:1px solid var(--preproom-line)}
+body.social-media-page .social-profile-friends{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+body.social-media-page .social-profile-friend{display:grid;gap:4px;min-width:0;padding:13px 14px;border:1px solid var(--preproom-line);border-radius:13px;background:var(--preproom-panel-2);color:var(--preproom-text)}
+body.social-media-page .social-profile-friend span,body.social-media-page .social-profile-friend small{color:var(--preproom-muted);overflow-wrap:anywhere}
+body.social-media-page .social-profile-media{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+body.social-media-page .social-profile-media-item{display:grid;gap:6px;min-width:0}
+body.social-media-page .social-profile-media-item img,body.social-media-page .social-profile-media-item video{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;background:var(--preproom-panel-2)}
+body.social-media-page .social-profile-media-item small{color:var(--preproom-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.social-post-menu{position:relative;display:flex;justify-content:flex-end;margin:8px 0 0}
+.social-post-menu>summary{display:grid;place-items:center;width:34px;height:32px;border:1px solid var(--preproom-line);border-radius:9px;color:var(--preproom-muted);cursor:pointer;list-style:none;font-size:16px;font-weight:800;letter-spacing:1px}
+.social-post-menu>summary::-webkit-details-marker{display:none}
+.social-post-menu[open]>summary{background:var(--preproom-panel-2);color:var(--preproom-text)}
+.social-post-menu-items{position:absolute;z-index:20;top:calc(100% + 5px);right:0;display:grid;min-width:145px;padding:5px;border:1px solid var(--preproom-line);border-radius:11px;background:var(--preproom-panel);box-shadow:0 12px 28px #0003}
+.social-post-menu-items button{padding:9px 11px;border:0;border-radius:7px;background:transparent;color:var(--preproom-text);text-align:left;font:inherit;font-size:12px;cursor:pointer}
+.social-post-menu-items button:hover{background:var(--preproom-panel-2)}
+.social-post-menu-items button[data-action="delete"],.social-post-menu-items button[data-profile-delete]{color:#d85b70}
+.preproom-page-nav a svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:600px){body.social-media-page .social-profile-section{padding:16px}body.social-media-page .social-profile-friends{grid-template-columns:1fr}body.social-media-page .social-profile-media{grid-template-columns:repeat(2,minmax(0,1fr))}}

@@ -5,9 +5,11 @@
   function icon(path){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>'}
   function setupBrand(){
     const brand=$(".social-brand"); if(!brand)return;
-    brand.innerHTML='<span class="social-brand-mark" aria-hidden="true">'+icon("M2 10 12 3l10 7-10 7zM6 13v5c4 3 8 3 12 0v-5M21 11v6")+'</span><span><strong>Preproom</strong><small style="display:block;font-size:10px;font-weight:500;letter-spacing:0;color:#b8a9ca">Learn. Share. Connect.</small></span>';
+    brand.innerHTML='<span class="social-brand-mark" aria-hidden="true">'+icon("M2 10 12 3l10 7-10 7zM6 13v5c4 3 8 3 12 0v-5M21 11v6")+'</span><span><strong>Preproom</strong></span>';
     brand.setAttribute("aria-label","Preproom home");
   }
+  function dashboardHref(){try{const account=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}");return account.educationTrack==="HIGHER"?"university-dashboard.html":"dashboard.html";}catch(_){return "dashboard.html";}}
+  function syncDashboardLinks(){const href=dashboardHref();$$(".social-home-return a, .preproom-dashboard-link").forEach(link=>{link.href=href;});}
   function setupNavigation(){
     const sidebar=$(".social-sidebar");
     if(sidebar){
@@ -26,7 +28,7 @@
       }
       const admin=$("#community-admin-link"); if(admin)admin.hidden=true;
       if(!$(".preproom-dashboard-link",sidebar)){
-        const back=document.createElement("a");back.className="social-admin-link preproom-dashboard-link";back.href="dashboard.html";back.textContent="← Back to Academic Tracker";sidebar.append(back);
+        const back=document.createElement("a");back.className="social-admin-link preproom-dashboard-link";back.href=dashboardHref();back.textContent="← Back to Academic Tracker";sidebar.append(back);
       }
     }
     const bottom=$("#social-bottom-nav");
@@ -36,6 +38,7 @@
         if(key==="people")button.querySelector("span").textContent="Explore";
       });
     }
+    syncDashboardLinks();document.addEventListener("preproom:profile-loaded",syncDashboardLinks);
   }
   function setupHome(){
     /* Keep the homepage intentionally focused: feed, composer and post actions only. */
@@ -55,27 +58,27 @@
     const query=$("#preproom-explore-query"), form=$("#people-search"), field=$("#people-query");
     $("#preproom-explore-search-btn")?.addEventListener("click",()=>{if(!query||!field||!form)return;field.value=query.value.trim();form.requestSubmit();});
     query?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("#preproom-explore-search-btn")?.click();}});
-    $("[data-topic]").forEach(button=>button.addEventListener("click",()=>{if(query){query.value=button.dataset.topic;$("#preproom-explore-search-btn")?.click();}}));
-    $("[data-explore-filter]").forEach(button=>button.addEventListener("click",()=>{$("[data-explore-filter]").forEach(b=>b.classList.toggle("active",b===button));const filter=button.dataset.exploreFilter;if(filter==="people"){field?.focus();}else if(filter==="groups"){document.querySelector('[data-tab="groups"]')?.click();}else if(filter==="posts"){document.querySelector('[data-tab="feed"]')?.click();}else{field?.focus();}}));
+    $$("[data-topic]").forEach(button=>button.addEventListener("click",()=>{if(query){query.value=button.dataset.topic;$("#preproom-explore-search-btn")?.click();}}));
+    $$("[data-explore-filter]").forEach(button=>button.addEventListener("click",()=>{$$("[data-explore-filter]").forEach(b=>b.classList.toggle("active",b===button));const filter=button.dataset.exploreFilter;if(filter==="people"){field?.focus();}else if(filter==="groups"){document.querySelector('[data-tab="groups"]')?.click();}else if(filter==="posts"){document.querySelector('[data-tab="feed"]')?.click();}else{field?.focus();}}));
   }
   function setupProfileTabs(){
-    $("[data-profile-tab]").forEach(button=>button.addEventListener("click",()=>{
-      $("[data-profile-tab]").forEach(b=>b.classList.toggle("active",b===button));
+    const panels=$$("[data-profile-panel]");
+    $$("[data-profile-tab]").forEach(button=>button.addEventListener("click",()=>{
+      $$("[data-profile-tab]").forEach(b=>b.classList.toggle("active",b===button));
       const tab=button.dataset.profileTab;
-      if(tab==="friends"){document.querySelector('[data-tab="people"]')?.click();return;}
-      if(tab==="media"){const posts=$("#social-profile-posts");if(posts)posts.scrollIntoView({behavior:"smooth",block:"start"});return;}
-      if(tab==="about")$("#profile-settings")?.scrollIntoView({behavior:"smooth",block:"start"});
-      if(tab==="posts")$("#social-profile-posts")?.scrollIntoView({behavior:"smooth",block:"start"});
+      panels.forEach(panel=>{panel.hidden=panel.dataset.profilePanel!==tab;});
+      document.dispatchEvent(new CustomEvent("preproom:profile-tab",{detail:{tab}}));
+      panels.find(panel=>panel.dataset.profilePanel===tab)?.scrollIntoView({behavior:"smooth",block:"start"});
     }));
   }
 
   function setupNotificationFilters(){
-    const buttons=$("[data-notification-filter]");
+    const buttons=$$("[data-notification-filter]");
     if(!buttons.length)return;
     buttons.forEach(button=>button.addEventListener("click",()=>{
       buttons.forEach(b=>b.classList.toggle("active",b===button));
       const type=button.dataset.notificationFilter;
-      $(".notification-item").forEach(item=>{
+      $$(".notification-item").forEach(item=>{
         const content=(item.innerText||"").toLowerCase();
         const match=type==="all"||(type==="likes"&&/liked|like/.test(content))||(type==="comments"&&/commented|comment/.test(content))||(type==="shares"&&/shared|share/.test(content));
         item.hidden=!match;
