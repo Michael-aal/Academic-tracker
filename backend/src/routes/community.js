@@ -175,11 +175,46 @@ router.get("/feed", async (req, res, next) => {
 router.get("/profiles/:username", async (req, res, next) => {
   try {
     const profile = await prisma.communityProfile.findUnique({ where: { username: slug(req.params.username) } });
-    if (!profile || !profile.usernameSet || profile.status !== "ACTIVE" || profile.visibility !== "PUBLIC" || await isBlocked(profile.userId, req.userId)) return res.status(404).json({ error: "Student profile not found." });
-    const user = await getUser(profile.userId);
-    if (!user) return res.status(404).json({ error: "Student profile not found." });
-    const posts = await prisma.communityPost.findMany({ where: { authorId: user.id, visibility: "PUBLIC" }, orderBy: { createdAt: "desc" }, take: 20 });
-    res.json({ profile: publicProfile(profile, user), posts });
+    if (!profile || !profile.usernameSet || profile.status !== "ACTIVE" || profile.visibility !== "PUBLIC" || await isBlocked(profile.userId, req.userId)) {
+      return res.status(404).json({ error: "Student profile not found." });
+    }
+    const [user, currentUser] = await Promise.all([getUser(profile.userId), getUser(req.userId)]);
+    if (!user || !currentUser) return res.status(404).json({ error: "Student profile not found." });
+    const [posts, outgoing, incoming] = await Promise.all([
+      prisma.communityPost.findMany({ where: { authorId: user.id, visibility: "PUBLIC" }, orderBy: { createdAt: "desc" }, take: 30 }),
+      prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: req.userId, followingId: user.id } } }),
+      prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: user.id, followingId: req.userId } } })
+    ]);
+    const postIds = posts.map(post => post.id);
+    const [reactions, comments, shares] = postIds.length ? await Promise.all([
+      prisma.communityReaction.groupBy({ by: ["postId"], where: { postId: { in: postIds } }, _count: { _all: true } }),
+      prisma.communityComment.groupBy({ by: ["postId"], where: { postId: { in: postIds } }, _count: { _all: true } }),
+      prisma.communityPost.groupBy({ by: ["sharedPostId"], where: { sharedPostId: { in: postIds } }, _count: { _all: true } })
+    ]) : [[], [], []];
+    const reactionCounts = new Map(reactions.map(row => [row.postId, row._count._all]));
+    const commentCounts = new Map(comments.map(row => [row.postId, row._count._all]));
+    const shareCounts = new Map(shares.map(row => [row.sharedPostId, row._count._all]));
+    const friendStatus = outgoing?.status === "ACCEPTED" && incoming?.status === "ACCEPTED" ? "FRIENDS" :
+      incoming?.status === "PENDING" ? "REQUEST_RECEIVED" :
+      outgoing?.status === "PENDING" ? "REQUEST_SENT" : "NONE";
+    res.json({
+      profile: publicProfile(profile, user),
+      relationship: {
+        canFriend: user.educationTrack === currentUser.educationTrack,
+        friendStatus,
+        friendRequestId: incoming?.status === "PENDING" ? incoming.id : null
+      },
+      stats: {
+        posts: posts.length,
+        likes: reactions.reduce((sum, row) => sum + row._count._all, 0)
+      },
+      posts: posts.map(post => ({
+        ...post,
+        reactionCount: reactionCounts.get(post.id) || 0,
+        commentCount: commentCounts.get(post.id) || 0,
+        shareCount: shareCounts.get(post.id) || 0
+      }))
+    });
   } catch (e) { next(e); }
 });
 
