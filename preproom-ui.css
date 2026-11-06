@@ -114,3 +114,101 @@ body.social-create-page{min-height:100vh;background:radial-gradient(ellipse at 5
  body.social-media-page .chat-window{min-height:55vh}
 }
 @media(max-width:420px){body.social-media-page .social-global-search input{font-size:11px}body.social-media-page .composer-row{gap:6px}body.social-media-page .composer-row input,body.social-media-page .composer-row select{font-size:11px}}
+
+
+/* Theme parity: Preproom follows the account-wide Academic Tracker theme. */
+html[data-theme="light"]{
+ --preproom-bg:#ffffff;--preproom-panel:#ffffff;--preproom-panel-2:#f7f2ff;
+ --preproom-line:#e5d9f8;--preproom-text:#261638;--preproom-muted:#675779;
+}
+html[data-theme="light"] body.social-media-page,
+html[data-theme="light"] body.social-create-page{
+ background:#fff!important;background-image:none!important;color:#261638!important;
+}
+html[data-theme="light"] body.social-media-page .social-topbar{
+ background:rgba(255,255,255,.96);border-bottom-color:#e5d9f8;
+}
+html[data-theme="light"] .social-brand{color:#261638}
+html[data-theme="light"] .social-global-search{background:#f4effb;border-color:#e5d9f8;color:#675779}
+html[data-theme="light"] .social-global-search input{color:#261638}
+html[data-theme="light"] .social-top-action,
+html[data-theme="light"] .social-top-profile{background:#f4effb;color:#57349a;border-color:#e5d9f8}
+html[data-theme="light"] .social-sidebar{background:#fff;border-right-color:#e5d9f8}
+html[data-theme="light"] .social-sidebar button{color:#675779}
+html[data-theme="light"] .social-sidebar button.active,
+html[data-theme="light"] .social-sidebar button:hover{color:#fff}
+html[data-theme="light"] body.social-media-page .community-shell{color:#261638}
+html[data-theme="light"] body.social-media-page .panel,
+html[data-theme="light"] .preproom-side-card,
+html[data-theme="light"] body.social-media-page .post-card{
+ background:#fff!important;background-image:none!important;color:#261638!important;
+ border-color:#e5d9f8!important;box-shadow:0 8px 28px rgba(47,28,82,.07)!important;
+}
+html[data-theme="light"] body.social-media-page .community-status:not(:empty){
+ background:#f7f2ff;color:#57349a;border-color:#e5d9f8;
+}
+html[data-theme="light"] .social-home-return,
+html[data-theme="light"] .social-home-return a,
+html[data-theme="light"] body.social-media-page .post-body,
+html[data-theme="light"] body.social-media-page .post-author,
+html[data-theme="light"] body.social-media-page .post-actions,
+html[data-theme="light"] body.social-media-page .post-actions button,
+html[data-theme="light"] body.social-media-page .feed-toolbar h2,
+html[data-theme="light"] .preproom-side-card h3,
+html[data-theme="light"] .preproom-side-note,
+html[data-theme="light"] body.social-media-page .social-profile-identity h2,
+html[data-theme="light"] body.social-media-page .social-profile-identity p,
+html[data-theme="light"] body.social-media-page .social-profile-stats strong,
+html[data-theme="light"] body.social-media-page .social-profile-stats span,
+html[data-theme="light"] body.social-media-page .social-profile-subject{
+ color:#261638!important;
+}
+html[data-theme="light"] .preproom-topic{background:#f0e7ff;color:#5b2ba8}
+html[data-theme="light"] body.social-media-page .composer textarea,
+html[data-theme="light"] body.social-media-page .composer-row input,
+html[data-theme="light"] body.social-media-page .composer-row select,
+html[data-theme="light"] body.social-media-page .profile-editor input,
+html[data-theme="light"] body.social-media-page .profile-editor select,
+html[data-theme="light"] body.social-media-page .profile-editor textarea,
+html[data-theme="light"] body.social-media-page .chat-send textarea,
+html[data-theme="light"] body.social-media-page .social-onboarding-card input{
+ background:#fff!important;color:#261638!important;border-color:#e5d9f8!important;
+}
+html[data-theme="light"] body.social-media-page .composer textarea::placeholder,
+html[data-theme="light"] body.social-media-page .social-profile-identity p{color:#675779!important}
+html[data-theme="light"] body.social-media-page .social-profile-avatar{
+ border-color:#fff;background:#eee8f8;
+}
+html[data-theme="light"] body.social-media-page .social-profile-stats{
+ border-color:#e5d9f8;
+}
+html[data-theme="light"] body.social-media-page .chat-list-panel,
+html[data-theme="light"] body.social-media-page .chat-window{
+ background:#fff!important;border-color:#e5d9f8!important;color:#261638!important;
+}
+html[data-theme="light"] body.social-media-page .social-onboarding-card{
+ background:#fff!important;color:#261638!important;border-color:#e5d9f8!important;
+}
+html[data-theme="light"] body.social-media-page .social-bottom-nav{
+ background:rgba(255,255,255,.97);border-top-color:#e5d9f8;
+}
+html[data-theme="light"] body.social-media-page .social-bottom-nav button{color:#675779}
+html[data-theme="light"] body.social-media-page .social-bottom-nav button.active{color:#7545c8}
+html[data-theme="light"] body.social-media-page .social-bottom-nav .social-create{color:#fff}
+html[data-theme="light"] body.social-create-page .social-create-header h1{color:#261638}
+html[data-theme="light"] body.social-create-page .social-create-header p:last-child,
+html[data-theme="light"] body.social-create-page .social-create-author small,
+html[data-theme="light"] body.social-create-page .composer-hint{color:#675779}
+html[data-theme="light"] body.social-create-page .social-create-form{
+ background:#fff!important;color:#261638!important;border-color:#e5d9f8!important;
+ box-shadow:0 8px 28px rgba(47,28,82,.07)!important;
+}
+html[data-theme="light"] body.social-create-page .social-create-form label,
+html[data-theme="light"] body.social-create-page .social-create-author strong{color:#261638}
+html[data-theme="light"] body.social-create-page .social-create-form textarea,
+html[data-theme="light"] body.social-create-page .social-create-form input,
+html[data-theme="light"] body.social-create-page .social-create-form select{
+ background:#fff;color:#261638;border-color:#e5d9f8;
+}
+html[data-theme="light"] body.social-create-page .social-create-form textarea::placeholder,
+html[data-theme="light"] body.social-create-page .social-create-form input::placeholder{color:#675779}
