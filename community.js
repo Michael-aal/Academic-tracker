@@ -220,7 +220,7 @@
         const shared = post.sharedPost;
         const sharedAuthor = shared?.author || {};
         const sharedCard = shared ? '<div class="shared-post-card"><small>SHARED FROM @'+esc(sharedAuthor.username||"student")+'</small><strong>'+esc(sharedAuthor.displayName||"Student")+'</strong>'+(shared.body?'<p>'+esc(shared.body)+'</p>':'')+(shared.mediaUrl?'<img class="post-media" src="'+esc(shared.mediaUrl)+'" alt="Shared post media" loading="lazy">':'')+(shared.videoUrl?'<video class="post-video" controls playsinline preload="metadata"><source src="'+esc(shared.videoUrl)+'">Your browser cannot play this video.</video>':'')+'</div>' : '';
-        const ownerActions = post.authorId === currentUserId() ? '<div class="post-owner-actions"><button type="button" data-action="edit" data-id="'+esc(post.id)+'">Edit post</button><button type="button" data-action="delete" data-id="'+esc(post.id)+'">Delete post</button></div>' : '';
+        const ownerActions = post.isOwner ? '<div class="post-owner-actions"><button type="button" data-action="edit" data-id="'+esc(post.id)+'">Edit post</button><button type="button" data-action="delete" data-id="'+esc(post.id)+'">Delete post</button></div>' : '';
         return '<article class="panel post-card" data-post="' + esc(post.id) + '"><div class="post-author"><div class="post-avatar">' + avatar + '</div><div><a class="post-author-profile-link" href="#profile/' + encodeURIComponent(author.username || "student") + '"><strong>' + esc(author.displayName || "Student") + '</strong></a><small>@' + esc(author.username || "student") + ' · ' + esc(author.educationTrack || "") + (post.isFriendPost?' · Friend':'') + '</small></div></div>' +
           (post.body ? '<p class="post-body">' + esc(post.body) + '</p>' : '') +
           sharedCard +
@@ -228,7 +228,7 @@
           (post.subject ? '<span class="post-subject">' + esc(post.subject) + '</span>' : '') +
           (post.videoUrl ? '<video class="post-video" controls playsinline preload="metadata"><source src="' + esc(post.videoUrl) + '">Your browser cannot play this video.</video>' : '') +
           '<div class="post-meta">' + new Date(post.createdAt).toLocaleString() + ' · ' + (post.reactionCount || 0) + ' likes · ' + (post.commentCount || 0) + ' comments · ' + (post.shareCount || 0) + ' shares</div>' +
-          ownerActions + '<div class="post-actions" aria-label="Post actions"><button type="button" class="post-action-like' + (post.isLiked?' is-liked':'') + '" data-action="react" data-id="' + esc(post.id) + '">' + (post.isLiked?'♥ Liked':'♡ Like') + '</button><button type="button" data-action="comments" data-id="' + esc(post.id) + '">▢ Comment (' + (post.commentCount || 0) + ')</button><button type="button" data-action="share" data-id="' + esc(post.id) + '">↗ Share</button><button type="button" data-action="save" data-id="' + esc(post.id) + '">' + (post.isSaved?'Saved ✓':'☆ Save') + '</button>' + (post.authorId === currentUserId() ? '' : '<button type="button" data-action="report" data-id="' + esc(post.id) + '">Report</button>') + '</div><div class="post-comments" id="comments-' + esc(post.id) + '" hidden></div></article>';
+          ownerActions + '<div class="post-actions" aria-label="Post actions"><button type="button" class="post-action-like' + (post.isLiked?' is-liked':'') + '" data-action="react" data-id="' + esc(post.id) + '">' + (post.isLiked?'♥ Liked':'♡ Like') + '</button><button type="button" data-action="comments" data-id="' + esc(post.id) + '">▢ Comment (' + (post.commentCount || 0) + ')</button><button type="button" data-action="share" data-id="' + esc(post.id) + '">↗ Share</button><button type="button" data-action="save" data-id="' + esc(post.id) + '">' + (post.isSaved?'Saved ✓':'☆ Save') + '</button>' + (post.isOwner ? '' : '<button type="button" data-action="report" data-id="' + esc(post.id) + '">Report</button>') + '</div><div class="post-comments" id="comments-' + esc(post.id) + '" hidden></div></article>';
       }).join("");
       if (append) $("feed-list").insertAdjacentHTML("beforeend", markup);
       else $("feed-list").innerHTML = markup;
@@ -393,11 +393,11 @@
     const avatar = p.avatarUrl
       ? '<img src="' + esc(p.avatarUrl) + '" alt="" loading="lazy">'
       : '<span>' + esc((p.displayName || p.username || "S").slice(0, 1).toUpperCase()) + '</span>';
-    const action = p.friendStatus === "FRIENDS" ? '<button class="outline-button" data-unfriend="' + esc(p.userId) + '">Friends · Remove</button>' :
-      p.friendStatus === "REQUEST_SENT" ? '<button class="outline-button" data-cancel-friend="' + esc(p.userId) + '">Request sent · Cancel</button>' :
+    const action = p.friendStatus === "FRIENDS" ? '<button class="outline-button" data-unfriend="' + esc(p.username) + '">Friends · Remove</button>' :
+      p.friendStatus === "REQUEST_SENT" ? '<button class="outline-button" data-cancel-friend="' + esc(p.username) + '">Request sent · Cancel</button>' :
       p.friendStatus === "REQUEST_RECEIVED" ? '<button class="primary-button" data-friend-request="' + esc(p.friendRequestId || "") + '" data-request-action="accept">Accept request</button><button class="outline-button" data-friend-request="' + esc(p.friendRequestId || "") + '" data-request-action="decline">Decline</button>' :
-      p.canFriend ? '<button class="outline-button" data-follow="' + esc(p.userId) + '">Add friend</button>' : '<button class="outline-button" type="button" disabled title="Friend requests are limited to students in the same academic environment">Different academic track</button>';
-    return '<article class="person-card person-discovery-card"><a class="person-profile-link" href="#profile/' + encodeURIComponent(p.username) + '" aria-label="View ' + esc(p.displayName || "student") + ' profile"><span class="person-discovery-avatar">' + avatar + '<i class="' + (p.online ? "is-online" : "is-offline") + '" aria-label="' + (p.online ? "Online" : "Offline") + '"></i></span><span class="person-discovery-identity"><strong>' + esc(p.displayName || "Student") + '</strong><small>@' + esc(p.username) + '</small><small class="person-presence ' + (p.online ? "online" : "offline") + '">' + (p.online ? "Online now" : "Offline") + '</small></span></a><p>' + esc(p.educationTrack || "Student") + ' · ' + esc(p.institutionName || p.programme || "Institution not specified") + '<br>Best subject: ' + esc(p.bestSubject || "Not specified") + '</p><div class="friend-request-actions">' + action + '<button class="quiet-button" data-block="' + esc(p.userId) + '">Block</button></div></article>';
+      p.canFriend ? '<button class="outline-button" data-follow="' + esc(p.username) + '">Add friend</button>' : '<button class="outline-button" type="button" disabled title="Friend requests are limited to students in the same academic environment">Different academic track</button>';
+    return '<article class="person-card person-discovery-card"><a class="person-profile-link" href="#profile/' + encodeURIComponent(p.username) + '" aria-label="View ' + esc(p.displayName || "student") + ' profile"><span class="person-discovery-avatar">' + avatar + '<i class="' + (p.online ? "is-online" : "is-offline") + '" aria-label="' + (p.online ? "Online" : "Offline") + '"></i></span><span class="person-discovery-identity"><strong>' + esc(p.displayName || "Student") + '</strong><small>@' + esc(p.username) + '</small><small class="person-presence ' + (p.online ? "online" : "offline") + '">' + (p.online ? "Online now" : "Offline") + '</small></span></a><p>' + esc(p.educationTrack || "Student") + ' · ' + esc(p.institutionName || p.programme || "Institution not specified") + '<br>Best subject: ' + esc(p.bestSubject || "Not specified") + '</p><div class="friend-request-actions">' + action + '<button class="quiet-button" data-block="' + esc(p.username) + '">Block</button></div></article>';
   }
   function renderPeople(people, total, onlineCount, nextCursor, append = false) {
     const count = $("people-results-count");
@@ -492,7 +492,7 @@
     try {
       const { blocks = [] } = await api("/community/blocks");
       box.innerHTML = blocks.length ? blocks.map(item =>
-        '<div class="blocked-person-row"><span><strong>' + esc(item.displayName || "Student") + '</strong><small>@' + esc(item.username || "unknown") + '</small></span><button type="button" class="outline-button" data-unblock="' + esc(item.blockedId) + '">Unblock</button></div>'
+        '<div class="blocked-person-row"><span><strong>' + esc(item.displayName || "Student") + '</strong><small>@' + esc(item.username || "unknown") + '</small></span><button type="button" class="outline-button" data-unblock="' + esc(item.username) + '">Unblock</button></div>'
       ).join("") : '<div class="empty-state">You have not blocked anyone.</div>';
     } catch (error) { box.innerHTML = '<div class="empty-state">' + esc(error.message) + '</div>'; }
   }
@@ -518,16 +518,16 @@
       const { profile, posts = [], relationship = {}, stats = {} } = await api("/community/profiles/" + encodeURIComponent(username));
       const avatar = profile.avatarUrl ? '<img src="' + esc(profile.avatarUrl) + '" alt="' + esc(profile.displayName) + ' profile photo">' : esc((profile.displayName || "S").slice(0,1).toUpperCase());
       const cover = profile.coverUrl ? '<img src="' + esc(profile.coverUrl) + '" alt="" class="public-profile-cover-image">' : "";
-      const statusAction = relationship.friendStatus === "FRIENDS" ? '<button type="button" class="outline-button" data-public-remove="' + esc(profile.userId) + '">Remove friend</button>' :
-        relationship.friendStatus === "REQUEST_SENT" ? '<button type="button" class="outline-button" data-public-cancel="' + esc(profile.userId) + '">Cancel request</button>' :
+      const statusAction = relationship.friendStatus === "FRIENDS" ? '<button type="button" class="outline-button" data-public-remove="' + esc(profile.username) + '">Remove friend</button>' :
+        relationship.friendStatus === "REQUEST_SENT" ? '<button type="button" class="outline-button" data-public-cancel="' + esc(profile.username) + '">Cancel request</button>' :
         relationship.friendStatus === "REQUEST_RECEIVED" ? '<button type="button" class="primary-button" data-public-request="' + esc(relationship.friendRequestId || "") + '" data-request-action="accept">Accept request</button><button type="button" class="outline-button" data-public-request="' + esc(relationship.friendRequestId || "") + '" data-request-action="decline">Decline</button>' :
-        relationship.canFriend ? '<button type="button" class="primary-button" data-public-add="' + esc(profile.userId) + '">Add friend</button>' : '<span class="muted-note">Friend requests are limited to your academic environment.</span>';
+        relationship.canFriend ? '<button type="button" class="primary-button" data-public-add="' + esc(profile.username) + '">Add friend</button>' : '<span class="muted-note">Friend requests are limited to your academic environment.</span>';
       const postMarkup = posts.length ? posts.map(post => '<article class="public-profile-post"><p>' + esc(post.body || "") + '</p>' + (post.mediaUrl ? '<img src="' + esc(post.mediaUrl) + '" alt="Post image" loading="lazy">' : "") + (post.videoUrl ? '<video controls playsinline preload="metadata"><source src="' + esc(post.videoUrl) + '"></video>' : "") + '<small>' + esc(post.subject || "Post") + ' · ' + (post.reactionCount || 0) + ' likes · ' + (post.commentCount || 0) + ' comments</small></article>').join("") : '<div class="empty-state">No public posts yet.</div>';
-      box.innerHTML = '<button type="button" class="quiet-button" id="close-public-profile">← Back to students</button><div class="public-profile-cover">' + cover + '</div><div class="public-profile-heading"><div class="public-profile-avatar">' + avatar + '</div><div class="public-profile-identity"><h1>' + esc(profile.displayName || "Student") + '</h1><p>@' + esc(profile.username) + '</p><p>' + esc(profile.bio || "No bio added yet.") + '</p></div><div class="public-profile-actions">' + statusAction + '<button type="button" class="outline-button" data-public-message="' + esc(profile.userId) + '" ' + (relationship.friendStatus === "FRIENDS" ? "" : "disabled") + '>Message</button><button type="button" class="quiet-button" data-public-block="' + esc(profile.userId) + '">Block</button></div></div><div class="public-profile-meta">' + esc(profile.educationTrack || "Student") + ' · ' + esc(profile.institutionName || profile.programme || "Institution not specified") + ' · Best subject: ' + esc(profile.bestSubject || "Not specified") + '</div><div class="public-profile-stats"><span>' + (stats.posts || 0) + ' posts</span><span>' + (stats.likes || 0) + ' likes</span></div><section class="public-profile-posts"><h2>Public posts</h2>' + postMarkup + '</section>';
-      box.dataset.userId = profile.userId;
+      box.innerHTML = '<button type="button" class="quiet-button" id="close-public-profile">← Back to students</button><div class="public-profile-cover">' + cover + '</div><div class="public-profile-heading"><div class="public-profile-avatar">' + avatar + '</div><div class="public-profile-identity"><h1>' + esc(profile.displayName || "Student") + '</h1><p>@' + esc(profile.username) + '</p><p>' + esc(profile.bio || "No bio added yet.") + '</p></div><div class="public-profile-actions">' + statusAction + '<button type="button" class="outline-button" data-public-message="' + esc(profile.username) + '" ' + (relationship.friendStatus === "FRIENDS" ? "" : "disabled") + '>Message</button><button type="button" class="quiet-button" data-public-block="' + esc(profile.username) + '">Block</button></div></div><div class="public-profile-meta">' + esc(profile.educationTrack || "Student") + ' · ' + esc(profile.institutionName || profile.programme || "Institution not specified") + ' · Best subject: ' + esc(profile.bestSubject || "Not specified") + '</div><div class="public-profile-stats"><span>' + (stats.posts || 0) + ' posts</span><span>' + (stats.likes || 0) + ' likes</span></div><section class="public-profile-posts"><h2>Public posts</h2>' + postMarkup + '</section>';
+      box.dataset.userId = profile.username;
     } catch (err) {
       box.innerHTML = '<button type="button" class="quiet-button" id="close-public-profile">← Back to students</button><div class="empty-state">' + esc(err.message || "This profile is unavailable.") + '</div>';
-      box.dataset.userId = "";
+      box.dataset.username = "";
     }
   }
   $("public-student-profile").addEventListener("click", async e => {
@@ -565,7 +565,7 @@
         '<article class="profile-friend-card"><div class="post-avatar">' +
         (person.avatarUrl ? '<img src="' + esc(person.avatarUrl) + '" alt="">' : esc((person.displayName || "S").slice(0,1).toUpperCase())) +
         '</div><div><strong>' + esc(person.displayName || "Student") + '</strong><small>@' + esc(person.username || "student") + '</small></div>' +
-        '<button type="button" class="outline-button" data-profile-friend-message="' + esc(person.userId) + '">Message</button></article>'
+        '<button type="button" class="outline-button" data-profile-friend-message="' + esc(person.username) + '">Message</button></article>'
       ).join("") : '<div class="empty-state">Your accepted friends will appear here.</div>';
     } catch (error) { box.innerHTML = '<div class="empty-state">' + esc(error.message) + '</div>'; }
   }
@@ -589,7 +589,7 @@
       ]);
       $("friend-count").textContent=String(friends.length);
       $("friend-request-count").textContent=String(requests.length);
-      $("friends-list").innerHTML=friends.length?friends.map(p=>'<article class="person-card"><strong>'+esc(p.displayName)+'</strong><p>@'+esc(p.username)+' · '+esc(p.educationTrack)+'<br>'+esc(p.institutionName||p.programme||"")+'<br>Best subject: '+esc(p.bestSubject||"Not specified")+'</p><div class="friend-request-actions"><button class="outline-button" data-unfriend="'+esc(p.userId)+'">Remove friend</button><button class="quiet-button" data-block="'+esc(p.userId)+'">Block</button></div></article>').join(""):'<div class="empty-state">Your accepted connections will appear here.</div>';
+      $("friends-list").innerHTML=friends.length?friends.map(p=>'<article class="person-card"><strong>'+esc(p.displayName)+'</strong><p>@'+esc(p.username)+' · '+esc(p.educationTrack)+'<br>'+esc(p.institutionName||p.programme||"")+'<br>Best subject: '+esc(p.bestSubject||"Not specified")+'</p><div class="friend-request-actions"><button class="outline-button" data-unfriend="'+esc(p.username)+'">Remove friend</button><button class="quiet-button" data-block="'+esc(p.username)+'">Block</button></div></article>').join(""):'<div class="empty-state">Your accepted connections will appear here.</div>';
       $("friend-requests-list").innerHTML=requests.length?requests.map(r=>'<article class="person-card"><strong>'+esc(r.requester?.name||"Student")+'</strong><p>Wants to connect with you · '+esc(r.requester?.educationTrack||"")+'</p><div class="friend-request-actions"><button class="primary-button" data-friend-request="'+esc(r.id)+'" data-request-action="accept">Accept</button><button class="outline-button" data-friend-request="'+esc(r.id)+'" data-request-action="decline">Decline</button></div></article>').join(""):'<div class="empty-state">No pending friend requests.</div>';
       await loadBlockedStudents();
     }catch(e){status(e.message);}
@@ -599,7 +599,7 @@
     if(!box)return;
     try{
       const {blocks=[]}=await api("/community/blocks");
-      box.innerHTML=blocks.length?blocks.map(item=>'<article class="person-card"><strong>'+esc(item.displayName||"Student")+'</strong><p>@'+esc(item.username||"")+'</p><button class="outline-button" data-unblock="'+esc(item.blockedId)+'">Unblock</button></article>').join(""):'<div class="empty-state">You have not blocked anyone.</div>';
+      box.innerHTML=blocks.length?blocks.map(item=>'<article class="person-card"><strong>'+esc(item.displayName||"Student")+'</strong><p>@'+esc(item.username||"")+'</p><button class="outline-button" data-unblock="'+esc(item.username)+'">Unblock</button></article>').join(""):'<div class="empty-state">You have not blocked anyone.</div>';
     }catch(err){box.innerHTML='<div class="empty-state">'+esc(err.message)+'</div>';}
   }
   $("friends-list").addEventListener("click",async e=>{
@@ -772,7 +772,7 @@
     e.preventDefault();if(!requireLogin())return;
     try{
       const {people=[]}=await api("/community/people?q="+encodeURIComponent($("chat-person-query").value.trim()));
-      $("chat-people-results").innerHTML=people.map(p=>'<div class="person-card"><strong>'+esc(p.displayName)+'</strong><small class="post-meta">'+esc(p.educationTrack)+' · '+esc(p.bestSubject||"")+'</small><button class="quiet-button" data-start-chat="'+esc(p.userId)+'">Message (accepted connections)</button></div>').join("")||'<p class="muted-note">No public student profiles found.</p>';
+      $("chat-people-results").innerHTML=people.map(p=>'<div class="person-card"><strong>'+esc(p.displayName)+'</strong><small class="post-meta">'+esc(p.educationTrack)+' · '+esc(p.bestSubject||"")+'</small><button class="quiet-button" data-start-chat="'+esc(p.username)+'">Message (accepted connections)</button></div>').join("")||'<p class="muted-note">No public student profiles found.</p>';
     }catch(err){status(err.message);}
   });
   $("chat-people-results").addEventListener("click",async e=>{
