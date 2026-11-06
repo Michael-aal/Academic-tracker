@@ -310,3 +310,21 @@ body.social-media-page .community-footer{display:none}
  .social-sidebar button svg{width:22px;height:22px}
  .social-top-actions svg{width:19px;height:19px}
 }
+
+/* People discovery: responsive cards, clear presence and touch-friendly actions. */
+.people-discovery-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 14px}
+#people-results-count{font-size:12px;color:var(--community-muted);font-weight:700}
+.person-discovery-card{display:flex;flex-direction:column;gap:8px}
+.person-profile-link{display:flex;align-items:center;gap:11px;min-width:0;color:var(--community-text);text-decoration:none}
+.person-discovery-avatar{width:48px;height:48px;flex:0 0 48px;position:relative;display:grid;place-items:center;border-radius:50%;background:linear-gradient(135deg,#9d7be8,#5c35a7);color:#fff;font-weight:800;overflow:visible}
+.person-discovery-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.person-discovery-avatar i{position:absolute;right:0;bottom:0;width:12px;height:12px;border:2px solid var(--community-panel);border-radius:50%;background:#92929c}
+.person-discovery-avatar i.is-online{background:#22c55e}
+.person-discovery-identity{display:grid;gap:2px;min-width:0}
+.person-discovery-identity strong{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.person-discovery-identity small{font-size:11px;color:var(--community-muted)}
+.person-presence.online{color:#16a34a;font-weight:800}
+.person-presence.offline{color:var(--community-muted)}
+.person-discovery-card .friend-request-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:auto}
+.person-discovery-card .friend-request-actions button{min-height:40px}
+@media(max-width:700px){.people-list{grid-template-columns:1fr}.person-discovery-card{padding:13px}.people-discovery-toolbar{align-items:flex-start}}
