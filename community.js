@@ -2,7 +2,6 @@
   "use strict";
   const API = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "") + "/api";
   const token = () => localStorage.getItem("academic-tracker-token") || "";
-  const currentUserId = () => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}").id || ""; } catch (_) { return ""; } };
   const $ = id => document.getElementById(id);
   let showingSavedPosts = false;
   let feedNextCursor = "";
@@ -785,7 +784,6 @@
     try{
       const {messages=[]}=await api("/community/chat/"+encodeURIComponent(id)+"/messages");
       $("chat-placeholder").hidden=true;$("chat-active").hidden=false;
-      const currentUser=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}").id;
       const conversation=conversationCache.find(item=>item.id===id);
       const other=conversation?.members?.find(member=>!member.isMe);
       $("chat-title").textContent=other?.user?.displayName||(conversation?.kind==="GROUP"?"Study group":"Conversation");
@@ -804,8 +802,7 @@
       const box=$("chat-messages");
       const nearBottom=box.scrollHeight-box.scrollTop-box.clientHeight<90;
       const {messages=[]}=await api("/community/chat/"+encodeURIComponent(activeChat)+"/messages");
-      const currentUser=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}").id;
-      box.innerHTML=messages.map(m=>'<div class="chat-bubble '+(m.senderId===currentUser?"mine":"")+'">'+(m.messageType==="VOICE_NOTE"&&m.mediaUrl?'<audio controls preload="metadata" src="'+esc(m.mediaUrl)+'"></audio>':esc(m.body||""))+'</div>').join("");
+      box.innerHTML=messages.map(m=>'<div class="chat-bubble '+(m.isMine?"mine":"")+'">'+(m.messageType==="VOICE_NOTE"&&m.mediaUrl?'<audio controls preload="metadata" src="'+esc(m.mediaUrl)+'"></audio>':esc(m.body||""))+'</div>').join("");
       if(nearBottom)box.scrollTop=box.scrollHeight;
     }catch(_){}
   }
