@@ -176,6 +176,61 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
     });
     assert.equal(reciprocal?.status, "ACCEPTED", "accepting a request must persist the reciprocal accepted relationship");
 
+    const postResponse = await request("/api/community/posts", viewer.user, {
+      method: "POST", body: JSON.stringify({ body: "A real integration-test post", visibility: "PUBLIC" })
+    });
+    assert.equal(postResponse.status, 201);
+    const createdPost = (await postResponse.json()).post;
+    assert.equal(createdPost.isOwner, true);
+    assert.equal(createdPost.authorId, undefined, "post APIs must not expose account IDs");
+
+    const feedResponse = await request("/api/community/feed?limit=20", requester.user);
+    assert.equal(feedResponse.status, 200);
+    const feed = await feedResponse.json();
+    const visiblePost = feed.posts.find(post => post.id === createdPost.id);
+    assert.ok(visiblePost);
+    assert.equal(visiblePost.authorId, undefined);
+    assert.equal(visiblePost.author.userId, undefined);
+    assert.equal(visiblePost.author.id, undefined);
+
+    const commentResponse = await request("/api/community/posts/" + createdPost.id + "/comments", requester.user, {
+      method: "POST", body: JSON.stringify({ body: "Useful explanation." })
+    });
+    assert.equal(commentResponse.status, 201);
+    const createdComment = (await commentResponse.json()).comment;
+    assert.equal(createdComment.isMine, true);
+    assert.equal(createdComment.userId, undefined);
+    const commentsResponse = await request("/api/community/posts/" + createdPost.id + "/comments", viewer.user);
+    const commentsData = await commentsResponse.json();
+    assert.equal(commentsData.comments[0].userId, undefined);
+
+    const directChat = await request("/api/community/chat/direct/" + requester.profile.username, viewer.user, {
+      method: "POST", body: "{}"
+    });
+    assert.equal(directChat.status, 201);
+    const conversation = (await directChat.json()).conversation;
+    assert.equal(conversation.createdById, undefined);
+    const sentMessage = await request("/api/community/chat/" + conversation.id + "/messages", viewer.user, {
+      method: "POST", body: JSON.stringify({ body: "Hello from the integration test." })
+    });
+    assert.equal(sentMessage.status, 201);
+    assert.equal((await sentMessage.json()).message.senderId, undefined);
+    const chatList = await request("/api/community/chat", requester.user);
+    const chatData = await chatList.json();
+    const listedConversation = chatData.conversations.find(item => item.id === conversation.id);
+    assert.ok(listedConversation);
+    assert.ok(listedConversation.members.every(member => member.userId === undefined));
+    assert.equal(listedConversation.lastMessage.senderId, undefined);
+    const chatMessages = await request("/api/community/chat/" + conversation.id + "/messages", requester.user);
+    const chatMessageData = await chatMessages.json();
+    assert.equal(chatMessageData.messages[0].senderId, undefined);
+    assert.equal(chatMessageData.messages[0].isMine, false);
+
+    const notificationResponse = await request("/api/notifications", requester.user);
+    const notificationData = await notificationResponse.json();
+    assert.ok(notificationData.notifications.some(item => item.title === "New message"));
+    assert.ok(notificationData.notifications.every(item => item.userId === undefined && item.createdById === undefined));
+
     const privateProfile = await request("/api/community/profiles/" + privateStudent.profile.username, viewer.user);
     assert.equal(privateProfile.status, 404);
     const suspendedProfile = await request("/api/community/profiles/" + suspendedStudent.profile.username, viewer.user);
