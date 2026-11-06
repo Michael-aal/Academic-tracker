@@ -395,7 +395,8 @@ router.post("/posts", async (req, res, next) => {
       return res.status(400).json({ error: "Post videos must be valid Cloudinary videos no larger than 50 MB uploaded to your account." });
     }
     const post = await prisma.communityPost.create({ data: { authorId: req.userId, body, mediaUrl, videoUrl, subject, visibility } });
-    res.status(201).json({ post });
+    const { authorId, ...safePost } = post;
+    res.status(201).json({ post: { ...safePost, isOwner: authorId === req.userId } });
   } catch (e) { next(e); }
 });
 
@@ -409,7 +410,8 @@ router.post("/posts/:id/share", async (req, res, next) => {
       authorId: req.userId, body, sharedPostId: original.id, subject: original.subject, visibility
     }});
     await notifySocial(original.authorId, req.userId, "Your post was shared", "A student shared one of your posts.", { type: "POST_SHARED", postId: original.id });
-    res.status(201).json({ post });
+    const { authorId, ...safePost } = post;
+    res.status(201).json({ post: { ...safePost, isOwner: authorId === req.userId } });
   } catch (e) { next(e); }
 });
 
@@ -473,7 +475,8 @@ router.patch("/posts/:id", async (req, res, next) => {
     if (!nextBody && !existing.mediaUrl && !existing.videoUrl) return res.status(400).json({ error: "A post must contain text or media." });
     if (!Object.keys(data).length) return res.status(400).json({ error: "There are no changes to save." });
     const post = await prisma.communityPost.update({ where: { id: existing.id }, data });
-    res.json({ post });
+    const { authorId, ...safePost } = post;
+    res.json({ post: { ...safePost, isOwner: authorId === req.userId } });
   } catch (e) { next(e); }
 });
 
@@ -548,7 +551,8 @@ router.post("/posts/:id/comments", async (req, res, next) => {
     }
     const comment = await prisma.communityComment.create({ data: { postId: post.id, userId: req.userId, parentId, body } });
     await notifySocial(post.authorId, req.userId, parentId ? "New reply on your post" : "New comment on your post", "A student commented on your post.", { type: "POST_COMMENT", postId: post.id, commentId: comment.id });
-    res.status(201).json({ comment });
+    const { userId, ...safeComment } = comment;
+    res.status(201).json({ comment: { ...safeComment, isMine: userId === req.userId } });
   } catch (e) { next(e); }
 });
 
