@@ -80,10 +80,10 @@
     const active=state()?.getActiveChat();
     const conversations=state()?.getConversations()||[];
     const conv=conversations.find(c=>c.id===active);
-    const other=conv?.members?.find(m=>m.userId!==me());
+    const other=conv?.members?.find(m=>!m.isMe);
     if(!other){setStatus("Calls are available in direct conversations with accepted connections.");return}
     try{
-      const {call}=await api("/community/calls",{method:"POST",body:JSON.stringify({calleeId:other.userId,callType:type})});
+      const {call}=await api("/community/calls",{method:"POST",body:JSON.stringify({calleeUsername:other.user.username,callType:type})});
       currentCall=call;setStatus("Calling "+(other.user?.name||"student")+"…");await makePeer(call,true);
     }catch(e){if(currentCall)try{await api("/community/calls/"+currentCall.id,{method:"PATCH",body:JSON.stringify({action:"END"})})}catch(_){}cleanup();setStatus(e.message)}
   }
