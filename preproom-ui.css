@@ -351,3 +351,29 @@ body.notifications-page #notification-compose-form input,body.notifications-page
  body.social-media-page .post-actions button{font-size:9px}
  body.social-media-page .social-profile-stats{gap:4px}
 }
+
+/* The supplied Preproom reference is intentionally dark, independent of the
+   parent dashboard's light/dark preference. */
+html[data-theme="light"] body.social-media-page,
+html[data-theme="light"] body.social-create-page{background:#090611!important;color:#f7f1ff!important}
+html[data-theme="light"] body.social-media-page .panel,
+html[data-theme="light"] body.social-media-page .preproom-side-card,
+html[data-theme="light"] body.social-media-page .post-card{background:linear-gradient(145deg,#160e24,#100a1b)!important;background-image:linear-gradient(145deg,#160e24,#100a1b)!important;color:#f7f1ff!important;border-color:var(--preproom-line)!important;box-shadow:0 12px 34px #0005!important}
+html[data-theme="light"] body.social-media-page .post-body,
+html[data-theme="light"] body.social-media-page .post-author,
+html[data-theme="light"] body.social-media-page .post-actions button,
+html[data-theme="light"] body.social-media-page .feed-toolbar h2,
+html[data-theme="light"] body.social-media-page .social-profile-identity h2,
+html[data-theme="light"] body.social-media-page .social-profile-identity p,
+html[data-theme="light"] body.social-media-page .social-profile-stats strong,
+html[data-theme="light"] body.social-media-page .social-profile-stats span{color:#f7f1ff!important}
+html[data-theme="light"] body.social-media-page .composer textarea,
+html[data-theme="light"] body.social-media-page .composer-row input,
+html[data-theme="light"] body.social-media-page .composer-row select,
+html[data-theme="light"] body.social-media-page .profile-editor input,
+html[data-theme="light"] body.social-media-page .profile-editor textarea,
+html[data-theme="light"] body.social-media-page .profile-editor select,
+html[data-theme="light"] body.social-media-page .chat-send textarea{background:#1b1030!important;color:#fff!important;border-color:var(--preproom-line)!important}
+html[data-theme="light"] body.notifications-page{background:#090611!important;color:#f7f1ff!important}
+html[data-theme="light"] body.notifications-page .notification-item,
+html[data-theme="light"] body.notifications-page .notification-admin-card{background:#130d20!important;color:#f7f1ff!important;border-color:var(--notice-border)!important}
