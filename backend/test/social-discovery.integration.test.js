@@ -77,6 +77,7 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
     const blockingStudent = await createStudent("Blocking Student", "SECONDARY");
     const requester = await createStudent("Incoming Requester", "SECONDARY");
     const sameTrack = await createStudent("Same Track Candidate", "SECONDARY");
+    const decliner = await createStudent("Decline Requester", "SECONDARY");
 
     await prisma.communityBlock.createMany({ data: [
       { blockerId: viewer.user.id, blockedId: blockedStudent.user.id },
@@ -84,6 +85,9 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
     ] });
     const incoming = await prisma.communityFollow.create({
       data: { followerId: requester.user.id, followingId: viewer.user.id, status: "PENDING" }
+    });
+    const incomingToDecline = await prisma.communityFollow.create({
+      data: { followerId: decliner.user.id, followingId: viewer.user.id, status: "PENDING" }
     });
 
     await new Promise((resolve, reject) => {
@@ -148,6 +152,20 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
     });
     assert.equal(sameTrackRequest.status, 200);
     assert.equal((await sameTrackRequest.json()).status, "PENDING", "same-track users should be able to send a persisted friend request");
+    const duplicateRequest = await request("/api/community/follow/" + sameTrack.user.id, viewer.user, { method: "POST", body: "{}" });
+    assert.equal(duplicateRequest.status, 200);
+    assert.equal(await prisma.communityFollow.count({ where: { followerId: viewer.user.id, followingId: sameTrack.user.id } }), 1, "repeated requests must not create duplicates");
+    const cancelRequest = await request("/api/community/follow/" + sameTrack.user.id, viewer.user, { method: "DELETE" });
+    assert.equal(cancelRequest.status, 200);
+    assert.equal(await prisma.communityFollow.count({ where: { followerId: viewer.user.id, followingId: sameTrack.user.id } }), 0, "cancelling must remove the pending request");
+    const selfRequest = await request("/api/community/follow/" + viewer.user.id, viewer.user, { method: "POST", body: "{}" });
+    assert.equal(selfRequest.status, 404, "users cannot send friend requests to themselves");
+
+    const declineRequest = await request("/api/community/friend-requests/" + incomingToDecline.id, viewer.user, {
+      method: "POST", body: JSON.stringify({ action: "decline" })
+    });
+    assert.equal(declineRequest.status, 200);
+    assert.equal(await prisma.communityFollow.count({ where: { id: incomingToDecline.id } }), 0, "declining must remove the pending request");
 
     const accept = await request("/api/community/friend-requests/" + incoming.id, viewer.user, {
       method: "POST", body: JSON.stringify({ action: "accept" })
