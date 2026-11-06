@@ -734,3 +734,8 @@ body.social-media-page[data-preproom-view="feed"] .social-topbar{display:grid!im
 .preproom-video-controls button{border:1px solid var(--preproom-line);border-radius:10px;padding:9px 13px;background:var(--preproom-panel);color:var(--preproom-text);font-size:12px;font-weight:700}
 .preproom-video-controls button:disabled{opacity:.4}
 @media(max-width:600px){.preproom-video-stage{aspect-ratio:9/16;border-radius:12px}.preproom-video-details strong{font-size:13px}.preproom-video-controls button{flex:1}}
+
+/* Feed pagination and interactive author links */
+.feed-load-more{display:block;min-height:42px;margin:14px auto 0}
+.post-author-profile-link{color:inherit;text-decoration:none}
+.post-author-profile-link:hover{text-decoration:underline}
