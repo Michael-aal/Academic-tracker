@@ -55,6 +55,8 @@
     if (name === "profile") {
       if ($("public-student-profile")) $("public-student-profile").hidden = true;
       if (document.querySelector(".social-profile-page")) document.querySelector(".social-profile-page").hidden = false;
+      document.querySelectorAll("[data-profile-tab]").forEach(button => button.classList.toggle("active", button.dataset.profileTab === "posts"));
+      document.querySelectorAll("[data-profile-panel]").forEach(panel => { panel.hidden = panel.dataset.profilePanel !== "posts"; });
       loadProfile();
     }
   }
