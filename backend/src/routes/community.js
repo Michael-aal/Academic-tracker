@@ -539,7 +539,7 @@ router.get("/people", async (req, res, next) => {
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {})
       }),
       prisma.communityProfile.count({
-        where: { ...profileWhere, lastSeenAt: { gte: new Date(now - 120000) } }
+        where: { ...profileWhere, lastSeenAt: { gte: new Date(now - 120000), lte: new Date(now) } }
       })
     ]);
     const hasMore = profiles.length > limit;
@@ -639,8 +639,8 @@ router.post("/follow/:userId", async (req, res, next) => {
     const [target, currentUser] = await Promise.all([getUser(req.params.userId), getUser(req.userId)]);
     if (!target || target.id === req.userId) return res.status(404).json({ error: "Student not found." });
     if (!currentUser || target.educationTrack !== currentUser.educationTrack) return res.status(403).json({ error: "Friend connections are limited to students in the same academic environment." });
-    const targetProfile = await prisma.communityProfile.findUnique({ where: { userId: target.id }, select: { visibility: true, status: true } });
-    if (!targetProfile || targetProfile.visibility !== "PUBLIC" || targetProfile.status !== "ACTIVE") return res.status(404).json({ error: "Student profile not found." });
+    const targetProfile = await prisma.communityProfile.findUnique({ where: { userId: target.id }, select: { visibility: true, status: true, usernameSet: true } });
+    if (!targetProfile || !targetProfile.usernameSet || targetProfile.visibility !== "PUBLIC" || targetProfile.status !== "ACTIVE") return res.status(404).json({ error: "Student profile not found." });
     if (await isBlocked(req.userId, target.id)) return res.status(403).json({ error: "This connection is blocked." });
     const [outgoing, incoming] = await Promise.all([
       prisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: req.userId, followingId: target.id } } }),
