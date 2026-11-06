@@ -61,18 +61,24 @@
       loadProfile();
     }
   }
+  function navigateSocialTab(name) {
+    if (!["feed", "people", "messages", "profile"].includes(name)) return tab(name);
+    const nextHash = "#" + name;
+    if (location.hash !== nextHash) { location.hash = nextHash; return; }
+    tab(name);
+  }
   document.addEventListener("click", e => {
     const button = e.target.closest("[data-tab]");
-    if (button) { e.preventDefault(); tab(button.dataset.tab); }
+    if (button) { e.preventDefault(); navigateSocialTab(button.dataset.tab); }
     const link = e.target.closest("[data-tab-link]");
-    if (link) { e.preventDefault(); tab(link.dataset.tabLink); }
+    if (link) { e.preventDefault(); navigateSocialTab(link.dataset.tabLink); }
   });
   const globalSearch = $("social-global-search");
   globalSearch?.addEventListener("submit", event => {
     event.preventDefault();
     const query = $("social-global-search-input").value.trim();
     if (query.length < 2) { status("Enter at least two characters to search."); return; }
-    tab("people");
+    navigateSocialTab("people");
     $("people-query").value = query;
     $("people-search").requestSubmit();
   });
@@ -548,7 +554,7 @@
     if (!button) return;
     try {
       const { conversation } = await api("/community/chat/direct/" + encodeURIComponent(button.dataset.profileFriendMessage), { method:"POST", body:"{}" });
-      tab("messages");
+      navigateSocialTab("messages");
       openChat(conversation.id);
     } catch (error) { status(error.message); }
   });
