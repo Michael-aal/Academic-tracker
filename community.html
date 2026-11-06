@@ -49,8 +49,9 @@
     <div class="preproom-explore-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><input id="preproom-explore-query" type="search" placeholder="Search people, topics or posts"><button type="button" id="preproom-explore-search-btn">Search</button></div>
     <div class="preproom-explore-filters" role="group" aria-label="Explore filters"><button type="button" class="active" data-explore-filter="all">All</button><button type="button" data-explore-filter="people">People</button><button type="button" data-explore-filter="posts">Posts</button><button type="button" data-explore-filter="groups">Groups</button></div>
     <div class="preproom-explore-grid">
-      <section class="panel section-panel preproom-explore-main"><div class="section-heading"><div><h2>People you may know</h2><p>Search students by username, name or institution.</p></div><span class="preproom-section-icon">♙</span></div>
-        <form id="people-search" class="search-row"><input id="people-query" minlength="2" autocomplete="off" placeholder="Enter @username, student name or institution"><button class="primary-button">Search</button></form>
+      <section class="panel section-panel preproom-explore-main"><div class="section-heading"><div><h2>Discover students</h2><p>Browse public student profiles across the platform, see who is online and send friend requests.</p></div><span class="preproom-section-icon">♙</span></div>
+        <form id="people-search" class="search-row"><input id="people-query" autocomplete="off" placeholder="Search by name, @username or institution"><button class="primary-button">Search</button><button class="outline-button" type="button" id="clear-people-search">Browse all</button></form>
+        <div class="people-discovery-toolbar"><span id="people-results-count">Loading students…</span><span class="muted-note">Online students appear first</span></div>
         <div id="people-list" class="people-list" aria-live="polite"><div class="empty-state">Search for students to discover profiles.</div></div>
       </section>
       <aside class="preproom-explore-rail">
