@@ -38,11 +38,8 @@
     }
   }
   function setupHome(){
-    const layout=$(".community-layout");
-    if(!layout||$(".preproom-side-rail",layout))return;
-    const rail=document.createElement("aside");rail.className="preproom-side-rail";
-    rail.innerHTML='<section class="preproom-side-card"><h3>Trending topics</h3><div class="preproom-topic-list"><span class="preproom-topic">#StudyTips</span><span class="preproom-topic">#Programming</span><span class="preproom-topic">#WebDev</span><span class="preproom-topic">#Mathematics</span><span class="preproom-topic">#UniversityLife</span></div></section><section class="preproom-side-card"><h3>About Preproom</h3><p class="preproom-side-note">A focused space for students to share what they are learning, exchange useful ideas and keep up with classmates.</p></section>';
-    layout.append(rail);
+    /* Keep the homepage intentionally focused: feed, composer and post actions only. */
+    const rail=$(".preproom-side-rail"); if(rail)rail.remove();
   }
   function simplifyFeed(){
     const returnBar=$(".social-home-return");
