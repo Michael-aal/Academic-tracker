@@ -19,9 +19,17 @@
 </head>
 <body class="social-media-page">
 <header class="social-topbar">
-<a class="social-brand" href="community.html" aria-label="Home"><span class="social-brand-mark">A</span></a>
-<form class="social-global-search" id="social-global-search" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><input id="social-global-search-input" type="search" placeholder="Search" aria-label="Search students and posts"><button type="submit" aria-label="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg></button></form>
-<div class="social-top-actions"><a href="social-create.html" class="social-top-action" aria-label="Create post" title="Create post"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a><a href="notifications.html" class="social-top-action" aria-label="Notifications" title="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></a><button type="button" class="social-top-action" data-tab="messages" aria-label="Messages" title="Messages"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4zM8 9h8M8 13h5"/></svg></button><button type="button" class="social-top-profile" data-tab="profile" aria-label="Profile" title="Profile"><span id="social-top-avatar">S</span></button></div></header>
+  <a class="social-brand" href="community.html" aria-label="Preproom home"></a>
+  <form class="social-global-search" id="social-global-search" role="search">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg>
+    <input id="social-global-search-input" type="search" placeholder="Search in Preproom..." aria-label="Search students and posts">
+    <button type="submit" aria-label="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg></button>
+  </form>
+  <div class="social-top-actions at-nav-actions">
+    <a href="notifications.html" class="social-top-action" aria-label="Notifications" title="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span class="social-notification-dot" id="social-notification-dot" hidden></span></a>
+    <button type="button" class="social-top-profile" data-tab="profile" aria-label="Profile" title="Profile"><span id="social-top-avatar">S</span></button>
+  </div>
+</header>
 <aside class="social-sidebar" aria-label="Main navigation"><button class="active" type="button" data-tab="feed"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/></svg> Home</button><button type="button" data-tab="people"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 5.5a3.5 3.5 0 0 1 0 7M17 14a5.5 5.5 0 0 1 4.5 5.5"/></svg> Friends</button><button type="button" data-tab="groups"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg> Study groups</button><button type="button" data-tab="videos"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m10 9 5 3-5 3z"/></svg> Watch &amp; explore</button><button type="button" data-tab="messages"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4zM8 9h8M8 13h5"/></svg> Messages</button><button type="button" data-tab="referrals"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg> Invite friends</button><button type="button" data-tab="profile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> My profile</button><div class="social-sidebar-divider"></div><a class="social-admin-link" id="community-admin-link" href="community-admin.html" hidden>Moderation tools</a></aside>
 <main class="community-shell">
   <div id="community-status" class="community-status" role="status" aria-live="polite"></div>
@@ -91,12 +99,12 @@
     </section>
   </section>
   <section class="social-onboarding-overlay" id="social-onboarding" hidden role="dialog" aria-modal="true"><form class="social-onboarding-card" id="social-onboarding-form"><h1>Choose a username</h1><p>Your username must be unique.</p><label for="onboarding-username">Username</label><div class="username-input-wrap"><span>@</span><input id="onboarding-username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}" placeholder="your_username" required></div><small>3–30 characters. Letters, numbers and underscores only.</small><div id="onboarding-error" role="alert"></div><button class="primary-button" type="submit">Continue</button></form></section>
-  <nav class="social-bottom-nav" id="social-bottom-nav" aria-label="Main navigation">
-  <button type="button" data-social-dest="feed" class="active" aria-current="page"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/></svg><span>Home</span></button>
-  <button type="button" data-social-dest="people"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 5.5a3.5 3.5 0 0 1 0 7M17 14a5.5 5.5 0 0 1 4.5 5.5"/></svg><span>Friends</span></button>
-  <button type="button" data-social-create class="social-create"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Create</span></button>
-  <button type="button" data-social-dest="messages"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4zM8 9h8M8 13h5"/></svg><span>Messages</span></button>
-  <button type="button" data-social-dest="profile"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Profile</span></button>
+  <nav class="social-bottom-nav" id="social-bottom-nav" aria-label="Preproom navigation">
+  <button type="button" data-social-dest="feed" class="active" aria-current="page" aria-label="Home"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/></svg><span>Home</span></button>
+  <button type="button" data-social-dest="people" aria-label="Explore"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><span>Explore</span></button>
+  <button type="button" data-social-create class="social-create" aria-label="Create post"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="sr-only">Create</span></button>
+  <button type="button" data-social-dest="messages" aria-label="Messages"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4zM8 9h8"/></svg><span>Messages</span><i class="social-nav-badge" id="social-message-badge" hidden>3</i></button>
+  <button type="button" data-social-dest="profile" aria-label="Profile"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Profile</span></button>
 </nav>
 
 </main>
