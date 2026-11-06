@@ -312,7 +312,7 @@ router.get("/profile/me", async (req, res, next) => {
     const shareCounts = new Map(shares.map(item => [item.sharedPostId, item._count._all]));
     const totalLikes = reactions.reduce((sum, item) => sum + item._count._all, 0);
     res.json({
-      profile: publicProfile(profile, user),
+      profile: { ...publicProfile(profile, user), usernameSet: profile.usernameSet },
       stats: { posts: posts.length, friends, likes: totalLikes },
       posts: posts.map(post => {
         const { authorId, ...safePost } = post;
