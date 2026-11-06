@@ -364,6 +364,7 @@ model CommunityProfile {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
   @@index([bestSubject])
+  @@index([lastSeenAt])
   @@map("community_profiles")
 }
 
