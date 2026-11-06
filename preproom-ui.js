@@ -30,11 +30,7 @@
         const create=document.createElement("a");create.className="primary-button preproom-create-link";create.href="social-create.html";create.textContent="＋  Create post";create.style.cssText="display:flex;align-items:center;justify-content:center;text-decoration:none;margin:14px 0 8px;min-height:48px";
         sidebar.insertBefore(create,sidebar.querySelector(".social-sidebar-divider"));
       }
-      const dashboardReturn=$("#social-dashboard-return"); if(dashboardReturn)dashboardReturn.href=dashboardPath();
       const admin=$("#community-admin-link"); if(admin)admin.hidden=true;
-      if(!$(".preproom-dashboard-link",sidebar)){
-        const back=document.createElement("a");back.className="social-admin-link preproom-dashboard-link";back.href=dashboardPath();back.textContent="← Back to Academic Tracker";sidebar.append(back);
-      }
     }
     const bottom=$("#social-bottom-nav");
     if(bottom){
