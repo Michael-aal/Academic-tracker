@@ -30,6 +30,42 @@ const safeUrl = value => {
   if (!raw) return null;
   try { const u = new URL(raw); return u.protocol === "https:" ? raw : null; } catch { return null; }
 };
+async function verifyCommunityCloudinaryAsset(rawUrl, userId, expectedResourceType, maxBytes) {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  if (!cloudName || !apiKey || !apiSecret) throw new Error("Community media storage is not configured.");
+  let url;
+  try { url = new URL(rawUrl); } catch { return false; }
+  if (url.protocol !== "https:" || url.hostname !== "res.cloudinary.com") return false;
+  const parts = url.pathname.split("/").filter(Boolean).map(decodeURIComponent);
+  if (parts.length < 5 || parts[0] !== cloudName || parts[1] !== expectedResourceType || parts[2] !== "upload") return false;
+  let assetParts = parts.slice(3);
+  if (/^v\\d+$/.test(assetParts[0] || "")) assetParts = assetParts.slice(1);
+  if (!assetParts.length) return false;
+  const last = assetParts[assetParts.length - 1];
+  assetParts[assetParts.length - 1] = last.replace(/\\.[a-z0-9]{2,8}$/i, "");
+  const publicId = assetParts.join("/");
+  const expectedFolder = "academic-tracker/community/" + userId + "/";
+  if (!publicId.startsWith(expectedFolder)) return false;
+
+  const endpoint = new URL("https://api.cloudinary.com/v1_1/" + encodeURIComponent(cloudName) + "/resources/" + expectedResourceType + "/upload");
+  endpoint.searchParams.append("public_ids[]", publicId);
+  const response = await fetch(endpoint, {
+    headers: { Authorization: "Basic " + Buffer.from(apiKey + ":" + apiSecret).toString("base64") },
+    signal: AbortSignal.timeout(7000),
+    redirect: "error"
+  });
+  if (!response.ok) {
+    if (response.status === 404) return false;
+    throw new Error("Could not verify the uploaded media with Cloudinary.");
+  }
+  const data = await response.json().catch(() => ({}));
+  const asset = (Array.isArray(data.resources) ? data.resources : []).find(item =>
+    item.public_id === publicId && item.resource_type === expectedResourceType && item.type === "upload"
+  );
+  return Boolean(asset && Number(asset.bytes) > 0 && Number(asset.bytes) <= maxBytes);
+}
 const slug = value => clean(value, 30).toLowerCase().replace(/[^a-z0-9_]/g, "").replace(/^_+|_+$/g, "");
 const publicProfile = (profile, user) => ({
   id: profile.id, userId: user.id, username: profile.username, usernameSet: profile.usernameSet, displayName: user.name,
@@ -287,6 +323,12 @@ router.patch("/profile/me", async (req, res, next) => {
       data.interests = [...new Set(req.body.interests.map(x => x.trim()))];
     }
     const current = await ensureProfile(user);
+    if (data.avatarUrl && data.avatarUrl !== current.avatarUrl && !await verifyCommunityCloudinaryAsset(data.avatarUrl, req.userId, "image", 8 * 1024 * 1024)) {
+      return res.status(400).json({ error: "Profile photos must be valid Cloudinary images no larger than 8 MB uploaded to your account." });
+    }
+    if (data.coverUrl && data.coverUrl !== current.coverUrl && !await verifyCommunityCloudinaryAsset(data.coverUrl, req.userId, "image", 8 * 1024 * 1024)) {
+      return res.status(400).json({ error: "Cover photos must be valid Cloudinary images no larger than 8 MB uploaded to your account." });
+    }
     const profile = Object.keys(data).length ? await prisma.communityProfile.update({ where: { id: current.id }, data }) : current;
     res.json({ profile: publicProfile(profile, user) });
   } catch (e) {
@@ -317,8 +359,14 @@ router.post("/posts", async (req, res, next) => {
     const videoUrl = req.body?.videoUrl ? safeUrl(req.body.videoUrl) : null;
     const subject = clean(req.body?.subject, 100) || null;
     const visibility = ["PUBLIC", "FOLLOWERS"].includes(req.body?.visibility) ? req.body.visibility : "PUBLIC";
-    if (!body && !mediaUrl && !videoUrl) return res.status(400).json({ error: "Write something or attach a valid HTTPS media link." });
+    if (!body && !mediaUrl && !videoUrl) return res.status(400).json({ error: "Write something or attach a valid media file." });
     if (req.body?.mediaUrl && !mediaUrl || req.body?.videoUrl && !videoUrl) return res.status(400).json({ error: "Media links must use HTTPS." });
+    if (mediaUrl && !await verifyCommunityCloudinaryAsset(mediaUrl, req.userId, "image", 8 * 1024 * 1024)) {
+      return res.status(400).json({ error: "Post images must be valid Cloudinary images no larger than 8 MB uploaded to your account." });
+    }
+    if (videoUrl && !await verifyCommunityCloudinaryAsset(videoUrl, req.userId, "video", 50 * 1024 * 1024)) {
+      return res.status(400).json({ error: "Post videos must be valid Cloudinary videos no larger than 50 MB uploaded to your account." });
+    }
     const post = await prisma.communityPost.create({ data: { authorId: req.userId, body, mediaUrl, videoUrl, subject, visibility } });
     res.status(201).json({ post });
   } catch (e) { next(e); }
