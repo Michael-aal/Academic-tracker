@@ -122,7 +122,7 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
     assert.equal(blockedProfile.status, 404, "blocked profiles must not be accessible");
     const blockListResponse = await request("/api/community/blocks", viewer.user);
     assert.equal(blockListResponse.status, 200);
-    assert.ok((await blockListResponse.json()).blocks.some(item => item.blockedId === blockedStudent.user.id));
+    assert.ok((await blockListResponse.json()).blocks.some(item => item.username === blockedStudent.profile.username));
     const unblock = await request("/api/community/blocks/" + blockedStudent.user.id, viewer.user, { method: "DELETE" });
     assert.equal(unblock.status, 200);
     const afterUnblock = await request("/api/community/people?limit=30", viewer.user);
