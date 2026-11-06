@@ -10,13 +10,14 @@ test("Social Media moderation status columns are present and queryable", {
   const { PrismaClient } = require("@prisma/client");
   const prisma = new PrismaClient();
   try {
-    const columns = await prisma.$queryRawUnsafe("SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public' AND ((table_name = 'community_profiles' AND column_name = 'status') OR (table_name = 'study_groups' AND column_name = 'status'))");
+    const columns = await prisma.$queryRawUnsafe("SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public' AND ((table_name = 'community_profiles' AND column_name IN ('status', 'last_seen_at')) OR (table_name = 'study_groups' AND column_name = 'status'))");
     const present = new Set(columns.map(row => row.table_name + "." + row.column_name));
     assert.ok(present.has("community_profiles.status"), "community_profiles.status migration is missing");
+    assert.ok(present.has("community_profiles.last_seen_at"), "community_profiles.last_seen_at migration is missing");
     assert.ok(present.has("study_groups.status"), "study_groups.status migration is missing");
 
     // These also validate that the generated Prisma client knows both fields.
-    await prisma.communityProfile.findMany({ select: { status: true }, take: 1 });
+    await prisma.communityProfile.findMany({ select: { status: true, lastSeenAt: true }, take: 1 });
     await prisma.studyGroup.findMany({ select: { status: true }, take: 1 });
   } finally {
     await prisma.$disconnect();
