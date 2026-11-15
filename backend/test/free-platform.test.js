@@ -11,7 +11,7 @@ test("AI generation route does not depend on a wallet, credits, or premium acces
   const ai = read("backend/src/routes/ai.js");
   assert.doesNotMatch(ai, /aiCreditGate|ai-credit-gate|INSUFFICIENT_AI_CREDITS|creditUsage/);
   assert.match(ai, /router\.post\("\/",\s*validateAiRequest,\s*aiUsageAudit,/);
-  assert.match(ai, /creditsCharged:\s*0/);
+  assert.doesNotMatch(ai, /creditsCharged|creditUsage/);
 });
 
 test("premium and payment API is not mounted", () => {
