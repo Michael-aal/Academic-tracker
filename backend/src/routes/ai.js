@@ -46,7 +46,7 @@ function recordAiUsage(req, usage = {}, provider = "unknown", model = "unknown",
   req.aiUsageEvents.push({
     provider, model, inputTokens: valid ? input : 0, outputTokens: valid ? output : 0,
     cachedInputTokens: valid ? cached : 0, reasoningTokens: valid ? reasoning : 0,
-    creditsCharged: 0, usageKnown,
+    usageKnown,
     status: providerOk ? "PROVIDER_OK" : "PROVIDER_FAILED",
     providerStatus: Number.isInteger(providerStatus) ? providerStatus : 0
   });
@@ -61,10 +61,8 @@ function aiUsageAudit(req, res, next) {
     finalized = true;
     if (!Array.isArray(req.aiUsageEvents) || req.aiUsageEvents.length === 0) return sendJson(payload);
     if (res.statusCode >= 400) {
-      for (const event of req.aiUsageEvents) event.creditsCharged = 0;
     } else {
       // Usage records are operational telemetry, never a user balance or charge.
-      for (const event of req.aiUsageEvents) event.creditsCharged = 0;
     }
     persistAiUsage(req)
       .then(() => sendJson(payload))
@@ -89,7 +87,7 @@ async function persistAiUsage(req) {
       model: String(event.model || "unknown").slice(0, 120),
       inputTokens: event.inputTokens, outputTokens: event.outputTokens,
       cachedInputTokens: event.cachedInputTokens, reasoningTokens: event.reasoningTokens,
-      creditsCharged: event.creditsCharged, usageKnown: event.usageKnown,
+      usageKnown: event.usageKnown,
       status: event.status, providerStatus: event.providerStatus
     }))
   });
@@ -154,7 +152,7 @@ router.get("/usage", requireAdmin, async (req, res, next) => {
       select: {
         id: true, requestId: true, action: true, provider: true, model: true,
         inputTokens: true, outputTokens: true, cachedInputTokens: true, reasoningTokens: true,
-        creditsCharged: true, usageKnown: true, status: true, providerStatus: true, createdAt: true,
+        usageKnown: true, status: true, providerStatus: true, createdAt: true,
         user: { select: { id: true, name: true, email: true } }
       }
     });
@@ -166,7 +164,7 @@ router.get("/usage/me", async (req, res, next) => {
   try {
     const records = await prisma.aiUsageRecord.findMany({
       where: { userId: req.userId }, orderBy: { createdAt: "desc" }, take: 100,
-      select: { requestId: true, action: true, provider: true, model: true, inputTokens: true, outputTokens: true, cachedInputTokens: true, reasoningTokens: true, creditsCharged: true, usageKnown: true, status: true, createdAt: true }
+      select: { requestId: true, action: true, provider: true, model: true, inputTokens: true, outputTokens: true, cachedInputTokens: true, reasoningTokens: true, usageKnown: true, status: true, createdAt: true }
     });
     res.json({ records });
   } catch (error) { next(error); }
