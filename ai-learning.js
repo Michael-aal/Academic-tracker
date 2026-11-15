@@ -442,7 +442,7 @@
           timePerQuestionSeconds: Number($("quiz-time-limit")?.value || 0)
         })
       });
-        if (state.action === "quiz") {
+      if (state.action === "quiz") {
         const expectedCount = Number($("question-count")?.value || 5);
         const validQuiz = data.quiz && typeof data.quiz.title === "string" && Array.isArray(data.quiz.questions) && data.quiz.questions.length === expectedCount && data.quiz.questions.every(question => question && typeof question.id === "string" && typeof question.question === "string" && Array.isArray(question.options) && question.options.length === 4 && question.options.every(option => option && typeof option.id === "string" && typeof option.text === "string"));
         if (!validQuiz || typeof data.attemptId !== "string" || !data.attemptId) {
