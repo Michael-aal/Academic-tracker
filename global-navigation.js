@@ -20,7 +20,6 @@
     ["AI Learning","ai-learning.html","learn"],
     ["English Studio","english-studio.html","learn"],
     ["Level Up","level-up.html","more"],
-    ["Subscription","premium.html","more"],
     ["Notifications","notifications.html","notifications"],
     ["AI Tutor","ai-tutor.html","tutor"],
     ["AI Quiz","ai-quiz-setup.html","quiz"],
