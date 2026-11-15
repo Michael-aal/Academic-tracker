@@ -5,15 +5,14 @@ const { requireAuth } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/admin");
 const { prisma } = require("../prisma");
 const { validateQuiz, publicQuiz, markQuiz } = require("../quiz-schema");
-const { aiCreditGate } = require("../ai-credit-gate");
 const { addXp } = require("./learning");
 const { requestChatCompletion, configuredProviders, hasConfiguredProvider, providerOrder } = require("../ai-provider");
 
 const router = express.Router();
 router.use(requireAuth);
 
-// Every generation request must reserve unexpired wallet credits in aiCreditGate.
-// An independent IP ceiling also limits automated abuse across multiple accounts.
+// Authenticated users have direct AI access; rate limits protect provider spend.
+// The IP ceiling also limits automated abuse across multiple accounts.
 const aiIpLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 30,
@@ -22,6 +21,16 @@ const aiIpLimiter = rateLimit({
   message: { error: "Too many AI requests from this network. Please wait before trying again." }
 });
 router.use(aiIpLimiter);
+
+const aiUserLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  keyGenerator: req => req.userId,
+  message: { error: "You have made several AI requests. Please wait a minute and try again." }
+});
+router.use(aiUserLimiter);
 
 const MAX_INPUT_CHARS = 12000;
 function recordAiUsage(req, usage = {}, provider = "unknown", model = "unknown", providerStatus = 0, providerOk = false) {
@@ -33,16 +42,15 @@ function recordAiUsage(req, usage = {}, provider = "unknown", model = "unknown",
   const reasoning = Number(usage?.completion_tokens_details?.reasoning_tokens ?? usage?.output_tokens_details?.reasoning_tokens ?? 0);
   const valid = [input, output, cached, reasoning].every(value => Number.isSafeInteger(value) && value >= 0);
   const usageKnown = hasInput && hasOutput && valid;
-  const eventCredits = 0; // Final fixed action cost is assigned once by aiUsageAudit.
   req.aiUsageEvents = req.aiUsageEvents || [];
   req.aiUsageEvents.push({
     provider, model, inputTokens: valid ? input : 0, outputTokens: valid ? output : 0,
     cachedInputTokens: valid ? cached : 0, reasoningTokens: valid ? reasoning : 0,
-    creditsCharged: eventCredits, usageKnown,
+    creditsCharged: 0, usageKnown,
     status: providerOk ? "PROVIDER_OK" : "PROVIDER_FAILED",
     providerStatus: Number.isInteger(providerStatus) ? providerStatus : 0
   });
-  // Credit charges are fixed per AI action; provider token usage remains audit-only.
+  // Provider token usage is recorded for internal cost monitoring only.
 }
 
 function aiUsageAudit(req, res, next) {
@@ -55,9 +63,8 @@ function aiUsageAudit(req, res, next) {
     if (res.statusCode >= 400) {
       for (const event of req.aiUsageEvents) event.creditsCharged = 0;
     } else {
-      // Charge the fixed action cost once per request, even when provider fallback occurs.
+      // Usage records are operational telemetry, never a user balance or charge.
       for (const event of req.aiUsageEvents) event.creditsCharged = 0;
-      req.aiUsageEvents[req.aiUsageEvents.length - 1].creditsCharged = req.aiCreditReservation?.amount || 0;
     }
     persistAiUsage(req)
       .then(() => sendJson(payload))
@@ -259,7 +266,7 @@ function validateAiRequest(req, res, next) {
   return next();
 }
 
-router.post("/", validateAiRequest, aiCreditGate, aiUsageAudit, async (req, res) => {
+router.post("/", validateAiRequest, aiUsageAudit, async (req, res) => {
   const action = typeof req.body?.action === "string" ? req.body.action : "";
   const subject = typeof req.body?.subject === "string" ? req.body.subject.trim().slice(0, 100) : "";
   const topic = typeof req.body?.topic === "string" ? req.body.topic.trim().slice(0, 160) : "";
@@ -371,7 +378,7 @@ router.post("/", validateAiRequest, aiCreditGate, aiUsageAudit, async (req, res)
         });
       } catch (validationError) {
         console.error("AI word spotlight validation failed:", validationError.message);
-        return res.status(502).json({ error: "The AI returned an incomplete word spotlight. No credits were charged; please try again." });
+        return res.status(502).json({ error: "The AI returned an incomplete word spotlight. No content was saved; please try again." });
       }
     }
     if (action === "story") {
