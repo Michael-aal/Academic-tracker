@@ -83,7 +83,7 @@
           title.textContent = (item.user?.name || "Student") + " · " + item.action + " · " + item.provider + " / " + item.model;
           const meta = document.createElement("div"); meta.className = "usage-meta";
           const tokens = "Input " + item.inputTokens + " · Output " + item.outputTokens + " · Cached " + item.cachedInputTokens + " · Reasoning " + item.reasoningTokens;
-          const details = "Account: " + (item.user?.email || item.user?.id || "—") + " · Credits: " + item.creditsCharged + " · " + (item.usageKnown ? "Provider usage reported" : "Usage unavailable; reservation estimate applies") + " · " + item.status + " (HTTP " + item.providerStatus + ") · " + new Date(item.createdAt).toLocaleString();
+          const details = "Account: " + (item.user?.email || item.user?.id || "—") + " · " + (item.usageKnown ? "Provider usage reported" : "Provider usage unavailable") + " · " + item.status + " (HTTP " + item.providerStatus + ") · " + new Date(item.createdAt).toLocaleString();
           meta.textContent = tokens + " | " + details;
           card.append(title, meta); host.append(card);
         }
