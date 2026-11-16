@@ -164,7 +164,7 @@ function validateData(kind, data, recordId) {
     }
     for (const meaning of data.meanings) {
       if (!isObject(meaning) || !validString(meaning.partOfSpeech, 40) ||
-          !Array.isArray(meaning.definitions) || meaning.definitions.length < 1 || meaning.definitions.length > 5) return "A dictionary meaning is invalid.";
+          !Array.isArray(meaning.definitions) || meaning.definitions.length < 1 || meaning.definitions.length > 4) return "A dictionary meaning is invalid.";
       for (const definition of meaning.definitions) {
         if (!isObject(definition) || !validString(definition.definition, 1200) || !definition.definition.trim() ||
             !validString(definition.example, 600, true) ||
