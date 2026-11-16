@@ -58,7 +58,7 @@ async function generateEnglishPractice(){
   const result=await api("/api/ai",{method:"POST",body:JSON.stringify({action:"english-practice",subject:"English Language",topic:state.category,content:"Create a fresh set of five varied practice questions for this category. For Reading & Comprehension, provide an original passage with every question.",questionCount:5,level:"adapt to registered education track"})});
   if(!Array.isArray(result.questions)||result.questions.length!==5)throw new Error("The AI returned an incomplete practice set.");
   const generated=result.questions.map(item=>({...item,category:state.category,aiGenerated:true}));
-  state.activities=state.activities.filter(item=>!item.aiGenerated||item.category!==state.category).concat(generated);
+  state.activities=generated.concat(state.activities.filter(item=>!item.aiGenerated||item.category!==state.category));
   state.answered=new Set([...state.answered].filter(id=>!generated.some(item=>item.id===id)));
   renderActivity();$("english-feedback").textContent="Five new AI-generated questions are ready. Answers are checked with explanations.";
  }catch(error){$("english-feedback").textContent=error.message;}
