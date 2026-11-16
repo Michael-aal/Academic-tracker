@@ -497,7 +497,7 @@ router.post("/", validateAiRequest, aiUsageAudit, async (req, res) => {
     const providerFailures = Array.isArray(error.failures)
       ? error.failures.map(failure => {
           const value = String(failure).slice(0, 220);
-          const match = value.match(/^([a-z0-9_-]+):\\s*(?:(\\d{3})\\s+)?/i);
+          const match = value.match(/^([a-z0-9_-]+):\s*(?:(\d{3})\s+)?/i);
           return {
             provider: match?.[1] || "unknown",
             status: match?.[2] ? Number(match[2]) : null,
