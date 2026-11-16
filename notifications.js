@@ -7,6 +7,8 @@
 
   const query = new URLSearchParams(location.search);
   const context = query.get("source") === "preproom" ? "preproom" : "tracker";
+  document.body.classList.toggle("notification-preproom-context", context === "preproom");
+  document.body.classList.toggle("notification-tracker-context", context === "tracker");
   const list = $("notification-list");
   const count = $("notification-count");
   const filterBar = document.querySelector(".preproom-notification-filters");
