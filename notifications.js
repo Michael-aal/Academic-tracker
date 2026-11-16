@@ -69,8 +69,9 @@
   function matchesFilter(item) {
     if (activeFilter === "all") return true;
     const type = String(item.metadata?.type || "").toUpperCase();
-    if (activeFilter === "likes") return ["POST_REACTION","POST_SHARED"].includes(type);
+    if (activeFilter === "likes") return type === "POST_REACTION";
     if (activeFilter === "comments") return type === "POST_COMMENT";
+    if (activeFilter === "shares") return type === "POST_SHARED";
     if (activeFilter === "friends") return ["FRIEND_REQUEST","FRIEND_ACCEPTED"].includes(type);
     if (activeFilter === "messages") return type.includes("MESSAGE") || Boolean(item.metadata?.conversationId);
     return true;
