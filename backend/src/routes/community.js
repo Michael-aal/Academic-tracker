@@ -14,16 +14,30 @@ router.get("/health", (_req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({ ok: true, service: "academic-tracker-social-api" });
 });
-const writeLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, limit: 80, standardHeaders: "draft-7", legacyHeaders: false,
+const communityLimiter = (limit, message, windowMs = 15 * 60 * 1000) => rateLimit({
+  windowMs, limit, standardHeaders: "draft-7", legacyHeaders: false,
   keyGenerator: req => req.userId,
-  message: { error: "Too many community actions. Please slow down." }
+  handler: (_req, res) => res.status(429).json({
+    error: message,
+    code: "COMMUNITY_RATE_LIMITED"
+  })
 });
-const presenceLimit = rateLimit({
-  windowMs: 5 * 60 * 1000, limit: 10, standardHeaders: "draft-7", legacyHeaders: false,
-  keyGenerator: req => req.userId,
-  message: { error: "Presence updates are arriving too frequently. Please wait a moment." }
-});
+
+// Separate budgets prevent routine reactions, chats, or uploads from consuming
+// the same allowance as friend requests and other abuse-sensitive actions.
+const communityLimits = {
+  interaction: communityLimiter(300, "You've reached the interaction limit. Please wait before reacting or saving again."),
+  content: communityLimiter(80, "You've reached the posting limit. Please wait before publishing or commenting again."),
+  friends: communityLimiter(40, "You've sent too many friend actions. Please wait before trying again."),
+  messaging: communityLimiter(240, "You've sent messages too quickly. Please wait before sending more."),
+  calls: communityLimiter(80, "You've made too many call actions. Please wait before trying again."),
+  groups: communityLimiter(50, "You've made too many group actions. Please wait before trying again."),
+  profile: communityLimiter(30, "You've updated your profile too frequently. Please wait before trying again."),
+  uploads: communityLimiter(40, "Too many media upload requests. Please wait before uploading again."),
+  moderation: communityLimiter(20, "Too many reports or moderation actions. Please wait before trying again."),
+  other: communityLimiter(80, "Too many community actions. Please slow down.")
+};
+const presenceLimit = communityLimiter(10, "Presence updates are arriving too frequently. Please wait a moment.", 5 * 60 * 1000);
 const clean = (v, max) => typeof v === "string" ? v.trim().slice(0, max) : "";
 const safeUrl = value => {
   const raw = clean(value, 1000);
@@ -284,9 +298,21 @@ router.get("/profiles/:username", async (req, res, next) => {
 });
 
 router.use((req, res, next) => {
-  if (req.method === "POST" && req.path === "/presence/heartbeat") return presenceLimit(req, res, next);
   if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
-  return writeLimit(req, res, next);
+  if (req.method === "POST" && req.path === "/presence/heartbeat") return presenceLimit(req, res, next);
+
+  const path = req.path;
+  let limiter = communityLimits.other;
+  if (path === "/media-upload-signature" || /\/voice-upload-signature$/.test(path)) limiter = communityLimits.uploads;
+  else if (path.startsWith("/chat/")) limiter = communityLimits.messaging;
+  else if (path.startsWith("/calls")) limiter = communityLimits.calls;
+  else if (path.startsWith("/friend-requests") || path.startsWith("/follow/") || path.startsWith("/blocks/")) limiter = communityLimits.friends;
+  else if (path.startsWith("/posts/") && /\/reaction$|\/save$/.test(path) || path === "/videos/engagement") limiter = communityLimits.interaction;
+  else if (path === "/posts" || /^\/posts\/[^/]+$/.test(path) || /\/comments$/.test(path)) limiter = communityLimits.content;
+  else if (path.startsWith("/groups") || path.startsWith("/group-invitations")) limiter = communityLimits.groups;
+  else if (path === "/profile/me") limiter = communityLimits.profile;
+  else if (path === "/reports" || path.startsWith("/admin/")) limiter = communityLimits.moderation;
+  return limiter(req, res, next);
 });
 
 router.get("/profile/me", async (req, res, next) => {
