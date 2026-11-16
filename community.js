@@ -23,7 +23,7 @@
   async function updateSocialBadges() {
     if (!token()) return;
     const [notifications, messages] = await Promise.allSettled([
-      api("/notifications?limit=1"),
+      api("/notifications?limit=1&context=preproom"),
       api("/community/chat/unread-count")
     ]);
     if (notifications.status === "fulfilled") {
