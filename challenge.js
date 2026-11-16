@@ -123,6 +123,60 @@
   }
   function selectedNote() { return state.notes.find(note => note.id === $("challenge-note-select").value); }
 
+  state.friends = [];
+  function renderFriendPicker() {
+    const host = $("challenge-friend-list");
+    if (!host) return;
+    const query = $("challenge-friend-search").value.trim().toLowerCase();
+    const selected = new Set([...host.querySelectorAll('input[type="checkbox"]:checked')].map(input => input.value));
+    host.replaceChildren();
+    const matches = state.friends.filter(friend => (friend.displayName || friend.name || friend.username || "").toLowerCase().includes(query) || (friend.username || "").toLowerCase().includes(query));
+    if (!matches.length) { host.append(node("p","challenge-muted", state.friends.length ? "No friends match that search." : "No accepted friends yet. Add friends in Preproom first.")); }
+    matches.forEach(friend => {
+      const label = node("label","challenge-friend-option");
+      const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.value = friend.userId || friend.id;
+      checkbox.checked = selected.has(checkbox.value);
+      const name = node("span","",friend.displayName || friend.name || "Student");
+      const handle = node("small","",friend.username ? "@" + friend.username : "");
+      label.append(checkbox,name,handle); host.append(label);
+    });
+    $("challenge-friend-count").textContent = selected.size + " selected";
+    host.querySelectorAll('input[type="checkbox"]').forEach(input => input.addEventListener("change", () => {
+      $("challenge-friend-count").textContent = host.querySelectorAll('input[type="checkbox"]:checked').length + " selected";
+    }));
+  }
+  async function loadChallengeFriends() {
+    try {
+      const data = await api("/api/community/friends");
+      state.friends = data.friends || [];
+      renderFriendPicker();
+    } catch (error) {
+      $("challenge-friend-list").replaceChildren(node("p","challenge-muted","Could not load friends: " + error.message));
+    }
+  }
+  async function loadChallengeInvitations() {
+    const host = $("challenge-invitations-list");
+    if (!host) return;
+    host.replaceChildren();
+    try {
+      const data = await api("/api/challenges/invitations");
+      if (!data.invitations?.length) { host.append(node("p","challenge-muted","No pending invitations.")); return; }
+      data.invitations.forEach(invite => {
+        const card = node("article","my-challenge-card");
+        card.append(node("strong","",invite.title),node("small","",invite.fromName + " invited you · " + invite.mode.replaceAll("_"," ")));
+        const actions = node("div","challenge-invitation-actions");
+        const accept = node("button","challenge-primary","Accept"); accept.type="button";
+        const decline = node("button","challenge-secondary","Decline"); decline.type="button";
+        accept.addEventListener("click",async()=>{accept.disabled=true;try{const result=await api("/api/challenges/"+encodeURIComponent(invite.challengeId)+"/invitations/"+encodeURIComponent(invite.notificationId)+"/respond",{method:"POST",body:JSON.stringify({decision:"ACCEPT"})});await loadChallengeInvitations();await loadMyChallenges();await openRoom(result.challengeId);}catch(error){status("challenge-join-status",error.message,true);accept.disabled=false;}});
+        decline.addEventListener("click",async()=>{decline.disabled=true;try{await api("/api/challenges/"+encodeURIComponent(invite.challengeId)+"/invitations/"+encodeURIComponent(invite.notificationId)+"/respond",{method:"POST",body:JSON.stringify({decision:"DECLINE"})});await loadChallengeInvitations();}catch(error){status("challenge-join-status",error.message,true);decline.disabled=false;}});
+        actions.append(accept,decline);card.append(actions);host.append(card);
+      });
+    } catch(error) { host.append(node("p","challenge-muted",error.message)); }
+  }
+  $("challenge-friend-search").addEventListener("input",renderFriendPicker);
+  $("refresh-invitations").addEventListener("click",loadChallengeInvitations);
+
+
   $("add-manual-question").addEventListener("click", () => addQuestionCard());
   $("challenge-mode").addEventListener("change", () => {
     const mode = $("challenge-mode").value;
@@ -183,6 +237,12 @@
         timerSeconds: Number($("challenge-timer").value), source
       }) });
       const challenge = result.challenge;
+      const selectedFriendIds = [...$("challenge-friend-list").querySelectorAll('input[type="checkbox"]:checked')].map(input => input.value);
+      if (selectedFriendIds.length) {
+        await api("/api/challenges/" + encodeURIComponent(challenge.id) + "/invitations", {
+          method: "POST", body: JSON.stringify({ userIds: selectedFriendIds, teamKey: mode === "TEAM" ? $("challenge-team").value : null })
+        });
+      }
       if (mode !== "FREE_FOR_ALL") {
         await api("/api/challenges/" + encodeURIComponent(challenge.id) + "/join", {
           method: "POST", body: JSON.stringify({ teamKey: mode === "TEAM" ? $("challenge-team").value : null })
@@ -396,4 +456,6 @@
   addQuestionCard();
   loadNotes();
   loadMyChallenges();
+  loadChallengeFriends();
+  loadChallengeInvitations();
 })();
