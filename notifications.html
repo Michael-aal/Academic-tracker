@@ -20,9 +20,13 @@
 </head>
 <body class="notifications-page social-media-page">
   <main class="notification-shell">
+    <div class="notification-context-links">
+      <a id="notification-context-return" href="dashboard.html">← Back to Academic Tracker</a>
+      <a id="notification-academic-return" href="dashboard.html" hidden>Academic Tracker</a>
+    </div>
     <header class="notification-page-heading">
-      <div><p class="notification-eyebrow">YOUR ACCOUNT</p><h1>Notifications</h1><p>Payment confirmations, account activity and important Study Track updates.</p></div>
-      <button id="mark-all-read" class="notification-secondary-button" type="button">Mark all as read</button>
+      <div><p class="notification-eyebrow">YOUR UPDATES</p><h1>Notifications</h1><p>Friend activity, messages, learning reminders and important account updates.</p></div>
+      <div class="notification-heading-actions"><button id="refresh-notifications" class="notification-secondary-button" type="button">Refresh</button><button id="mark-all-read" class="notification-secondary-button" type="button">Mark all as read</button></div>
     </header>
     <section id="notification-admin" class="notification-admin-card" hidden aria-labelledby="admin-notification-title">
       <div><p class="notification-eyebrow">ADMINISTRATOR TOOLS</p><h2 id="admin-notification-title">Send an announcement</h2><p>Publish an in-app message to every student account or a selected account.</p></div>
@@ -44,11 +48,11 @@
     </section>
   </main>
   <nav class="preproom-page-nav" aria-label="Preproom navigation">
-    <a href="social-media.html#feed"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/></svg><small>Home</small></a>
-    <a href="social-media.html#people"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2 20a7 7 0 0 1 14 0M16 5a3.5 3.5 0 0 1 0 7M17 14a5.5 5.5 0 0 1 4.5 5.5"/></svg><small>Friends</small></a>
+    <a href="community.html#feed"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/></svg><small>Home</small></a>
+    <a href="community.html#people"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2 20a7 7 0 0 1 14 0M16 5a3.5 3.5 0 0 1 0 7M17 14a5.5 5.5 0 0 1 4.5 5.5"/></svg><small>Friends</small></a>
     <a href="social-create.html"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><small>Create</small></a>
-    <a href="social-media.html#messages"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4zM8 9h8"/></svg><small>Messages</small></a>
-    <a href="social-media.html#profile"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><small>Profile</small></a>
+    <a href="community.html#messages"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4zM8 9h8"/></svg><small>Messages</small></a>
+    <a href="community.html#profile"><svg class="social-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><small>Profile</small></a>
   </nav>
   <script src="notifications.js"></script>
   <script src="preproom-ui.js" defer></script>
