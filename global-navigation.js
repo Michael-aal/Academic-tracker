@@ -7,7 +7,7 @@
   const initialFile = location.pathname.split("/").pop() || "dashboard.html";
   if (initialFile === "login.html" || initialFile === "register.html") return;
   // Social Media is a separate app surface with its own navigation shell.
-  if (document.body.classList.contains("social-media-page")) return;
+  if (document.body.classList.contains("social-media-page") || document.documentElement.classList.contains("preproom-notifications-context")) return;
   document.body.classList.add("at-has-global-navigation");
 
   const routes = [
