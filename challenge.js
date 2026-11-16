@@ -3,7 +3,7 @@
   const API = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
   const token = localStorage.getItem("academic-tracker-token");
   const $ = id => document.getElementById(id);
-  const state = { questions: [], notes: [], room: null, challengeId: null, refreshTimer: null, timerTimer: null, chatTimer: null, autoSkipKey: "" };
+  const state = { questions: [], notes: [], room: null, challengeId: null, refreshTimer: null, timerTimer: null, chatTimer: null, autoSkipKey: "", friends: [], selectedFriendIds: new Set() };
   if (!token) { window.location.replace("login.html"); return; }
 
   const user = (() => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}"); } catch { return {}; } })();
@@ -128,7 +128,7 @@
     const host = $("challenge-friend-list");
     if (!host) return;
     const query = $("challenge-friend-search").value.trim().toLowerCase();
-    const selected = new Set([...host.querySelectorAll('input[type="checkbox"]:checked')].map(input => input.value));
+    const selected = state.selectedFriendIds;
     host.replaceChildren();
     const matches = state.friends.filter(friend => (friend.displayName || friend.name || friend.username || "").toLowerCase().includes(query) || (friend.username || "").toLowerCase().includes(query));
     if (!matches.length) { host.append(node("p","challenge-muted", state.friends.length ? "No friends match that search." : "No accepted friends yet. Add friends in Preproom first.")); }
@@ -136,14 +136,16 @@
       const label = node("label","challenge-friend-option");
       const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.value = friend.userId || friend.id;
       checkbox.checked = selected.has(checkbox.value);
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) state.selectedFriendIds.add(checkbox.value);
+        else state.selectedFriendIds.delete(checkbox.value);
+        $("challenge-friend-count").textContent = state.selectedFriendIds.size + " selected";
+      });
       const name = node("span","",friend.displayName || friend.name || "Student");
       const handle = node("small","",friend.username ? "@" + friend.username : "");
       label.append(checkbox,name,handle); host.append(label);
     });
-    $("challenge-friend-count").textContent = selected.size + " selected";
-    host.querySelectorAll('input[type="checkbox"]').forEach(input => input.addEventListener("change", () => {
-      $("challenge-friend-count").textContent = host.querySelectorAll('input[type="checkbox"]:checked').length + " selected";
-    }));
+    $("challenge-friend-count").textContent = state.selectedFriendIds.size + " selected";
   }
   async function loadChallengeFriends() {
     try {
@@ -237,7 +239,7 @@
         timerSeconds: Number($("challenge-timer").value), source
       }) });
       const challenge = result.challenge;
-      const selectedFriendIds = [...$("challenge-friend-list").querySelectorAll('input[type="checkbox"]:checked')].map(input => input.value);
+      const selectedFriendIds = [...state.selectedFriendIds];
       if (selectedFriendIds.length) {
         await api("/api/challenges/" + encodeURIComponent(challenge.id) + "/invitations", {
           method: "POST", body: JSON.stringify({ userIds: selectedFriendIds, teamKey: mode === "TEAM" ? $("challenge-team").value : null })
