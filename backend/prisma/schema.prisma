@@ -535,3 +535,65 @@ model GroupInvitation {
   @@index([invitedUserId, status, createdAt])
   @@map("group_invitations")
 }
+
+
+model Challenge {
+  id          String                 @id @default(cuid())
+  hostUserId  String                 @map("host_user_id")
+  mode        String                 @db.VarChar(20)
+  title       String                 @db.VarChar(120)
+  inviteCode  String                 @unique @map("invite_code") @db.VarChar(16)
+  status      String                 @default("LOBBY") @db.VarChar(20)
+  questions   Json
+  settings    Json?
+  startedAt   DateTime?              @map("started_at")
+  finishedAt  DateTime?              @map("finished_at")
+  createdAt   DateTime               @default(now()) @map("created_at")
+  updatedAt   DateTime               @updatedAt @map("updated_at")
+  participants ChallengeParticipant[]
+  answers     ChallengeAnswer[]
+  messages    ChallengeMessage[]
+  @@index([hostUserId, createdAt])
+  @@index([status, createdAt])
+  @@map("challenges")
+}
+
+model ChallengeParticipant {
+  id          String    @id @default(cuid())
+  challengeId String    @map("challenge_id")
+  userId      String    @map("user_id")
+  teamKey     String?   @map("team_key") @db.VarChar(8)
+  role        String    @default("PLAYER") @db.VarChar(16)
+  joinedAt    DateTime  @default(now()) @map("joined_at")
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  @@unique([challengeId, userId])
+  @@index([challengeId, teamKey, joinedAt])
+  @@index([userId, joinedAt])
+  @@map("challenge_participants")
+}
+
+model ChallengeAnswer {
+  id            String    @id @default(cuid())
+  challengeId   String    @map("challenge_id")
+  questionIndex Int       @map("question_index")
+  competitorKey String    @map("competitor_key") @db.VarChar(80)
+  optionId      String?   @map("option_id") @db.VarChar(80)
+  isCorrect     Boolean   @default(false) @map("is_correct")
+  answeredAt    DateTime  @default(now()) @map("answered_at")
+  challenge     Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  @@unique([challengeId, questionIndex, competitorKey])
+  @@index([challengeId, competitorKey])
+  @@map("challenge_answers")
+}
+
+model ChallengeMessage {
+  id          String    @id @default(cuid())
+  challengeId String    @map("challenge_id")
+  userId      String    @map("user_id")
+  teamKey     String?   @map("team_key") @db.VarChar(8)
+  body        String    @db.VarChar(1000)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  @@index([challengeId, teamKey, createdAt])
+  @@map("challenge_messages")
+}
