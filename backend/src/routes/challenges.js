@@ -368,4 +368,75 @@ router.post("/:id/messages", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+
+router.get("/invitations/inbox", async (req, res, next) => {
+  try {
+    const rows = await prisma.notification.findMany({
+      where: { userId: req.userId, category: "SOCIAL", readAt: null },
+      orderBy: { createdAt: "desc" }, take: 60
+    });
+    const invitations = rows.filter(row => row.metadata?.type === "CHALLENGE_INVITE" && row.metadata?.status === "PENDING")
+      .map(row => ({ notificationId: row.id, challengeId: row.metadata.challengeId, title: row.metadata.title || row.title, mode: row.metadata.mode || "DUEL", fromName: row.metadata.fromName || "A friend", teamKey: row.metadata.teamKey || null }));
+    res.json({ invitations });
+  } catch (error) { next(error); }
+});
+
+router.post("/:id/invitations", async (req, res, next) => {
+  try {
+    const challenge = await prisma.challenge.findUnique({ where: { id: req.params.id } });
+    if (!challenge) return res.status(404).json({ error: "Challenge not found." });
+    if (challenge.hostUserId !== req.userId || challenge.status !== "LOBBY") return res.status(403).json({ error: "Only the host can invite friends before the challenge starts." });
+    const ids = [...new Set((Array.isArray(req.body?.userIds) ? req.body.userIds : []).filter(id => typeof id === "string" && id && id !== req.userId))].slice(0, 10);
+    if (!ids.length) return res.status(400).json({ error: "Select at least one friend to invite." });
+    if (challenge.mode === "DUEL" && ids.length > 1) return res.status(400).json({ error: "A 1v1 Duel can invite only one friend." });
+    if (challenge.mode === "FREE_FOR_ALL" && ids.length > 5) return res.status(400).json({ error: "A tournament can invite at most five competitors." });
+    if (challenge.mode === "TEAM" && ids.length > 4) return res.status(400).json({ error: "You join the selected team too, so invite up to four friends to that team." });
+    const [host, friends, outgoing, incoming, blocks] = await Promise.all([
+      prisma.user.findUnique({ where: { id: req.userId }, select: { id: true, name: true, educationTrack: true } }),
+      prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, educationTrack: true } }),
+      prisma.communityFollow.findMany({ where: { followerId: req.userId, followingId: { in: ids }, status: "ACCEPTED" }, select: { followingId: true } }),
+      prisma.communityFollow.findMany({ where: { followingId: req.userId, followerId: { in: ids }, status: "ACCEPTED" }, select: { followerId: true } }),
+      prisma.communityBlock.findMany({ where: { OR: [{ blockerId: req.userId, blockedId: { in: ids } }, { blockedId: req.userId, blockerId: { in: ids } }] }, select: { blockerId: true, blockedId: true } })
+    ]);
+    const accepted = new Set(outgoing.map(row => row.followingId).filter(id => incoming.some(row => row.followerId === id)));
+    const blocked = new Set(blocks.map(row => row.blockerId === req.userId ? row.blockedId : row.blockerId));
+    if (!host || friends.length !== ids.length || ids.some(id => !accepted.has(id) || blocked.has(id) || friends.find(friend => friend.id === id)?.educationTrack !== host.educationTrack)) {
+      return res.status(403).json({ error: "Invitations are limited to accepted, unblocked Preproom friends on your academic track." });
+    }
+    const existing = await prisma.challengeParticipant.findMany({ where: { challengeId: challenge.id, userId: { in: ids } }, select: { userId: true } });
+    const alreadyJoined = new Set(existing.map(row => row.userId));
+    const recipients = ids.filter(id => !alreadyJoined.has(id));
+    if (!recipients.length) return res.status(409).json({ error: "All selected friends have already joined." });
+    const userNames = await prisma.user.findMany({ where: { id: { in: recipients } }, select: { id: true } });
+    await prisma.notification.createMany({ data: recipients.map(user => ({
+      userId: user.id, createdById: req.userId, category: "SOCIAL",
+      title: "Challenge invitation",
+      body: host.name + " invited you to " + challenge.title + ".",
+      metadata: { type: "CHALLENGE_INVITE", status: "PENDING", challengeId: challenge.id, title: challenge.title, mode: challenge.mode, fromName: host.name, teamKey: challenge.mode === "TEAM" && ["A","B"].includes(req.body?.teamKey) ? req.body.teamKey : null }
+    })) });
+    res.status(201).json({ ok: true, invited: recipients.length });
+  } catch (error) { next(error); }
+});
+
+router.post("/:id/invitations/:notificationId/respond", async (req, res, next) => {
+  try {
+    const decision = clean(req.body?.decision, 12).toUpperCase();
+    if (!["ACCEPT","DECLINE"].includes(decision)) return res.status(400).json({ error: "Choose accept or decline." });
+    const notification = await prisma.notification.findFirst({ where: { id: req.params.notificationId, userId: req.userId, category: "SOCIAL" } });
+    if (!notification || notification.metadata?.type !== "CHALLENGE_INVITE" || notification.metadata?.challengeId !== req.params.id || notification.metadata?.status !== "PENDING") {
+      return res.status(404).json({ error: "This invitation is no longer available." });
+    }
+    if (decision === "DECLINE") {
+      await prisma.notification.update({ where: { id: notification.id }, data: { readAt: new Date(), metadata: { ...notification.metadata, status: "DECLINED" } } });
+      return res.json({ ok: true, decision });
+    }
+    const challenge = await prisma.challenge.findUnique({ where: { id: req.params.id } });
+    if (!challenge || challenge.status !== "LOBBY") return res.status(409).json({ error: "This challenge has already started or expired." });
+    const joined = await joinChallenge(challenge.id, req.userId, clean(notification.metadata.teamKey, 8).toUpperCase());
+    if (joined.error) return res.status(joined.status).json({ error: joined.error });
+    await prisma.notification.update({ where: { id: notification.id }, data: { readAt: new Date(), metadata: { ...notification.metadata, status: "ACCEPTED" } } });
+    res.json({ ok: true, decision, challengeId: challenge.id });
+  } catch (error) { next(error); }
+});
+
 module.exports = router;

@@ -47,7 +47,7 @@
           <select id="question-source">
             <option value="manual">Write questions manually</option>
             <option value="notebook">Use my saved notebook notes</option>
-            <option value="ai">Generate questions with AI</option>
+            <option value="ai">AI-generated quiz</option>
           </select>
           <div id="manual-question-source">
             <div class="challenge-subheading"><strong>Question builder</strong><span id="manual-question-count">0 / 50</span></div>
@@ -73,6 +73,12 @@
           </div>
           <label for="challenge-timer">Time per question</label>
           <select id="challenge-timer"><option value="0">No timer</option><option value="10">10 seconds</option><option value="15">15 seconds</option><option value="20">20 seconds</option><option value="30">30 seconds</option><option value="60">60 seconds</option></select>
+          <section class="challenge-friend-picker" aria-labelledby="challenge-friends-title">
+            <div class="challenge-subheading"><strong id="challenge-friends-title">Invite your friends</strong><span id="challenge-friend-count">0 selected</span></div>
+            <p class="challenge-help">Only accepted Preproom friends on your academic track can be invited. You can also invite them later from the room.</p>
+            <input id="challenge-friend-search" type="search" placeholder="Search your friends…" aria-label="Search friends">
+            <div id="challenge-friend-list" class="challenge-friend-list"><p class="challenge-muted">Loading your friends…</p></div>
+          </section>
           <p id="challenge-create-status" class="challenge-status" role="status" aria-live="polite"></p>
           <button class="challenge-primary" id="create-challenge" type="submit">Create challenge</button>
         </form>
@@ -87,6 +93,9 @@
           <p id="challenge-join-status" class="challenge-status" role="status" aria-live="polite"></p>
           <button class="challenge-primary" type="submit">Join challenge</button>
         </form>
+        <div class="challenge-divider"></div>
+        <div class="challenge-panel-heading"><div><h2>Challenge invitations</h2><p>Invitations from your Preproom friends.</p></div><button id="refresh-invitations" class="challenge-icon-button" type="button" aria-label="Refresh invitations">↻</button></div>
+        <div id="challenge-invitations-list" class="my-challenges-list"><p class="challenge-muted">Loading invitations…</p></div>
         <div class="challenge-divider"></div>
         <div class="challenge-panel-heading"><div><h2>My challenges</h2><p>Your rooms and recent results.</p></div><button id="refresh-challenges" class="challenge-icon-button" type="button" aria-label="Refresh challenges">↻</button></div>
         <div id="my-challenges-list" class="my-challenges-list"><p class="challenge-muted">Loading your challenges…</p></div>

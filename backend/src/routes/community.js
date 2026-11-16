@@ -732,7 +732,7 @@ router.get("/friends", async (req, res, next) => {
     const users = await prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, educationTrack: true, institutionName: true, programme: true, studyLevel: true } });
     const profiles = await prisma.communityProfile.findMany({ where: { userId: { in: ids } } });
     const profileMap = new Map(profiles.map(p => [p.userId, p]));
-    res.json({ friends: users.filter(u => profileMap.has(u.id)).map(u => publicProfile(profileMap.get(u.id), u)) });
+    res.json({ friends: users.filter(u => profileMap.has(u.id)).map(u => ({ ...publicProfile(profileMap.get(u.id), u), userId: u.id })) });
   } catch (e) { next(e); }
 });
 

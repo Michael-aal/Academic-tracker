@@ -52,3 +52,21 @@ html[data-theme="dark"]{--ch-bg:#0b0812;--ch-panel:#110d1b;--ch-panel-soft:#1711
 @media(max-width:560px){.challenge-shell{width:calc(100% - 22px);margin:18px auto 60px}.challenge-panel{padding:15px;border-radius:16px}.challenge-topbar{height:58px;padding:0 11px}.challenge-brand{font-size:12px}.challenge-back{font-size:11px}.challenge-academic-return{font-size:10px;padding:8px}.manual-question-options,.room-options{grid-template-columns:1fr}.challenge-room-top{align-items:flex-start;flex-direction:column}.room-invite{gap:7px}.room-invite button{margin-left:0}.room-ranking{grid-template-columns:28px minmax(0,1fr) auto}}
 
 .challenge-page [hidden]{display:none!important}
+
+.challenge-page{font-size:14px;line-height:1.55}
+.challenge-panel-heading h2,.challenge-room-top h2{font-size:clamp(19px,2vw,22px);font-weight:800;line-height:1.25}
+.challenge-form>label,.challenge-inline-fields label{font-size:13px;line-height:1.4}
+.challenge-help,.challenge-muted{font-size:13px;line-height:1.6}
+.challenge-status{font-size:13px;line-height:1.55}
+.manual-question-heading strong,.manual-question-card label{font-size:12px;line-height:1.45}
+.my-challenge-card strong,.room-participant strong,.room-rank-name{font-size:14px;line-height:1.4}
+.my-challenge-card small,.room-participant small{font-size:12px;line-height:1.4}
+.room-option{font-size:14px;line-height:1.5}
+.challenge-friend-picker{display:grid;gap:9px;margin-top:8px;padding:13px;border:1px solid var(--ch-line);border-radius:13px;background:var(--ch-bg)}
+.challenge-friend-picker>input{width:100%;min-height:40px;padding:9px 11px;border:1px solid var(--ch-line);border-radius:10px;background:var(--ch-panel);color:var(--ch-text);font:inherit}
+.challenge-friend-list{display:grid;gap:6px;max-height:220px;overflow:auto}
+.challenge-friend-option{display:grid;grid-template-columns:18px minmax(0,1fr) auto;align-items:center;gap:9px;padding:9px;border:1px solid var(--ch-line);border-radius:10px;background:var(--ch-panel);font-size:13px;font-weight:700;color:var(--ch-text)}
+.challenge-friend-option input{accent-color:var(--ch-purple)}
+.challenge-friend-option small{color:var(--ch-muted);font-size:11px}
+.challenge-invitation-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+@media(max-width:760px){.challenge-entry-grid,.challenge-room-grid{grid-template-columns:minmax(0,1fr)}.challenge-panel{padding:16px}.challenge-shell{width:min(100% - 22px,1160px);margin-top:20px}.challenge-topbar{height:58px}.challenge-intro h1{font-size:34px}.room-options{grid-template-columns:minmax(0,1fr)}}
