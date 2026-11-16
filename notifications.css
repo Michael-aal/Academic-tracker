@@ -34,3 +34,20 @@ html[data-theme="dark"] .notifications-page{--notice-bg:#100b1b;--notice-card:#1
 .notification-form-status.error{color:#dc5368}
 .notification-form-status.success{color:#26835d}
 @media(max-width:620px){.notification-shell{width:calc(100% - 24px);padding-top:24px}.notification-page-heading{align-items:flex-start;flex-direction:column}.notification-page-heading .notification-secondary-button{align-self:flex-end}.notification-item{grid-template-columns:36px minmax(0,1fr) auto;gap:10px;padding:14px}.notification-item-icon{width:36px;height:36px}.notification-compose-row{grid-template-columns:1fr}}
+
+
+/* Context navigation and accessible clickable notification destinations. */
+.notification-context-links{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+.notification-context-links a{display:inline-flex;align-items:center;min-height:34px;padding:7px 10px;border:1px solid var(--notice-border);border-radius:9px;color:var(--notice-text);text-decoration:none;font-size:12px;font-weight:750}
+.notification-context-links a:hover{border-color:#8b5cf6;color:#a78bfa}
+.notification-heading-actions{display:flex;align-items:center;gap:8px}
+.notification-item{grid-template-columns:minmax(0,1fr) auto}
+.notification-item-main{display:flex;align-items:flex-start;gap:14px;min-width:0;color:inherit;text-decoration:none}
+.notification-item-main:focus-visible{outline:2px solid #8b5cf6;outline-offset:4px;border-radius:10px}
+.notification-item-copy{min-width:0}
+.notification-item-copy h3{margin-top:0}
+.notification-item-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.preproom-page-nav[hidden],.preproom-notification-filters[hidden]{display:none!important}
+.notification-tracker-context .notification-shell{padding-top:30px}
+.notification-tracker-context .preproom-notification-filters{display:none}
+@media(max-width:620px){.notification-context-links{align-items:flex-start;flex-wrap:wrap}.notification-heading-actions{align-self:stretch;justify-content:flex-end}.notification-item-main{gap:10px}.notification-item{grid-template-columns:minmax(0,1fr) auto}}
