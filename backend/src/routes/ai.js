@@ -304,7 +304,7 @@ router.post("/", validateAiRequest, aiUsageAudit, async (req, res) => {
     const completion = await requestChatCompletion({
       messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) }],
       temperature: ["quiz", "english-practice"].includes(action) ? 0.2 : 0.4,
-      ...(["quiz", "word-spotlight"].includes(action) ? { response_format: { type: "json_object" } } : {}),
+      ...(["quiz", "word-spotlight", "english-practice"].includes(action) ? { response_format: { type: "json_object" } } : {}),
       max_tokens: ["quiz", "english-practice"].includes(action) ? Math.min(10000, 1800 + questionCount * 500) : action === "flashcards" ? 5000 : action === "story" ? 3200 : action === "word-spotlight" ? 650 : 1800
     }, { signal: controller.signal, onUsage: (usage, providerId, usedModel, providerStatus, providerOk) => recordAiUsage(req, usage, providerId, usedModel, providerStatus, providerOk) });
     const data = completion.data;
