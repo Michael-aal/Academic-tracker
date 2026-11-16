@@ -50,3 +50,5 @@ html[data-theme="dark"]{--ch-bg:#0b0812;--ch-panel:#110d1b;--ch-panel-soft:#1711
 .team-chat-form{display:flex;gap:6px}.team-chat-form input{flex:1}.team-chat-form button{width:40px;border:0;border-radius:10px;background:var(--ch-purple);color:#fff;font-size:16px}
 @media(max-width:850px){.challenge-entry-grid{grid-template-columns:1fr}.challenge-room-grid{grid-template-columns:1fr}.team-chat-panel{position:static}.team-chat-messages{height:210px}}
 @media(max-width:560px){.challenge-shell{width:calc(100% - 22px);margin:18px auto 60px}.challenge-panel{padding:15px;border-radius:16px}.challenge-topbar{height:58px;padding:0 11px}.challenge-brand{font-size:12px}.challenge-back{font-size:11px}.challenge-academic-return{font-size:10px;padding:8px}.manual-question-options,.room-options{grid-template-columns:1fr}.challenge-room-top{align-items:flex-start;flex-direction:column}.room-invite{gap:7px}.room-invite button{margin-left:0}.room-ranking{grid-template-columns:28px minmax(0,1fr) auto}}
+
+.challenge-page [hidden]{display:none!important}
