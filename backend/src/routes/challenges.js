@@ -389,6 +389,8 @@ router.post("/:id/invitations", async (req, res, next) => {
     const ids = [...new Set((Array.isArray(req.body?.userIds) ? req.body.userIds : []).filter(id => typeof id === "string" && id && id !== req.userId))].slice(0, 10);
     if (!ids.length) return res.status(400).json({ error: "Select at least one friend to invite." });
     if (challenge.mode === "DUEL" && ids.length > 1) return res.status(400).json({ error: "A 1v1 Duel can invite only one friend." });
+    if (challenge.mode === "FREE_FOR_ALL" && ids.length > 5) return res.status(400).json({ error: "A tournament can invite at most five competitors." });
+    if (challenge.mode === "TEAM" && ids.length > 5) return res.status(400).json({ error: "Invite up to five friends to one team at a time." });
     const [host, friends, outgoing, incoming, blocks] = await Promise.all([
       prisma.user.findUnique({ where: { id: req.userId }, select: { id: true, name: true, educationTrack: true } }),
       prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, educationTrack: true } }),
