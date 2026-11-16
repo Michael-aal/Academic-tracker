@@ -68,7 +68,7 @@
 
     if (name === "groups") loadGroups();
     if (name === "videos") loadVideoPreferences();
-    if (name === "messages") loadChats();
+    if (name === "messages") { loadChatConnections(); loadChats(); }
     if (name === "referrals") loadReferrals();
     if (name === "profile") {
       if ($("public-student-profile")) $("public-student-profile").hidden = true;
@@ -789,17 +789,40 @@
       $("chat-list").innerHTML=conversations.map(c=>'<button class="chat-item" data-chat="'+esc(c.id)+'">'+(c.kind==="GROUP"?"Study group conversation":"Direct conversation")+'<small class="post-meta">'+esc(c.lastMessage?.body||"No messages yet")+'</small></button>').join("")||'<div class="empty-state">No conversations yet. Search for a connection above.</div>';
     }catch(e){status(e.message);}
   }
-  $("chat-people-search").addEventListener("submit",async e=>{
-    e.preventDefault();if(!requireLogin())return;
-    try{
-      const {people=[]}=await api("/community/people?q="+encodeURIComponent($("chat-person-query").value.trim()));
-      $("chat-people-results").innerHTML=people.map(p=>'<div class="person-card"><strong>'+esc(p.displayName)+'</strong><small class="post-meta">'+esc(p.educationTrack)+' · '+esc(p.bestSubject||"")+'</small><button class="quiet-button" data-start-chat="'+esc(p.username)+'">Message (accepted connections)</button></div>').join("")||'<p class="muted-note">No public student profiles found.</p>';
-    }catch(err){status(err.message);}
+  let chatFriends = [];
+  async function loadChatConnections(query = "") {
+    if (!requireLogin()) return;
+    const box = $("chat-people-results");
+    box.innerHTML = '<div class="empty-state">Loading your friends…</div>';
+    try {
+      const { friends = [] } = await api("/community/friends");
+      chatFriends = friends;
+      const q = String(query || "").trim().toLocaleLowerCase();
+      const matches = chatFriends.filter(friend =>
+        !q || String(friend.displayName || "").toLocaleLowerCase().includes(q) ||
+        String(friend.username || "").toLocaleLowerCase().includes(q)
+      );
+      box.innerHTML = matches.length ? matches.map(friend =>
+        '<article class="person-card chat-connection-card"><div><strong>' + esc(friend.displayName || "Student") + '</strong><small class="post-meta">@' + esc(friend.username || "student") + ' · ' + esc(friend.educationTrack || "") + '</small></div><div class="friend-request-actions"><button type="button" class="primary-button" data-start-chat="' + esc(friend.username) + '">Chat</button><a class="quiet-button" href="challenge.html">Challenge</a><a class="quiet-button" href="community.html#profile/' + encodeURIComponent(friend.username || "") + '">Profile</a></div></article>'
+      ).join("") : '<div class="empty-state">' + (q ? 'No friend matches that search. Add them as a friend in People first.' : 'You have no accepted friends yet. Find students in People and accept a friend request before chatting.') + '</div>';
+    } catch (error) {
+      box.innerHTML = '<div class="empty-state">Your friends could not be loaded. Please try again.</div>';
+      status(error.message);
+    }
+  }
+  $("chat-people-search").addEventListener("submit", async event => {
+    event.preventDefault();
+    await loadChatConnections($("chat-person-query").value);
   });
-  $("chat-people-results").addEventListener("click",async e=>{
-    const b=e.target.closest("[data-start-chat]");if(!b)return;
-    try{const {conversation}=await api("/community/chat/direct/"+encodeURIComponent(b.dataset.startChat),{method:"POST",body:"{}"});await loadChats();openChat(conversation.id);}
-    catch(err){status(err.message);}
+  $("chat-people-results").addEventListener("click", async event => {
+    const button = event.target.closest("[data-start-chat]");
+    if (!button) return;
+    button.disabled = true;
+    try {
+      const { conversation } = await api("/community/chat/direct/" + encodeURIComponent(button.dataset.startChat), { method: "POST", body: "{}" });
+      await loadChats();
+      await openChat(conversation.id);
+    } catch (error) { status(error.message); button.disabled = false; }
   });
   async function openChat(id){
     activeChat=id;
