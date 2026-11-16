@@ -597,11 +597,11 @@ router.get("/people", async (req, res, next) => {
       const usernameSearch = q.startsWith("@");
       const normalizedQuery = usernameSearch ? slug(q.slice(1)) : q.trim();
       const [usernameProfiles, matchingUsers] = await Promise.all([
-        normalizedQuery.length >= 2
+        usernameSearch && normalizedQuery.length >= 2
           ? prisma.communityProfile.findMany({
               where: {
                 visibility: "PUBLIC", status: "ACTIVE", usernameSet: true,
-                username: usernameSearch ? normalizedQuery : "__no_username_match__"
+                username: normalizedQuery
               },
               select: { userId: true },
               take: 500
