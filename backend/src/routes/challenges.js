@@ -257,40 +257,73 @@ router.get("/:id", async (req, res, next) => {
 
 router.post("/:id/answer", async (req, res, next) => {
   try {
-    const challenge = await findChallenge(req.params.id);
-    if (!challenge) return res.status(404).json({ error: "Challenge not found." });
-    if (challenge.status !== "ACTIVE") return res.status(409).json({ error: "This challenge is not accepting answers." });
-    const participant = challenge.participants.find(item => item.userId === req.userId);
-    if (!participant) return res.status(403).json({ error: "Only competitors can submit answers." });
-    const teamMode = challenge.mode === "TEAM";
-    const competitorKey = teamMode ? participant.teamKey : req.userId;
-    if (teamMode) {
-      const captain = challenge.participants.filter(item => item.teamKey === participant.teamKey).sort((a, b) => a.joinedAt - b.joinedAt)[0];
-      if (captain?.userId !== req.userId) return res.status(403).json({ error: "Only the first joined teammate can submit the shared team answer." });
-    }
-    const questionIndex = req.body?.questionIndex;
-    const optionId = req.body?.optionId === null ? null : clean(req.body?.optionId, 80);
-    if (!Number.isInteger(questionIndex) || questionIndex < 0 || questionIndex >= challenge.questions.length) return res.status(400).json({ error: "Choose a valid question." });
-    const existing = challenge.answers.filter(answer => answer.competitorKey === competitorKey);
-    if (questionIndex !== existing.length) return res.status(409).json({ error: "Answer the current question in order." });
-    const question = challenge.questions[questionIndex];
-    if (optionId && !question.options.some(option => option.id === optionId)) return res.status(400).json({ error: "Choose one of the available answers." });
-    const timerSeconds = Number(challenge.settings?.timerSeconds || 0);
-    if (timerSeconds > 0 && challenge.startedAt) {
-      const deadline = challenge.startedAt.getTime() + (questionIndex + 1) * timerSeconds * 1000;
-      if (Date.now() > deadline && optionId) return res.status(408).json({ error: "The time for this question has ended. Submit it as unanswered to continue." });
-    }
-    const isCorrect = Boolean(optionId && optionId === question.correctOptionId);
-    await prisma.challengeAnswer.create({
-      data: { challengeId: challenge.id, questionIndex, competitorKey, optionId, isCorrect }
-    });
-    const refreshed = await findChallenge(challenge.id);
-    const competitors = teamMode
-      ? [...new Set(refreshed.participants.map(item => item.teamKey).filter(Boolean))]
-      : refreshed.participants.map(item => item.userId);
-    const complete = competitors.length > 0 && competitors.every(key => refreshed.answers.filter(answer => answer.competitorKey === key).length >= refreshed.questions.length);
-    if (complete) await prisma.challenge.update({ where: { id: challenge.id }, data: { status: "FINISHED", finishedAt: new Date() } });
-    res.json({ ok: true, isCorrect, answeredCount: refreshed.answers.filter(answer => answer.competitorKey === competitorKey).length, totalQuestions: refreshed.questions.length, status: complete ? "FINISHED" : "ACTIVE" });
+    const result = await prisma.$transaction(async tx => {
+      await tx.$queryRaw`SELECT "id" FROM "challenges" WHERE "id" = ${req.params.id} FOR UPDATE`;
+      const challenge = await tx.challenge.findUnique({
+        where: { id: req.params.id },
+        include: {
+          participants: { orderBy: { joinedAt: "asc" } },
+          answers: { orderBy: [{ questionIndex: "asc" }, { answeredAt: "asc" }] }
+        }
+      });
+      if (!challenge) return { status: 404, error: "Challenge not found." };
+      if (challenge.status !== "ACTIVE") return { status: 409, error: "This challenge is not accepting answers." };
+      const participant = challenge.participants.find(item => item.userId === req.userId);
+      if (!participant) return { status: 403, error: "Only competitors can submit answers." };
+      const teamMode = challenge.mode === "TEAM";
+      const competitorKey = teamMode ? participant.teamKey : req.userId;
+      if (teamMode) {
+        const captain = challenge.participants.filter(item => item.teamKey === participant.teamKey).sort((a, b) => a.joinedAt - b.joinedAt)[0];
+        if (captain?.userId !== req.userId) return { status: 403, error: "Only the first joined teammate can submit the shared team answer." };
+      }
+      const questionIndex = req.body?.questionIndex;
+      const optionId = req.body?.optionId === null ? null : clean(req.body?.optionId, 80) || null;
+      if (!Number.isInteger(questionIndex) || questionIndex < 0 || questionIndex >= challenge.questions.length) {
+        return { status: 400, error: "Choose a valid question." };
+      }
+      const existing = challenge.answers.filter(answer => answer.competitorKey === competitorKey);
+      if (questionIndex !== existing.length) return { status: 409, error: "Answer the current question in order." };
+      const question = challenge.questions[questionIndex];
+      if (optionId && !question.options.some(option => option.id === optionId)) {
+        return { status: 400, error: "Choose one of the available answers." };
+      }
+      const timerSeconds = Number(challenge.settings?.timerSeconds || 0);
+      if (timerSeconds > 0 && challenge.startedAt) {
+        const deadline = challenge.startedAt.getTime() + (questionIndex + 1) * timerSeconds * 1000;
+        if (Date.now() > deadline && optionId) {
+          return { status: 408, error: "The time for this question has ended. Submit it as unanswered to continue." };
+        }
+      }
+      const isCorrect = Boolean(optionId && optionId === question.correctOptionId);
+      await tx.challengeAnswer.create({
+        data: { challengeId: challenge.id, questionIndex, competitorKey, optionId, isCorrect }
+      });
+      const refreshed = await tx.challenge.findUnique({
+        where: { id: challenge.id },
+        include: { participants: true, answers: true }
+      });
+      const competitors = teamMode
+        ? [...new Set(refreshed.participants.map(item => item.teamKey).filter(Boolean))]
+        : refreshed.participants.map(item => item.userId);
+      const complete = competitors.length > 0 && competitors.every(key =>
+        refreshed.answers.filter(answer => answer.competitorKey === key).length >= refreshed.questions.length
+      );
+      if (complete) {
+        await tx.challenge.update({ where: { id: challenge.id }, data: { status: "FINISHED", finishedAt: new Date() } });
+      }
+      return {
+        status: 200,
+        body: {
+          ok: true,
+          isCorrect,
+          answeredCount: refreshed.answers.filter(answer => answer.competitorKey === competitorKey).length,
+          totalQuestions: refreshed.questions.length,
+          status: complete ? "FINISHED" : "ACTIVE"
+        }
+      };
+    }, { isolationLevel: "Serializable" });
+    if (result.error) return res.status(result.status).json({ error: result.error });
+    res.status(result.status).json(result.body);
   } catch (error) { next(error); }
 });
 
