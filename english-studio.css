@@ -115,3 +115,5 @@ html[data-theme="dark"] .dictionary-ipa { background: #2B1D45; color: #DDD0FF; }
   .dictionary-saved-word { flex-wrap: wrap; }
   .dictionary-saved-word small { flex: 1; }
 }
+
+#dictionary-panel[hidden],#word-spotlight-panel[hidden],#english-lessons-panel[hidden],#english-practice-panel[hidden],#english-ai-panel[hidden],#stories[hidden]{display:none!important}
