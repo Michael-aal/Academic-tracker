@@ -20,7 +20,7 @@
     ["AI Learning","ai-learning.html","learn"],
     ["English Studio","english-studio.html","learn"],
     ["Level Up","level-up.html","more"],
-    ["Notifications","notifications.html","notifications"],
+    ["Notifications","notifications.html?source=tracker","notifications"],
     ["AI Tutor","ai-tutor.html","tutor"],
     ["AI Quiz","ai-quiz-setup.html","quiz"],
     ["Educational Videos","educational-videos.html","videos"],
@@ -141,7 +141,7 @@
   const moreToggle = bottom.querySelector("#at-nav-more-toggle");
   const notificationToggle = header.querySelector("#at-nav-notifications");
   if (!localStorage.getItem("academic-tracker-token")) notificationToggle.hidden = true;
-  notificationToggle.addEventListener("click", () => { window.location.href = "notifications.html"; });
+  notificationToggle.addEventListener("click", () => { window.location.href = "notifications.html?source=tracker"; });
   const installButton = menu.querySelector("#at-nav-install-app");
 
   // In-app notification badge + lightweight live polling. No browser/OS notifications are used.
@@ -166,7 +166,7 @@
     toast.hidden = false;
     toast.onclick = event => {
       if (event.target.closest("button")) { toast.hidden = true; return; }
-      window.location.href = "notifications.html?id=" + encodeURIComponent(item.id);
+      window.location.href = "notifications.html?source=tracker&id=" + encodeURIComponent(item.id);
     };
     clearTimeout(notificationToastTimer);
     notificationToastTimer = setTimeout(() => { toast.hidden = true; }, 9000);
