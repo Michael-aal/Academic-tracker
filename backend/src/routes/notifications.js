@@ -57,8 +57,12 @@ router.patch("/:id/read", async (req, res, next) => {
 
 router.post("/read-all", async (req, res, next) => {
   try {
+    const where = { userId: req.userId, readAt: null };
+    const context = typeof req.body?.context === "string" ? req.body.context : "";
+    if (context === "preproom") where.category = "SOCIAL";
+    else if (context === "tracker") where.category = { not: "SOCIAL" };
     const result = await prisma.notification.updateMany({
-      where: { userId: req.userId, readAt: null },
+      where,
       data: { readAt: new Date() }
     });
     res.json({ ok: true, markedRead: result.count });
