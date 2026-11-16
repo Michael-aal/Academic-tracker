@@ -491,9 +491,48 @@ router.post("/", validateAiRequest, aiUsageAudit, async (req, res) => {
     }
     res.json({ answer: answer.trim(), action, model, provider });
   } catch (error) {
-    if (error.name === "AbortError") return res.status(504).json({ error: "The AI request took too long. Please try again." });
-    console.error("AI request error:", error.message);
-    res.status(502).json({ error: "Could not reach the AI provider. Check the server connection and try again." });
+    if (error.name === "AbortError") return res.status(504).json({ error: "The AI request took too long. Please try again.", code: "AI_REQUEST_TIMEOUT" });
+
+    const requestId = randomUUID();
+    const providerFailures = Array.isArray(error.failures)
+      ? error.failures.map(failure => {
+          const value = String(failure).slice(0, 220);
+          const match = value.match(/^([a-z0-9_-]+):\s*(?:(\d{3})\s+)?/i);
+          return {
+            provider: match?.[1] || "unknown",
+            status: match?.[2] ? Number(match[2]) : null,
+            reason: value.slice(match?.[0]?.length || 0, 180)
+          };
+        })
+      : [];
+
+    console.error("AI request failed:", {
+      requestId,
+      name: error?.name || "Error",
+      code: error?.code || null,
+      provider: error?.provider || null,
+      providerFailures
+    });
+
+    if (["P1001", "P1002", "P1017"].includes(error?.code)) {
+      return res.status(503).json({
+        error: "The study database is temporarily unavailable. Please try again shortly.",
+        code: "DATABASE_UNAVAILABLE",
+        requestId
+      });
+    }
+    if (providerFailures.length || error?.status === 503) {
+      return res.status(503).json({
+        error: "The AI provider could not complete this quiz. The server recorded a diagnostic reference; please try again shortly.",
+        code: "AI_PROVIDER_UNAVAILABLE",
+        requestId
+      });
+    }
+    res.status(502).json({
+      error: "The AI request failed before a quiz could be created. Please try again.",
+      code: "AI_REQUEST_FAILED",
+      requestId
+    });
   } finally {
     clearTimeout(timeout);
   }
