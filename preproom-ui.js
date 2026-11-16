@@ -9,9 +9,11 @@
       return String(user.educationTrack||"SECONDARY").toUpperCase()==="HIGHER"?"university-dashboard.html":"dashboard.html";
     }catch(_){return "dashboard.html";}
   }
+  function dashboardHref(){try{const account=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}");return account.educationTrack==="HIGHER"?"university-dashboard.html":"dashboard.html";}catch(_){return "dashboard.html";}}
+  function syncDashboardLinks(){const href=dashboardHref();$(".social-home-return a, .preproom-dashboard-link").forEach(link=>{link.href=href;});}
   function setupBrand(){
     const brand=$(".social-brand"); if(!brand)return;
-    brand.innerHTML='<span class="social-brand-mark" aria-hidden="true">'+icon("M2 10 12 3l10 7-10 7zM6 13v5c4 3 8 3 12 0v-5M21 11v6")+'</span><span><strong>Preproom</strong><small>Learn. Share. Connect.</small></span>';
+    brand.innerHTML='<span class="social-brand-mark" aria-hidden="true">'+icon("M2 10 12 3l10 7-10 7zM6 13v5c4 3 8 3 12 0v-5M21 11v6")+'</span><span><strong>Preproom</strong></span>';
     brand.setAttribute("aria-label","Preproom home");
   }
   function setupNavigation(){
@@ -31,7 +33,11 @@
         sidebar.insertBefore(create,sidebar.querySelector(".social-sidebar-divider"));
       }
       const admin=$("#community-admin-link"); if(admin)admin.hidden=true;
+      if(!$(".preproom-dashboard-link",sidebar)){
+        const back=document.createElement("a");back.className="social-admin-link preproom-dashboard-link";back.href=dashboardHref();back.textContent="← Back to Academic Tracker";sidebar.append(back);
+      }
     }
+    syncDashboardLinks();document.addEventListener("preproom:profile-loaded",syncDashboardLinks);
     const bottom=$("#social-bottom-nav");
     if(bottom){
       $$("[data-social-dest]",bottom).forEach(button=>{
