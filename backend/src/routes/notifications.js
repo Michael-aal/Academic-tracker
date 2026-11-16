@@ -60,7 +60,7 @@ router.post("/read-all", async (req, res, next) => {
     const where = { userId: req.userId, readAt: null };
     const context = typeof req.body?.context === "string" ? req.body.context : "";
     if (context === "preproom") where.category = "SOCIAL";
-    else if (context === "tracker") where.category = { not: "SOCIAL" };
+    else if (context === "tracker") where.category = { notIn: ["SOCIAL", "PAYMENT", "SUBSCRIPTION", "AI_CREDITS"] };
     const result = await prisma.notification.updateMany({
       where,
       data: { readAt: new Date() }
