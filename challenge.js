@@ -259,10 +259,34 @@
       await refreshRoom();
     } catch (error) { status("room-answer-feedback", error.message, true); buttons.forEach(button => button.disabled = false); }
   }
+  function renderReview(room) {
+    const host = $("room-review-list"); host.replaceChildren();
+    room.challenge.questions.forEach((question, index) => {
+      const card = node("article", "room-review-card");
+      card.append(node("strong", "", "Question " + (index + 1)), node("p", "", question.prompt));
+      const correct = question.options.find(option => option.id === question.correctOptionId);
+      card.append(node("p", "room-review-answer", "Correct answer: " + (correct?.text || "Unavailable")));
+      if (question.explanation) card.append(node("p", "challenge-muted", question.explanation));
+      host.append(card);
+    });
+  }
   function renderQuestion(room) {
     const section = $("room-question-section");
+    show("room-review", room.challenge.status === "FINISHED");
+    if (room.challenge.status === "FINISHED") {
+      section.hidden = true;
+      renderReview(room);
+      return;
+    }
     if (room.challenge.status !== "ACTIVE") { section.hidden = true; return; }
     section.hidden = false;
+    if (room.challenge.mode === "FREE_FOR_ALL" && room.challenge.isHost) {
+      $("question-progress").textContent = "Mastermind · host view";
+      $("question-timer").textContent = "";
+      $("room-question").textContent = "You are hosting this tournament.";
+      $("room-options").replaceChildren(node("p", "challenge-muted", "You do not compete in Free-for-all. Watch the live rankings while the students answer the same question set."));
+      return;
+    }
     const index = room.myAnswers.length;
     const questions = room.challenge.questions;
     if (index >= questions.length) {
