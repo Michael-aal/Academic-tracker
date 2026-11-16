@@ -7,7 +7,9 @@
   if (!token) { window.location.replace("login.html"); return; }
 
   const user = (() => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}"); } catch { return {}; } })();
-  $("challenge-academic-return").href = user.educationTrack === "HIGHER" ? "university-dashboard.html" : "dashboard.html";
+  const currentUserId = user.id || user.userId || (() => { try { return JSON.parse(atob(token.split(".")[1])).sub || ""; } catch { return ""; } })();
+  const educationTrack = String(user.educationTrack || "").toUpperCase();
+  $("challenge-academic-return").href = ["HIGHER", "UNIVERSITY"].includes(educationTrack) ? "university-dashboard.html" : "dashboard.html";
 
   async function api(path, options = {}) {
     const response = await fetch(API + path, {
@@ -249,7 +251,7 @@
   }
   function isTeamCaptain(room) {
     if (room.challenge.mode !== "TEAM") return true;
-    const mine = room.participants.find(person => person.userId === user.id);
+    const mine = room.participants.find(person => person.userId === currentUserId);
     if (!mine?.teamKey) return false;
     const teammates = room.participants.filter(person => person.teamKey === mine.teamKey);
     return teammates[0]?.userId === user.id;
@@ -330,7 +332,7 @@
   }
   async function loadTeamMessages() {
     const room = state.room;
-    if (!room || room.challenge.mode !== "TEAM" || !room.participants.some(item => item.userId === user.id)) return;
+    if (!room || room.challenge.mode !== "TEAM" || !room.participants.some(item => item.userId === currentUserId)) return;
     try {
       const data = await api("/api/challenges/" + encodeURIComponent(state.challengeId) + "/messages");
       const host = $("team-chat-messages"); const atBottom = host.scrollHeight - host.scrollTop - host.clientHeight < 60;
@@ -353,7 +355,7 @@
       renderParticipants(room); renderRankings(room); renderQuestion(room);
       show("start-challenge", room.challenge.isHost && room.challenge.status === "LOBBY");
       show("finish-challenge", room.challenge.isHost && room.challenge.status === "ACTIVE");
-      show("team-chat-panel", room.challenge.mode === "TEAM" && room.participants.some(item => item.userId === user.id));
+      show("team-chat-panel", room.challenge.mode === "TEAM" && room.participants.some(item => item.userId === currentUserId));
       if (room.challenge.status === "LOBBY") status("room-status", room.challenge.isHost ? "Share the invitation code. Start when the required competitors have joined." : "Waiting for the host to start the challenge.");
       else if (room.challenge.status === "FINISHED") status("room-status", "Challenge complete. Final answers and rankings are ready.");
       else status("room-status", "The same question set is active for every competitor.");
