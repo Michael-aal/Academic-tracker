@@ -154,7 +154,7 @@
       catch(err){status(err.message);}
     }
   });
-  $("choose-profile-cover").addEventListener("click", () => $("profile-cover-file").click());
+  $("social-profile-cover").addEventListener("click", event => { if(event.target.closest("#choose-profile-cover")) $("profile-cover-file").click(); });
   $("profile-cover-file").addEventListener("change", async e => {
     const file=e.target.files?.[0];
     if(!file)return;
