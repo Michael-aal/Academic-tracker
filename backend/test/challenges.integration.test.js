@@ -129,7 +129,11 @@ test("challenge rooms enforce identical questions, competition roles, team answe
     assert.equal(teamBMessages.messages.length, 0);
   } finally {
     if (challengeIds.length) await prisma.challenge.deleteMany({ where: { id: { in: challengeIds } } });
-    if (users.length) await prisma.user.deleteMany({ where: { id: { in: users.map(user => user.id) } } });
+    if (users.length) {
+      const ids = users.map(user => user.id);
+      await prisma.communityFollow.deleteMany({ where: { OR: [{ followerId: { in: ids } }, { followingId: { in: ids } }] } });
+      await prisma.user.deleteMany({ where: { id: { in: ids } } });
+    }
     if (server) await new Promise(resolve => server.close(resolve));
   }
 });
