@@ -843,8 +843,25 @@
   try { const u=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}"); if(u.isAdmin||["ADMIN","DEVELOPER","DEV"].includes(String(u.role||"").toUpperCase())) $("community-admin-link").hidden=false; } catch (_) {}
   const requestedView = location.hash.replace(/^#/, "");
   const publicProfileMatch = requestedView.match(/^profile\/(.+)$/);
-  const initialView = publicProfileMatch ? "profile" : requestedView;
+  const postMatch = requestedView.match(/^post\/(.+)$/);
+  const initialView = publicProfileMatch ? "profile" : postMatch ? "feed" : requestedView;
   document.body.dataset.preproomView = ["feed","people","messages","profile","videos"].includes(initialView) ? initialView : "feed";
   if (["feed","people","messages","profile"].includes(initialView)) tab(initialView);
   if (publicProfileMatch) loadPublicProfile(decodeURIComponent(publicProfileMatch[1]));
+  if (postMatch) {
+    const postId = decodeURIComponent(postMatch[1]);
+    const feedList = $("feed-list");
+    const openTargetPost = () => {
+      const card = [...(feedList?.querySelectorAll(".post-card") || [])].find(item => item.dataset.post === postId);
+      if (!card) return false;
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+      renderPostComments(postId).catch(() => {});
+      return true;
+    };
+    if (!openTargetPost() && feedList) {
+      const observer = new MutationObserver(() => { if (openTargetPost()) observer.disconnect(); });
+      observer.observe(feedList, { childList: true, subtree: true });
+      setTimeout(() => observer.disconnect(), 10000);
+    }
+  }
 })();
