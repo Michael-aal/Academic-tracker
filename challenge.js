@@ -125,7 +125,6 @@
   $("challenge-mode").addEventListener("change", () => {
     const mode = $("challenge-mode").value;
     show("team-create-fields", mode === "TEAM");
-    show("join-team-fields", mode === "TEAM");
     $("challenge-mode-help").textContent = mode === "DUEL"
       ? "Two students compete with the same question set. The host can also join as a competitor."
       : mode === "TEAM"
