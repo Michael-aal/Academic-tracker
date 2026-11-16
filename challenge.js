@@ -159,7 +159,7 @@
     if (!host) return;
     host.replaceChildren();
     try {
-      const data = await api("/api/challenges/invitations");
+      const data = await api("/api/challenges/invitations/inbox");
       if (!data.invitations?.length) { host.append(node("p","challenge-muted","No pending invitations.")); return; }
       data.invitations.forEach(invite => {
         const card = node("article","my-challenge-card");
