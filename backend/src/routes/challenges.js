@@ -369,7 +369,7 @@ router.post("/:id/messages", async (req, res, next) => {
 });
 
 
-router.get("/invitations", async (req, res, next) => {
+router.get("/invitations/inbox", async (req, res, next) => {
   try {
     const rows = await prisma.notification.findMany({
       where: { userId: req.userId, category: "SOCIAL", readAt: null },
