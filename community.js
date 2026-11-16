@@ -844,10 +844,15 @@
   const requestedView = location.hash.replace(/^#/, "");
   const publicProfileMatch = requestedView.match(/^profile\/(.+)$/);
   const postMatch = requestedView.match(/^post\/(.+)$/);
-  const initialView = publicProfileMatch ? "profile" : postMatch ? "feed" : requestedView;
+  const messageMatch = requestedView.match(/^messages\/(.+)$/);
+  const initialView = publicProfileMatch ? "profile" : postMatch ? "feed" : messageMatch ? "messages" : requestedView;
   document.body.dataset.preproomView = ["feed","people","messages","profile","videos"].includes(initialView) ? initialView : "feed";
   if (["feed","people","messages","profile"].includes(initialView)) tab(initialView);
   if (publicProfileMatch) loadPublicProfile(decodeURIComponent(publicProfileMatch[1]));
+  if (messageMatch) {
+    const conversationId = decodeURIComponent(messageMatch[1]);
+    loadChats().then(() => window.ATCommunityState?.openChat?.(conversationId));
+  }
   if (postMatch) {
     const postId = decodeURIComponent(postMatch[1]);
     const feedList = $("feed-list");
