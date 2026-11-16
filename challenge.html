@@ -20,7 +20,7 @@
     <a class="challenge-academic-return" href="dashboard.html" id="challenge-academic-return">Academic Tracker</a>
   </header>
   <main class="challenge-shell">
-    <section class="challenge-intro">
+    <section id="challenge-intro" class="challenge-intro">
       <p class="challenge-eyebrow">LEARN TOGETHER · COMPETE FAIRLY</p>
       <h1>Challenges</h1>
       <p>Build a shared question set, invite students and see results update from the same questions.</p>
@@ -103,6 +103,7 @@
         <div class="challenge-room-main">
           <section class="room-section"><div class="challenge-subheading"><strong>Competitors</strong><span id="room-participant-count">0</span></div><div id="room-participants" class="room-participants"></div><button id="start-challenge" class="challenge-primary" type="button" hidden>Start challenge</button><p id="room-status" class="challenge-status" role="status" aria-live="polite"></p></section>
           <section id="room-question-section" class="room-section" hidden><div class="room-question-meta"><span id="question-progress"></span><strong id="question-timer"></strong></div><h3 id="room-question"></h3><div id="room-options" class="room-options"></div><p id="room-answer-feedback" class="challenge-status" role="status" aria-live="polite"></p></section>
+          <section id="room-review" class="room-section" hidden><div class="challenge-subheading"><strong>Answer review</strong><span>Shared question set</span></div><div id="room-review-list" class="room-review-list"></div></section>
           <section class="room-section"><div class="challenge-subheading"><strong>Live rankings</strong><span id="ranking-status">Updates automatically</span></div><ol id="room-rankings" class="room-rankings"></ol></section>
           <button id="finish-challenge" class="challenge-secondary" type="button" hidden>Finish challenge</button>
         </div>
