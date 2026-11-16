@@ -469,3 +469,41 @@ body.social-media-page .social-profile-post .social-profile-icon-action{display:
 body.social-media-page .social-profile-post .social-profile-icon-action svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 body.social-media-page .social-profile-post .social-profile-delete-action{color:#d94b61}
 body.social-media-page .social-profile-post .social-profile-icon-action:focus-visible{outline:2px solid var(--community-accent);outline-offset:2px}
+
+
+/* Light-mode profile readability: keep profile information dark on white surfaces. */
+html[data-theme="light"] body.social-media-page :is(
+  .social-profile-identity,
+  .social-profile-identity h2,
+  .social-profile-identity p,
+  .social-profile-stats strong,
+  .social-profile-stats span,
+  .social-profile-subject,
+  .social-profile-posts-heading h3,
+  .social-profile-posts-heading span,
+  .social-profile-friends,
+  .social-profile-friends strong,
+  .social-profile-friends small,
+  .social-profile-media,
+  .public-profile-identity,
+  .public-profile-identity h1,
+  .public-profile-identity p,
+  .public-profile-meta,
+  .public-profile-stats,
+  .public-profile-posts,
+  .public-profile-posts h2,
+  .public-profile-post,
+  .public-profile-post p,
+  .public-profile-post small,
+  .profile-friend-card,
+  .profile-friend-card strong,
+  .profile-friend-card small
+) {
+  color: #17121f !important;
+  opacity: 1 !important;
+}
+html[data-theme="light"] body.social-media-page :is(
+  .social-profile-posts-heading,
+  .social-profile-stats,
+  .public-profile-stats
+) { color: #17121f !important; }
