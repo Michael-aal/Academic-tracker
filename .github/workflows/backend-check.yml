@@ -60,8 +60,6 @@ on:
       - "level-up.js"
       - "exam-simulator.html"
       - "exam-simulator.js"
-      - "focus-music.js"
-      - "focus-music.css"
       - "notes-workspace.js"
       - "memory-mastery.js"
       - "study-planner.js"
