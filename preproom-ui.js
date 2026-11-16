@@ -9,7 +9,7 @@
       return String(user.educationTrack||"SECONDARY").toUpperCase()==="HIGHER"?"university-dashboard.html":"dashboard.html";
     }catch(_){return "dashboard.html";}
   }
-  function dashboardHref(){try{const account=JSON.parse(localStorage.getItem("academic-tracker-user")||"{}");return account.educationTrack==="HIGHER"?"university-dashboard.html":"dashboard.html";}catch(_){return "dashboard.html";}}
+  function dashboardHref(){return dashboardPath();}
   function syncDashboardLinks(){const href=dashboardHref();$$(".social-home-return a, .preproom-dashboard-link").forEach(link=>{link.href=href;});}
   function setupBrand(){
     const brand=$(".social-brand"); if(!brand)return;
