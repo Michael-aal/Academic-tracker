@@ -107,7 +107,7 @@
       $("social-profile-handle").textContent = "@" + (profile.username || "student");
       $("social-profile-bio").textContent = profile.bio || "Add a short bio to introduce yourself.";
       $("social-profile-avatar").innerHTML = profile.avatarUrl ? '<img src="' + esc(profile.avatarUrl) + '" alt="Profile photo">' : esc((profile.displayName || "S").slice(0,1).toUpperCase());
-      $("social-profile-cover").innerHTML = profile.coverUrl ? '<img src="' + esc(profile.coverUrl) + '" alt="Profile cover">' : '<span>YOUR SPACE</span>';
+      $("social-profile-cover").innerHTML = (profile.coverUrl ? '<img src="' + esc(profile.coverUrl) + '" alt="Profile cover">' : '<span>YOUR SPACE</span>') + '<button type="button" class="social-cover-change" id="choose-profile-cover">Change cover</button>';
       $("profile-post-count").textContent = String(stats.posts || 0);
       $("profile-friend-count").textContent = String(stats.friends || 0);
       $("profile-like-count").textContent = String(stats.likes || 0);
