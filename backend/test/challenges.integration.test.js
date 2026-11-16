@@ -63,6 +63,10 @@ test("challenge rooms enforce identical questions, competition roles, team answe
     const teamA2 = await createStudent("Team A Second");
     const teamB1 = await createStudent("Team B Captain");
     const teamB2 = await createStudent("Team B Second");
+    await prisma.communityFollow.createMany({ data: [
+      { followerId: host.id, followingId: opponent.id, status: "ACCEPTED" },
+      { followerId: opponent.id, followingId: host.id, status: "ACCEPTED" }
+    ] });
 
     await new Promise((resolve, reject) => {
       server = app.listen(0, "127.0.0.1", error => error ? reject(error) : resolve());
