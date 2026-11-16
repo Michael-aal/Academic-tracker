@@ -5,6 +5,23 @@
   const $ = id => document.getElementById(id);
   let showingSavedPosts = false;
   let currentProfilePosts = [];
+  let profileVideoObserver = null;
+  function observeProfileVideos(root) {
+    if (profileVideoObserver) profileVideoObserver.disconnect();
+    const videos = [...(root || document).querySelectorAll(".social-profile-video-player, .social-profile-media-video")];
+    if (!videos.length || !("IntersectionObserver" in window)) return;
+    profileVideoObserver = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        const video = entry.target;
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+          videos.forEach(other => { if (other !== video) other.pause(); });
+          const playback = video.play();
+          if (playback && typeof playback.catch === "function") playback.catch(() => {});
+        } else video.pause();
+      }
+    }, { threshold: [0, 0.6, 1] });
+    videos.forEach(video => profileVideoObserver.observe(video));
+  }
   let feedNextCursor = "";
   let peopleNextCursor = "";
   let peopleQuery = "";
@@ -112,12 +129,14 @@
       $("profile-friend-count").textContent = String(stats.friends || 0);
       $("profile-like-count").textContent = String(stats.likes || 0);
       $("social-profile-subject").textContent = [profile.bestSubject, profile.educationTrack, profile.programme].filter(Boolean).join(" · ");
-      $("social-profile-posts").innerHTML = posts.length ? posts.map(post => '<article class="social-profile-post" data-profile-post="' + esc(post.id) + '">' + (post.mediaUrl ? '<img src="' + esc(post.mediaUrl) + '" alt="Your post" loading="lazy">' : post.videoUrl ? '<video class="social-profile-video-player" controls playsinline preload="metadata"><source src="' + esc(post.videoUrl) + '">Video unavailable.</video>' : '<div class="social-profile-text-post">' + esc((post.body || "").slice(0,180)) + '</div>') + '<div class="social-profile-post-meta">' + esc(post.subject || "Post") + '<span class="social-profile-post-counts"><span title="Likes" aria-label="' + (post.reactionCount || 0) + ' likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg>' + (post.reactionCount || 0) + '</span><span title="Shares" aria-label="' + (post.shareCount || 0) + ' shares"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m0 0L7 8m5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>' + (post.shareCount || 0) + '</span></span></div><details class="social-post-menu"><summary aria-label="Post options" title="Post options"><span aria-hidden="true">•••</span></summary><div class="social-post-menu-items"><button type="button" class="social-profile-icon-action" data-profile-edit="' + esc(post.id) + '" data-body="' + esc(post.body || "") + '" data-subject="' + esc(post.subject || "") + '" data-visibility="' + esc(post.visibility || "PUBLIC") + '" aria-label="Edit post" title="Edit post"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 4 4M4 20l4-.8L19 8a2.8 2.8 0 0 0-4-4L4 15z"/></svg></button><button type="button" class="social-profile-icon-action social-profile-delete-action" data-profile-delete="' + esc(post.id) + '" aria-label="Delete post" title="Delete post"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3"/></svg></button></div></details></article>').join("") : '<div class="empty-state social-profile-empty">Your posts will appear here after you publish your first post.</div>';
+      $("social-profile-posts").innerHTML = posts.length ? posts.map(post => '<article class="social-profile-post" data-profile-post="' + esc(post.id) + '">' + (post.mediaUrl ? '<img src="' + esc(post.mediaUrl) + '" alt="Your post" loading="lazy">' : post.videoUrl ? '<video class="social-profile-video-player" controls autoplay muted playsinline loop preload="metadata"><source src="' + esc(post.videoUrl) + '">Video unavailable.</video>' : '<div class="social-profile-text-post">' + esc((post.body || "").slice(0,180)) + '</div>') + '<div class="social-profile-post-meta">' + esc(post.subject || "Post") + '<span class="social-profile-post-counts"><span title="Likes" aria-label="' + (post.reactionCount || 0) + ' likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg>' + (post.reactionCount || 0) + '</span><span title="Shares" aria-label="' + (post.shareCount || 0) + ' shares"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m0 0L7 8m5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>' + (post.shareCount || 0) + '</span></span></div><details class="social-post-menu"><summary aria-label="Post options" title="Post options"><span aria-hidden="true">•••</span></summary><div class="social-post-menu-items"><button type="button" class="social-profile-icon-action" data-profile-edit="' + esc(post.id) + '" data-body="' + esc(post.body || "") + '" data-subject="' + esc(post.subject || "") + '" data-visibility="' + esc(post.visibility || "PUBLIC") + '" aria-label="Edit post" title="Edit post"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 4 4M4 20l4-.8L19 8a2.8 2.8 0 0 0-4-4L4 15z"/></svg></button><button type="button" class="social-profile-icon-action social-profile-delete-action" data-profile-delete="' + esc(post.id) + '" aria-label="Delete post" title="Delete post"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3"/></svg></button></div></details></article>').join("") : '<div class="empty-state social-profile-empty">Your posts will appear here after you publish your first post.</div>';
       $("social-profile-media").innerHTML = posts.some(post => post.mediaUrl || post.videoUrl)
         ? posts.filter(post => post.mediaUrl || post.videoUrl).map(post => post.mediaUrl
           ? '<a class="social-profile-media-item" href="' + esc(post.mediaUrl) + '" target="_blank" rel="noopener"><img src="' + esc(post.mediaUrl) + '" alt="Your post photo" loading="lazy"></a>'
-          : '<article class="social-profile-media-item"><video controls playsinline preload="metadata"><source src="' + esc(post.videoUrl) + '"></video></article>').join("")
+          : '<article class="social-profile-media-item"><video class="social-profile-media-video" controls autoplay muted playsinline loop preload="metadata"><source src="' + esc(post.videoUrl) + '"></video></article>').join("")
         : '<div class="empty-state">Your photos and videos will appear here.</div>';
+      observeProfileVideos($("social-profile-posts"));
+      observeProfileVideos($("social-profile-media"));
       loadProfileFriends();
 
     } catch (e) { status(e.message); }
