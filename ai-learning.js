@@ -419,16 +419,25 @@
     event.preventDefault();
     const content = $("content").value.trim();
     const topic = ($("topic")?.value || "").trim();
+    const tutorHistory = state.action === "tutor" ? state.conversation.slice(-8).map(message => (message.role === "student" ? "Student" : "Tutor") + ":\n" + message.content).join("\n\n") : "";
+    const pendingTutorMessage = state.action === "tutor" ? { role: "student", content: content || topic } : null;
     if ((!content && !topic) || (state.action === "tutor" && state.conversation.length && !content)) { setNotice(state.action === "tutor" && state.conversation.length ? "Ask a follow-up question or paste the next part of your notes first." : "Enter a question, topic, or notes first.", true); return; }
     const button = $("submit-learning");
     button.disabled = true;
     $("submit-label").textContent = state.action === "quiz" ? "Generating your quiz…" : "Working on your request…";
     setNotice("Preparing your study response. This may take a few seconds.");
-    $("result-panel").hidden = true;
+    if (pendingTutorMessage) {
+      state.conversation.push(pendingTutorMessage);
+      renderTutorConversation($("result-content"), topic || content, ($("subject")?.value || "").trim());
+      $("result-title").textContent = "Your tutoring conversation";
+      $("result-panel").hidden = false;
+      $("result-content").lastElementChild?.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+    } else {
+      $("result-panel").hidden = true;
+    }
     try {
       if (state.action === "quiz") localStorage.removeItem(ATTEMPT_KEY);
-      const history = state.action === "tutor" ? state.conversation.slice(-8).map(message => (message.role === "student" ? "Student" : "Tutor") + ":\n" + message.content).join("\n\n") : "";
-      const requestContent = history ? (history + "\n\nStudent's latest message:\n" + content).slice(-12000) : content;
+      const requestContent = tutorHistory ? (tutorHistory + "\n\nStudent's latest message:\n" + content).slice(-12000) : content;
       const data = await api("/api/ai", {
         method: "POST",
         body: JSON.stringify({
@@ -455,7 +464,6 @@
       } else {
         state.answer = data.answer || "No response was returned.";
         if (state.action === "tutor") {
-          state.conversation.push({ role: "student", content: content || topic });
           state.conversation.push({ role: "tutor", content: state.answer });
           state.conversationId = state.conversationId || (crypto.randomUUID ? crypto.randomUUID() : "tutor-" + Date.now());
           api("/api/user-data/tutor-conversations/" + encodeURIComponent(state.conversationId), {
@@ -465,7 +473,6 @@
           renderTutorConversation($("result-content"), topic || content, ($("subject")?.value || "").trim());
           $("result-title").textContent = "Your tutoring conversation";
           $("content").value = "";
-          $("content").placeholder = "Ask a follow-up question or paste another part of your notes…";
           $("char-count").textContent = "0 / 12,000 characters";
         } else {
           renderSafeMarkdown($("result-content"), state.answer);
@@ -475,6 +482,11 @@
       setNotice("Response ready. Review it alongside your school materials.");
       $("result-panel").scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
+      if (pendingTutorMessage && state.conversation[state.conversation.length - 1] === pendingTutorMessage) {
+        state.conversation.pop();
+        renderTutorConversation($("result-content"), topic || content, ($("subject")?.value || "").trim());
+        $("result-panel").hidden = state.conversation.length === 0;
+      }
       setNotice(error.message || "The request could not be completed.", true);
     } finally {
       button.disabled = false;
