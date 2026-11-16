@@ -4,6 +4,7 @@
   const token = () => localStorage.getItem("academic-tracker-token") || "";
   const $ = id => document.getElementById(id);
   let showingSavedPosts = false;
+  let currentProfilePosts = [];
   let feedNextCursor = "";
   let peopleNextCursor = "";
   let peopleQuery = "";
@@ -86,6 +87,9 @@
     if (!requireLogin()) return;
     try {
       const { profile, stats = {}, posts = [] } = await api("/community/profile/me");
+      currentProfilePosts = Array.isArray(posts) ? posts : [];
+      try { const account = JSON.parse(localStorage.getItem("academic-tracker-user") || "{}"); if (profile.educationTrack) account.educationTrack = profile.educationTrack; localStorage.setItem("academic-tracker-user", JSON.stringify(account)); } catch (_) {}
+      document.dispatchEvent(new CustomEvent("preproom:profile-loaded", { detail: { educationTrack: profile.educationTrack || "" } }));
       $("profile-username").value = profile.username || "";
       $("profile-best-subject").value = profile.bestSubject || "";
       $("profile-bio").value = profile.bio || "";
@@ -108,7 +112,7 @@
       $("profile-friend-count").textContent = String(stats.friends || 0);
       $("profile-like-count").textContent = String(stats.likes || 0);
       $("social-profile-subject").textContent = [profile.bestSubject, profile.educationTrack, profile.programme].filter(Boolean).join(" · ");
-      $("social-profile-posts").innerHTML = posts.length ? posts.map(post => '<article class="social-profile-post" data-profile-post="' + esc(post.id) + '">' + (post.mediaUrl ? '<img src="' + esc(post.mediaUrl) + '" alt="Your post" loading="lazy">' : post.videoUrl ? '<video class="social-profile-video-player" controls playsinline preload="metadata"><source src="' + esc(post.videoUrl) + '">Video unavailable.</video>' : '<div class="social-profile-text-post">' + esc((post.body || "").slice(0,180)) + '</div>') + '<div class="social-profile-post-meta">' + esc(post.subject || "Post") + '<span>' + (post.reactionCount || 0) + ' likes · ' + (post.commentCount || 0) + ' comments · ' + (post.shareCount || 0) + ' shares</span></div><div class="social-profile-post-controls"><button type="button" data-profile-edit="' + esc(post.id) + '" data-body="' + esc(post.body || "") + '" data-subject="' + esc(post.subject || "") + '" data-visibility="' + esc(post.visibility || "PUBLIC") + '">Edit</button><button type="button" data-profile-delete="' + esc(post.id) + '">Delete</button></div></article>').join("") : '<div class="empty-state social-profile-empty">Your posts will appear here after you publish your first post.</div>';
+      $("social-profile-posts").innerHTML = posts.length ? posts.map(post => '<article class="social-profile-post" data-profile-post="' + esc(post.id) + '">' + (post.mediaUrl ? '<img src="' + esc(post.mediaUrl) + '" alt="Your post" loading="lazy">' : post.videoUrl ? '<video class="social-profile-video-player" controls playsinline preload="metadata"><source src="' + esc(post.videoUrl) + '">Video unavailable.</video>' : '<div class="social-profile-text-post">' + esc((post.body || "").slice(0,180)) + '</div>') + '<div class="social-profile-post-meta">' + esc(post.subject || "Post") + '<span>' + (post.reactionCount || 0) + ' likes · ' + (post.commentCount || 0) + ' comments · ' + (post.shareCount || 0) + ' shares</span></div><details class="social-post-menu"><summary aria-label="Post options" title="Post options"><span aria-hidden="true">•••</span></summary><div class="social-post-menu-items"><button type="button" data-profile-edit="' + esc(post.id) + '" data-body="' + esc(post.body || "") + '" data-subject="' + esc(post.subject || "") + '" data-visibility="' + esc(post.visibility || "PUBLIC") + '">Edit</button><button type="button" data-profile-delete="' + esc(post.id) + '">Delete post</button></div></details></article>').join("") : '<div class="empty-state social-profile-empty">Your posts will appear here after you publish your first post.</div>';
       $("social-profile-media").innerHTML = posts.some(post => post.mediaUrl || post.videoUrl)
         ? posts.filter(post => post.mediaUrl || post.videoUrl).map(post => post.mediaUrl
           ? '<a class="social-profile-media-item" href="' + esc(post.mediaUrl) + '" target="_blank" rel="noopener"><img src="' + esc(post.mediaUrl) + '" alt="Your post photo" loading="lazy"></a>'
@@ -219,7 +223,7 @@
         const shared = post.sharedPost;
         const sharedAuthor = shared?.author || {};
         const sharedCard = shared ? '<div class="shared-post-card"><small>SHARED FROM @'+esc(sharedAuthor.username||"student")+'</small><strong>'+esc(sharedAuthor.displayName||"Student")+'</strong>'+(shared.body?'<p>'+esc(shared.body)+'</p>':'')+(shared.mediaUrl?'<img class="post-media" src="'+esc(shared.mediaUrl)+'" alt="Shared post media" loading="lazy">':'')+(shared.videoUrl?'<video class="post-video" controls playsinline preload="metadata"><source src="'+esc(shared.videoUrl)+'">Your browser cannot play this video.</video>':'')+'</div>' : '';
-        const ownerActions = post.isOwner ? '<div class="post-owner-actions"><button type="button" data-action="edit" data-id="'+esc(post.id)+'">Edit post</button><button type="button" data-action="delete" data-id="'+esc(post.id)+'">Delete post</button></div>' : '';
+        const ownerActions = post.isOwner ? '<details class="social-post-menu post-owner-menu"><summary aria-label="Post options" title="Post options"><span aria-hidden="true">•••</span></summary><div class="social-post-menu-items"><button type="button" data-action="edit" data-id="'+esc(post.id)+'">Edit post</button><button type="button" data-action="delete" data-id="'+esc(post.id)+'">Delete post</button></div></details>' : '';
         return '<article class="panel post-card" data-post="' + esc(post.id) + '"><div class="post-author"><div class="post-avatar">' + avatar + '</div><div><a class="post-author-profile-link" href="#profile/' + encodeURIComponent(author.username || "student") + '"><strong>' + esc(author.displayName || "Student") + '</strong></a><small>@' + esc(author.username || "student") + ' · ' + esc(author.educationTrack || "") + (post.isFriendPost?' · Friend':'') + '</small></div></div>' +
           (post.body ? '<p class="post-body">' + esc(post.body) + '</p>' : '') +
           sharedCard +
