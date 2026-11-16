@@ -458,3 +458,14 @@ body.social-media-page .social-profile-media-item video{pointer-events:auto}
   body.social-media-page .post-card .post-video{max-height:68svh}
   body.social-media-page .post-actions button{font-size:10px;padding-inline:5px}
 }
+
+
+/* Compact, accessible icon-only actions on the profile post grid. */
+body.social-media-page .social-profile-post-counts{display:inline-flex;align-items:center;gap:9px}
+body.social-media-page .social-profile-post-counts>span{display:inline-flex;align-items:center;gap:3px;color:#fff}
+body.social-media-page .social-profile-post-counts svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body.social-media-page .social-profile-post .social-post-menu-items{display:flex;align-items:center;gap:5px}
+body.social-media-page .social-profile-post .social-profile-icon-action{display:grid;place-items:center;width:34px;height:34px;min-width:34px;padding:0;border:1px solid var(--community-border);border-radius:9px;background:var(--community-panel);color:var(--community-text);cursor:pointer}
+body.social-media-page .social-profile-post .social-profile-icon-action svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body.social-media-page .social-profile-post .social-profile-delete-action{color:#d94b61}
+body.social-media-page .social-profile-post .social-profile-icon-action:focus-visible{outline:2px solid var(--community-accent);outline-offset:2px}
