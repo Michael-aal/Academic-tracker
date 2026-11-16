@@ -119,6 +119,19 @@ async function joinChallenge(challengeId, userId, teamKey) {
     }
     const existing = challenge.participants.find(item => item.userId === userId);
     if (existing) return { status: 200, participant: existing, existing: true };
+    if (challenge.mode === "DUEL" && challenge.hostUserId !== userId) {
+      const [host, joining, forward, reverse, blocked] = await Promise.all([
+        tx.user.findUnique({ where: { id: challenge.hostUserId }, select: { educationTrack: true } }),
+        tx.user.findUnique({ where: { id: userId }, select: { educationTrack: true } }),
+        tx.communityFollow.findUnique({ where: { followerId_followingId: { followerId: challenge.hostUserId, followingId: userId } }, select: { status: true } }),
+        tx.communityFollow.findUnique({ where: { followerId_followingId: { followerId: userId, followingId: challenge.hostUserId } }, select: { status: true } }),
+        tx.communityBlock.findFirst({ where: { OR: [{ blockerId: challenge.hostUserId, blockedId: userId }, { blockerId: userId, blockedId: challenge.hostUserId }] }, select: { id: true } })
+      ]);
+      if (!host || !joining || host.educationTrack !== joining.educationTrack ||
+          forward?.status !== "ACCEPTED" || reverse?.status !== "ACCEPTED" || blocked) {
+        return { status: 403, error: "1v1 Duels are limited to accepted Preproom friends on the same academic track." };
+      }
+    }
     if (challenge.mode === "DUEL" && challenge.participants.length >= 2) return { status: 409, error: "This duel already has two competitors." };
     if (challenge.mode === "FREE_FOR_ALL" && challenge.participants.length >= 6) return { status: 409, error: "This tournament is full." };
     if (challenge.mode === "TEAM") {
