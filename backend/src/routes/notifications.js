@@ -19,12 +19,12 @@ router.get("/", async (req, res, next) => {
     const where = { userId: req.userId };
     const context = typeof req.query.context === "string" ? req.query.context : "";
     if (context === "preproom") where.category = "SOCIAL";
-    else if (context === "tracker") where.category = { not: "SOCIAL" };
+    else if (context === "tracker") where.category = { notIn: ["SOCIAL", "PAYMENT", "SUBSCRIPTION", "AI_CREDITS"] };
     if (req.query.unread === "true") where.readAt = null;
     if (before && !Number.isNaN(before.getTime())) where.createdAt = { lt: before };
     const unreadWhere = { userId: req.userId, readAt: null };
     if (context === "preproom") unreadWhere.category = "SOCIAL";
-    else if (context === "tracker") unreadWhere.category = { not: "SOCIAL" };
+    else if (context === "tracker") unreadWhere.category = { notIn: ["SOCIAL", "PAYMENT", "SUBSCRIPTION", "AI_CREDITS"] };
     const [notifications, unreadCount] = await Promise.all([
       prisma.notification.findMany({ where, orderBy: { createdAt: "desc" }, take: limit }),
       prisma.notification.count({ where: unreadWhere })
