@@ -135,8 +135,7 @@
           ? '<a class="social-profile-media-item" href="' + esc(post.mediaUrl) + '" target="_blank" rel="noopener"><img src="' + esc(post.mediaUrl) + '" alt="Your post photo" loading="lazy"></a>'
           : '<article class="social-profile-media-item"><video class="social-profile-media-video" controls autoplay muted playsinline loop preload="metadata"><source src="' + esc(post.videoUrl) + '"></video></article>').join("")
         : '<div class="empty-state">Your photos and videos will appear here.</div>';
-      observeProfileVideos($("social-profile-posts"));
-      observeProfileVideos($("social-profile-media"));
+      observeProfileVideos(document);
       loadProfileFriends();
 
     } catch (e) { status(e.message); }
