@@ -65,7 +65,8 @@
     if (type === "FRIEND_ACCEPTED") return metadata.actorUsername
       ? "community.html#profile/" + encodeURIComponent(metadata.actorUsername)
       : "community.html#people";
-    if (type.includes("MESSAGE") || metadata.conversationId || metadata.groupId) return "community.html#messages";
+    if (metadata.conversationId) return "community.html#messages/" + encodeURIComponent(metadata.conversationId);
+    if (type.includes("MESSAGE") || metadata.groupId) return "community.html#messages";
     if (metadata.actorUsername) return "community.html#profile/" + encodeURIComponent(metadata.actorUsername);
     return "community.html#feed";
   }
