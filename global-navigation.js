@@ -176,7 +176,7 @@
     if (!token || notificationPollBusy) { if (!token) notificationDot.hidden = true; return; }
     notificationPollBusy = true;
     try {
-      const response = await fetch(notificationApiBase + "/api/notifications?limit=5", {
+      const response = await fetch(notificationApiBase + "/api/notifications?limit=5&unread=true&context=tracker", {
         headers: { Authorization: "Bearer " + token, "Cache-Control": "no-store" },
         cache: "no-store"
       });
