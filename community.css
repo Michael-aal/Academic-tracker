@@ -386,3 +386,75 @@ body.social-media-page .community-footer{display:none}
 .blocked-person-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 2px;border-top:1px solid var(--community-border)}
 .blocked-person-row span{display:grid;gap:3px;min-width:0}
 .blocked-person-row small{font-size:11px;color:var(--community-muted)}
+
+/* Responsive Preproom layout and natural-ratio post media. */
+body.social-media-page,
+body.social-media-page *{box-sizing:border-box}
+body.social-media-page .community-shell,
+body.social-media-page .community-layout,
+body.social-media-page .community-main-column,
+body.social-media-page .feed-list,
+body.social-media-page .post-card{min-width:0;max-width:100%}
+body.social-media-page .post-card{overflow:hidden}
+body.social-media-page .post-card .post-media,
+body.social-media-page .post-card .post-video,
+body.social-media-page .shared-post-card .post-media,
+body.social-media-page .shared-post-card .post-video,
+body.social-media-page .public-profile-post img,
+body.social-media-page .public-profile-post video{
+  display:block;
+  width:100%;
+  height:auto;
+  max-width:100%;
+  max-height:min(78vh,760px);
+  aspect-ratio:auto;
+  object-fit:contain;
+  border-radius:12px;
+  background:#080610;
+  margin:12px 0;
+}
+body.social-media-page .post-media-preview,
+body.social-media-page .post-review-media{width:100%;max-width:100%;min-width:0}
+body.social-media-page .post-preview-asset{
+  display:block;
+  width:100%;
+  height:auto;
+  max-width:100%;
+  max-height:min(72vh,680px);
+  aspect-ratio:auto;
+  object-fit:contain;
+}
+body.social-media-page .post-body,
+body.social-media-page .post-meta,
+body.social-media-page .post-author,
+body.social-media-page .post-actions{min-width:0;overflow-wrap:anywhere}
+body.social-media-page .post-actions{flex-wrap:wrap}
+body.social-media-page .post-actions button{min-width:0}
+body.social-media-page .composer-row{flex-wrap:wrap}
+body.social-media-page .composer-row>*{min-width:0;max-width:100%}
+body.social-media-page .composer-row input,
+body.social-media-page .composer-row select{flex:1 1 150px}
+body.social-media-page .social-profile-post-grid,
+body.social-media-page .social-profile-media{min-width:0}
+body.social-media-page .social-profile-post>img,
+body.social-media-page .social-profile-post>video,
+body.social-media-page .social-profile-media-item img,
+body.social-media-page .social-profile-media-item video{display:block;width:100%;height:100%;object-fit:cover}
+body.social-media-page .social-profile-media-item video{pointer-events:auto}
+@media(max-width:760px){
+  body.social-media-page .community-shell{width:calc(100% - 16px);margin-inline:auto}
+  body.social-media-page .post-card{padding:12px;border-radius:14px}
+  body.social-media-page .post-card .post-media,
+  body.social-media-page .post-card .post-video,
+  body.social-media-page .shared-post-card .post-media,
+  body.social-media-page .shared-post-card .post-video{max-height:72svh;border-radius:10px}
+  body.social-media-page .post-actions{gap:4px}
+  body.social-media-page .post-actions button{padding:8px 7px;font-size:11px}
+  body.social-media-page .feed-toolbar{align-items:flex-start;flex-wrap:wrap}
+  body.social-media-page .feed-toolbar-actions{flex-wrap:wrap}
+}
+@media(max-width:380px){
+  body.social-media-page .post-card .post-media,
+  body.social-media-page .post-card .post-video{max-height:68svh}
+  body.social-media-page .post-actions button{font-size:10px;padding-inline:5px}
+}
