@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0B0812">
+  <title>Challenges · Preproom</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="site-design-system.css">
+  <link rel="stylesheet" href="global-light-mode.css" data-global-light-mode>
+  <link rel="stylesheet" href="dark-mode-guard.css" data-dark-mode-guard>
+  <link rel="stylesheet" href="theme-page-overrides.css" data-page-theme-overrides>
+  <link rel="stylesheet" href="challenge.css">
+  <script src="global-theme.js" defer></script>
+</head>
+<body class="challenge-page">
+  <header class="challenge-topbar">
+    <a class="challenge-back" href="community.html" aria-label="Return to Preproom">← <span>Preproom</span></a>
+    <a class="challenge-brand" href="challenge.html">Preproom <span>Challenges</span></a>
+    <a class="challenge-academic-return" href="dashboard.html" id="challenge-academic-return">Academic Tracker</a>
+  </header>
+  <main class="challenge-shell">
+    <section id="challenge-intro" class="challenge-intro">
+      <p class="challenge-eyebrow">LEARN TOGETHER · COMPETE FAIRLY</p>
+      <h1>Challenges</h1>
+      <p>Build a shared question set, invite students and see results update from the same questions.</p>
+    </section>
+
+    <div class="challenge-entry-grid">
+      <section class="challenge-panel">
+        <div class="challenge-panel-heading"><div><h2>Create a challenge</h2><p>Choose a mode and prepare the question set.</p></div></div>
+        <form id="challenge-create-form" class="challenge-form">
+          <label for="challenge-title">Challenge name</label>
+          <input id="challenge-title" maxlength="120" value="Revision challenge" required>
+          <label for="challenge-mode">Challenge mode</label>
+          <select id="challenge-mode">
+            <option value="DUEL">1v1 Duel</option>
+            <option value="TEAM">Team Challenge</option>
+            <option value="FREE_FOR_ALL">Free-for-all tournament</option>
+          </select>
+          <p id="challenge-mode-help" class="challenge-help">Two students answer the same questions. The host may also compete.</p>
+          <div id="team-create-fields" hidden>
+            <label for="challenge-team">Join as a team member</label>
+            <select id="challenge-team"><option value="A">Team A</option><option value="B">Team B</option></select>
+          </div>
+          <label for="question-source">Question source</label>
+          <select id="question-source">
+            <option value="manual">Write questions manually</option>
+            <option value="notebook">Use my saved notebook notes</option>
+            <option value="ai">Generate questions with AI</option>
+          </select>
+          <div id="manual-question-source">
+            <div class="challenge-subheading"><strong>Question builder</strong><span id="manual-question-count">0 / 50</span></div>
+            <div id="manual-question-list" class="manual-question-list"></div>
+            <button id="add-manual-question" class="challenge-secondary" type="button">＋ Add question</button>
+          </div>
+          <div id="notebook-question-source" hidden>
+            <label for="challenge-note-select">Choose saved notes</label>
+            <select id="challenge-note-select"><option value="">Loading your notes…</option></select>
+            <p class="challenge-help">The selected note is used as the source for one shared question set.</p>
+            <label for="notebook-question-count">Number of questions</label>
+            <input id="notebook-question-count" type="number" min="1" max="50" value="10">
+            <button id="generate-from-notes" class="challenge-secondary" type="button">Generate questions from notes</button>
+          </div>
+          <div id="ai-question-source" hidden>
+            <label for="challenge-topic">Topic or study material</label>
+            <textarea id="challenge-topic" rows="4" maxlength="12000" placeholder="Enter a topic or paste study notes…"></textarea>
+            <div class="challenge-inline-fields">
+              <label>Question count<input id="ai-question-count" type="number" min="1" max="50" value="10"></label>
+              <label>Difficulty<select id="ai-question-difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></label>
+            </div>
+            <button id="generate-ai-questions" class="challenge-secondary" type="button">Generate question set</button>
+          </div>
+          <label for="challenge-timer">Time per question</label>
+          <select id="challenge-timer"><option value="0">No timer</option><option value="10">10 seconds</option><option value="15">15 seconds</option><option value="20">20 seconds</option><option value="30">30 seconds</option><option value="60">60 seconds</option></select>
+          <p id="challenge-create-status" class="challenge-status" role="status" aria-live="polite"></p>
+          <button class="challenge-primary" id="create-challenge" type="submit">Create challenge</button>
+        </form>
+      </section>
+
+      <section class="challenge-panel challenge-join-panel">
+        <div class="challenge-panel-heading"><div><h2>Join a challenge</h2><p>Enter the in-app invitation code from a student.</p></div></div>
+        <form id="challenge-join-form" class="challenge-form">
+          <label for="challenge-invite-code">Invitation code</label>
+          <input id="challenge-invite-code" maxlength="16" autocomplete="off" placeholder="10-character code" required>
+          <div id="join-team-fields"><label for="join-team">Team (only used for Team Challenges)</label><select id="join-team"><option value="A">Team A</option><option value="B">Team B</option></select></div>
+          <p id="challenge-join-status" class="challenge-status" role="status" aria-live="polite"></p>
+          <button class="challenge-primary" type="submit">Join challenge</button>
+        </form>
+        <div class="challenge-divider"></div>
+        <div class="challenge-panel-heading"><div><h2>My challenges</h2><p>Your rooms and recent results.</p></div><button id="refresh-challenges" class="challenge-icon-button" type="button" aria-label="Refresh challenges">↻</button></div>
+        <div id="my-challenges-list" class="my-challenges-list"><p class="challenge-muted">Loading your challenges…</p></div>
+      </section>
+    </div>
+
+    <section id="challenge-room" class="challenge-panel challenge-room" hidden>
+      <div class="challenge-room-top">
+        <div><p class="challenge-eyebrow">CHALLENGE ROOM</p><h2 id="room-title">Challenge</h2><p id="room-subtitle" class="challenge-muted"></p></div>
+        <button id="leave-room" class="challenge-secondary" type="button">Back to challenges</button>
+      </div>
+      <div id="room-invite" class="room-invite" hidden><span>Invitation code</span><strong id="room-invite-code"></strong><button id="copy-invite-code" type="button" class="challenge-secondary">Copy code</button></div>
+      <div class="challenge-room-grid">
+        <div class="challenge-room-main">
+          <section class="room-section"><div class="challenge-subheading"><strong>Competitors</strong><span id="room-participant-count">0</span></div><div id="room-participants" class="room-participants"></div><button id="start-challenge" class="challenge-primary" type="button" hidden>Start challenge</button><p id="room-status" class="challenge-status" role="status" aria-live="polite"></p></section>
+          <section id="room-question-section" class="room-section" hidden><div class="room-question-meta"><span id="question-progress"></span><strong id="question-timer"></strong></div><h3 id="room-question"></h3><div id="room-options" class="room-options"></div><p id="room-answer-feedback" class="challenge-status" role="status" aria-live="polite"></p></section>
+          <section id="room-review" class="room-section" hidden><div class="challenge-subheading"><strong>Answer review</strong><span>Shared question set</span></div><div id="room-review-list" class="room-review-list"></div></section>
+          <section class="room-section"><div class="challenge-subheading"><strong>Live rankings</strong><span id="ranking-status">Updates automatically</span></div><ol id="room-rankings" class="room-rankings"></ol></section>
+          <button id="finish-challenge" class="challenge-secondary" type="button" hidden>Finish challenge</button>
+        </div>
+        <aside id="team-chat-panel" class="team-chat-panel" hidden><div class="challenge-subheading"><strong>Team chat</strong><span id="team-chat-label"></span></div><div id="team-chat-messages" class="team-chat-messages"></div><form id="team-chat-form" class="team-chat-form"><input id="team-chat-input" maxlength="1000" placeholder="Message your teammates…" required><button type="submit" aria-label="Send team message">➤</button></form></aside>
+      </div>
+    </section>
+  </main>
+  <script src="challenge.js" defer></script>
+</body>
+</html>

@@ -7,7 +7,7 @@
   const initialFile = location.pathname.split("/").pop() || "dashboard.html";
   if (initialFile === "login.html" || initialFile === "register.html") return;
   // Social Media is a separate app surface with its own navigation shell.
-  if (document.body.classList.contains("social-media-page")) return;
+  if (document.body.classList.contains("social-media-page") || document.documentElement.classList.contains("preproom-notifications-context")) return;
   document.body.classList.add("at-has-global-navigation");
 
   const routes = [
@@ -20,8 +20,7 @@
     ["AI Learning","ai-learning.html","learn"],
     ["English Studio","english-studio.html","learn"],
     ["Level Up","level-up.html","more"],
-    ["Subscription","premium.html","more"],
-    ["Notifications","notifications.html","notifications"],
+    ["Notifications","notifications.html?source=tracker","notifications"],
     ["AI Tutor","ai-tutor.html","tutor"],
     ["AI Quiz","ai-quiz-setup.html","quiz"],
     ["Educational Videos","educational-videos.html","videos"],
@@ -142,7 +141,7 @@
   const moreToggle = bottom.querySelector("#at-nav-more-toggle");
   const notificationToggle = header.querySelector("#at-nav-notifications");
   if (!localStorage.getItem("academic-tracker-token")) notificationToggle.hidden = true;
-  notificationToggle.addEventListener("click", () => { window.location.href = "notifications.html"; });
+  notificationToggle.addEventListener("click", () => { window.location.href = "notifications.html?source=tracker"; });
   const installButton = menu.querySelector("#at-nav-install-app");
 
   // In-app notification badge + lightweight live polling. No browser/OS notifications are used.
@@ -167,7 +166,7 @@
     toast.hidden = false;
     toast.onclick = event => {
       if (event.target.closest("button")) { toast.hidden = true; return; }
-      window.location.href = "notifications.html?id=" + encodeURIComponent(item.id);
+      window.location.href = "notifications.html?source=tracker&id=" + encodeURIComponent(item.id);
     };
     clearTimeout(notificationToastTimer);
     notificationToastTimer = setTimeout(() => { toast.hidden = true; }, 9000);
@@ -177,7 +176,7 @@
     if (!token || notificationPollBusy) { if (!token) notificationDot.hidden = true; return; }
     notificationPollBusy = true;
     try {
-      const response = await fetch(notificationApiBase + "/api/notifications?limit=5", {
+      const response = await fetch(notificationApiBase + "/api/notifications?limit=5&unread=true&context=tracker", {
         headers: { Authorization: "Bearer " + token, "Cache-Control": "no-store" },
         cache: "no-store"
       });

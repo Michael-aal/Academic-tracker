@@ -7,7 +7,7 @@
   const $ = id => document.getElementById(id);
   const ACCOUNT_KEY = (() => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}").id || "account"; } catch { return "account"; } })();
   const ATTEMPT_KEY = "academic-tracker-active-quiz:" + ACCOUNT_KEY;
-  const state = { action: "tutor", creditBalance: null, creditCosts: { tutor: 2, quiz: 3, summarize: 2, "study-plan": 2, flashcards: 2 }, answer: "", conversation: [], conversationId: null, quiz: null, attemptId: null, index: 0, selected: {}, answered: {}, submitted: false, result: null };
+  const state = { action: "tutor", answer: "", conversation: [], conversationId: null, quiz: null, attemptId: null, index: 0, selected: {}, answered: {}, submitted: false, result: null };
   const taskCopy = {
     tutor: { title: "Talk to your AI tutor", description: "Ask questions, paste your class notes, and keep asking until it makes sense.", label: "What should we learn together?", placeholder: "Ask a question, paste your notes, or ask me to explain something more simply…", button: "Ask tutor", result: "Your tutoring conversation" },
     quiz: { title: "Build a revision quiz", description: "Create practice questions from a topic or your own notes.", label: "Paste your notes or describe the topic", placeholder: "Paste your notes here, or describe the topic you want to practise…", button: "Generate my quiz", result: "Your practice quiz" },
@@ -134,22 +134,6 @@
     if (text !== undefined) node.textContent = text;
     return node;
   }
-  const creditCostNotice = el("p", "ai-credit-cost-note");
-  const formFoot = document.querySelector(".form-foot");
-  if (formFoot) formFoot.insertAdjacentElement("afterend", creditCostNotice);
-  function renderCreditNotice() {
-    const cost = state.creditCosts[state.action] ?? 2;
-    const balance = Number.isFinite(state.creditBalance) ? state.creditBalance.toLocaleString() + " available" : "checking wallet";
-    creditCostNotice.textContent = "This request costs " + cost + " credits · " + balance + ". Failed requests are refunded.";
-  }
-  api("/api/premium/me").then(data => {
-    state.creditBalance = Number(data.credits?.balance || 0);
-    state.creditCosts = { ...state.creditCosts, ...(data.creditPolicy?.costs || {}) };
-    renderCreditNotice();
-  }).catch(() => {
-    creditCostNotice.textContent = "AI credits are checked securely before each request.";
-  });
-
   function setAction(action) {
     if (state.action !== action) state.conversation = [];
     state.action = action;
@@ -168,7 +152,6 @@
     $("char-count").textContent = "0 / 12,000 characters";
     $("result-panel").hidden = true;
     setNotice("");
-    renderCreditNotice();
   }
 
   function renderTutorConversation(host, videoQuery, subject) {
@@ -436,16 +419,25 @@
     event.preventDefault();
     const content = $("content").value.trim();
     const topic = ($("topic")?.value || "").trim();
+    const tutorHistory = state.action === "tutor" ? state.conversation.slice(-8).map(message => (message.role === "student" ? "Student" : "Tutor") + ":\n" + message.content).join("\n\n") : "";
+    const pendingTutorMessage = state.action === "tutor" ? { role: "student", content: content || topic } : null;
     if ((!content && !topic) || (state.action === "tutor" && state.conversation.length && !content)) { setNotice(state.action === "tutor" && state.conversation.length ? "Ask a follow-up question or paste the next part of your notes first." : "Enter a question, topic, or notes first.", true); return; }
     const button = $("submit-learning");
     button.disabled = true;
     $("submit-label").textContent = state.action === "quiz" ? "Generating your quiz…" : "Working on your request…";
     setNotice("Preparing your study response. This may take a few seconds.");
-    $("result-panel").hidden = true;
+    if (pendingTutorMessage) {
+      state.conversation.push(pendingTutorMessage);
+      renderTutorConversation($("result-content"), topic || content, ($("subject")?.value || "").trim());
+      $("result-title").textContent = "Your tutoring conversation";
+      $("result-panel").hidden = false;
+      $("result-content").lastElementChild?.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+    } else {
+      $("result-panel").hidden = true;
+    }
     try {
       if (state.action === "quiz") localStorage.removeItem(ATTEMPT_KEY);
-      const history = state.action === "tutor" ? state.conversation.slice(-8).map(message => (message.role === "student" ? "Student" : "Tutor") + ":\n" + message.content).join("\n\n") : "";
-      const requestContent = history ? (history + "\n\nStudent's latest message:\n" + content).slice(-12000) : content;
+      const requestContent = tutorHistory ? (tutorHistory + "\n\nStudent's latest message:\n" + content).slice(-12000) : content;
       const data = await api("/api/ai", {
         method: "POST",
         body: JSON.stringify({
@@ -459,8 +451,6 @@
           timePerQuestionSeconds: Number($("quiz-time-limit")?.value || 0)
         })
       });
-      state.creditBalance = Number.isFinite(data.creditUsage?.balance) ? data.creditUsage.balance : state.creditBalance;
-      renderCreditNotice();
       if (state.action === "quiz") {
         const expectedCount = Number($("question-count")?.value || 5);
         const validQuiz = data.quiz && typeof data.quiz.title === "string" && Array.isArray(data.quiz.questions) && data.quiz.questions.length === expectedCount && data.quiz.questions.every(question => question && typeof question.id === "string" && typeof question.question === "string" && Array.isArray(question.options) && question.options.length === 4 && question.options.every(option => option && typeof option.id === "string" && typeof option.text === "string"));
@@ -474,7 +464,6 @@
       } else {
         state.answer = data.answer || "No response was returned.";
         if (state.action === "tutor") {
-          state.conversation.push({ role: "student", content: content || topic });
           state.conversation.push({ role: "tutor", content: state.answer });
           state.conversationId = state.conversationId || (crypto.randomUUID ? crypto.randomUUID() : "tutor-" + Date.now());
           api("/api/user-data/tutor-conversations/" + encodeURIComponent(state.conversationId), {
@@ -484,7 +473,6 @@
           renderTutorConversation($("result-content"), topic || content, ($("subject")?.value || "").trim());
           $("result-title").textContent = "Your tutoring conversation";
           $("content").value = "";
-          $("content").placeholder = "Ask a follow-up question or paste another part of your notes…";
           $("char-count").textContent = "0 / 12,000 characters";
         } else {
           renderSafeMarkdown($("result-content"), state.answer);
@@ -494,6 +482,11 @@
       setNotice("Response ready. Review it alongside your school materials.");
       $("result-panel").scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
+      if (pendingTutorMessage && state.conversation[state.conversation.length - 1] === pendingTutorMessage) {
+        state.conversation.pop();
+        renderTutorConversation($("result-content"), topic || content, ($("subject")?.value || "").trim());
+        $("result-panel").hidden = state.conversation.length === 0;
+      }
       setNotice(error.message || "The request could not be completed.", true);
     } finally {
       button.disabled = false;

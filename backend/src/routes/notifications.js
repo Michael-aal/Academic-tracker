@@ -7,7 +7,7 @@ const { prisma } = require("../prisma");
 
 const router = express.Router();
 const announcementLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 8, standardHeaders: "draft-7", legacyHeaders: false, message: { error: "Too many announcements. Please wait before publishing another." } });
-const CATEGORIES = new Set(["ANNOUNCEMENT", "UPDATE", "MAINTENANCE", "PAYMENT", "SUBSCRIPTION", "AI_CREDITS"]);
+const CATEGORIES = new Set(["ANNOUNCEMENT", "UPDATE", "MAINTENANCE"]);
 
 router.use(requireAuth);
 
@@ -17,13 +17,26 @@ router.get("/", async (req, res, next) => {
     const limit = Number.isInteger(requestedLimit) ? Math.min(100, Math.max(1, requestedLimit)) : 40;
     const before = typeof req.query.before === "string" ? new Date(req.query.before) : null;
     const where = { userId: req.userId };
+    const context = typeof req.query.context === "string" ? req.query.context : "";
+    if (context === "preproom") where.category = "SOCIAL";
+    else if (context === "tracker") where.category = { notIn: ["SOCIAL", "PAYMENT", "SUBSCRIPTION", "AI_CREDITS"] };
     if (req.query.unread === "true") where.readAt = null;
     if (before && !Number.isNaN(before.getTime())) where.createdAt = { lt: before };
+    const unreadWhere = { userId: req.userId, readAt: null };
+    if (context === "preproom") unreadWhere.category = "SOCIAL";
+    else if (context === "tracker") unreadWhere.category = { notIn: ["SOCIAL", "PAYMENT", "SUBSCRIPTION", "AI_CREDITS"] };
     const [notifications, unreadCount] = await Promise.all([
       prisma.notification.findMany({ where, orderBy: { createdAt: "desc" }, take: limit }),
-      prisma.notification.count({ where: { userId: req.userId, readAt: null } })
+      prisma.notification.count({ where: unreadWhere })
     ]);
-    res.json({ notifications, unreadCount });
+    const safeNotifications = notifications.map(notification => {
+      const { userId, createdById, ...safeNotification } = notification;
+      const metadata = safeNotification.metadata && typeof safeNotification.metadata === "object" ? { ...safeNotification.metadata } : {};
+      delete metadata.userId;
+      delete metadata.requesterId;
+      return { ...safeNotification, metadata };
+    });
+    res.json({ notifications: safeNotifications, unreadCount });
   } catch (error) { next(error); }
 });
 
@@ -44,8 +57,12 @@ router.patch("/:id/read", async (req, res, next) => {
 
 router.post("/read-all", async (req, res, next) => {
   try {
+    const where = { userId: req.userId, readAt: null };
+    const context = typeof req.body?.context === "string" ? req.body.context : "";
+    if (context === "preproom") where.category = "SOCIAL";
+    else if (context === "tracker") where.category = { notIn: ["SOCIAL", "PAYMENT", "SUBSCRIPTION", "AI_CREDITS"] };
     const result = await prisma.notification.updateMany({
-      where: { userId: req.userId, readAt: null },
+      where,
       data: { readAt: new Date() }
     });
     res.json({ ok: true, markedRead: result.count });
@@ -63,7 +80,7 @@ router.post("/admin/send", announcementLimiter, requireAdmin, async (req, res, n
 
     if (title.length < 3 || title.length > 120) return res.status(400).json({ error: "Title must be between 3 and 120 characters." });
     if (body.length < 3 || body.length > 4000) return res.status(400).json({ error: "Message must be between 3 and 4,000 characters." });
-    if (!CATEGORIES.has(category) || ["PAYMENT", "SUBSCRIPTION", "AI_CREDITS"].includes(category)) {
+    if (!CATEGORIES.has(category)) {
       return res.status(400).json({ error: "Choose an announcement, update, or maintenance category." });
     }
     if (audience === "SELECTED" && !userIds.length) return res.status(400).json({ error: "Select at least one recipient." });

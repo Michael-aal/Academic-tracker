@@ -17,9 +17,10 @@ const ALLOWED_KINDS = new Set([
   "note-summaries",
   "study-notes",
   "focus-sessions",
-  "preferences"
+  "preferences",
+  "dictionary-words"
 ]);
-const MAX_RECORDS = { "secondary-tracker": 1, "video-library": 300, "video-history": 300, "study-sessions": 500, "memory-cards": 500, "memory-stats": 1, "tutor-conversations": 200, "note-summaries": 200, "study-notes": 200, "focus-sessions": 500, "preferences": 1 };
+const MAX_RECORDS = { "secondary-tracker": 1, "video-library": 300, "video-history": 300, "study-sessions": 500, "memory-cards": 500, "memory-stats": 1, "tutor-conversations": 200, "note-summaries": 200, "study-notes": 200, "focus-sessions": 500, "preferences": 1, "dictionary-words": 300 };
 const limiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 120,
@@ -150,6 +151,29 @@ function validateData(kind, data, recordId) {
   if (kind === "preferences") {
     if (recordId !== "main" || (data.theme !== undefined && !["light", "dark"].includes(data.theme))) return "The saved preferences are invalid.";
   }
+  if (kind === "dictionary-words") {
+    const word = typeof data.word === "string" ? data.word.trim().toLowerCase() : "";
+    const validId = /^[a-z][a-z'-]{0,79}$/.test(recordId);
+    if (!validId || word !== recordId || !Array.isArray(data.phonetics) || data.phonetics.length > 6 ||
+        !Array.isArray(data.meanings) || data.meanings.length < 1 || data.meanings.length > 5 ||
+        !validString(data.collection, 60) || !data.collection.trim()) return "The saved dictionary entry is invalid.";
+    for (const phonetic of data.phonetics) {
+      if (!isObject(phonetic) || !validString(phonetic.text, 80, true) ||
+          !validString(phonetic.audio, 500, true) ||
+          (phonetic.audio && !/^https:\/\//.test(phonetic.audio))) return "A dictionary pronunciation entry is invalid.";
+    }
+    for (const meaning of data.meanings) {
+      if (!isObject(meaning) || !validString(meaning.partOfSpeech, 40) ||
+          !Array.isArray(meaning.definitions) || meaning.definitions.length < 1 || meaning.definitions.length > 4) return "A dictionary meaning is invalid.";
+      for (const definition of meaning.definitions) {
+        if (!isObject(definition) || !validString(definition.definition, 1200) || !definition.definition.trim() ||
+            !validString(definition.example, 600, true) ||
+            !Array.isArray(definition.synonyms) || definition.synonyms.length > 6 ||
+            !Array.isArray(definition.antonyms) || definition.antonyms.length > 6) return "A dictionary definition is invalid.";
+      }
+    }
+  }
+
   return null;
 }
 

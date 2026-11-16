@@ -57,11 +57,21 @@
         </section>
         <section class="learning-panel tutor-composer-panel">
           <div class="panel-heading tutor-composer-heading"><div><h2 id="task-title">Ask your tutor</h2><p id="task-description">Keep the conversation going until it makes sense.</p></div></div>
-          <form id="learning-form" class="tutor-composer">
-            <label class="full-label" for="content" id="content-label">Message your tutor</label>
-            <textarea id="content" rows="3" maxlength="12000" placeholder="Ask anything, paste your notes, or tell me where you're stuck…"></textarea>
-            <div class="form-foot"><span id="char-count">0 / 12,000 characters</span></div>
-            <div class="tutor-composer-bottom"><p>AI can make mistakes. Check important facts with your textbook or teacher.</p><button id="submit-learning" type="submit" aria-label="Send message to AI Tutor"><span aria-hidden="true">↗</span><span id="submit-label">Send message</span></button></div>
+          <form id="learning-form" class="tutor-composer" aria-label="AI Tutor message composer">
+            <label class="sr-only" for="content" id="content-label">Message your AI Tutor</label>
+            <input id="tutor-attachment" class="sr-only" type="file" accept=".txt,.md,.csv,text/plain,text/markdown,text/csv">
+            <button id="tutor-attach" class="tutor-icon-button" type="button" aria-label="Attach a text or notes file" title="Attach notes">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12.5 14.8 5.7a3.2 3.2 0 0 1 4.5 4.5l-8.1 8.1a5 5 0 0 1-7.1-7.1l8.2-8.1"/></svg>
+            </button>
+            <textarea id="content" rows="1" maxlength="12000" aria-label="Message your AI Tutor" autocomplete="off"></textarea>
+            <button id="tutor-voice" class="tutor-icon-button" type="button" aria-label="Dictate a message" title="Voice input">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.5M8.5 21.5h7"/></svg>
+            </button>
+            <button id="submit-learning" class="tutor-send-button" type="submit" aria-label="Send message">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 4 16 8-16 8 3-8-3-8Z"/><path d="M7 12h13"/></svg>
+              <span id="submit-label" class="sr-only">Send message</span>
+            </button>
+            <span id="char-count" class="sr-only">0 / 12,000 characters</span>
           </form>
           <div id="notice" class="notice" role="status"></div>
         </section>
@@ -70,6 +80,7 @@
   </div>
   <script src="ai-learning.js"></script>
   <script src="ai-tutor-ui.js"></script>
+  <script src="ai-tutor-response-scroll.js"></script>
   <script src="global-navigation.js"></script>
 </body>
 </html>

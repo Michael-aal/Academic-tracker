@@ -5,15 +5,14 @@ const { requireAuth } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/admin");
 const { prisma } = require("../prisma");
 const { validateQuiz, publicQuiz, markQuiz } = require("../quiz-schema");
-const { aiCreditGate } = require("../ai-credit-gate");
 const { addXp } = require("./learning");
 const { requestChatCompletion, configuredProviders, hasConfiguredProvider, providerOrder } = require("../ai-provider");
 
 const router = express.Router();
 router.use(requireAuth);
 
-// Every generation request must reserve unexpired wallet credits in aiCreditGate.
-// An independent IP ceiling also limits automated abuse across multiple accounts.
+// Authenticated users have direct AI access; rate limits protect provider spend.
+// The IP ceiling also limits automated abuse across multiple accounts.
 const aiIpLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 30,
@@ -22,6 +21,16 @@ const aiIpLimiter = rateLimit({
   message: { error: "Too many AI requests from this network. Please wait before trying again." }
 });
 router.use(aiIpLimiter);
+
+const aiUserLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  keyGenerator: req => req.userId,
+  message: { error: "You have made several AI requests. Please wait a minute and try again." }
+});
+router.use(aiUserLimiter);
 
 const MAX_INPUT_CHARS = 12000;
 function recordAiUsage(req, usage = {}, provider = "unknown", model = "unknown", providerStatus = 0, providerOk = false) {
@@ -33,16 +42,15 @@ function recordAiUsage(req, usage = {}, provider = "unknown", model = "unknown",
   const reasoning = Number(usage?.completion_tokens_details?.reasoning_tokens ?? usage?.output_tokens_details?.reasoning_tokens ?? 0);
   const valid = [input, output, cached, reasoning].every(value => Number.isSafeInteger(value) && value >= 0);
   const usageKnown = hasInput && hasOutput && valid;
-  const eventCredits = 0; // Final fixed action cost is assigned once by aiUsageAudit.
   req.aiUsageEvents = req.aiUsageEvents || [];
   req.aiUsageEvents.push({
     provider, model, inputTokens: valid ? input : 0, outputTokens: valid ? output : 0,
     cachedInputTokens: valid ? cached : 0, reasoningTokens: valid ? reasoning : 0,
-    creditsCharged: eventCredits, usageKnown,
+    usageKnown,
     status: providerOk ? "PROVIDER_OK" : "PROVIDER_FAILED",
     providerStatus: Number.isInteger(providerStatus) ? providerStatus : 0
   });
-  // Credit charges are fixed per AI action; provider token usage remains audit-only.
+  // Provider token usage is recorded for internal cost monitoring only.
 }
 
 function aiUsageAudit(req, res, next) {
@@ -53,11 +61,8 @@ function aiUsageAudit(req, res, next) {
     finalized = true;
     if (!Array.isArray(req.aiUsageEvents) || req.aiUsageEvents.length === 0) return sendJson(payload);
     if (res.statusCode >= 400) {
-      for (const event of req.aiUsageEvents) event.creditsCharged = 0;
     } else {
-      // Charge the fixed action cost once per request, even when provider fallback occurs.
-      for (const event of req.aiUsageEvents) event.creditsCharged = 0;
-      req.aiUsageEvents[req.aiUsageEvents.length - 1].creditsCharged = req.aiCreditReservation?.amount || 0;
+      // Usage records are operational telemetry, never a user balance or charge.
     }
     persistAiUsage(req)
       .then(() => sendJson(payload))
@@ -82,13 +87,13 @@ async function persistAiUsage(req) {
       model: String(event.model || "unknown").slice(0, 120),
       inputTokens: event.inputTokens, outputTokens: event.outputTokens,
       cachedInputTokens: event.cachedInputTokens, reasoningTokens: event.reasoningTokens,
-      creditsCharged: event.creditsCharged, usageKnown: event.usageKnown,
+      usageKnown: event.usageKnown,
       status: event.status, providerStatus: event.providerStatus
     }))
   });
 }
 
-const ACTIONS = new Set(["tutor", "quiz", "summarize", "study-plan", "flashcards", "english", "story", "word-spotlight"]);
+const ACTIONS = new Set(["tutor", "quiz", "summarize", "study-plan", "flashcards", "english", "english-practice", "story", "word-spotlight"]);
 // Quiz attempts do not call the AI provider, but answer/submit endpoints still
 // perform database reads and writes. Keep those operations bounded per account.
 const quizAttemptLimiter = rateLimit({
@@ -119,8 +124,9 @@ function buildPrompt({ action, subject, topic, content, level, questionCount, ca
     summarize: "Summarize the supplied study material for revision. Start with a short overview, then organize the main ideas under clear headings with important facts, definitions, steps, and formulas where relevant. Keep the summary focused on the supplied topic and subject, preserve the meaning, and do not add unsupported claims. Do not generate quiz questions, tests, flashcards, or self-test questions. If no notes were supplied, ask the student to paste notes.",
     flashcards: "Return only a JSON object with a cards array. Generate exactly " + cardCount + " accurate study flashcards for the specified subject and topic, using the supplied notes as the primary source when present. Each card must contain a concise question field and an accurate answer field. Make cards useful for active recall: definitions, processes, causes, formulas, distinctions, and key facts. Do not write multiple-choice options, quiz scores, or a test. Do not invent details absent from the notes when notes are provided. Keep each question under 700 characters and each answer under 1800 characters.",
     "word-spotlight": "Return ONLY one valid JSON object with keys word, partOfSpeech, pronunciation, definition, example, and usageTip. Generate exactly one fresh, useful English vocabulary word appropriate for the signed-in student education track. Prefer an interesting, practical word rather than an obscure word. Do not choose any word listed in the excluded words supplied by the student. Include a clear part of speech, readable IPA pronunciation (prefer standard British English; do not invent uncertain IPA), a concise accurate definition, one natural original example sentence, and a short usage tip or common distinction. Keep explanations age-appropriate and easy to understand. Do not add Markdown or text outside the JSON object.",
+    "english-practice": "Return only valid JSON with a top-level questions array containing exactly " + questionCount + " questions. Generate fresh, original English-language practice for the requested category and student level. For reading comprehension, every question must include a short original passage (80–180 words) and test inference, main idea, vocabulary in context, tone or evidence; do not ask questions answerable without reading. For grammar, parts of speech, communication, spelling and pronunciation, create accurate category-specific questions. Each question must have prompt, passage (empty string when not needed), options (exactly four distinct short strings), correctIndex (integer 0–3), and explanation (clear reason). Vary question styles and difficulty, avoid duplicate or ambiguous answers, and adapt to the registered education track. Never invent phonetic rules; use standard English. Do not include answers in the prompt or options. Return no Markdown.",
     english: "Act as a patient English-language tutor. Adapt to the student education track. Explain vocabulary, spelling, pronunciation, parts of speech, grammar, sentence structure, punctuation, comprehension, writing and figures of speech. Define terms plainly, provide original examples, contrast common mistakes and include a short practice suggestion when useful. For pronunciation, provide syllable breakdown and IPA only when confident; distinguish British and American variants where relevant. Do not claim audio playback occurred. Keep explanations accurate and encouraging.",
-    story: "Create one original, engaging English-learning short story suitable for a secondary-school learner. Return ONLY valid JSON with keys title, genre, readingLevel, estimatedMinutes, story, vocabulary, and questions. story must be 3–7 short paragraphs of clear, natural English. vocabulary must contain 4–6 objects with word, partOfSpeech, meaning, and example. questions must contain exactly 3 comprehension questions, each with question and answer. Make the plot coherent, age-appropriate, culturally inclusive, and genuinely original. Do not copy or imitate a known story. Use the requested topic and genre. Avoid graphic content, romantic themes, and unsafe challenges.",
+    story: "Create one original, engaging English-learning short story suitable for the signed-in student’s registered education track and current academic level (secondary school, university, polytechnic, college of education or other institution). Return ONLY valid JSON with keys title, genre, readingLevel, estimatedMinutes, story, vocabulary, and questions. story must be 3–7 short paragraphs of clear, natural English. vocabulary must contain 4–6 objects with word, partOfSpeech, meaning, and example. questions must contain exactly 3 comprehension questions, each with question and answer. Make the plot coherent, age-appropriate, culturally inclusive, and genuinely original. Do not copy or imitate a known story. Use the requested topic and genre. Avoid graphic content, romantic themes, and unsafe challenges.",
     "study-plan": "Create a realistic, encouraging 7-day study plan for the supplied subject/topic, considering the student's programme, registered courses and target grades when relevant. Use short sessions, active recall, practice questions and review days. Include a clear daily task and a simple way to check understanding. Do not assume the student's available hours; suggest flexible 20–30 minute blocks."
   };
 
@@ -147,7 +153,7 @@ router.get("/usage", requireAdmin, async (req, res, next) => {
       select: {
         id: true, requestId: true, action: true, provider: true, model: true,
         inputTokens: true, outputTokens: true, cachedInputTokens: true, reasoningTokens: true,
-        creditsCharged: true, usageKnown: true, status: true, providerStatus: true, createdAt: true,
+        usageKnown: true, status: true, providerStatus: true, createdAt: true,
         user: { select: { id: true, name: true, email: true } }
       }
     });
@@ -159,7 +165,7 @@ router.get("/usage/me", async (req, res, next) => {
   try {
     const records = await prisma.aiUsageRecord.findMany({
       where: { userId: req.userId }, orderBy: { createdAt: "desc" }, take: 100,
-      select: { requestId: true, action: true, provider: true, model: true, inputTokens: true, outputTokens: true, cachedInputTokens: true, reasoningTokens: true, creditsCharged: true, usageKnown: true, status: true, createdAt: true }
+      select: { requestId: true, action: true, provider: true, model: true, inputTokens: true, outputTokens: true, cachedInputTokens: true, reasoningTokens: true, usageKnown: true, status: true, createdAt: true }
     });
     res.json({ records });
   } catch (error) { next(error); }
@@ -249,7 +255,7 @@ function validateAiRequest(req, res, next) {
   const timeLimit = body.timePerQuestionSeconds === undefined ? 0 : body.timePerQuestionSeconds;
 
   if (!ACTIONS.has(action)) return res.status(400).json({ error: "Choose a supported AI learning task." });
-  if (action === "quiz" && (!Number.isInteger(questionCount) || questionCount < 1 || questionCount > 10)) return res.status(400).json({ error: "Choose between 1 and 10 quiz questions." });
+  if (["quiz", "english-practice"].includes(action) && (!Number.isInteger(questionCount) || questionCount < 1 || questionCount > 10)) return res.status(400).json({ error: "Choose between 1 and 10 quiz questions." });
   if (action === "flashcards" && (!Number.isInteger(cardCount) || cardCount < 1 || cardCount > 20)) return res.status(400).json({ error: "Choose between 1 and 20 memory cards." });
   if (action === "quiz" && !["easy", "medium", "hard"].includes(difficulty)) return res.status(400).json({ error: "Choose easy, medium, or hard difficulty." });
   if (action === "quiz" && (!Number.isInteger(timeLimit) || ![0, 10, 15, 20, 30, 60].includes(timeLimit))) return res.status(400).json({ error: "Choose a supported time limit per question." });
@@ -259,7 +265,7 @@ function validateAiRequest(req, res, next) {
   return next();
 }
 
-router.post("/", validateAiRequest, aiCreditGate, aiUsageAudit, async (req, res) => {
+router.post("/", validateAiRequest, aiUsageAudit, async (req, res) => {
   const action = typeof req.body?.action === "string" ? req.body.action : "";
   const subject = typeof req.body?.subject === "string" ? req.body.subject.trim().slice(0, 100) : "";
   const topic = typeof req.body?.topic === "string" ? req.body.topic.trim().slice(0, 160) : "";
@@ -287,7 +293,7 @@ router.post("/", validateAiRequest, aiCreditGate, aiUsageAudit, async (req, res)
   let provider = null;
   const controller = new AbortController();
   // Ten-question quizzes need substantially more generation time than short tutor replies.
-  const requestTimeoutMs = action === "quiz" ? 90000 : action === "story" ? 70000 : 45000;
+  const requestTimeoutMs = ["quiz", "english-practice"].includes(action) ? 90000 : action === "story" ? 70000 : 45000;
   const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
 
   try {
@@ -297,9 +303,9 @@ router.post("/", validateAiRequest, aiCreditGate, aiUsageAudit, async (req, res)
     const studentProfile = { ...user, courses };
     const completion = await requestChatCompletion({
       messages: [{ role: "user", content: buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) }],
-      temperature: action === "quiz" ? 0.2 : 0.4,
-      ...(["quiz", "word-spotlight"].includes(action) ? { response_format: { type: "json_object" } } : {}),
-      max_tokens: action === "quiz" ? Math.min(10000, 1800 + questionCount * 820) : action === "flashcards" ? 5000 : action === "story" ? 3200 : action === "word-spotlight" ? 650 : 1800
+      temperature: ["quiz", "english-practice"].includes(action) ? 0.2 : 0.4,
+      ...(["quiz", "word-spotlight", "english-practice"].includes(action) ? { response_format: { type: "json_object" } } : {}),
+      max_tokens: ["quiz", "english-practice"].includes(action) ? Math.min(10000, 1800 + questionCount * 500) : action === "flashcards" ? 5000 : action === "story" ? 3200 : action === "word-spotlight" ? 650 : 1800
     }, { signal: controller.signal, onUsage: (usage, providerId, usedModel, providerStatus, providerOk) => recordAiUsage(req, usage, providerId, usedModel, providerStatus, providerOk) });
     const data = completion.data;
     provider = completion.provider;
@@ -371,7 +377,34 @@ router.post("/", validateAiRequest, aiCreditGate, aiUsageAudit, async (req, res)
         });
       } catch (validationError) {
         console.error("AI word spotlight validation failed:", validationError.message);
-        return res.status(502).json({ error: "The AI returned an incomplete word spotlight. No credits were charged; please try again." });
+        return res.status(502).json({ error: "The AI returned an incomplete word spotlight. No content was saved; please try again." });
+      }
+    }
+    if (action === "english-practice") {
+      try {
+        const cleaned = answer.trim().replace(/^\x60{3}(?:json)?\s*/i, "").replace(/\s*\x60{3}$/i, "").trim();
+        let parsed;
+        try { parsed = JSON.parse(cleaned); }
+        catch (parseError) {
+          const firstBrace = cleaned.indexOf("{"), lastBrace = cleaned.lastIndexOf("}");
+          if (firstBrace < 0 || lastBrace <= firstBrace) throw parseError;
+          parsed = JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+        }
+        if (data?.choices?.[0]?.finish_reason === "length" || !Array.isArray(parsed.questions) || parsed.questions.length !== questionCount) throw new Error("The AI returned an incomplete practice set.");
+        const questions = parsed.questions.map((item, index) => {
+          const prompt = typeof item?.prompt === "string" ? item.prompt.trim() : "";
+          const passage = typeof item?.passage === "string" ? item.passage.trim() : "";
+          const options = Array.isArray(item?.options) ? item.options.map(value => String(value).trim()) : [];
+          const correctIndex = item?.correctIndex;
+          const explanation = typeof item?.explanation === "string" ? item.explanation.trim() : "";
+          if (prompt.length < 8 || prompt.length > 500 || passage.length > 1800 || options.length !== 4 || options.some(value => !value || value.length > 180) || new Set(options.map(value => value.toLowerCase())).size !== 4 || !Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex > 3 || explanation.length < 8 || explanation.length > 500) throw new Error("Question " + (index + 1) + " did not pass validation.");
+          if (/comprehension|reading/i.test(topic) && passage.length < 80) throw new Error("A comprehension question is missing its reading passage.");
+          return { id: "ai-english-" + randomUUID(), category: topic.toLowerCase().replace(/[^a-z-]/g, ""), level, prompt, passage, options, answerIndex: correctIndex, explanation, aiGenerated: true };
+        });
+        return res.json({ questions, action, model, provider });
+      } catch (validationError) {
+        console.error("AI English practice validation failed:", validationError.message);
+        return res.status(502).json({ error: "The AI could not produce a complete, accurate practice set. Nothing was saved; please try again." });
       }
     }
     if (action === "story") {
