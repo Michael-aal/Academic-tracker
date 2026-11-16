@@ -133,11 +133,17 @@
         : "A separate Mastermind hosts the tournament. Two to six students compete individually.";
   });
   $("question-source").addEventListener("change", () => {
+    state.questions = [];
     const source = $("question-source").value;
     show("manual-question-source", source === "manual");
     show("notebook-question-source", source === "notebook");
     show("ai-question-source", source === "ai");
     if (source === "notebook") loadNotes();
+  });
+  ["challenge-topic", "ai-question-count", "ai-question-difficulty", "challenge-note-select", "notebook-question-count"].forEach(id => {
+    const field = $(id);
+    field?.addEventListener("input", () => { state.questions = []; });
+    field?.addEventListener("change", () => { state.questions = []; });
   });
   $("generate-ai-questions").addEventListener("click", async () => {
     const button = $("generate-ai-questions"); button.disabled = true;
