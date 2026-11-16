@@ -591,32 +591,32 @@ router.get("/people", async (req, res, next) => {
     };
 
     if (q) {
-      const exactUsernameSearch = q.startsWith("@");
-      const usernameQuery = slug(q.replace(/^@/, ""));
-      const usernameProfiles = usernameQuery.length >= 2
-        ? await prisma.communityProfile.findMany({
-            where: {
-              visibility: "PUBLIC", status: "ACTIVE", usernameSet: true,
-              username: exactUsernameSearch ? usernameQuery : { contains: usernameQuery }
-            },
-            select: { userId: true },
-            take: 500
-          })
-        : [];
-      const usernameIds = usernameProfiles.map(profile => profile.userId);
-      const matchingUsers = exactUsernameSearch || q.startsWith("@") ? [] : await prisma.user.findMany({
-        where: {
-          id: { notIn: excludedIds },
-          OR: [
-            { name: { contains: q, mode: "insensitive" } },
-            { institutionName: { contains: q, mode: "insensitive" } },
-            { programme: { contains: q, mode: "insensitive" } }
-          ]
-        },
-        select: { id: true },
-        take: 500
-      });
-      const matchingIds = [...new Set([...usernameIds, ...matchingUsers.map(user => user.id)])];
+      // People search is identity-based: a full display name must match exactly.
+      // Use @username for an exact username lookup; do not mix institution or
+      // programme substring matches into person-name results.
+      const usernameSearch = q.startsWith("@");
+      const normalizedQuery = usernameSearch ? slug(q.slice(1)) : q.trim();
+      const [usernameProfiles, matchingUsers] = await Promise.all([
+        normalizedQuery.length >= 2
+          ? prisma.communityProfile.findMany({
+              where: {
+                visibility: "PUBLIC", status: "ACTIVE", usernameSet: true,
+                username: usernameSearch ? normalizedQuery : "__no_username_match__"
+              },
+              select: { userId: true },
+              take: 500
+            })
+          : Promise.resolve([]),
+        usernameSearch ? Promise.resolve([]) : prisma.user.findMany({
+          where: {
+            id: { notIn: excludedIds },
+            name: { equals: normalizedQuery, mode: "insensitive" }
+          },
+          select: { id: true },
+          take: 500
+        })
+      ]);
+      const matchingIds = [...new Set([...usernameProfiles.map(profile => profile.userId), ...matchingUsers.map(user => user.id)])];
       profileWhere.userId = { in: matchingIds, notIn: excludedIds };
     }
 
