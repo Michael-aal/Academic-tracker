@@ -17,6 +17,7 @@ const accountRoutes = require("./routes/account");
 const notificationRoutes = require("./routes/notifications");
 const learningRoutes = require("./routes/learning").router;
 const communityRoutes = require("./routes/community");
+const challengeRoutes = require("./routes/challenges");
 
 const app = express();
 // The API is hosted behind Render's single reverse-proxy hop. Trust only that
@@ -97,6 +98,7 @@ app.use("/api/account", accountRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/learning", learningRoutes);
 app.use("/api/community", communityRoutes);
+app.use("/api/challenges", challengeRoutes);
 
 app.use((_req, res) => res.status(404).json({ error: "Route not found." }));
 
