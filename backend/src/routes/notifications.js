@@ -23,7 +23,14 @@ router.get("/", async (req, res, next) => {
       prisma.notification.findMany({ where, orderBy: { createdAt: "desc" }, take: limit }),
       prisma.notification.count({ where: { userId: req.userId, readAt: null } })
     ]);
-    res.json({ notifications, unreadCount });
+    const safeNotifications = notifications.map(notification => {
+      const { userId, createdById, ...safeNotification } = notification;
+      const metadata = safeNotification.metadata && typeof safeNotification.metadata === "object" ? { ...safeNotification.metadata } : {};
+      delete metadata.userId;
+      delete metadata.requesterId;
+      return { ...safeNotification, metadata };
+    });
+    res.json({ notifications: safeNotifications, unreadCount });
   } catch (error) { next(error); }
 });
 
