@@ -51,3 +51,5 @@ html[data-theme="dark"] .notifications-page{--notice-bg:#100b1b;--notice-card:#1
 .notification-tracker-context .notification-shell{padding-top:30px}
 .notification-tracker-context .preproom-notification-filters{display:none}
 @media(max-width:620px){.notification-context-links{align-items:flex-start;flex-wrap:wrap}.notification-heading-actions{align-self:stretch;justify-content:flex-end}.notification-item-main{gap:10px}.notification-item{grid-template-columns:minmax(0,1fr) auto}}
+
+.notification-context-links [hidden],#notification-admin[hidden],.preproom-page-nav[hidden],.preproom-notification-filters[hidden]{display:none!important}
