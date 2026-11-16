@@ -7,6 +7,7 @@
 
   const query = new URLSearchParams(location.search);
   const context = query.get("source") === "preproom" ? "preproom" : "tracker";
+  document.body.classList.toggle("social-media-page", context === "preproom");
   document.body.classList.toggle("notification-preproom-context", context === "preproom");
   document.body.classList.toggle("notification-tracker-context", context === "tracker");
   const list = $("notification-list");
