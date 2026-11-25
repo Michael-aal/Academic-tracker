@@ -36,13 +36,15 @@
           cache: "no-store",
           signal: controller.signal
         });
-        clearTimeout(timeout);
         const data = await response.json().catch(() => ({}));
+        clearTimeout(timeout);
         if (response.status === 401) {
           localStorage.removeItem("academic-tracker-token");
           localStorage.removeItem("academic-tracker-user");
           window.location.replace("login.html");
-          throw new Error("Your session expired. Please sign in again.");
+          const error = new Error("Your session expired. Please sign in again.");
+          error.status = 401;
+          throw error;
         }
         if (!response.ok) {
           const error = new Error(data.error || "The challenge request could not be completed.");
