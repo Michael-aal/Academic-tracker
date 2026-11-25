@@ -33,6 +33,24 @@ const aiUserLimiter = rateLimit({
 router.use(aiUserLimiter);
 
 const MAX_INPUT_CHARS = 12000;
+
+function summarizeProviderFailures(error) {
+  const failures = Array.isArray(error?.failures) ? error.failures : [];
+  return failures.map(entry => {
+    const detail = String(entry || "");
+    const provider = detail.split(":")[0].trim().slice(0, 30) || "unknown";
+    const statusMatch = detail.match(/:\\s*(\\d{3})\\b/);
+    const status = statusMatch ? Number(statusMatch[1]) : null;
+    let category = "provider_error";
+    if (/not configured/i.test(detail)) category = "not_configured";
+    else if (status === 401 || status === 403) category = "authentication";
+    else if (status === 429) category = "rate_limited";
+    else if (status === 408) category = "timeout";
+    else if ((status !== null && status >= 500) || /empty or malformed/i.test(detail)) category = "upstream";
+    else if (/fetch failed|network|connection|enotfound|econn|socket/i.test(detail)) category = "network";
+    return { provider, status, category };
+  });
+}
 function recordAiUsage(req, usage = {}, provider = "unknown", model = "unknown", providerStatus = 0, providerOk = false) {
   const hasInput = usage?.prompt_tokens !== undefined || usage?.input_tokens !== undefined;
   const hasOutput = usage?.completion_tokens !== undefined || usage?.output_tokens !== undefined;
@@ -491,9 +509,54 @@ router.post("/", validateAiRequest, aiUsageAudit, async (req, res) => {
     }
     res.json({ answer: answer.trim(), action, model, provider });
   } catch (error) {
-    if (error.name === "AbortError") return res.status(504).json({ error: "The AI request took too long. Please try again." });
-    console.error("AI request error:", error.message);
-    res.status(502).json({ error: "Could not reach the AI provider. Check the server connection and try again." });
+    if (error.name === "AbortError") {
+      console.warn("AI request timed out:", JSON.stringify({ action, timeoutMs: requestTimeoutMs }));
+      return res.status(504).json({ error: "The AI request took too long. Please try again.", code: "AI_REQUEST_TIMEOUT" });
+    }
+
+    const providerFailures = summarizeProviderFailures(error);
+    if (Array.isArray(error.failures)) {
+      // Log provider IDs/status categories only. Never log API keys or raw upstream payloads.
+      console.error("All configured AI providers failed:", JSON.stringify({
+        action,
+        failures: providerFailures
+      }));
+      const categories = new Set(providerFailures.map(item => item.category));
+      if (categories.has("authentication")) {
+        return res.status(503).json({
+          error: "AI provider authentication failed. The administrator needs to check the configured provider key.",
+          code: "AI_PROVIDER_AUTH_FAILED"
+        });
+      }
+      if (categories.has("rate_limited")) {
+        return res.status(503).json({
+          error: "AI providers are temporarily rate-limiting requests. Please try again shortly.",
+          code: "AI_PROVIDER_RATE_LIMITED"
+        });
+      }
+      return res.status(503).json({
+        error: "AI providers are temporarily unavailable. Please try again shortly.",
+        code: categories.has("not_configured") ? "AI_PROVIDER_CONFIGURATION" : "AI_PROVIDER_UNAVAILABLE"
+      });
+    }
+
+    console.error("AI request failed:", JSON.stringify({
+      action,
+      provider: error.provider || null,
+      status: Number.isInteger(error.status) ? error.status : null,
+      name: error.name || "Error",
+      message: String(error.message || "Unknown error").slice(0, 180)
+    }));
+    if (error.status && error.status < 500) {
+      return res.status(502).json({
+        error: "The AI provider rejected this request. Please try again or contact the administrator.",
+        code: "AI_PROVIDER_REQUEST_REJECTED"
+      });
+    }
+    return res.status(502).json({
+      error: "Could not complete the AI request. Please try again.",
+      code: "AI_REQUEST_FAILED"
+    });
   } finally {
     clearTimeout(timeout);
   }
