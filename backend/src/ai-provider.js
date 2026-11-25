@@ -20,9 +20,12 @@ const PROVIDERS = {
 };
 
 function providerOrder() {
+  // AI_PROVIDER_ORDER is a preference, not an allow-list. Always append every
+  // known provider so any provider with a key can be used as a fallback.
   const requested = String(process.env.AI_PROVIDER_ORDER || "groq,openrouter,xai")
     .split(",").map(value => value.trim().toLowerCase()).filter(Boolean);
-  return [...new Set(requested)].filter(name => Object.hasOwn(PROVIDERS, name));
+  return [...new Set([...requested, ...Object.keys(PROVIDERS)])]
+    .filter(name => Object.hasOwn(PROVIDERS, name));
 }
 
 function configuredProviders() {
@@ -30,7 +33,7 @@ function configuredProviders() {
     const config = PROVIDERS[name];
     return {
       id: name,
-      configured: Boolean(process.env[config.envKey]),
+      configured: Boolean(String(process.env[config.envKey] || "").trim()),
       model: process.env[config.modelEnv] || config.defaultModel
     };
   });
