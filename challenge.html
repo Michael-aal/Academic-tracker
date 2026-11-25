@@ -96,7 +96,7 @@
     <section id="challenge-room" class="challenge-panel challenge-room" hidden>
       <div class="challenge-room-top">
         <div><p class="challenge-eyebrow">CHALLENGE ROOM</p><h2 id="room-title">Challenge</h2><p id="room-subtitle" class="challenge-muted"></p></div>
-        <button id="leave-room" class="challenge-secondary" type="button">Back to challenges</button>
+        <button id="leave-room" class="challenge-secondary" type="button">Create another challenge</button>
       </div>
       <div id="room-invite" class="room-invite" hidden><span>Invitation code</span><strong id="room-invite-code"></strong><button id="copy-invite-code" type="button" class="challenge-secondary">Copy code</button><button id="copy-invite-link" type="button" class="challenge-primary">Share invite link</button></div>
       <div class="challenge-room-grid">
@@ -105,7 +105,7 @@
           <section id="room-question-section" class="room-section" hidden><div class="room-question-meta"><span id="question-progress"></span><strong id="question-timer"></strong></div><h3 id="room-question"></h3><div id="room-options" class="room-options"></div><p id="room-answer-feedback" class="challenge-status" role="status" aria-live="polite"></p></section>
           <section id="room-review" class="room-section" hidden><div class="challenge-subheading"><strong>Answer review</strong><span>Shared question set</span></div><div id="room-review-list" class="room-review-list"></div></section>
           <section class="room-section"><div class="challenge-subheading"><strong>Live rankings</strong><span id="ranking-status">Updates automatically</span></div><ol id="room-rankings" class="room-rankings"></ol></section>
-          <button id="finish-challenge" class="challenge-secondary" type="button" hidden>Finish challenge</button>
+          <div class="challenge-room-actions"><button id="close-challenge" class="challenge-secondary" type="button" hidden>Close challenge</button><button id="finish-challenge" class="challenge-secondary" type="button" hidden>Finish challenge</button></div>
         </div>
         <aside id="team-chat-panel" class="team-chat-panel" hidden><div class="challenge-subheading"><strong>Team chat</strong><span id="team-chat-label"></span></div><div id="team-chat-messages" class="team-chat-messages"></div><form id="team-chat-form" class="team-chat-form"><input id="team-chat-input" maxlength="1000" placeholder="Message your teammates…" required><button type="submit" aria-label="Send team message">➤</button></form></aside>
       </div>
