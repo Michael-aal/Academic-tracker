@@ -122,11 +122,9 @@
       showMessage(successBox, adminSetup ? 'Administrator created. Opening the admin dashboard…' : mode === 'register' ? 'Account created. Opening your study space…' : 'Welcome back. Opening your study space…');
       const role = String(data.user.role || '').trim().toUpperCase();
       const isAdmin = ['ADMIN', 'DEVELOPER', 'DEV'].includes(role) || data.user.isAdmin === true;
-      const destination = isAdmin
-        ? 'admin-dashboard.html'
-        : String(data.user.educationTrack || 'SECONDARY').toUpperCase() === 'HIGHER'
-          ? 'university-dashboard.html'
-          : 'dashboard.html';
+      const pendingInvite = (() => { try { const value = sessionStorage.getItem("academic-tracker-pending-challenge-invite") || ""; return /^[A-F0-9]{10}$/i.test(value) ? value.toUpperCase() : ""; } catch (_) { return ""; } })();
+      if (pendingInvite) { window.location.replace("challenge.html?invite=" + encodeURIComponent(pendingInvite)); return; }
+      const destination = isAdmin ? 'admin-dashboard.html' : String(data.user.educationTrack || 'SECONDARY').toUpperCase() === 'HIGHER' ? 'university-dashboard.html' : 'dashboard.html';
       window.location.replace(destination);
     } catch (error) {
       const message = error instanceof TypeError ? 'Could not reach the API. Check your connection and confirm the Render API allows this website in its CORS settings.' : error.message;
