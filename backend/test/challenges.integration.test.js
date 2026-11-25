@@ -34,12 +34,13 @@ test("challenge rooms enforce identical questions, competition roles, team answe
       { algorithm: "HS256", issuer: "academic-tracker-api", audience: "academic-tracker-client", expiresIn: "10m" }
     );
   }
-  async function request(path, user, body, method = body ? "POST" : "GET") {
+  async function request(path, user, body, method = body ? "POST" : "GET", extraHeaders = {}) {
     return fetch(baseUrl + path, {
       method,
       headers: {
         ...(body ? { "Content-Type": "application/json" } : {}),
-        Authorization: "Bearer " + tokenFor(user)
+        Authorization: "Bearer " + tokenFor(user),
+        ...extraHeaders
       },
       ...(body ? { body: JSON.stringify(body) } : {})
     });
@@ -74,21 +75,31 @@ test("challenge rooms enforce identical questions, competition roles, team answe
     baseUrl = `http://127.0.0.1:${server.address().port}`;
 
     // Duel: both students receive the same saved set; answers and rankings are server-authoritative.
-    let response = await request("/api/challenges", host, { mode: "DUEL", title: "Duel test", questions, timerSeconds: 0 });
+    const duelPayload = { mode: "DUEL", title: "Duel test", questions, timerSeconds: 0 };
+    const createKey = "challenge-create-" + tag;
+    let response = await request("/api/challenges", host, duelPayload, "POST", { "Idempotency-Key": createKey });
     assert.equal(response.status, 201);
     let created = (await response.json()).challenge;
     challengeIds.push(created.id);
+    response = await request("/api/challenges", host, duelPayload, "POST", { "Idempotency-Key": createKey });
+    assert.equal(response.status, 200, "replayed create requests should return the original challenge");
+    assert.equal((await response.json()).challenge.id, created.id, "replayed create requests must not duplicate rooms");
     response = await request("/api/challenges/" + created.id + "/join", host, {});
     assert.equal(response.status, 201);
     response = await request("/api/challenges/join", opponent, { inviteCode: created.inviteCode });
     assert.equal(response.status, 201);
     response = await request("/api/challenges/" + created.id + "/start", host, {});
     assert.equal(response.status, 200);
+    response = await request("/api/challenges/" + created.id + "/start", host, {});
+    assert.equal(response.status, 200, "starting an already active challenge should be safe to retry");
     const hostRoom = await (await request("/api/challenges/" + created.id, host)).json();
     const opponentRoom = await (await request("/api/challenges/" + created.id, opponent)).json();
     assert.deepEqual(hostRoom.challenge.questions, opponentRoom.challenge.questions);
     assert.equal(hostRoom.challenge.questions[0].correctOptionId, undefined, "answers must remain hidden while active");
-    await request("/api/challenges/" + created.id + "/answer", host, { questionIndex: 0, optionId: "b" });
+    response = await request("/api/challenges/" + created.id + "/answer", host, { questionIndex: 0, optionId: "b" });
+    assert.equal(response.status, 200);
+    response = await request("/api/challenges/" + created.id + "/answer", host, { questionIndex: 0, optionId: "b" });
+    assert.equal(response.status, 200, "replaying the same saved answer should return success");
     await request("/api/challenges/" + created.id + "/answer", opponent, { questionIndex: 0, optionId: "a" });
     const finished = await (await request("/api/challenges/" + created.id, host)).json();
     assert.equal(finished.challenge.status, "FINISHED");
@@ -134,6 +145,8 @@ test("challenge rooms enforce identical questions, competition roles, team answe
     response = await request("/api/challenges/" + created.id + "/close", host, {});
     assert.equal(response.status, 200);
     assert.equal((await response.json()).status, "CLOSED");
+    response = await request("/api/challenges/" + created.id + "/close", host, {});
+    assert.equal(response.status, 200, "closing an already closed challenge should be safe to retry");
     const closedRoom = await (await request("/api/challenges/" + created.id, host)).json();
     assert.equal(closedRoom.challenge.status, "CLOSED");
     assert.equal(closedRoom.challenge.questions[0].correctOptionId, "b");
