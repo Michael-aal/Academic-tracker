@@ -80,20 +80,13 @@ async function requestChatCompletion(payload, options = {}) {
         ? data.error.message.slice(0, 180)
         : "HTTP " + response.status;
       failures.push(providerId + ": " + response.status + " " + message);
-      // Authentication, rate-limit and provider/server failures can be recovered
-      // by another configured provider. Invalid client payloads should not be retried.
-      if (![401, 403, 408, 429].includes(response.status) && response.status < 500) {
-        const error = new Error("The AI request was rejected by the provider.");
-        error.status = response.status;
-        error.provider = providerId;
-        throw error;
-      }
+      // Try the next configured provider for rejected requests too. A model or
+      // provider-specific constraint may affect one provider but not its fallback.
     } catch (error) {
       if (typeof onUsage === "function") {
         try { onUsage({}, providerId, model, 0, false); } catch (_) { /* Ignore telemetry callback failures. */ }
       }
       if (error.name === "AbortError") throw error;
-      if (error.status && error.status < 500 && ![401, 403, 408, 429].includes(error.status)) throw error;
       failures.push(providerId + ": " + (error.message || "connection failed").slice(0, 180));
     }
   }
