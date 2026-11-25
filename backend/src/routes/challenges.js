@@ -50,7 +50,7 @@ function normalizeQuestions(value) {
 }
 
 function publicQuestions(challenge) {
-  const reveal = challenge.status === "FINISHED";
+  const reveal = challenge.status === "FINISHED" || challenge.status === "CLOSED";
   return (Array.isArray(challenge.questions) ? challenge.questions : []).map((question, index) => ({
     id: question.id || "question-" + (index + 1),
     prompt: question.prompt,
@@ -113,6 +113,7 @@ async function joinChallenge(challengeId, userId, teamKey) {
       include: { participants: { orderBy: { joinedAt: "asc" } } }
     });
     if (!challenge) return { status: 404, error: "Challenge not found." };
+    if (challenge.status === "CLOSED") return { status: 409, error: "This challenge has been closed by its host. Ask for a new invitation." };
     if (challenge.status !== "LOBBY") return { status: 409, error: "This challenge has already started." };
     if (challenge.mode === "FREE_FOR_ALL" && challenge.hostUserId === userId) {
       return { status: 403, error: "The Mastermind organizes this tournament and does not compete." };
@@ -327,6 +328,27 @@ router.post("/:id/answer", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+router.post("/:id/close", async (req, res, next) => {
+  try {
+    const result = await prisma.$transaction(async tx => {
+      await tx.$queryRaw`SELECT "id" FROM "challenges" WHERE "id" = ${req.params.id} FOR UPDATE`;
+      const challenge = await tx.challenge.findUnique({ where: { id: req.params.id } });
+      if (!challenge) return { status: 404, error: "Challenge not found." };
+      if (challenge.hostUserId !== req.userId) return { status: 403, error: "Only the challenge host can close this challenge." };
+      if (!["LOBBY", "ACTIVE"].includes(challenge.status)) {
+        return { status: 409, error: "Only a waiting or active challenge can be closed. Completed challenges are already in your history." };
+      }
+      const updated = await tx.challenge.update({
+        where: { id: challenge.id },
+        data: { status: "CLOSED", finishedAt: new Date() }
+      });
+      return { status: 200, body: { ok: true, status: updated.status, closedAt: updated.finishedAt } };
+    }, { isolationLevel: "Serializable" });
+    if (result.error) return res.status(result.status).json({ error: result.error });
+    res.status(result.status).json(result.body);
+  } catch (error) { next(error); }
+});
+
 router.post("/:id/finish", async (req, res, next) => {
   try {
     const challenge = await prisma.challenge.findUnique({ where: { id: req.params.id } });
@@ -356,7 +378,8 @@ router.get("/:id/messages", async (req, res, next) => {
 
 router.post("/:id/messages", async (req, res, next) => {
   try {
-    const challenge = await prisma.challenge.findUnique({ where: { id: req.params.id }, select: { id: true, mode: true } });
+    const challenge = await prisma.challenge.findUnique({ where: { id: req.params.id }, select: { id: true, mode: true, status: true } });
+    if (challenge?.status === "CLOSED") return res.status(409).json({ error: "This challenge is closed. Team chat is now read-only." });
     if (!challenge) return res.status(404).json({ error: "Challenge not found." });
     if (challenge.mode !== "TEAM") return res.status(400).json({ error: "Team chat is available in Team Challenges." });
     const participant = await prisma.challengeParticipant.findUnique({ where: { challengeId_userId: { challengeId: challenge.id, userId: req.userId } } });
