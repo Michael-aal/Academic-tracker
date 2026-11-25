@@ -312,7 +312,7 @@ router.post("/", validateAiRequest, aiUsageAudit, async (req, res) => {
   let provider = null;
   const controller = new AbortController();
   // Ten-question quizzes need substantially more generation time than short tutor replies.
-  const requestTimeoutMs = ["quiz", "english-practice"].includes(action) ? 90000 : action === "story" ? 70000 : 45000;
+  const requestTimeoutMs = action === "quiz" ? 210000 : action === "english-practice" ? 90000 : action === "story" ? 70000 : 45000;
   const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
 
   try {
@@ -464,10 +464,8 @@ router.post("/", validateAiRequest, aiUsageAudit, async (req, res) => {
         if (typeof rawAnswer !== "string" || !rawAnswer.trim()) throw new Error("The AI returned an empty quiz.");
         const cleaned = rawAnswer.trim().replace(/^\x60{3}(?:json)?\s*/i, "").replace(/\s*\x60{3}$/i, "").trim();
         let parsed;
-        try {
-          parsed = JSON.parse(cleaned);
-        } catch (parseError) {
-          // Some providers wrap an otherwise valid JSON object in a short preamble.
+        try { parsed = JSON.parse(cleaned); }
+        catch (parseError) {
           const firstBrace = cleaned.indexOf("{");
           const lastBrace = cleaned.lastIndexOf("}");
           if (firstBrace < 0 || lastBrace <= firstBrace) throw parseError;
@@ -476,34 +474,60 @@ router.post("/", validateAiRequest, aiUsageAudit, async (req, res) => {
         return validateQuiz(parsed, questionCount);
       };
 
-      try {
-        quiz = parseAndValidate(answer, data?.choices?.[0]?.finish_reason);
-      } catch (firstValidationError) {
-        console.warn("Initial AI quiz response failed validation; attempting one regeneration:", firstValidationError.message, "finish_reason:", data?.choices?.[0]?.finish_reason || "missing");
-        // A single structured retry helps recover from malformed JSON or a model that
-        // omitted fields. Never save a quiz until the same strict validator passes.
-        const retryController = new AbortController();
-        const retryTimeout = setTimeout(() => retryController.abort(), 60000);
+      const basePrompt = buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile });
+      const retryErrors = [];
+      const preferredProviders = providerOrder();
+      // The first response plus two independent regeneration attempts protects
+      // learners from truncated JSON and structurally incomplete questions.
+      for (let attemptNumber = 0; attemptNumber < 3 && !quiz; attemptNumber++) {
+        let response = data;
+        let responseProvider = provider;
+        let responseModel = model;
+        if (attemptNumber > 0) {
+          const retryController = new AbortController();
+          const retryTimeout = setTimeout(() => retryController.abort(), 60000);
+          try {
+            const previousError = retryErrors[retryErrors.length - 1] || "The previous response was incomplete.";
+            const retryPrompt = basePrompt +
+              "\n\nREGENERATION " + attemptNumber + ": The previous response failed validation: " + previousError.slice(0, 220) +
+              ". Regenerate the ENTIRE quiz from scratch. Return exactly " + questionCount +
+              " complete questions. Every question must have a unique id, a meaningful complete question, exactly four distinct {id,text} options using A, B, C, D once each, a correctAnswer matching one option ID, a clear explanation, and a non-empty hint. Keep wording concise so the JSON is never truncated. Do not omit any field, use placeholders, repeat questions, or add Markdown.";
+            const preferred = preferredProviders[(preferredProviders.indexOf(provider) + attemptNumber) % preferredProviders.length];
+            const retryCompletion = await requestChatCompletion({
+              messages: [{ role: "user", content: retryPrompt }],
+              temperature: 0.1,
+              response_format: { type: "json_object" },
+              max_tokens: Math.min(12000, 3000 + questionCount * 850)
+            }, { signal: retryController.signal, preferredProvider: preferred, onUsage: (usage, providerId, usedModel, status, ok) => recordAiUsage(req, usage, providerId, usedModel, status, ok) });
+            response = retryCompletion.data;
+            responseProvider = retryCompletion.provider;
+            responseModel = retryCompletion.model;
+          } finally {
+            clearTimeout(retryTimeout);
+          }
+        }
+
         try {
-          const retryPrompt = buildPrompt({ action, subject, topic, content, level, questionCount, cardCount, difficulty, studentProfile }) +
-            "\n\nFINAL OUTPUT CHECK: Your previous attempt did not satisfy the required schema. Regenerate the entire quiz from scratch. Return only valid JSON with exactly " + questionCount +
-            " questions. Each question must include id, question, options (exactly four {id,text} objects with IDs A/B/C/D), correctAnswer (one of A/B/C/D), explanation, and a non-empty hint. Keep each question and explanation concise, use short option text, do not repeat the topic as filler, and do not return partial JSON or Markdown fences.";
-          const retryCompletion = await requestChatCompletion({
-            messages: [{ role: "user", content: retryPrompt }],
-            temperature: 0.1,
-            response_format: { type: "json_object" },
-            max_tokens: Math.min(10000, 2200 + questionCount * 820)
-          }, { signal: retryController.signal, preferredProvider: providerOrder().find(providerId => providerId !== provider) || provider, onUsage: (usage, providerId) => recordAiUsage(req, usage, providerId) });
-          provider = retryCompletion.provider;
-          model = retryCompletion.model;
-          quiz = parseAndValidate(retryCompletion.data?.choices?.[0]?.message?.content, retryCompletion.data?.choices?.[0]?.finish_reason);
-        } catch (retryError) {
-          console.error("AI quiz retry failed validation:", retryError.message);
-          return res.status(502).json({ error: "The AI could not produce a complete quiz after retrying. No quiz was created; please try again with a shorter topic or fewer questions." });
-        } finally {
-          clearTimeout(retryTimeout);
+          quiz = parseAndValidate(response?.choices?.[0]?.message?.content, response?.choices?.[0]?.finish_reason);
+          provider = responseProvider;
+          model = responseModel;
+        } catch (validationError) {
+          retryErrors.push(validationError.message || "Quiz validation failed.");
+          console.warn("AI quiz generation attempt failed validation:", JSON.stringify({
+            attempt: attemptNumber + 1,
+            reason: String(validationError.message || "validation failed").slice(0, 180),
+            finishReason: response?.choices?.[0]?.finish_reason || "missing"
+          }));
         }
       }
+
+      if (!quiz) {
+        return res.status(502).json({
+          error: "The AI could not produce a complete quiz after three attempts. No quiz was created. Try fewer questions or a more specific topic.",
+          code: "AI_QUIZ_INCOMPLETE"
+        });
+      }
+
       quiz.timePerQuestionSeconds = timePerQuestionSeconds;
       const attempt = await prisma.aiQuizAttempt.create({ data: { userId: req.userId, title: quiz.title, subject, topic, difficulty, questionData: quiz, status: "IN_PROGRESS" }, select: { id: true } });
       return res.status(201).json({ quiz: publicQuiz(quiz), attemptId: attempt.id, action, model, provider });
