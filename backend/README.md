@@ -89,13 +89,20 @@ Deploy schema changes with `npx prisma migrate deploy` using the Render build co
 
 ## AI learning (optional)
 
-The AI learning routes are authenticated and use OpenRouter from the server; the provider key is never sent to the browser. To enable the student tutor, quiz generator, notes summarizer, and study planner, set these environment variables on the backend host:
+The authenticated AI learning routes use a server-side, OpenAI-compatible provider gateway. Groq is the default primary provider; OpenRouter and xAI can be configured as optional fallbacks. Provider keys are never sent to the browser.
 
-- `OPENROUTER_API_KEY` — private OpenRouter API key. Never add this to frontend code or commit a real value.
-- `OPENROUTER_MODEL` — optional model identifier; defaults to `openai/gpt-4o-mini`.
-- `AI_SITE_URL` — optional site URL sent as provider metadata.
+Configure these variables on the backend host (Render):
 
-The `/api/ai` endpoint accepts `tutor`, `quiz`, `summarize`, `study-plan`, and `flashcards` actions, limits supplied text to 12,000 characters, and allows 10 requests per account in any rolling 15-minute window. Each request is recorded in PostgreSQL inside a transaction that locks the account row, so concurrent requests and multiple API instances share the same quota. Quota checks fail closed if PostgreSQL is unavailable, and usage events older than 48 hours are cleaned up opportunistically. The admin-only `GET /api/ai/status` endpoint reports configuration status without exposing credentials. The `ai_usage_events` migration must be deployed before this quota feature is enabled. AI is disabled until the server-side key is configured.
+- `GROQ_API_KEY` — private Groq API key (recommended primary provider).
+- `GROQ_MODEL` — optional Groq model identifier; defaults to `llama-3.3-70b-versatile`.
+- `AI_PROVIDER_ORDER` — ordered comma-separated fallback chain; defaults to `groq,openrouter,xai`. Only providers with configured keys are called.
+- `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` — optional OpenRouter fallback.
+- `XAI_API_KEY` and `XAI_MODEL` — optional xAI fallback.
+- `AI_SITE_URL` — optional OpenRouter site metadata.
+
+Create a Groq API key in the Groq developer console and add it to Render as `GROQ_API_KEY`. Never commit real keys or put them in frontend code. Free-tier availability and rate limits are controlled by Groq and can change; configuring Groq does not guarantee unlimited free inference.
+
+The `/api/ai` endpoint accepts the supported tutor, quiz, summarization, study-plan, flashcard and English-learning actions. The gateway sends the same compatible chat-completion payload to each configured provider in order and falls back when a provider rejects a request or is unavailable. Model capabilities and provider limits can differ, so choose a Groq model that supports the required structured JSON output for quiz generation.
 
 
 ## Proxy and rate-limit configuration
