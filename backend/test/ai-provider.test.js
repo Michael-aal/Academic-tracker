@@ -49,6 +49,34 @@ test("AI gateway falls back from a rate-limited OpenRouter to xAI", async () => 
   }
 });
 
+test("AI gateway falls back when a provider rejects its model request", async () => {
+  const names = ["AI_PROVIDER_ORDER", "OPENROUTER_API_KEY", "OPENROUTER_MODEL", "XAI_API_KEY", "XAI_MODEL"];
+  const previous = Object.fromEntries(names.map(name => [name, process.env[name]]));
+  const originalFetch = global.fetch;
+  const calls = [];
+  try {
+    process.env.AI_PROVIDER_ORDER = "openrouter,xai";
+    process.env.OPENROUTER_API_KEY = "test-openrouter";
+    process.env.OPENROUTER_MODEL = "unsupported-openrouter-model";
+    process.env.XAI_API_KEY = "test-xai";
+    process.env.XAI_MODEL = "test-grok-model";
+    global.fetch = async (url, options) => {
+      calls.push({ url, body: JSON.parse(options.body) });
+      if (String(url).includes("openrouter.ai")) {
+        return { ok: false, status: 400, json: async () => ({ error: { message: "model is not available" } }) };
+      }
+      return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: "fallback ready" } }] }) };
+    };
+    const result = await requestChatCompletion({ messages: [{ role: "user", content: "generate a quiz" }] });
+    assert.equal(result.provider, "xai");
+    assert.equal(result.data.choices[0].message.content, "fallback ready");
+    assert.equal(calls.length, 2);
+  } finally {
+    global.fetch = originalFetch;
+    restoreEnv(names, previous);
+  }
+});
+
 test("AI gateway reports only configured providers without exposing keys", () => {
   const names = ["AI_PROVIDER_ORDER", "OPENROUTER_API_KEY", "XAI_API_KEY"];
   const previous = Object.fromEntries(names.map(name => [name, process.env[name]]));

@@ -50,7 +50,7 @@ function normalizeQuestions(value) {
 }
 
 function publicQuestions(challenge) {
-  const reveal = challenge.status === "FINISHED";
+  const reveal = challenge.status === "FINISHED" || challenge.status === "CLOSED";
   return (Array.isArray(challenge.questions) ? challenge.questions : []).map((question, index) => ({
     id: question.id || "question-" + (index + 1),
     prompt: question.prompt,
@@ -113,6 +113,7 @@ async function joinChallenge(challengeId, userId, teamKey) {
       include: { participants: { orderBy: { joinedAt: "asc" } } }
     });
     if (!challenge) return { status: 404, error: "Challenge not found." };
+    if (challenge.status === "CLOSED") return { status: 409, error: "This challenge has been closed by its host. Ask for a new invitation." };
     if (challenge.status !== "LOBBY") return { status: 409, error: "This challenge has already started." };
     if (challenge.mode === "FREE_FOR_ALL" && challenge.hostUserId === userId) {
       return { status: 403, error: "The Mastermind organizes this tournament and does not compete." };
@@ -211,20 +212,25 @@ router.post("/:id/join", async (req, res, next) => {
 
 router.post("/:id/start", async (req, res, next) => {
   try {
-    const challenge = await prisma.challenge.findUnique({ where: { id: req.params.id }, include: { participants: true } });
-    if (!challenge) return res.status(404).json({ error: "Challenge not found." });
-    if (challenge.hostUserId !== req.userId) return res.status(403).json({ error: "Only the challenge host can start this room." });
-    if (challenge.status !== "LOBBY") return res.status(409).json({ error: "This challenge is no longer waiting to start." });
-    const players = challenge.participants;
-    if (challenge.mode === "DUEL" && players.length !== 2) return res.status(409).json({ error: "A duel needs exactly two competitors." });
-    if (challenge.mode === "FREE_FOR_ALL" && (players.length < 2 || players.length > 6)) return res.status(409).json({ error: "A tournament needs between two and six competitors." });
-    if (challenge.mode === "TEAM") {
-      const a = players.filter(item => item.teamKey === "A").length;
-      const b = players.filter(item => item.teamKey === "B").length;
-      if (a < 2 || b < 2) return res.status(409).json({ error: "Each team needs at least two students before the challenge can start." });
-    }
-    const updated = await prisma.challenge.update({ where: { id: challenge.id }, data: { status: "ACTIVE", startedAt: new Date() } });
-    res.json({ ok: true, status: updated.status, startedAt: updated.startedAt });
+    const result = await prisma.$transaction(async tx => {
+      await tx.$queryRaw`SELECT "id" FROM "challenges" WHERE "id" = ${req.params.id} FOR UPDATE`;
+      const challenge = await tx.challenge.findUnique({ where: { id: req.params.id }, include: { participants: true } });
+      if (!challenge) return { status: 404, error: "Challenge not found." };
+      if (challenge.hostUserId !== req.userId) return { status: 403, error: "Only the challenge host can start this room." };
+      if (challenge.status !== "LOBBY") return { status: 409, error: "This challenge is no longer waiting to start." };
+      const players = challenge.participants;
+      if (challenge.mode === "DUEL" && players.length !== 2) return { status: 409, error: "A duel needs exactly two competitors." };
+      if (challenge.mode === "FREE_FOR_ALL" && (players.length < 2 || players.length > 6)) return { status: 409, error: "A tournament needs between two and six competitors." };
+      if (challenge.mode === "TEAM") {
+        const a = players.filter(item => item.teamKey === "A").length;
+        const b = players.filter(item => item.teamKey === "B").length;
+        if (a < 2 || b < 2) return { status: 409, error: "Each team needs at least two students before the challenge can start." };
+      }
+      const updated = await tx.challenge.update({ where: { id: challenge.id }, data: { status: "ACTIVE", startedAt: new Date() } });
+      return { status: 200, body: { ok: true, status: updated.status, startedAt: updated.startedAt } };
+    }, { isolationLevel: "Serializable" });
+    if (result.error) return res.status(result.status).json({ error: result.error });
+    res.status(result.status).json(result.body);
   } catch (error) { next(error); }
 });
 
@@ -327,14 +333,40 @@ router.post("/:id/answer", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+router.post("/:id/close", async (req, res, next) => {
+  try {
+    const result = await prisma.$transaction(async tx => {
+      await tx.$queryRaw`SELECT "id" FROM "challenges" WHERE "id" = ${req.params.id} FOR UPDATE`;
+      const challenge = await tx.challenge.findUnique({ where: { id: req.params.id } });
+      if (!challenge) return { status: 404, error: "Challenge not found." };
+      if (challenge.hostUserId !== req.userId) return { status: 403, error: "Only the challenge host can close this challenge." };
+      if (!["LOBBY", "ACTIVE"].includes(challenge.status)) {
+        return { status: 409, error: "Only a waiting or active challenge can be closed. Completed challenges are already in your history." };
+      }
+      const updated = await tx.challenge.update({
+        where: { id: challenge.id },
+        data: { status: "CLOSED", finishedAt: new Date() }
+      });
+      return { status: 200, body: { ok: true, status: updated.status, closedAt: updated.finishedAt } };
+    }, { isolationLevel: "Serializable" });
+    if (result.error) return res.status(result.status).json({ error: result.error });
+    res.status(result.status).json(result.body);
+  } catch (error) { next(error); }
+});
+
 router.post("/:id/finish", async (req, res, next) => {
   try {
-    const challenge = await prisma.challenge.findUnique({ where: { id: req.params.id } });
-    if (!challenge) return res.status(404).json({ error: "Challenge not found." });
-    if (challenge.hostUserId !== req.userId) return res.status(403).json({ error: "Only the challenge host can finish this room." });
-    if (challenge.status !== "ACTIVE") return res.status(409).json({ error: "This challenge is not active." });
-    const updated = await prisma.challenge.update({ where: { id: challenge.id }, data: { status: "FINISHED", finishedAt: new Date() } });
-    res.json({ ok: true, status: updated.status });
+    const result = await prisma.$transaction(async tx => {
+      await tx.$queryRaw`SELECT "id" FROM "challenges" WHERE "id" = ${req.params.id} FOR UPDATE`;
+      const challenge = await tx.challenge.findUnique({ where: { id: req.params.id } });
+      if (!challenge) return { status: 404, error: "Challenge not found." };
+      if (challenge.hostUserId !== req.userId) return { status: 403, error: "Only the challenge host can finish this room." };
+      if (challenge.status !== "ACTIVE") return { status: 409, error: "This challenge is not active." };
+      const updated = await tx.challenge.update({ where: { id: challenge.id }, data: { status: "FINISHED", finishedAt: new Date() } });
+      return { status: 200, body: { ok: true, status: updated.status } };
+    }, { isolationLevel: "Serializable" });
+    if (result.error) return res.status(result.status).json({ error: result.error });
+    res.status(result.status).json(result.body);
   } catch (error) { next(error); }
 });
 
@@ -356,15 +388,21 @@ router.get("/:id/messages", async (req, res, next) => {
 
 router.post("/:id/messages", async (req, res, next) => {
   try {
-    const challenge = await prisma.challenge.findUnique({ where: { id: req.params.id }, select: { id: true, mode: true } });
-    if (!challenge) return res.status(404).json({ error: "Challenge not found." });
-    if (challenge.mode !== "TEAM") return res.status(400).json({ error: "Team chat is available in Team Challenges." });
-    const participant = await prisma.challengeParticipant.findUnique({ where: { challengeId_userId: { challengeId: challenge.id, userId: req.userId } } });
-    if (!participant) return res.status(403).json({ error: "Only team members can send messages." });
     const body = clean(req.body?.body, 1000);
     if (!body) return res.status(400).json({ error: "Write a message first." });
-    const message = await prisma.challengeMessage.create({ data: { challengeId: challenge.id, userId: req.userId, teamKey: participant.teamKey, body } });
-    res.status(201).json({ message: { id: message.id, body: message.body, createdAt: message.createdAt } });
+    const result = await prisma.$transaction(async tx => {
+      await tx.$queryRaw`SELECT "id" FROM "challenges" WHERE "id" = ${req.params.id} FOR UPDATE`;
+      const challenge = await tx.challenge.findUnique({ where: { id: req.params.id }, select: { id: true, mode: true, status: true } });
+      if (!challenge) return { status: 404, error: "Challenge not found." };
+      if (challenge.status === "CLOSED") return { status: 409, error: "This challenge is closed. Team chat is now read-only." };
+      if (challenge.mode !== "TEAM") return { status: 400, error: "Team chat is available in Team Challenges." };
+      const participant = await tx.challengeParticipant.findUnique({ where: { challengeId_userId: { challengeId: challenge.id, userId: req.userId } } });
+      if (!participant) return { status: 403, error: "Only team members can send messages." };
+      const message = await tx.challengeMessage.create({ data: { challengeId: challenge.id, userId: req.userId, teamKey: participant.teamKey, body } });
+      return { status: 201, body: { message: { id: message.id, body: message.body, createdAt: message.createdAt } } };
+    }, { isolationLevel: "Serializable" });
+    if (result.error) return res.status(result.status).json({ error: result.error });
+    res.status(result.status).json(result.body);
   } catch (error) { next(error); }
 });
 

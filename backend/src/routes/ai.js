@@ -46,6 +46,7 @@ function summarizeProviderFailures(error) {
     else if (status === 401 || status === 403) category = "authentication";
     else if (status === 429) category = "rate_limited";
     else if (status === 408) category = "timeout";
+    else if (status !== null && status >= 400 && status < 500) category = "request_rejected";
     else if ((status !== null && status >= 500) || /empty or malformed/i.test(detail)) category = "upstream";
     else if (/fetch failed|network|connection|enotfound|econn|socket/i.test(detail)) category = "network";
     return { provider, status, category };
@@ -531,12 +532,21 @@ router.post("/", validateAiRequest, aiUsageAudit, async (req, res) => {
       if (categories.has("rate_limited")) {
         return res.status(503).json({
           error: "AI providers are temporarily rate-limiting requests. Please try again shortly.",
-          code: "AI_PROVIDER_RATE_LIMITED"
+          code: "AI_PROVIDER_RATE_LIMITED",
+          providerFailures
+        });
+      }
+      if (categories.has("request_rejected")) {
+        return res.status(502).json({
+          error: "The configured AI providers rejected this request. Check the provider model and request settings.",
+          code: "AI_PROVIDER_REQUEST_REJECTED",
+          providerFailures
         });
       }
       return res.status(503).json({
         error: "AI providers are temporarily unavailable. Please try again shortly.",
-        code: categories.has("not_configured") ? "AI_PROVIDER_CONFIGURATION" : "AI_PROVIDER_UNAVAILABLE"
+        code: categories.has("not_configured") ? "AI_PROVIDER_CONFIGURATION" : "AI_PROVIDER_UNAVAILABLE",
+        providerFailures
       });
     }
 

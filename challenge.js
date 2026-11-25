@@ -26,7 +26,18 @@
       window.location.replace("login.html");
       throw new Error("Your session expired. Please sign in again.");
     }
-    if (!response.ok) throw new Error(data.error || "The challenge request could not be completed.");
+    if (!response.ok) {
+      if (Array.isArray(data.providerFailures) && data.providerFailures.length) {
+        const detail = data.providerFailures.map(item =>
+          [item.provider, item.status || "no status", item.category].filter(Boolean).join(" ")
+        ).join("; ");
+        throw new Error((data.error || "AI provider request failed.") + " (" + detail + ")");
+      }
+      if (response.status === 404 && data.error === "Route not found.") {
+        throw new Error("Challenge API endpoint not found: " + (options.method || "GET").toUpperCase() + " " + path + ". The backend deployment may be behind the website version.");
+      }
+      throw new Error(data.error || "The challenge request could not be completed.");
+    }
     return data;
   }
   const node = (tag, cls, value) => { const item = document.createElement(tag); if (cls) item.className = cls; if (value !== undefined) item.textContent = String(value); return item; };
@@ -220,8 +231,14 @@
         const card = node("article", "my-challenge-card");
         const title = node("strong", "", challenge.title);
         const meta = node("small", "", challenge.mode.replaceAll("_", " ") + " · " + challenge.status + " · " + challenge.participantCount + " students");
-        const open = node("button", "challenge-secondary", "Open room"); open.type = "button"; open.addEventListener("click", () => openRoom(challenge.id));
-        card.append(title, meta, open); host.append(card);
+        const open = node("button", "challenge-secondary", challenge.status === "CLOSED" || challenge.status === "FINISHED" ? "View results" : "Open room"); open.type = "button"; open.addEventListener("click", () => openRoom(challenge.id));
+        card.append(title, meta, open);
+        if (challenge.isHost && ["LOBBY", "ACTIVE"].includes(challenge.status)) {
+          const close = node("button", "challenge-secondary", "Close challenge"); close.type = "button";
+          close.addEventListener("click", () => closeChallenge(challenge.id));
+          card.append(close);
+        }
+        host.append(card);
       });
     } catch (error) { host.append(node("p", "challenge-muted", error.message)); }
   }
@@ -282,8 +299,8 @@
   }
   function renderQuestion(room) {
     const section = $("room-question-section");
-    show("room-review", room.challenge.status === "FINISHED");
-    if (room.challenge.status === "FINISHED") {
+    show("room-review", room.challenge.status === "FINISHED" || room.challenge.status === "CLOSED");
+    if (room.challenge.status === "FINISHED" || room.challenge.status === "CLOSED") {
       section.hidden = true;
       renderReview(room);
       return;
@@ -352,16 +369,19 @@
       const room = data;
       $("room-title").textContent = room.challenge.title;
       $("room-subtitle").textContent = room.challenge.mode.replaceAll("_", " ") + " · " + room.challenge.status;
-      if (room.challenge.isHost && room.challenge.inviteCode) {
+      if (room.challenge.isHost && room.challenge.inviteCode && room.challenge.status !== "CLOSED") {
         show("room-invite", true); $("room-invite-code").textContent = room.challenge.inviteCode;
         const shareUrl = new URL("challenge.html", window.location.href); shareUrl.searchParams.set("invite", room.challenge.inviteCode); $("copy-invite-link").dataset.inviteUrl = shareUrl.toString();
       } else show("room-invite", false);
       renderParticipants(room); renderRankings(room); renderQuestion(room);
       show("start-challenge", room.challenge.isHost && room.challenge.status === "LOBBY");
       show("finish-challenge", room.challenge.isHost && room.challenge.status === "ACTIVE");
+      show("close-challenge", room.challenge.isHost && ["LOBBY", "ACTIVE"].includes(room.challenge.status));
       show("team-chat-panel", room.challenge.mode === "TEAM" && room.participants.some(item => item.userId === currentUserId));
+      show("team-chat-form", room.challenge.status !== "CLOSED");
       if (room.challenge.status === "LOBBY") status("room-status", room.challenge.isHost ? "Share the invitation code. Start when the required competitors have joined." : "Waiting for the host to start the challenge.");
       else if (room.challenge.status === "FINISHED") status("room-status", "Challenge complete. Final answers and rankings are ready.");
+      else if (room.challenge.status === "CLOSED") status("room-status", "This challenge was closed by its host. Its participants, scores and answer review are preserved in your challenge history. Create a new challenge whenever you are ready.");
       else status("room-status", "The same question set is active for every competitor.");
       await loadTeamMessages();
     } catch (error) { status("room-status", error.message, true); }
@@ -378,6 +398,20 @@
     catch (error) { status("room-status", error.message, true); }
     finally { button.disabled = false; }
   });
+  async function closeChallenge(id) {
+    if (!id) return;
+    if (!window.confirm("Close this challenge? Nobody will be able to join or submit more answers. Existing participants, scores and results will be kept in challenge history. You can create a new challenge afterwards.")) return;
+    try {
+      await api("/api/challenges/" + encodeURIComponent(id) + "/close", { method: "POST", body: JSON.stringify({}) });
+      await loadMyChallenges();
+      if (state.challengeId === id) await refreshRoom();
+      else status("challenge-create-status", "Challenge closed. Its history has been preserved. You can create a new challenge now.");
+    } catch (error) {
+      if (state.challengeId === id) status("room-status", error.message, true);
+      else status("challenge-create-status", error.message, true);
+    }
+  }
+  $("close-challenge").addEventListener("click", () => closeChallenge(state.challengeId));
   $("finish-challenge").addEventListener("click", async () => {
     if (!window.confirm("Finish this challenge and reveal the final results?")) return;
     try { await api("/api/challenges/" + encodeURIComponent(state.challengeId) + "/finish", { method: "POST", body: JSON.stringify({}) }); await refreshRoom(); }
