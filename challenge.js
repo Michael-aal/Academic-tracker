@@ -3,7 +3,7 @@
   const API = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
   const token = localStorage.getItem("academic-tracker-token");
   const $ = id => document.getElementById(id);
-  const state = { questions: [], notes: [], room: null, challengeId: null, refreshTimer: null, timerTimer: null, chatTimer: null, autoSkipKey: "" };
+  const state = { questions: [], notes: [], room: null, challengeId: null, refreshTimer: null, timerTimer: null, chatTimer: null, autoSkipKey: "", refreshPromise: null };
   const inviteFromUrl = new URLSearchParams(window.location.search).get("invite") || "";
   const pendingInvite = (inviteFromUrl || sessionStorage.getItem("academic-tracker-pending-challenge-invite") || "").trim().toUpperCase();
   if (pendingInvite && /^[A-F0-9]{10}$/.test(pendingInvite)) sessionStorage.setItem("academic-tracker-pending-challenge-invite", pendingInvite);
@@ -15,30 +15,64 @@
   $("challenge-academic-return").href = ["HIGHER", "UNIVERSITY"].includes(educationTrack) ? "university-dashboard.html" : "dashboard.html";
 
   async function api(path, options = {}) {
-    const response = await fetch(API + path, {
-      ...options,
-      headers: { Authorization: "Bearer " + token, ...(options.body ? { "Content-Type": "application/json" } : {}), ...(options.headers || {}) }
-    });
-    const data = await response.json().catch(() => ({}));
-    if (response.status === 401) {
-      localStorage.removeItem("academic-tracker-token");
-      localStorage.removeItem("academic-tracker-user");
-      window.location.replace("login.html");
-      throw new Error("Your session expired. Please sign in again.");
-    }
-    if (!response.ok) {
-      if (Array.isArray(data.providerFailures) && data.providerFailures.length) {
-        const detail = data.providerFailures.map(item =>
-          [item.provider, item.status || "no status", item.category].filter(Boolean).join(" ")
-        ).join("; ");
-        throw new Error((data.error || "AI provider request failed.") + " (" + detail + ")");
+    const method = String(options.method || "GET").toUpperCase();
+    const headers = {
+      Authorization: "Bearer " + token,
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(options.headers || {})
+    };
+    // GET requests are safe to retry. Challenge creation is also safe because its
+    // stable idempotency key makes a replay return the original challenge.
+    const retryable = method === "GET" || Boolean(headers["Idempotency-Key"]);
+    const maxAttempts = retryable ? 3 : 1;
+    let lastError;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      try {
+        const response = await fetch(API + path, {
+          ...options,
+          headers,
+          cache: "no-store",
+          signal: controller.signal
+        });
+        const data = await response.json().catch(() => ({}));
+        clearTimeout(timeout);
+        if (response.status === 401) {
+          localStorage.removeItem("academic-tracker-token");
+          localStorage.removeItem("academic-tracker-user");
+          window.location.replace("login.html");
+          const error = new Error("Your session expired. Please sign in again.");
+          error.status = 401;
+          throw error;
+        }
+        if (!response.ok) {
+          const error = new Error(data.error || "The challenge request could not be completed.");
+          error.status = response.status;
+          if (Array.isArray(data.providerFailures) && data.providerFailures.length) {
+            const detail = data.providerFailures.map(item =>
+              [item.provider, item.status || "no status", item.category].filter(Boolean).join(" ")
+            ).join("; ");
+            error.message = (data.error || "AI provider request failed.") + " (" + detail + ")";
+          }
+          if (response.status === 404 && data.error === "Route not found.") {
+            error.message = "Challenge API endpoint not found: " + method + " " + path + ". The backend deployment may be behind the website version.";
+          }
+          if (![502, 503, 504].includes(response.status) || attempt === maxAttempts - 1) throw error;
+          lastError = error;
+        } else return data;
+      } catch (error) {
+        clearTimeout(timeout);
+        if (error?.status || attempt === maxAttempts - 1) {
+          if (error?.status) throw error;
+          lastError = error;
+        } else lastError = error?.name === "AbortError"
+          ? new Error("The challenge server took too long to respond. Retrying…")
+          : new Error("The connection was interrupted. Retrying…");
       }
-      if (response.status === 404 && data.error === "Route not found.") {
-        throw new Error("Challenge API endpoint not found: " + (options.method || "GET").toUpperCase() + " " + path + ". The backend deployment may be behind the website version.");
-      }
-      throw new Error(data.error || "The challenge request could not be completed.");
+      await new Promise(resolve => setTimeout(resolve, 350 * (attempt + 1)));
     }
-    return data;
+    throw lastError || new Error("The challenge request could not be completed.");
   }
   const node = (tag, cls, value) => { const item = document.createElement(tag); if (cls) item.className = cls; if (value !== undefined) item.textContent = String(value); return item; };
   const status = (id, message, error = false) => { const target = $(id); if (target) { target.textContent = message; target.classList.toggle("is-error", error); } };
@@ -115,7 +149,8 @@
       const batch = Math.min(10, total - offset);
       status(statusId, "Generating questions " + (offset + 1) + "–" + (offset + batch) + " of " + total + "…");
       const result = await api("/api/ai", { method: "POST", body: JSON.stringify({
-        action: "quiz", subject: "Revision challenge", topic: "Create a fair shared challenge question set.",
+        action: "quiz", purpose: "challenge",
+        subject: "Revision challenge", topic: "Create a fair shared challenge question set.",
         content: material.slice(0, 12000), questionCount: batch, difficulty,
         level: user.educationTrack === "HIGHER" ? "higher institution / university" : "secondary school"
       }) });
@@ -179,6 +214,20 @@
     finally { button.disabled = false; }
   });
 
+  function challengeCreationKey() {
+    const storageKey = "academic-tracker-challenge-create-key";
+    const prefix = "challenge-" + String(currentUserId || "unknown").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 24) + "-";
+    let key = sessionStorage.getItem(storageKey);
+    if (!key || !key.startsWith(prefix)) {
+      const nonce = window.crypto?.randomUUID
+        ? window.crypto.randomUUID()
+        : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+      key = prefix + nonce;
+      sessionStorage.setItem(storageKey, key);
+    }
+    return key;
+  }
+
   $("challenge-create-form").addEventListener("submit", async event => {
     event.preventDefault();
     const button = $("create-challenge"); button.disabled = true;
@@ -192,17 +241,31 @@
         const note = selectedNote(); if (!note) throw new Error("Choose saved notes first.");
         questions = await generateAiQuestions(note.content, $("notebook-question-count").value, $("ai-question-difficulty").value, "challenge-create-status");
       } else questions = await generateAiQuestions($("challenge-topic").value, $("ai-question-count").value, $("ai-question-difficulty").value, "challenge-create-status");
-      const result = await api("/api/challenges", { method: "POST", body: JSON.stringify({
-        title: $("challenge-title").value.trim(), mode, questions,
-        timerSeconds: Number($("challenge-timer").value), source
-      }) });
+      const result = await api("/api/challenges", {
+        method: "POST",
+        headers: { "Idempotency-Key": challengeCreationKey() },
+        body: JSON.stringify({
+          title: $("challenge-title").value.trim(), mode, questions,
+          timerSeconds: Number($("challenge-timer").value), source
+        })
+      });
       const challenge = result.challenge;
+      sessionStorage.removeItem("academic-tracker-challenge-create-key");
+      let hostJoinWarning = "";
       if (mode !== "FREE_FOR_ALL") {
-        await api("/api/challenges/" + encodeURIComponent(challenge.id) + "/join", {
-          method: "POST", body: JSON.stringify({ teamKey: mode === "TEAM" ? $("challenge-team").value : null })
-        });
+        try {
+          await api("/api/challenges/" + encodeURIComponent(challenge.id) + "/join", {
+            method: "POST",
+            headers: { "Idempotency-Key": "join-" + challenge.id + "-" + currentUserId },
+            body: JSON.stringify({ teamKey: mode === "TEAM" ? $("challenge-team").value : null })
+          });
+        } catch (joinError) {
+          // The challenge itself is already safely saved. Keep the room accessible
+          // and explain the separate host-join issue instead of reporting total failure.
+          hostJoinWarning = " The challenge was created, but host entry needs attention: " + joinError.message;
+        }
       }
-      status("challenge-create-status", "Challenge created. Invitation code: " + challenge.inviteCode);
+      status("challenge-create-status", "Challenge created. Invitation code: " + challenge.inviteCode + hostJoinWarning, Boolean(hostJoinWarning));
       await loadMyChallenges();
       await openRoom(challenge.id);
     } catch (error) { status("challenge-create-status", error.message, true); }
@@ -223,9 +286,10 @@
   });
 
   async function loadMyChallenges() {
-    const host = $("my-challenges-list"); host.replaceChildren();
+    const host = $("my-challenges-list");
     try {
       const data = await api("/api/challenges/mine");
+      host.replaceChildren();
       if (!data.challenges?.length) { host.append(node("p", "challenge-muted", "No challenges yet. Create one or join with an invitation code.")); return; }
       data.challenges.forEach(challenge => {
         const card = node("article", "my-challenge-card");
@@ -240,7 +304,10 @@
         }
         host.append(card);
       });
-    } catch (error) { host.append(node("p", "challenge-muted", error.message)); }
+    } catch (error) {
+      if (!host.children.length) host.append(node("p", "challenge-muted", error.message));
+      else status("challenge-create-status", "Could not refresh your challenge list. Your current list is still shown. " + error.message, true);
+    }
   }
   $("refresh-challenges").addEventListener("click", loadMyChallenges);
 
@@ -280,7 +347,9 @@
     const buttons = $("room-options").querySelectorAll("button"); buttons.forEach(button => button.disabled = true);
     try {
       await api("/api/challenges/" + encodeURIComponent(state.challengeId) + "/answer", {
-        method: "POST", body: JSON.stringify({ questionIndex, optionId })
+        method: "POST",
+        headers: { "Idempotency-Key": "answer-" + state.challengeId + "-" + currentUserId + "-" + questionIndex },
+        body: JSON.stringify({ questionIndex, optionId })
       });
       status("room-answer-feedback", "Answer saved. Rankings are updating.");
       await refreshRoom();
@@ -363,8 +432,12 @@
   }
   async function refreshRoom() {
     if (!state.challengeId) return;
+    if (state.refreshPromise) return state.refreshPromise;
+    const requestedChallengeId = state.challengeId;
+    state.refreshPromise = (async () => {
     try {
-      const data = await api("/api/challenges/" + encodeURIComponent(state.challengeId));
+      const data = await api("/api/challenges/" + encodeURIComponent(requestedChallengeId));
+      if (state.challengeId !== requestedChallengeId) return;
       state.room = data;
       const room = data;
       $("room-title").textContent = room.challenge.title;
@@ -384,17 +457,27 @@
       else if (room.challenge.status === "CLOSED") status("room-status", "This challenge was closed by its host. Its participants, scores and answer review are preserved in your challenge history. Create a new challenge whenever you are ready.");
       else status("room-status", "The same question set is active for every competitor.");
       await loadTeamMessages();
-    } catch (error) { status("room-status", error.message, true); }
+    } catch (error) {
+      if (state.challengeId === requestedChallengeId) {
+        status("room-status", "Connection interrupted. Your saved challenge data is safe. " + error.message, true);
+      }
+    }
+    })();
+    try { await state.refreshPromise; } finally { state.refreshPromise = null; }
   }
   async function openRoom(id) {
-    stopTimers(); state.challengeId = id; state.autoSkipKey = ""; showRoom(true);
+    stopTimers();
+    if (state.refreshPromise) await state.refreshPromise;
+    state.challengeId = id; state.autoSkipKey = ""; showRoom(true);
     await refreshRoom();
     state.refreshTimer = setInterval(refreshRoom, 5000);
     state.timerTimer = setInterval(() => { if (state.room) renderQuestion(state.room); }, 500);
   }
   $("start-challenge").addEventListener("click", async () => {
     const button = $("start-challenge"); button.disabled = true;
-    try { await api("/api/challenges/" + encodeURIComponent(state.challengeId) + "/start", { method: "POST", body: JSON.stringify({}) }); await refreshRoom(); }
+    try { await api("/api/challenges/" + encodeURIComponent(state.challengeId) + "/start", {
+      method: "POST", headers: { "Idempotency-Key": "start-" + state.challengeId }, body: JSON.stringify({})
+    }); await refreshRoom(); }
     catch (error) { status("room-status", error.message, true); }
     finally { button.disabled = false; }
   });
@@ -402,7 +485,9 @@
     if (!id) return;
     if (!window.confirm("Close this challenge? Nobody will be able to join or submit more answers. Existing participants, scores and results will be kept in challenge history. You can create a new challenge afterwards.")) return;
     try {
-      await api("/api/challenges/" + encodeURIComponent(id) + "/close", { method: "POST", body: JSON.stringify({}) });
+      await api("/api/challenges/" + encodeURIComponent(id) + "/close", {
+        method: "POST", headers: { "Idempotency-Key": "close-" + id }, body: JSON.stringify({})
+      });
       await loadMyChallenges();
       if (state.challengeId === id) await refreshRoom();
       else status("challenge-create-status", "Challenge closed. Its history has been preserved. You can create a new challenge now.");
@@ -414,7 +499,9 @@
   $("close-challenge").addEventListener("click", () => closeChallenge(state.challengeId));
   $("finish-challenge").addEventListener("click", async () => {
     if (!window.confirm("Finish this challenge and reveal the final results?")) return;
-    try { await api("/api/challenges/" + encodeURIComponent(state.challengeId) + "/finish", { method: "POST", body: JSON.stringify({}) }); await refreshRoom(); }
+    try { await api("/api/challenges/" + encodeURIComponent(state.challengeId) + "/finish", {
+      method: "POST", headers: { "Idempotency-Key": "finish-" + state.challengeId }, body: JSON.stringify({})
+    }); await refreshRoom(); }
     catch (error) { status("room-status", error.message, true); }
   });
   $("copy-invite-code").addEventListener("click", async () => {

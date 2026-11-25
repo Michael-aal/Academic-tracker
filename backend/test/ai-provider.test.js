@@ -10,12 +10,13 @@ function restoreEnv(names, previous) {
 }
 
 test("AI gateway falls back from a rate-limited OpenRouter to xAI", async () => {
-  const names = ["AI_PROVIDER_ORDER", "OPENROUTER_API_KEY", "OPENROUTER_MODEL", "XAI_API_KEY", "XAI_MODEL"];
+  const names = ["AI_PROVIDER_ORDER", "GROQ_API_KEY", "OPENROUTER_API_KEY", "OPENROUTER_MODEL", "XAI_API_KEY", "XAI_MODEL"];
   const previous = Object.fromEntries(names.map(name => [name, process.env[name]]));
   const originalFetch = global.fetch;
   const calls = [];
   try {
     process.env.AI_PROVIDER_ORDER = "openrouter,xai";
+    delete process.env.GROQ_API_KEY;
     process.env.OPENROUTER_API_KEY = "test-openrouter";
     process.env.OPENROUTER_MODEL = "test-openrouter-model";
     process.env.XAI_API_KEY = "test-xai";
@@ -78,14 +79,15 @@ test("AI gateway falls back when a provider rejects its model request", async ()
 });
 
 test("AI gateway reports only configured providers without exposing keys", () => {
-  const names = ["AI_PROVIDER_ORDER", "OPENROUTER_API_KEY", "XAI_API_KEY"];
+  const names = ["AI_PROVIDER_ORDER", "GROQ_API_KEY", "OPENROUTER_API_KEY", "XAI_API_KEY"];
   const previous = Object.fromEntries(names.map(name => [name, process.env[name]]));
   try {
     process.env.AI_PROVIDER_ORDER = "openrouter,xai";
+    delete process.env.GROQ_API_KEY;
     process.env.OPENROUTER_API_KEY = "secret-one";
     delete process.env.XAI_API_KEY;
     const status = configuredProviders();
-    assert.deepEqual(status.map(item => [item.id, item.configured]), [["openrouter", true], ["xai", false]]);
+    assert.deepEqual(status.map(item => [item.id, item.configured]), [["openrouter", true], ["xai", false], ["groq", false]]);
     assert.equal(JSON.stringify(status).includes("secret-one"), false);
   } finally {
     restoreEnv(names, previous);

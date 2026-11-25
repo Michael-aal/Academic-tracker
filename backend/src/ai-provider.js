@@ -52,7 +52,7 @@ async function requestChatCompletion(payload, options = {}) {
     : ordered;
   for (const providerId of candidates) {
     const config = PROVIDERS[providerId];
-    const key = process.env[config.envKey];
+    const key = String(process.env[config.envKey] || "").trim();
     if (!key) {
       failures.push(providerId + ": not configured");
       continue;

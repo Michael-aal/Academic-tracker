@@ -113,13 +113,18 @@ async function joinChallenge(challengeId, userId, teamKey) {
       include: { participants: { orderBy: { joinedAt: "asc" } } }
     });
     if (!challenge) return { status: 404, error: "Challenge not found." };
+    const existing = challenge.participants.find(item => item.userId === userId);
+    if (existing) {
+      if (challenge.mode === "TEAM" && existing.teamKey !== teamKey) {
+        return { status: 409, error: "You have already joined Team " + existing.teamKey + ". Your team cannot be changed after joining." };
+      }
+      return { status: 200, participant: existing, existing: true };
+    }
     if (challenge.status === "CLOSED") return { status: 409, error: "This challenge has been closed by its host. Ask for a new invitation." };
     if (challenge.status !== "LOBBY") return { status: 409, error: "This challenge has already started." };
     if (challenge.mode === "FREE_FOR_ALL" && challenge.hostUserId === userId) {
       return { status: 403, error: "The Mastermind organizes this tournament and does not compete." };
     }
-    const existing = challenge.participants.find(item => item.userId === userId);
-    if (existing) return { status: 200, participant: existing, existing: true };
     if (challenge.mode === "DUEL" && challenge.hostUserId !== userId) {
       const [host, joining, forward, reverse, blocked] = await Promise.all([
         tx.user.findUnique({ where: { id: challenge.hostUserId }, select: { educationTrack: true } }),
@@ -156,18 +161,48 @@ router.post("/", async (req, res, next) => {
     if (!MODES.has(mode)) return res.status(400).json({ error: "Choose Duel, Team Challenge or Free-for-all." });
     if (normalized.error) return res.status(400).json({ error: normalized.error });
     if (!Number.isInteger(timerSeconds) || !timerValues.has(timerSeconds)) return res.status(400).json({ error: "Choose a supported timer per question." });
-    const inviteCode = randomBytes(5).toString("hex").toUpperCase();
-    const challenge = await prisma.challenge.create({
-      data: {
-        hostUserId: req.userId,
-        mode,
-        title,
-        inviteCode,
-        questions: normalized.questions,
-        settings: { timerSeconds, source: clean(req.body?.source, 20) || "manual" }
+    const idempotencyKey = clean(req.get("Idempotency-Key"), 80);
+    if (idempotencyKey && !/^[A-Za-z0-9._:-]{8,80}$/.test(idempotencyKey)) {
+      return res.status(400).json({ error: "The challenge request key is invalid." });
+    }
+    if (idempotencyKey) {
+      const existing = await prisma.challenge.findUnique({ where: { idempotencyKey } });
+      if (existing) {
+        if (existing.hostUserId !== req.userId) return res.status(409).json({ error: "This request key has already been used." });
+        return res.status(200).json({ challenge: {
+          id: existing.id, title: existing.title, mode: existing.mode, inviteCode: existing.inviteCode,
+          status: existing.status, questionCount: Array.isArray(existing.questions) ? existing.questions.length : 0,
+          timerSeconds: Number(existing.settings?.timerSeconds || 0), reused: true
+        } });
       }
-    });
-    res.status(201).json({ challenge: { id: challenge.id, title: challenge.title, mode, inviteCode, status: challenge.status, questionCount: normalized.questions.length, timerSeconds } });
+    }
+    const inviteCode = randomBytes(5).toString("hex").toUpperCase();
+    try {
+      const challenge = await prisma.challenge.create({
+        data: {
+          hostUserId: req.userId,
+          mode,
+          title,
+          inviteCode,
+          ...(idempotencyKey ? { idempotencyKey } : {}),
+          questions: normalized.questions,
+          settings: { timerSeconds, source: clean(req.body?.source, 20) || "manual" }
+        }
+      });
+      return res.status(201).json({ challenge: { id: challenge.id, title: challenge.title, mode, inviteCode, status: challenge.status, questionCount: normalized.questions.length, timerSeconds } });
+    } catch (error) {
+      if (idempotencyKey && error?.code === "P2002") {
+        const existing = await prisma.challenge.findUnique({ where: { idempotencyKey } });
+        if (existing?.hostUserId === req.userId) {
+          return res.status(200).json({ challenge: {
+            id: existing.id, title: existing.title, mode: existing.mode, inviteCode: existing.inviteCode,
+            status: existing.status, questionCount: Array.isArray(existing.questions) ? existing.questions.length : 0,
+            timerSeconds: Number(existing.settings?.timerSeconds || 0), reused: true
+          } });
+        }
+      }
+      throw error;
+    }
   } catch (error) { next(error); }
 });
 
@@ -217,6 +252,7 @@ router.post("/:id/start", async (req, res, next) => {
       const challenge = await tx.challenge.findUnique({ where: { id: req.params.id }, include: { participants: true } });
       if (!challenge) return { status: 404, error: "Challenge not found." };
       if (challenge.hostUserId !== req.userId) return { status: 403, error: "Only the challenge host can start this room." };
+      if (challenge.status === "ACTIVE") return { status: 200, body: { ok: true, status: challenge.status, startedAt: challenge.startedAt, reused: true } };
       if (challenge.status !== "LOBBY") return { status: 409, error: "This challenge is no longer waiting to start." };
       const players = challenge.participants;
       if (challenge.mode === "DUEL" && players.length !== 2) return { status: 409, error: "A duel needs exactly two competitors." };
@@ -288,6 +324,16 @@ router.post("/:id/answer", async (req, res, next) => {
         return { status: 400, error: "Choose a valid question." };
       }
       const existing = challenge.answers.filter(answer => answer.competitorKey === competitorKey);
+      if (questionIndex < existing.length) {
+        const saved = existing.find(answer => answer.questionIndex === questionIndex);
+        if (saved && saved.optionId === optionId) {
+          return { status: 200, body: {
+            ok: true, isCorrect: saved.isCorrect, answeredCount: existing.length,
+            totalQuestions: challenge.questions.length, status: challenge.status, reused: true
+          } };
+        }
+        return { status: 409, error: "An answer has already been saved for this question. Refresh the room to continue." };
+      }
       if (questionIndex !== existing.length) return { status: 409, error: "Answer the current question in order." };
       const question = challenge.questions[questionIndex];
       if (optionId && !question.options.some(option => option.id === optionId)) {
@@ -340,6 +386,7 @@ router.post("/:id/close", async (req, res, next) => {
       const challenge = await tx.challenge.findUnique({ where: { id: req.params.id } });
       if (!challenge) return { status: 404, error: "Challenge not found." };
       if (challenge.hostUserId !== req.userId) return { status: 403, error: "Only the challenge host can close this challenge." };
+      if (challenge.status === "CLOSED") return { status: 200, body: { ok: true, status: "CLOSED", closedAt: challenge.finishedAt, reused: true } };
       if (!["LOBBY", "ACTIVE"].includes(challenge.status)) {
         return { status: 409, error: "Only a waiting or active challenge can be closed. Completed challenges are already in your history." };
       }
@@ -361,6 +408,7 @@ router.post("/:id/finish", async (req, res, next) => {
       const challenge = await tx.challenge.findUnique({ where: { id: req.params.id } });
       if (!challenge) return { status: 404, error: "Challenge not found." };
       if (challenge.hostUserId !== req.userId) return { status: 403, error: "Only the challenge host can finish this room." };
+      if (challenge.status === "FINISHED") return { status: 200, body: { ok: true, status: "FINISHED", reused: true } };
       if (challenge.status !== "ACTIVE") return { status: 409, error: "This challenge is not active." };
       const updated = await tx.challenge.update({ where: { id: challenge.id }, data: { status: "FINISHED", finishedAt: new Date() } });
       return { status: 200, body: { ok: true, status: updated.status } };
