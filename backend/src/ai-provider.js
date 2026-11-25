@@ -1,4 +1,10 @@
 const PROVIDERS = {
+  groq: {
+    envKey: "GROQ_API_KEY",
+    modelEnv: "GROQ_MODEL",
+    defaultModel: "openai/gpt-oss-120b",
+    url: "https://api.groq.com/openai/v1/chat/completions"
+  },
   openrouter: {
     envKey: "OPENROUTER_API_KEY",
     modelEnv: "OPENROUTER_MODEL",
@@ -14,7 +20,7 @@ const PROVIDERS = {
 };
 
 function providerOrder() {
-  const requested = String(process.env.AI_PROVIDER_ORDER || "openrouter,xai")
+  const requested = String(process.env.AI_PROVIDER_ORDER || "groq,openrouter,xai")
     .split(",").map(value => value.trim().toLowerCase()).filter(Boolean);
   return [...new Set(requested)].filter(name => Object.hasOwn(PROVIDERS, name));
 }
