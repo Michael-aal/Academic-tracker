@@ -617,9 +617,9 @@ router.get("/people", async (req, res, next) => {
     };
 
     if (q) {
-      // People search is identity-based: a full display name must match exactly.
-      // Use @username for an exact username lookup; do not mix institution or
-      // programme substring matches into person-name results.
+      // Search public people by display name, institution, programme, or study level.
+      // @username remains an exact username lookup; all other terms use
+      // case-insensitive partial matching without bypassing profile visibility.
       const usernameSearch = q.startsWith("@");
       const normalizedQuery = usernameSearch ? slug(q.slice(1)) : q.trim();
       const [usernameProfiles, matchingUsers] = await Promise.all([
@@ -636,7 +636,12 @@ router.get("/people", async (req, res, next) => {
         usernameSearch ? Promise.resolve([]) : prisma.user.findMany({
           where: {
             id: { notIn: excludedIds },
-            name: { equals: normalizedQuery, mode: "insensitive" }
+            OR: [
+              { name: { contains: normalizedQuery, mode: "insensitive" } },
+              { institutionName: { contains: normalizedQuery, mode: "insensitive" } },
+              { programme: { contains: normalizedQuery, mode: "insensitive" } },
+              { studyLevel: { contains: normalizedQuery, mode: "insensitive" } }
+            ]
           },
           select: { id: true },
           take: 500
