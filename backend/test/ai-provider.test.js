@@ -87,7 +87,7 @@ test("AI gateway reports only configured providers without exposing keys", () =>
     process.env.OPENROUTER_API_KEY = "secret-one";
     delete process.env.XAI_API_KEY;
     const status = configuredProviders();
-    assert.deepEqual(status.map(item => [item.id, item.configured]), [["openrouter", true], ["xai", false]]);
+    assert.deepEqual(status.map(item => [item.id, item.configured]), [["openrouter", true], ["xai", false], ["groq", false]]);
     assert.equal(JSON.stringify(status).includes("secret-one"), false);
   } finally {
     restoreEnv(names, previous);
