@@ -149,7 +149,8 @@
       const batch = Math.min(10, total - offset);
       status(statusId, "Generating questions " + (offset + 1) + "–" + (offset + batch) + " of " + total + "…");
       const result = await api("/api/ai", { method: "POST", body: JSON.stringify({
-        action: "quiz", subject: "Revision challenge", topic: "Create a fair shared challenge question set.",
+        action: "quiz", purpose: "challenge",
+        subject: "Revision challenge", topic: "Create a fair shared challenge question set.",
         content: material.slice(0, 12000), questionCount: batch, difficulty,
         level: user.educationTrack === "HIGHER" ? "higher institution / university" : "secondary school"
       }) });
