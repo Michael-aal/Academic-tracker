@@ -212,12 +212,15 @@
   });
 
   function challengeCreationKey() {
-    let key = sessionStorage.getItem("academic-tracker-challenge-create-key");
-    if (!key) {
-      key = window.crypto?.randomUUID
+    const storageKey = "academic-tracker-challenge-create-key";
+    const prefix = "challenge-" + String(currentUserId || "unknown").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 24) + "-";
+    let key = sessionStorage.getItem(storageKey);
+    if (!key || !key.startsWith(prefix)) {
+      const nonce = window.crypto?.randomUUID
         ? window.crypto.randomUUID()
-        : "challenge-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
-      sessionStorage.setItem("academic-tracker-challenge-create-key", key);
+        : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+      key = prefix + nonce;
+      sessionStorage.setItem(storageKey, key);
     }
     return key;
   }
