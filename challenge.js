@@ -254,7 +254,7 @@
     const mine = room.participants.find(person => person.userId === currentUserId);
     if (!mine?.teamKey) return false;
     const teammates = room.participants.filter(person => person.teamKey === mine.teamKey);
-    return teammates[0]?.userId === user.id;
+    return teammates[0]?.userId === currentUserId;
   }
   async function submitAnswer(questionIndex, optionId) {
     const buttons = $("room-options").querySelectorAll("button"); buttons.forEach(button => button.disabled = true);
@@ -305,7 +305,7 @@
     }
     if (!isTeamCaptain(room)) {
       $("room-question").textContent = "Your team is working on this challenge.";
-      $("room-options").replaceChildren(node("p", "challenge-muted", "Only your team's first joined teammate can submit the shared answer. Your team's progress will appear in the rankings."));
+      $("room-options").replaceChildren(node("p", "challenge-muted", "Your team captain submits the shared answer. Follow team progress in the rankings and discuss strategy in team chat."));
       $("question-progress").textContent = "Team mode";
       $("question-timer").textContent = "";
       return;
