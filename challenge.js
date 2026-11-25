@@ -1,6 +1,9 @@
 (() => {
   "use strict";
   const API = (window.AT_API_BASE || "https://academic-tracker-0b2q.onrender.com").replace(/\/$/, "");
+  // Shared challenge invitations must always use the stable production URL,
+  // never a temporary Vercel preview or deployment hostname.
+  const APP_URL = (window.AT_APP_URL || "https://study-track-lilac.vercel.app").replace(/\/$/, "");
   const token = localStorage.getItem("academic-tracker-token");
   const $ = id => document.getElementById(id);
   const state = { questions: [], notes: [], room: null, challengeId: null, refreshTimer: null, timerTimer: null, chatTimer: null, autoSkipKey: "", refreshPromise: null };
@@ -444,7 +447,7 @@
       $("room-subtitle").textContent = room.challenge.mode.replaceAll("_", " ") + " · " + room.challenge.status;
       if (room.challenge.isHost && room.challenge.inviteCode && room.challenge.status !== "CLOSED") {
         show("room-invite", true); $("room-invite-code").textContent = room.challenge.inviteCode;
-        const shareUrl = new URL("challenge.html", window.location.href); shareUrl.searchParams.set("invite", room.challenge.inviteCode); $("copy-invite-link").dataset.inviteUrl = shareUrl.toString();
+        const shareUrl = new URL("challenge.html", APP_URL); shareUrl.searchParams.set("invite", room.challenge.inviteCode); $("copy-invite-link").dataset.inviteUrl = shareUrl.toString();
       } else show("room-invite", false);
       renderParticipants(room); renderRankings(room); renderQuestion(room);
       show("start-challenge", room.challenge.isHost && room.challenge.status === "LOBBY");
