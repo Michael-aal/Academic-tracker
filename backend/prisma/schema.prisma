@@ -543,6 +543,7 @@ model Challenge {
   mode        String                 @db.VarChar(20)
   title       String                 @db.VarChar(120)
   inviteCode  String                 @unique @map("invite_code") @db.VarChar(16)
+  idempotencyKey String?              @unique @map("idempotency_key") @db.VarChar(80)
   status      String                 @default("LOBBY") @db.VarChar(20)
   questions   Json
   settings    Json?
