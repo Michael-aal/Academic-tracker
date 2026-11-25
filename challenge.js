@@ -4,7 +4,10 @@
   const token = localStorage.getItem("academic-tracker-token");
   const $ = id => document.getElementById(id);
   const state = { questions: [], notes: [], room: null, challengeId: null, refreshTimer: null, timerTimer: null, chatTimer: null, autoSkipKey: "" };
-  if (!token) { window.location.replace("login.html"); return; }
+  const inviteFromUrl = new URLSearchParams(window.location.search).get("invite") || "";
+  const pendingInvite = (inviteFromUrl || sessionStorage.getItem("academic-tracker-pending-challenge-invite") || "").trim().toUpperCase();
+  if (pendingInvite && /^[A-F0-9]{10}$/.test(pendingInvite)) sessionStorage.setItem("academic-tracker-pending-challenge-invite", pendingInvite);
+  if (!token) { window.location.replace(pendingInvite ? "register.html?challengeInvite=1" : "login.html"); return; }
 
   const user = (() => { try { return JSON.parse(localStorage.getItem("academic-tracker-user") || "{}"); } catch { return {}; } })();
   const currentUserId = user.id || user.userId || (() => { try { return JSON.parse(atob(token.split(".")[1])).sub || ""; } catch { return ""; } })();
@@ -351,6 +354,7 @@
       $("room-subtitle").textContent = room.challenge.mode.replaceAll("_", " ") + " · " + room.challenge.status;
       if (room.challenge.isHost && room.challenge.inviteCode) {
         show("room-invite", true); $("room-invite-code").textContent = room.challenge.inviteCode;
+        const shareUrl = new URL("challenge.html", window.location.href); shareUrl.searchParams.set("invite", room.challenge.inviteCode); $("copy-invite-link").dataset.inviteUrl = shareUrl.toString();
       } else show("room-invite", false);
       renderParticipants(room); renderRankings(room); renderQuestion(room);
       show("start-challenge", room.challenge.isHost && room.challenge.status === "LOBBY");
@@ -383,6 +387,12 @@
     try { await navigator.clipboard.writeText($("room-invite-code").textContent); status("room-status", "Invitation code copied."); }
     catch { status("room-status", "Select and copy the invitation code."); }
   });
+  $("copy-invite-link").addEventListener("click", async () => {
+    const url = $("copy-invite-link").dataset.inviteUrl;
+    if (!url) return status("room-status", "No invitation link is available.", true);
+    try { if (navigator.share) await navigator.share({ title: "Join my Preproom challenge", text: "Open this link to join my study challenge.", url }); else { await navigator.clipboard.writeText(url); status("room-status", "Shareable challenge link copied."); } }
+    catch (error) { if (error.name !== "AbortError") status("room-status", "Could not share the invitation link.", true); }
+  });
   $("leave-room").addEventListener("click", () => {
     stopTimers(); state.challengeId = null; state.room = null; showRoom(false); loadMyChallenges();
   });
@@ -396,4 +406,17 @@
   addQuestionCard();
   loadNotes();
   loadMyChallenges();
+  if (pendingInvite && /^[A-F0-9]{10}$/.test(pendingInvite)) {
+    (async () => {
+      try {
+        let teamKey = null;
+        const choice = String(window.prompt("For a Team Challenge, enter A or B. Otherwise leave blank:", "") || "").trim().toUpperCase();
+        if (choice === "A" || choice === "B") teamKey = choice;
+        const result = await api("/api/challenges/join", { method: "POST", body: JSON.stringify({ inviteCode: pendingInvite, teamKey }) });
+        sessionStorage.removeItem("academic-tracker-pending-challenge-invite");
+        const cleanUrl = new URL(window.location.href); cleanUrl.searchParams.delete("invite"); window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+        await loadMyChallenges(); await openRoom(result.challengeId);
+      } catch (error) { status("challenge-join-status", error.message, true); sessionStorage.removeItem("academic-tracker-pending-challenge-invite"); }
+    })();
+  }
 })();
