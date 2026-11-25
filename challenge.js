@@ -288,7 +288,7 @@
   }
   function renderQuestion(room) {
     const section = $("room-question-section");
-    show("room-review", room.challenge.status === "FINISHED");
+    show("room-review", room.challenge.status === "FINISHED" || room.challenge.status === "CLOSED");
     if (room.challenge.status === "FINISHED" || room.challenge.status === "CLOSED") {
       section.hidden = true;
       renderReview(room);
