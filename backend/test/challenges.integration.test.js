@@ -127,6 +127,26 @@ test("challenge rooms enforce identical questions, competition roles, team answe
     const teamBMessages = await (await request("/api/challenges/" + created.id + "/messages", teamB1)).json();
     assert.equal(teamAMessages.messages.length, 1);
     assert.equal(teamBMessages.messages.length, 0);
+
+    // Closing a live room must preserve history and atomically make all writes read-only.
+    response = await request("/api/challenges/" + created.id + "/answer", host, { questionIndex: 0, optionId: "b" });
+    assert.equal(response.status, 200);
+    response = await request("/api/challenges/" + created.id + "/close", host, {});
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).status, "CLOSED");
+    const closedRoom = await (await request("/api/challenges/" + created.id, host)).json();
+    assert.equal(closedRoom.challenge.status, "CLOSED");
+    assert.equal(closedRoom.challenge.questions[0].correctOptionId, "b");
+    assert.equal(closedRoom.myAnswers.length, 1, "answers must remain available in closed challenge history");
+    const preservedMessages = await (await request("/api/challenges/" + created.id + "/messages", teamA2)).json();
+    assert.equal(preservedMessages.messages.length, 1, "team chat history must remain readable after closure");
+    response = await request("/api/challenges/" + created.id + "/messages", host, { body: "This must not be saved." });
+    assert.equal(response.status, 409, "closed team chat must reject new messages");
+    response = await request("/api/challenges/" + created.id + "/answer", host, { questionIndex: 1, optionId: "a" });
+    assert.equal(response.status, 409, "closed challenges must reject further answers");
+    const lateJoiner = await createStudent("Late Joiner");
+    response = await request("/api/challenges/join", lateJoiner, { inviteCode: created.inviteCode });
+    assert.equal(response.status, 409, "closed challenges must reject new participants");
   } finally {
     if (challengeIds.length) await prisma.challenge.deleteMany({ where: { id: { in: challengeIds } } });
     if (users.length) {
