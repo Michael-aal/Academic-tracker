@@ -2,7 +2,7 @@ const PROVIDERS = {
   groq: {
     envKey: "GROQ_API_KEY",
     modelEnv: "GROQ_MODEL",
-    defaultModel: "llama-3.3-70b-versatile",
+    defaultModel: "openai/gpt-oss-120b",
     url: "https://api.groq.com/openai/v1/chat/completions"
   },
   openrouter: {
