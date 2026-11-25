@@ -21,7 +21,7 @@ function validateQuiz(input, expectedCount) {
     const hint = raw.hint == null ? "" : typeof raw.hint === "string" ? raw.hint.trim() : null;
     if (!id || id.length > 64 || questionIds.has(id)) throw new Error("Question IDs must be unique and valid.");
     if (question.length < 12 || question.length > 1200 || questionTexts.has(normalizeText(question))) throw new Error("Questions must be complete, distinct, and meaningful.");
-    if (explanation.length < 8 || explanation.length > 1200 || hint === null || hint.length > 500) throw new Error("Question explanation or hint is invalid.");
+    if (explanation.length < 8 || explanation.length > 1200 || hint === null || hint.length < 4 || hint.length > 500) throw new Error("Question explanation or hint is invalid.");
     if (!Array.isArray(raw.options) || raw.options.length !== 4) throw new Error("Each question must have exactly four options.");
     const optionIds = new Set();
     const optionTexts = new Set();
