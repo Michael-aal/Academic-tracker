@@ -551,15 +551,10 @@ router.post("/", validateAiRequest, aiUsageAudit, async (req, res) => {
       if (challengeGeneration) {
         // Challenge creation needs the answer key on the server-side save path.
         // Return only the challenge-shaped payload; do not create a learner quiz attempt.
-        const challengeQuestions = quiz.questions.map(question => ({
-          id: question.id,
-          prompt: question.question,
-          options: question.options,
-          correctOptionId: question.correctAnswer,
-          explanation: question.explanation
-        }));
         return res.status(201).json({
-          quiz: { title: quiz.title, questions: challengeQuestions },
+          // Keep the exact validated AI Quiz schema so challenge.js can map it
+          // without a second, divergent question parser.
+          quiz: { title: quiz.title, questions: quiz.questions },
           action, model, provider, purpose: "challenge"
         });
       }
