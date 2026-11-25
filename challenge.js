@@ -26,7 +26,18 @@
       window.location.replace("login.html");
       throw new Error("Your session expired. Please sign in again.");
     }
-    if (!response.ok) throw new Error(data.error || "The challenge request could not be completed.");
+    if (!response.ok) {
+      if (Array.isArray(data.providerFailures) && data.providerFailures.length) {
+        const detail = data.providerFailures.map(item =>
+          [item.provider, item.status || "no status", item.category].filter(Boolean).join(" ")
+        ).join("; ");
+        throw new Error((data.error || "AI provider request failed.") + " (" + detail + ")");
+      }
+      if (response.status === 404 && data.error === "Route not found.") {
+        throw new Error("Challenge API endpoint not found: " + (options.method || "GET").toUpperCase() + " " + path + ". The backend deployment may be behind the website version.");
+      }
+      throw new Error(data.error || "The challenge request could not be completed.");
+    }
     return data;
   }
   const node = (tag, cls, value) => { const item = document.createElement(tag); if (cls) item.className = cls; if (value !== undefined) item.textContent = String(value); return item; };
