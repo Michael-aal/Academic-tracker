@@ -69,3 +69,13 @@ test("preserves the selected per-question timer in the learner-facing quiz paylo
   assert.equal(publicQuiz(quiz).timePerQuestionSeconds, 15);
   assert.equal(publicQuiz(validateQuiz(sampleQuiz(), 1)).timePerQuestionSeconds, 0);
 });
+
+
+test("rejects missing or empty hints so incomplete questions cannot enter a quiz", () => {
+  const missingHint = sampleQuiz();
+  missingHint.questions[0].hint = "";
+  assert.throws(() => validateQuiz(missingHint, 1), /explanation or hint/);
+  const noHint = sampleQuiz();
+  delete noHint.questions[0].hint;
+  assert.throws(() => validateQuiz(noHint, 1), /explanation or hint/);
+});
