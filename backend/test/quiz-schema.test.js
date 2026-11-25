@@ -69,3 +69,18 @@ test("preserves the selected per-question timer in the learner-facing quiz paylo
   assert.equal(publicQuiz(quiz).timePerQuestionSeconds, 15);
   assert.equal(publicQuiz(validateQuiz(sampleQuiz(), 1)).timePerQuestionSeconds, 0);
 });
+
+
+test("rejects missing, empty, and too-short hints so incomplete questions cannot be saved", () => {
+  const emptyHint = sampleQuiz();
+  emptyHint.questions[0].hint = "";
+  assert.throws(() => validateQuiz(emptyHint, 1), /explanation or hint/);
+
+  const missingHint = sampleQuiz();
+  delete missingHint.questions[0].hint;
+  assert.throws(() => validateQuiz(missingHint, 1), /explanation or hint/);
+
+  const shortHint = sampleQuiz();
+  shortHint.questions[0].hint = "No";
+  assert.throws(() => validateQuiz(shortHint, 1), /explanation or hint/);
+});
