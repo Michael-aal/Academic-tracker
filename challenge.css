@@ -72,3 +72,6 @@ html[data-theme="dark"] .challenge-primary{color:#171020;background:#b69aff;bord
 @media(max-width:720px){.challenge-intro{padding:22px 18px;border-radius:19px}.challenge-shell{gap:15px}.challenge-entry-grid{gap:14px}.challenge-panel{box-shadow:0 8px 24px color-mix(in srgb,var(--ch-text) 4%,transparent)}}
 @media(max-width:420px){.challenge-topbar{gap:8px}.challenge-brand span{display:none}.challenge-academic-return{max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.challenge-intro h1{font-size:34px}.challenge-inline-fields{grid-template-columns:1fr}.room-participant{min-width:calc(50% - 5px);flex:1}}
 @media(prefers-reduced-motion:reduce){.challenge-panel,.challenge-primary,.challenge-secondary,.my-challenge-card,.room-option{transition:none!important}.my-challenge-card:hover,.room-option:hover{transform:none}}
+
+.challenge-room-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center}.challenge-close{border-color:color-mix(in srgb,#d94b68 38%,var(--ch-line));color:#c53b59}.challenge-close:hover:not(:disabled){background:color-mix(in srgb,#d94b68 10%,var(--ch-panel));border-color:#d94b68}
+html[data-theme="dark"] .challenge-close{color:#ff9caf;border-color:#754052}
