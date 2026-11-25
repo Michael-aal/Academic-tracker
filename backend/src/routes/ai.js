@@ -547,6 +547,22 @@ router.post("/", validateAiRequest, aiUsageAudit, async (req, res) => {
       }
 
       quiz.timePerQuestionSeconds = timePerQuestionSeconds;
+      const challengeGeneration = req.body?.purpose === "challenge";
+      if (challengeGeneration) {
+        // Challenge creation needs the answer key on the server-side save path.
+        // Return only the challenge-shaped payload; do not create a learner quiz attempt.
+        const challengeQuestions = quiz.questions.map(question => ({
+          id: question.id,
+          prompt: question.question,
+          options: question.options,
+          correctOptionId: question.correctAnswer,
+          explanation: question.explanation
+        }));
+        return res.status(201).json({
+          quiz: { title: quiz.title, questions: challengeQuestions },
+          action, model, provider, purpose: "challenge"
+        });
+      }
       const attempt = await prisma.aiQuizAttempt.create({ data: { userId: req.userId, title: quiz.title, subject, topic, difficulty, questionData: quiz, status: "IN_PROGRESS" }, select: { id: true } });
       return res.status(201).json({ quiz: publicQuiz(quiz), attemptId: attempt.id, action, model, provider });
     }
