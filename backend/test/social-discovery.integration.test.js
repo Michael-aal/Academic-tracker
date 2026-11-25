@@ -146,8 +146,12 @@ test("social discovery enforces visibility, blocks, presence, pagination and fri
 
     const nameSearch = await request("/api/community/people?q=Online%20Higher%20Student", viewer.user);
     assert.ok((await nameSearch.json()).people.some(person => person.username === online.profile.username), "search must include display names");
+    const partialNameSearch = await request("/api/community/people?q=Online%20Higher", viewer.user);
+    assert.ok((await partialNameSearch.json()).people.some(person => person.username === online.profile.username), "search must support partial display names");
     const institutionSearch = await request("/api/community/people?q=Lagos%20Tech", viewer.user);
     assert.ok((await institutionSearch.json()).people.some(person => person.username === online.profile.username), "search must include institution");
+    const studyLevelSearch = await request("/api/community/people?q=Test%20level", viewer.user);
+    assert.ok((await studyLevelSearch.json()).people.some(person => person.username === online.profile.username), "search must include study level");
 
     const search = await request("/api/community/people?q=Computer%20Engineering", viewer.user);
     assert.equal(search.status, 200);
