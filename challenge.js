@@ -249,7 +249,9 @@
       if (mode !== "FREE_FOR_ALL") {
         try {
           await api("/api/challenges/" + encodeURIComponent(challenge.id) + "/join", {
-            method: "POST", body: JSON.stringify({ teamKey: mode === "TEAM" ? $("challenge-team").value : null })
+            method: "POST",
+            headers: { "Idempotency-Key": "join-" + challenge.id + "-" + currentUserId },
+            body: JSON.stringify({ teamKey: mode === "TEAM" ? $("challenge-team").value : null })
           });
         } catch (joinError) {
           // The challenge itself is already safely saved. Keep the room accessible
@@ -339,7 +341,9 @@
     const buttons = $("room-options").querySelectorAll("button"); buttons.forEach(button => button.disabled = true);
     try {
       await api("/api/challenges/" + encodeURIComponent(state.challengeId) + "/answer", {
-        method: "POST", body: JSON.stringify({ questionIndex, optionId })
+        method: "POST",
+        headers: { "Idempotency-Key": "answer-" + state.challengeId + "-" + currentUserId + "-" + questionIndex },
+        body: JSON.stringify({ questionIndex, optionId })
       });
       status("room-answer-feedback", "Answer saved. Rankings are updating.");
       await refreshRoom();
@@ -456,14 +460,18 @@
     try { await state.refreshPromise; } finally { state.refreshPromise = null; }
   }
   async function openRoom(id) {
-    stopTimers(); state.challengeId = id; state.autoSkipKey = ""; showRoom(true);
+    stopTimers();
+    if (state.refreshPromise) await state.refreshPromise;
+    state.challengeId = id; state.autoSkipKey = ""; showRoom(true);
     await refreshRoom();
     state.refreshTimer = setInterval(refreshRoom, 5000);
     state.timerTimer = setInterval(() => { if (state.room) renderQuestion(state.room); }, 500);
   }
   $("start-challenge").addEventListener("click", async () => {
     const button = $("start-challenge"); button.disabled = true;
-    try { await api("/api/challenges/" + encodeURIComponent(state.challengeId) + "/start", { method: "POST", body: JSON.stringify({}) }); await refreshRoom(); }
+    try { await api("/api/challenges/" + encodeURIComponent(state.challengeId) + "/start", {
+      method: "POST", headers: { "Idempotency-Key": "start-" + state.challengeId }, body: JSON.stringify({})
+    }); await refreshRoom(); }
     catch (error) { status("room-status", error.message, true); }
     finally { button.disabled = false; }
   });
@@ -471,7 +479,9 @@
     if (!id) return;
     if (!window.confirm("Close this challenge? Nobody will be able to join or submit more answers. Existing participants, scores and results will be kept in challenge history. You can create a new challenge afterwards.")) return;
     try {
-      await api("/api/challenges/" + encodeURIComponent(id) + "/close", { method: "POST", body: JSON.stringify({}) });
+      await api("/api/challenges/" + encodeURIComponent(id) + "/close", {
+        method: "POST", headers: { "Idempotency-Key": "close-" + id }, body: JSON.stringify({})
+      });
       await loadMyChallenges();
       if (state.challengeId === id) await refreshRoom();
       else status("challenge-create-status", "Challenge closed. Its history has been preserved. You can create a new challenge now.");
@@ -483,7 +493,9 @@
   $("close-challenge").addEventListener("click", () => closeChallenge(state.challengeId));
   $("finish-challenge").addEventListener("click", async () => {
     if (!window.confirm("Finish this challenge and reveal the final results?")) return;
-    try { await api("/api/challenges/" + encodeURIComponent(state.challengeId) + "/finish", { method: "POST", body: JSON.stringify({}) }); await refreshRoom(); }
+    try { await api("/api/challenges/" + encodeURIComponent(state.challengeId) + "/finish", {
+      method: "POST", headers: { "Idempotency-Key": "finish-" + state.challengeId }, body: JSON.stringify({})
+    }); await refreshRoom(); }
     catch (error) { status("room-status", error.message, true); }
   });
   $("copy-invite-code").addEventListener("click", async () => {
