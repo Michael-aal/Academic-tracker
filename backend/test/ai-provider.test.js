@@ -141,3 +141,34 @@ test("Groq is the default first provider and its key is never exposed in status"
     restoreEnv(names, previous);
   }
 });
+
+
+test("provider preference is not an allow-list; fallback discovers any provider with a key", async () => {
+  const names = ["AI_PROVIDER_ORDER", "GROQ_API_KEY", "OPENROUTER_API_KEY", "OPENROUTER_MODEL", "XAI_API_KEY"];
+  const previous = Object.fromEntries(names.map(name => [name, process.env[name]]));
+  const originalFetch = global.fetch;
+  const calls = [];
+  try {
+    process.env.AI_PROVIDER_ORDER = "groq";
+    process.env.GROQ_API_KEY = " ";
+    process.env.OPENROUTER_API_KEY = "available-openrouter-key";
+    process.env.OPENROUTER_MODEL = "fallback-model";
+    delete process.env.XAI_API_KEY;
+    global.fetch = async (url, options) => {
+      calls.push({ url: String(url), body: JSON.parse(options.body) });
+      return { ok: true, status: 200, json: async () => ({
+        choices: [{ message: { content: "fallback provider used" } }]
+      }) };
+    };
+    const status = configuredProviders();
+    assert.equal(status.find(item => item.id === "groq").configured, false);
+    assert.equal(status.find(item => item.id === "openrouter").configured, true);
+    const result = await requestChatCompletion({ messages: [{ role: "user", content: "test" }] });
+    assert.equal(result.provider, "openrouter");
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].body.model, "fallback-model");
+  } finally {
+    global.fetch = originalFetch;
+    restoreEnv(names, previous);
+  }
+});
