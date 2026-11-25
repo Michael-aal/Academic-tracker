@@ -39,7 +39,7 @@ function summarizeProviderFailures(error) {
   return failures.map(entry => {
     const detail = String(entry || "");
     const provider = detail.split(":")[0].trim().slice(0, 30) || "unknown";
-    const statusMatch = detail.match(/:\\s*(\\d{3})\\b/);
+    const statusMatch = detail.match(/:\s*(\d{3})\b/);
     const status = statusMatch ? Number(statusMatch[1]) : null;
     let category = "provider_error";
     if (/not configured/i.test(detail)) category = "not_configured";
